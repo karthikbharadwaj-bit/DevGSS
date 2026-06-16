@@ -1,0 +1,157 @@
+---
+description: Apex code general guidlines. Use when creating or updating apex code.
+alwaysApply: false
+---
+
+# AI Rules for Apex Coding Standards Enforcement
+
+## Code Formatting Rules
+
+### FMT-001: Indentation
+**Rule:** All code indentation must use exactly 4 spaces, never tabs.
+**Detection:** Flag any line using tab characters (\t) for indentation.
+**Fix:** Replace all tab indentations with 4-space equivalents.
+
+### FMT-002: Space Before Opening Brace
+**Rule:** Always include a space before opening braces `{`.
+**Pattern:** `\w{` (word character immediately followed by opening brace)
+**Detection:** Flag patterns like `new Set<String>{}`, `if(condition){`, `method(){`
+**Fix:** Insert space before `{`: `new Set<String> {}`, `if(condition) {`, `method() {`
+
+### FMT-003: Data Type Capitalization
+**Rule:** All Apex data types must be capitalized.
+**Detection:** Flag lowercase data types: `integer`, `string`, `boolean`, `decimal`, `date`, `datetime`, `list`, `set`, `map`
+**Fix:** Capitalize: `Integer`, `String`, `Boolean`, `Decimal`, `Date`, `Datetime`, `List`, `Set`, `Map`
+
+### FMT-004: Comma Spacing
+**Rule:** Always include a space after commas in lists, method parameters, and SOQL queries.
+**Pattern:** `,\S` (comma immediately followed by non-whitespace)
+**Detection:** Flag patterns like `[SELECT Id,Name]`, `method(param1,param2)`
+**Fix:** Insert space after comma: `[SELECT Id, Name]`, `method(param1, param2)`
+
+### FMT-005: Operator Spacing
+**Rule:** Special characters (`+`, `-`, `&&`, `||`, `==`, `!=`, `>=`, `<=`, `=`) must have spaces around them.
+**Pattern:** `\S[+\-&|=!<>]+\S` (non-whitespace + operator + non-whitespace)
+**Detection:** Flag patterns like `a+b`, `x&&y`, `count==0`
+**Fix:** Add spaces: `a + b`, `x && y`, `count == 0`
+
+### FMT-006: Egyptian Brackets Prevention
+**Rule:** Opening braces `{` must be on the same line as the statement, not on a new line.
+**Pattern:** `\n\s*{` (newline followed by optional whitespace and opening brace)
+**Detection:** Flag standalone opening braces on new lines
+**Fix:** Move opening brace to end of previous line with proper spacing
+
+### FMT-007: Else/Catch Placement
+**Rule:** `else` and `catch` keywords must be on the same line as the preceding closing brace `}`.
+**Pattern:** `}\s*\n\s*(else|catch)` (closing brace followed by newline and else/catch)
+**Detection:** Flag `else` or `catch` on new lines after closing braces
+**Fix:** Move to same line: `} else {`, `} catch (Exception ex) {`
+
+### FMT-008: Mandatory Code Blocks
+**Rule:** Always use curly braces `{}` for code blocks, even single statements.
+**Pattern:** `if\s*\([^)]+\)\s*[^{]` (if statement not followed by opening brace)
+**Detection:** Flag if/for/while statements without braces
+**Fix:** Wrap single statements in braces: `if (condition) { statement; }`
+
+### FMT-009: ForEach Loop Spacing
+**Rule:** Put spaces around `:` in enhanced for loops.
+**Pattern:** `for\s*\([^:]+:[^)]+\)` without proper spacing
+**Detection:** Flag patterns like `for(Account acc:accounts)`
+**Fix:** Add spaces: `for (Account acc : accounts)`
+
+### FMT-010: Cast and Parenthesis Spacing
+**Rule:** Put spaces after `,`, `:`, `;`, `(`, `)` and closing parenthesis of casts.
+**Exception:** No space before `:` in SOQL variable references.
+**Detection:** Flag missing spaces except in SOQL `:variableName` patterns
+**Fix:** Add appropriate spacing while preserving SOQL syntax
+
+## Code Quality Rules
+
+### QUAL-001: Debug Statement Detection
+**Rule:** No `System.debug()` statements in production code.
+**Pattern:** `System\.debug\s*\(`
+**Detection:** Flag all System.debug calls
+**Action:** Remove or replace with proper logging framework
+
+### QUAL-002: Literal Value Detection
+**Rule:** Literal values should be replaced with constants.
+**Pattern:** Detect string literals (`"[^"]*"`), numeric literals not in declarations
+**Detection:** Flag hardcoded values outside of constant declarations
+**Fix:** Suggest creating `static final` constants
+
+### QUAL-003: String Field Reference
+**Rule:** sObject field references must use tokens, not strings.
+**Pattern:** `'[A-Z][a-zA-Z0-9_]*\.[A-Z][a-zA-Z0-9_]*'` (quoted field references)
+**Detection:** Flag string literals that appear to be field references
+**Fix:** Replace with token: `Account.Name` instead of `'Name'`
+
+### QUAL-004: User-Facing String Detection
+**Rule:** User-facing strings must use custom labels.
+**Pattern:** Detect strings in return statements, error messages, UI components
+**Detection:** Flag string literals in user-facing contexts
+**Fix:** Replace with `Label.CustomLabelName`
+
+### QUAL-005: Constant Declaration Enforcement
+**Rule:** All fixed values must be declared as `static final` constants.
+**Detection:** Flag repeated literal values across codebase
+**Fix:** Extract to constant: `private static final String CONSTANT_NAME = 'value';`
+
+## Comment Rules
+
+### CMT-001: Commented Code Detection
+**Rule:** No commented-out code blocks in production.
+**Pattern:** `//\s*(if|for|while|try|public|private|Integer|String)` (commented code keywords)
+**Detection:** Flag commented lines that appear to be code
+**Action:** Remove commented code blocks
+
+### CMT-002: Comment Quality Check
+**Rule:** Comments should explain WHY, not WHAT.
+**Pattern:** Comments starting with action words: `//\s*(creates?|sets?|gets?|returns?)`
+**Detection:** Flag comments that describe obvious actions
+**Suggestion:** Rewrite to explain business logic or reasoning
+
+### CMT-003: Javadoc Format Preference
+**Rule:** Prefer Javadoc-style comments `/* */` over single-line `//` for method documentation.
+**Detection:** Methods with only `//` comments instead of `/* */` blocks
+**Fix:** Convert to Javadoc format for better documentation
+
+## Line Breaking Rules
+
+### LBR-001: Long Line Detection
+**Rule:** Break long expressions according to readability principles.
+**Detection:** Lines exceeding reasonable length (typically 120 characters)
+**Fix:** Apply line breaking rules:
+- Break after commas
+- Break before operators
+- Align with expression start
+
+### LBR-002: Expression Alignment
+**Rule:** Multi-line expressions must be properly aligned.
+**Detection:** Inconsistent indentation in continued expressions
+**Fix:** Align continuation lines with the start of the expression
+
+## Implementation Priority
+
+### High Priority (Automatic Fixes)
+- FMT-001, FMT-002, FMT-004, FMT-005 (Basic formatting)
+- QUAL-001 (Debug statement removal)
+- CMT-001 (Commented code removal)
+
+### Medium Priority (Suggestions)
+- QUAL-002, QUAL-005 (Literal value extraction)
+- FMT-006, FMT-007, FMT-008 (Structural formatting)
+- LBR-001, LBR-002 (Line breaking)
+
+### Low Priority (Code Review Flags)
+- QUAL-003, QUAL-004 (Architecture improvements)
+- CMT-002, CMT-003 (Comment quality)
+
+## Usage Instructions for AI Systems
+
+1. **Scan Phase:** Apply detection patterns to identify violations
+2. **Classification:** Categorize violations by priority and type
+3. **Fix Phase:** Apply automatic fixes for high-priority formatting issues
+4. **Suggestion Phase:** Provide refactoring suggestions for medium-priority issues
+5. **Review Phase:** Flag low-priority items for human code review
+6. **Report Phase:** Generate summary of changes made and issues flagged
+

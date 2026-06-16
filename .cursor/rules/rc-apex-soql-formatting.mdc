@@ -1,0 +1,157 @@
+---
+description: Apex code SOQL formatting. Use when creating or updating apex code.
+alwaysApply: false
+---
+# AI Rules for SOQL formatting
+
+## Overview
+This rule defines the standard approach for implementing SOQL queries in Salesforce using the Data Layer pattern with SObjectSelector classes.
+
+## Core Requirements
+
+### SOQL-001: Use SObjectSelector Pattern
+- **MUST** use Data Layer with SObjectSelector classes instead of direct SOQL queries
+- **MUST** extend the base `SObjectSelector` class
+- **MUST** use `inherited sharing` access modifier for all Selector classes
+
+---
+
+### SOQL-002: Query Construction
+- **MUST** use `QueryFactory` class for constructing SOQL expressions
+- **EXCEPTION**: Use regular SOQL expressions for aggregate queries only
+- **MUST** use `List<Schema.SObjectField>` type for queried fields lists
+- **ALLOWED**: `List<String>` type only when necessary for related object field references (e.g., `Account__r.Name`)
+
+---
+
+### SOQL-003: Required Methods
+Every SObjectSelector class **MUST** implement:
+- `getSObjectType()` - returns the SObject type
+- `getDefaultFieldList()` - returns default fields as `List<Schema.SObjectField>`
+- Constructor with no parameters calling `super()`
+- Constructor with CRUD/FLS parameters calling `super(enforceCRUD, enforceFLS)`
+
+## Implementation Template
+
+```apex
+public inherited sharing class [ObjectName]Selector extends SObjectSelector {
+    
+    public [ObjectName]Selector() {
+        super();
+    }
+    
+    public [ObjectName]Selector(Boolean enforceCRUD, Boolean enforceFLS) {
+        super(enforceCRUD, enforceFLS);
+    }
+    
+    public override Schema.SObjectType getSObjectType() {
+        return [ObjectName].SObjectType;
+    }
+    
+    public override List<Schema.SObjectField> getDefaultFieldList() {
+        return new List<Schema.SObjectField> {
+            [ObjectName].Id,
+            [ObjectName].[Field1],
+            [ObjectName].[Field2]
+            // Add other default fields
+        };
+    }
+    
+    public QueryFactory select[ObjectName]Default(String condition) {
+        return newQueryFactory()
+            .setFactoryName('select[ObjectName]')
+            .selectFields(getDefaultFieldList())
+            .setCondition(condition)
+            .setLimit(1);
+    }
+}
+```
+
+## Examples
+
+### ✅ Correct Implementation
+```apex
+public inherited sharing class AccountSelector extends SObjectSelector {
+    public AccountSelector() {
+        super();
+    }
+    
+    public AccountSelector(Boolean enforceCRUD, Boolean enforceFLS) {
+        super(enforceCRUD, enforceFLS);
+    }
+    
+    public override Schema.SObjectType getSObjectType() {
+        return Account.SObjectType;
+    }
+    
+    public override List<Schema.SObjectField> getDefaultFieldList() {
+        return new List<Schema.SObjectField> {
+            Account.Description,
+            Account.Id,
+            Account.AccountNumber,
+            Account.Name,
+            Account.Type,
+            Account.AnnualRevenue
+        };
+    }
+    
+    public QueryFactory selectAccountDefault(String condition) {
+        return newQueryFactory()
+            .setFactoryName('selectIdOfAccount')
+            .selectFields(getDefaultFieldList())
+            .setCondition(condition)
+            .setLimit(1);
+    }
+}
+```
+
+### ❌ Incorrect Implementation
+```apex
+// Wrong: Direct SOQL query
+List<Account> accounts = [SELECT Id, Name FROM Account WHERE Type = 'Customer'];
+
+// Wrong: Missing inherited sharing
+public class AccountSelector extends SObjectSelector { ... }
+
+// Wrong: Using List<String> for standard fields
+public override List<String> getDefaultFieldList() {
+    return new List<String> {'Id', 'Name', 'Type'};
+}
+```
+
+### ✅ Correct Related Field Reference
+```apex
+// Allowed: List<String> for related object fields
+List<String> relatedFields = new List<String> {
+    'Account__r.Name',
+    'Owner.Email'
+};
+```
+
+## Usage Guidelines
+
+1. **Naming Convention**: Use `[ObjectName]Selector` format
+2. **Method Naming**: Use descriptive method names like `selectAccountDefault()`
+3. **Factory Names**: Set meaningful factory names using `setFactoryName()`
+4. **Field Selection**: Always use `getDefaultFieldList()` or explicitly define required fields
+5. **Security**: Leverage constructor parameters for CRUD/FLS enforcement when needed
+
+## Exception Cases
+
+- **Aggregate Queries**: Use regular SOQL syntax instead of QueryFactory
+- **Dynamic Queries**: May require `List<String>` for field references
+- **Cross-Object References**: Use `List<String>` for relationship field notation
+
+## Implementation Priority
+
+### High Priority (Automatic Fixes)
+- SOQL-001, SOQL-002, SOQL-003
+
+## Usage Instructions for AI Systems
+
+1. **Scan Phase:** Apply detection patterns to identify violations
+2. **Classification:** Categorize violations by priority and type
+3. **Fix Phase:** Apply automatic fixes for high-priority formatting issues
+4. **Suggestion Phase:** Provide refactoring suggestions for medium-priority issues
+5. **Review Phase:** Flag low-priority items for human code review
+6. **Report Phase:** Generate summary of changes made and issues flagged

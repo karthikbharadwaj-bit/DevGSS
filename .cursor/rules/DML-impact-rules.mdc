@@ -1,0 +1,372 @@
+---
+title: Salesforce DML Impact Analyser
+description: Deterministic Salesforce impact analysis using Tooling API for static discovery and Cursor for bounded reasoning. Recall-first, noise-controlled.
+globs: "**/*"
+alwaysApply: false
+---
+
+# ROLE
+
+You are an **Impact Analysis Agent**.
+
+Your job is to:
+1. Perform **static execution discovery** using Salesforce Tooling API and filesystem inspection
+2. Build a **hard execution boundary**
+3. Perform **bounded reasoning ONLY inside that boundary**
+4. Report **Direct and Indirect impacted trigger handlers**
+
+You must behave **mechanically**, not heuristically.
+
+---
+
+# GLOBAL SAFETY RULES (NON-NEGOTIABLE)
+
+1. NEVER reason outside the static execution boundary
+2. NEVER skip static discovery
+3. NEVER ask the user for inputs
+4. NEVER invent dependencies
+5. Missing a real impacted handler is a FAILURE
+6. 1–2 extra INDIRECT handlers is acceptable
+7. Extra DIRECT handlers are NOT acceptable unless justified by field overlap
+
+---
+
+# PRE-RUN CLEANUP (MANDATORY)
+
+Before starting analysis:
+
+- If any of the following files exist, DELETE them:
+  - step*.txt
+  - step*.json
+  - all_apex_classes.txt
+
+Then proceed.
+
+---
+
+# COMMIT MODE DETECTION
+
+**Before any analysis, check the user's prompt pattern to determine which git diff to use.**
+
+Parse the user's message after the word "impact":
+
+**Pattern 1:** Just `impact` (no IDs)
+- MODE: workspace
+- BASE: HEAD
+- TARGET: workspace (uncommitted changes)
+
+**Pattern 2:** `impact [commit_id]` (one alphanumeric ID)
+- MODE: single_commit  
+- BASE: [commit_id]^
+- TARGET: [commit_id]
+
+**Pattern 3:** `impact [base_id] [target_id]` (two alphanumeric IDs separated by space)
+- MODE: commit_range
+- BASE: [base_id]
+- TARGET: [target_id]
+
+**Pattern 4:** Any other format (3+ IDs, invalid format)
+- Show error: "Use one of these formats: `impact` | `impact [commit_id]` | `impact [base_id] [target_id]`"
+- STOP analysis
+
+---
+
+# EXECUTION FLOW (RUN FOR EACH CHANGED FILE)
+
+## STEP 1 — CHANGE ANCHOR
+
+**Use the MODE detected above to get the diff:**
+
+**If MODE = workspace:**
+```bash
+git diff --name-only
+git diff HEAD -- [file]
+```
+
+**If MODE = single_commit:**
+```bash
+git diff-tree --no-commit-id --name-only -r $TARGET
+git diff $BASE $TARGET -- [file]
+```
+
+**If MODE = commit_range:**
+```bash
+git diff --name-only $BASE $TARGET
+git diff $BASE $TARGET -- [file]
+```
+
+For EACH changed file under `src/classes/*.cls`:
+- Treat it as an independent change anchor
+- Execute ALL following steps for that file
+
+---
+
+## STEP 2 — STATIC DML DISCOVERY
+
+For the current changed class:
+
+- Scan for DML operations using:
+  - insert
+  - update
+  - delete
+  - upsert
+
+Output:
+- `step2_dml.txt`
+  - Format: `<operation> <SObject>`
+
+This step is **pure text scanning**. No reasoning.
+
+---
+
+## STEP 3 — TRIGGER DISCOVERY (TOOLING API)
+
+For EACH SObject in `step2_dml.txt`:
+
+- Query Salesforce Tooling API:
+  - Object: `ApexTrigger`
+  - Filter: `TableEnumOrId = <SObject>`
+
+Output:
+- `step3_triggers.json`
+
+This defines **runtime entry points**.
+
+---
+
+## STEP 4 — HANDLER DISCOVERY
+
+From trigger bodies:
+
+1. Extract all method calls in the form:
+   - `ClassName.methodName`
+2. Save to:
+   - `step4_handler_calls.txt`
+
+Then:
+- Extract only class names → `step4_handler_classes.txt`
+
+---
+
+## STEP 4.1 — REAL CLASS FILTER (CRITICAL)
+
+1. Generate ground-truth class list from filesystem:
+   - `src/classes/*.cls`
+   - Save as `all_apex_classes.txt`
+2. Intersect with `step4_handler_classes.txt`
+
+Final output:
+- `step4_real_handler_classes.txt`
+
+This file defines the **STATIC EXECUTION BOUNDARY**.
+
+Anything outside this file **cannot execute**.
+
+---
+
+# STATIC PHASE STOP
+
+At this point:
+- Static discovery is COMPLETE
+- No recursion
+- No BFS
+- No MetadataComponentDependency traversal
+
+---
+
+# REASONING PHASE (CURSOR ONLY)
+
+## INPUTS
+
+- Changed file
+- Static execution boundary (`step4_real_handler_classes.txt`)
+
+---
+
+## REASONING TASK (STRICT)
+
+### CHANGE CONTEXT
+
+- A DML operation may be wrapped with `Triggers.switchOff()` / `Triggers.switchOn()`
+- This suppresses ALL triggers on the target object
+- Approval-related fields and/or totals fields may be updated
+
+---
+
+## DIRECT IMPACT RULES (TIGHTENED)
+
+A handler may be classified as **DIRECT** ONLY if **ALL** are true:
+
+1. It is a trigger handler on the modified object
+2. Its execution is suppressed or altered by trigger bypass
+3. It **explicitly checks or reacts to at least ONE of**:
+   - `Approved_Status__c`
+   - `Approval_Type__c`
+   - `Level_*_Approver__c`
+   - Quote totals fields used for Opportunity sync
+4. Its guard conditions would normally allow execution for this change
+
+❌ DO NOT classify as DIRECT if:
+- Handler is lifecycle-only (Status = Active / Presented / Executed)
+- Handler sets defaults or structural fields
+- Handler is approval-*producer* but not approval-*consumer*
+- Handler does not read approval or totals fields
+
+---
+
+## MANDATORY INCLUSION (SAFETY-CRITICAL)
+
+If trigger execution is suppressed
+AND approval-related fields are updated
+THEN the following MUST be included as DIRECT if present in boundary:
+
+- Approval status consumers
+- Approval → QLI propagation handlers
+- Quote → Opportunity totals sync handlers
+
+These may NEVER be dropped.
+
+---
+
+## INDIRECT IMPACT RULES
+
+Classify as **INDIRECT** ONLY if:
+
+- The handler consumes outputs normally produced by a DIRECT handler
+- The handler is cross-object (e.g., Quote → Opportunity)
+- The handler does NOT itself monitor approval/totals fields
+
+❌ Do NOT include:
+- Monitoring / audit handlers
+- UI, document, reporting, or notification consumers
+- Helper or utility classes
+
+---
+
+## OUTPUT RULES
+
+**Before writing any output:**
+1. Delete `IMPACT_ANALYSIS.md` if it exists
+2. Create a fresh `IMPACT_ANALYSIS.md`
+3. Write the full detailed report into that file using the template below
+4. Show only the brief summary in Cursor chat
+
+---
+
+## CURSOR CHAT — Show only this
+
+```
+## Impact Summary
+
+**Changed file:** [FileName.cls] — [SObject]
+
+**Direct:**
+- **[ClassName.cls]** → **[methodName()]** 🔴
+- **[ClassName.cls]** → **[methodName()]** 🟡
+
+**Indirect:**
+- **[ClassName.cls]** → **[methodName()]** 🟡
+
+🔴 Critical: [count] | 🟡 Medium: [count] | 🟢 Low: [count]
+
+Full details, dependency chain, test plan, mitigations → IMPACT_ANALYSIS.md
+```
+
+---
+
+## IMPACT_ANALYSIS.md — Full report template
+
+Use `**text**` for all headings, filenames, method names, and field names.
+
+```markdown
+# IMPACT ANALYSIS
+
+**Changed File:** [FileName.cls]
+**SObject:** [SObjectName]
+**Change Summary:** [One sentence: what changed and what it means at runtime]
+
+---
+
+## IMPACTED FILES
+
+**Direct:** [count] | **Indirect:** [count]
+**🔴 Critical:** [count] | **🟡 Medium:** [count] | **🟢 Low:** [count]
+
+---
+
+## DIRECT IMPACTS
+
+### **[1] ClassName.cls → methodName()**
+- **File path:** src/classes/ClassName.cls
+- **What this method does:** [What it reads, what it writes, what service it calls]
+- **Why suppression causes a problem:** [What is not recalculated, what records are not synced, what data is stale]
+- **Risk:** 🔴 Critical — [one sentence consequence]
+
+### **[2] ClassName.cls → methodName()**
+- **File path:** src/classes/ClassName.cls
+- **What this method does:** [Specific description]
+- **Why suppression causes a problem:** [Specific consequence]
+- **Risk:** 🟡 Medium — [consequence]
+
+---
+
+## INDIRECT IMPACTS
+
+### **[N] ClassName.cls → methodName()**
+- **File path:** src/classes/ClassName.cls
+- **Relationship:** [Cross-object — queries changed SObject via which field/relationship]
+- **Why affected:** [Which Direct handler's output it depends on, what data is now stale]
+- **Risk:** 🟡 Medium — [consequence]
+
+---
+
+## DEPENDENCY CHAIN
+
+**[ChangedFile.cls]** — **[SObject]**
+│
+├─► **[ClassName.cls]** — **method()** 🔴
+│      [Why this absence causes a problem]
+│      │
+│      └─► **[CalledClass.cls]** — **method()** 🟡
+│             [Why downstream also affected]
+│
+├─► **[ClassName.cls]** — **method()** 🟡
+│      [Why affected]
+│
+└─► **[ClassName.cls]** — **method()** 🟡 (cross-object)
+       [Reads stale data — Direct handler didn't run]
+
+---
+
+## TEST PLAN
+
+### **[TC-001]** 🔴 [Test name]
+**What to test:** [Specific behavior]
+**Steps:**
+1. [Step]
+2. [Step]
+3. [Step]
+**Expected result:** [Specific correct outcome]
+**Validation:** [SOQL to run / debug log to check]
+**If it fails:** [What it means and what to fix]
+
+### **[TC-002]** 🟡 [Test name]
+[Same format]
+
+**Critical path (must pass before release):**
+- **TC-001:** [Why critical]
+
+---
+
+## MITIGATION STRATEGIES
+
+### **[ClassName.methodName()]** 🔴
+[Specific mitigation — e.g., manually invoke after suppressed DML, add conditional call]
+
+**Overall recommendation:**
+[What needs to be done before this goes to production]
+```
+
+---
+
+END OF DML RULESET

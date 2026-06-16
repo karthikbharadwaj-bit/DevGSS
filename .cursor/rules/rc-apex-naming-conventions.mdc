@@ -1,0 +1,181 @@
+---
+description: Apex code naming conventions. Use when creating or updating apex code.
+alwaysApply: false
+---
+# AI Rules for Apex Naming Conventions
+
+## NC-001: General Salesforce Component Naming
+
+**Scope**: All Salesforce components unless specific rules override
+
+**Core Requirements**:
+- Use `UpperCamelCase` for all component names
+- **NEVER** use underscores in names (except Test and BatchJob classes)
+- **NEVER** replace spaces with underscores
+- Always treat names as case-sensitive
+- If component has separate label, make it same as name but with spaces
+- If component has separate label, make it same as name but with spaces
+- Always populate Description/Help Text fields
+
+**Examples**:
+```
+✅ MyEmailTemplate (Name) → "My Email Template" (Label)
+✅ CaseTaggingTool
+✅ MessageViewer
+❌ My_Email_Template
+❌ case_tagging_tool
+```
+
+---
+
+## NC-002: Apex Class Naming Patterns
+
+**Scope**: All Apex classes
+
+**Naming Patterns**:
+
+| Class Type | Pattern | Example | Notes |
+|------------|---------|---------|-------|
+| Batch | `BatchJob_<Name>` | `BatchJob_Account` | Only exception to underscore rule |
+| Data Access | `<ObjectName>Selector` | `AccountSelector` | Remove `__c` from custom objects |
+| Domain/Trigger | `<ObjectName>TriggerHelper` | `AccountTriggerHelper` | Remove `__c` from custom objects |
+| Helper | `<ObjectName>Helper` or `<Type>Helper` | `AccountHelper`, `StringHelper` | |
+| REST API | `<ResourceName>RestAPI` | `ContractRestAPI` | |
+| Scheduler | `<Name>Scheduler` | `ChurnSurveyScheduler` | |
+| Service | `<ResourceName>Svc` | `LocationSvc`, `QuoteSvc` | |
+| Unit Test | `Test_<ClassName>` | `Test_AccountHelper` | Only exception to underscore rule |
+| VF Controller | `<PageName>Ctrl` | `MessageViewerCtrl` | |
+
+**Custom Object Reference**: Use object name without `__c` suffix in class names.
+
+---
+
+## NC-003: Class Member Naming Standards
+
+**Scope**: All Apex class members
+
+**Member Naming**:
+
+| Member Type | Pattern | Example | Notes |
+|-------------|---------|---------|-------|
+| Constants | `UPPER_UNDERSCORE` | `private final Integer MAX_QUERY_LIMIT = 100;` | For anything marked `final` |
+| Fields/Properties | `lowerCamelCase` | `public String name;` | All visibility levels |
+| Boolean Fields | `is/has + CamelCase` | `public Boolean isSomething;` | Start with `is` or `has` |
+| Methods | `lowerCamelCase` | `public void myMethod();` | All visibility levels |
+| Parameters | `lowerCamelCase` | `public void myMethod(String myParam)` | |
+| Local Variables | `lowerCamelCase` | `Integer intVar = 20;` | |
+| Nested Classes | `UpperCamelCase` | `class MyNestedClass {}` | |
+| Interfaces | `I + UpperCamelCase` | `interface IMyInterface {}` | Always prefix with `I` |
+| Enums | Name: `UpperCamelCase`, Values: `UPPER_UNDERSCORE` | `enum Season { SUMMER, WINTER }` | |
+
+**Map Naming**:
+- Use "to" preposition: `accNameToApprovalMap`
+- For same object key/value: `accsMap` 
+- ❌ Avoid "By" preposition: `approvalByAccNameMap`
+
+---
+
+## NC-004: Custom Field Naming Rules
+
+**Scope**: All Salesforce custom fields
+
+**General Rule**: Use `UpperCamelCase` with no underscores
+
+**Field-Specific Patterns**:
+
+| Field Type | Pattern | Example | Label Example |
+|------------|---------|---------|---------------|
+| Checkbox | `Is<Name>__c` or `Has<Name>__c` | `IsActive__c` | "Active" |
+| Lookup/Master-Detail | `<ObjectName>__c` | `MyCustomObject__c` | "My Custom Object" |
+
+**Requirements**:
+- Checkbox labels can drop "Is" prefix for readability
+- Child relationship names must be descriptive
+- Always use meaningful, descriptive names
+
+**Examples**:
+```
+✅ IsActive__c → Label: "Active"
+✅ HasLineItems__c → Label: "Has Line Items"  
+✅ MyCustomObject__c → Label: "My Custom Object"
+❌ Is_Active__c
+❌ my_custom_object__c
+```
+
+---
+
+## NC-005: Trigger and Component Naming
+
+**Scope**: Apex Triggers, Lightning Components, Visualforce
+
+**Trigger Naming**:
+- Pattern: `<ObjectName>.trigger`
+- Examples: `Account.trigger`, `MyCustomObject.trigger`
+- **NEVER** include "Trigger" suffix in name
+- **NEVER** include `__c` suffix for custom objects
+
+**Component Naming**:
+
+| Component Type | Pattern | Example | Notes |
+|----------------|---------|---------|-------|
+| Custom Object | `UpperCamelCase` | `MyCustomObject__c` | Salesforce adds suffix automatically |
+| Visualforce Component | `UpperCamelCase` | `LearningCenterFooter` | |
+| Visualforce Page | `UpperCamelCase` | `MessageViewer` | |
+| Lightning Component | `UpperCamelCase` | `CaseTaggingTool` | |
+| Lightning Web Component | `UpperCamelCase` | `scAdminHeader` | Use unmanaged prefix |
+
+---
+
+## NC-006: Custom Label Standards
+
+**Scope**: All Salesforce custom labels
+
+**Requirements**:
+- Use `UpperCamelCase` with no underscores
+- Always populate `category` field to show usage location
+- Always populate description field
+
+**Examples**:
+```
+✅ Name: MyEmailTemplateTitle
+   Category: EmailTemplates
+   Description: Title text for account email template
+
+✅ Name: CaseTaggingHeader  
+   Category: LightningComponents.CaseTagging
+   Description: Header text for case tagging component
+
+❌ My_Email_Template_Title
+❌ Missing category or description
+```
+
+## NC-007: Best Practices
+
+**Scope**: All Salesforce components
+
+**Best Practices**:
+- Group related labels with consistent category naming
+- Use descriptive categories like "ComponentName.FeatureName"
+- Make descriptions specific enough for other developers to understand usage
+
+## Implementation Priority
+
+### High Priority (Automatic Fixes)
+- NC-001, NC-002, NC-004, NC-005 (Basic formatting)
+- NC-006 (Custom label standards)
+
+### Medium Priority (Suggestions)
+- NC-003 (Class member naming standards)
+- NC-007 (Best practices)
+
+### Low Priority (Code Review Flags)
+- NC-007 (Best practices)
+
+## Usage Instructions for AI Systems
+
+1. **Scan Phase:** Apply detection patterns to identify violations
+2. **Classification:** Categorize violations by priority and type
+3. **Fix Phase:** Apply automatic fixes for high-priority formatting issues
+4. **Suggestion Phase:** Provide refactoring suggestions for medium-priority issues
+5. **Review Phase:** Flag low-priority items for human code review
+6. **Report Phase:** Generate summary of changes made and issues flagged

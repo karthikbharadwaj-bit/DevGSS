@@ -1,0 +1,251 @@
+---
+description: Apex code unit tests formatting. Use when creating or updating apex unit tests.
+alwaysApply: false
+---
+# AI Rules for Apex Unit Testing
+
+## UT-001: Test Class Structure and Naming
+
+**Scope**: All Apex test classes
+
+**Core Requirements**:
+- Use `Test_<ClassName>` pattern for test class names
+- All test classes and methods must be `private`
+- Use `@isTest` annotation instead of `testmethod` keyword
+- Generate `.cls-meta.xml` file with current API version
+
+**Examples**:
+```apex
+✅ Test_AccountHelper.cls
+✅ Test_ContractRestAPI.cls
+✅ Test_BatchJob_Account.cls
+
+❌ AccountHelperTest.cls
+❌ AccountTest.cls
+❌ account_helper_test.cls
+```
+
+**Class Structure Template**:
+```apex
+@isTest
+private class Test_AccountHelper {
+    
+    @testSetup
+    static void testData() {
+        // Setup data shared across test methods
+    }
+    
+    @isTest
+    static void shouldReturnActiveAccountsWhenFilteringByStatus() {
+        // Test implementation
+    }
+}
+```
+
+---
+
+## UT-002: Test Method Naming and Structure
+
+**Scope**: All test methods within test classes
+
+**Naming Pattern**: `should<Expected>When<Condition>`
+
+**Method Structure Requirements**:
+- Always use `Test.startTest()` and `Test.stopTest()` blocks
+- Inner test block should have 4-space indentation
+- Every test method must include assertions
+- Use meaningful variable names for assert messages
+
+**Method Patterns**:
+
+| Pattern | Example | Usage |
+|---------|---------|-------|
+| Positive Test | `shouldReturnAccountsWhenValidDataProvided` | Happy path scenarios |
+| Negative Test | `shouldThrowExceptionWhenInvalidDataProvided` | Error conditions |
+| Boundary Test | `shouldHandleMaxLimitWhenProcessingLargeDataSets` | Edge cases |
+| Permission Test | `shouldRestrictAccessWhenUserLacksPermissions` | Security validation |
+
+**Examples**:
+```apex
+✅ shouldReturnActiveAccountsWhenFilteringByStatus()
+✅ shouldThrowExceptionWhenAccountIdIsNull()
+✅ shouldUpdateStatusWhenValidationPasses()
+
+❌ testGetAccounts()
+❌ test_account_method()
+❌ accountTest1()
+```
+
+---
+
+## UT-003: Test Data Creation Standards
+
+**Scope**: All test data creation in test classes
+
+**Data Creation Requirements**:
+- Use `SObjectBuilder` and `SObjectFactory` for data creation
+- Use `ValueProvider` class for field values
+- **NEVER** hardcode Salesforce IDs
+- **NEVER** use `@seeAllData=true` annotation
+- Avoid SOQL queries when possible - use created test data
+
+**Factory Usage Patterns**:
+
+| Component | Pattern | Example |
+|-----------|---------|---------|
+| Builder Setup | `SObjectBuilder.new<Object>()` | `SObjectBuilder.newAccount()` |
+| Field Assignment | `.setFields(Map)` or `.setField(String, Object)` | `.setField('Name', accountName)` |
+| Value Generation | `ValueProvider.get<Type>()` | `ValueProvider.getString('Account')` |
+
+**Examples**:
+```apex
+✅ Good Data Creation:
+@testSetup
+static void testData() {
+    String accountName = ValueProvider.getString('TestAccount');
+    Account testAccount = (Account) SObjectBuilder.newAccount()
+        .setField('Name', accountName)
+        .setField('Industry', 'Technology')
+        .build();
+}
+
+❌ Bad Data Creation:
+Account testAccount = new Account(
+    Id = '0011234567890123456',  // Hardcoded ID
+    Name = 'Test Account'        // Hardcoded string
+);
+```
+
+---
+
+## UT-004: Assertion Best Practices
+
+**Scope**: All assertions in test methods
+
+**Assertion Requirements**:
+- Every test method must include at least one assertion
+- Always provide meaningful assert messages using string variables
+- Use appropriate assertion methods based on data type
+- Group related assertions logically
+- Both `System.assert*()` and `Assert.*()` classes are acceptable
+
+**Assertion Patterns**:
+
+| Assertion Type | System Class Method | Assert Class Method | Example |
+|----------------|---------------------|---------------------|---------|
+| Equality | `System.assertEquals()` | `Assert.areEqual()` | `Assert.areEqual(expectedCount, actualCount, errorMessage)` |
+| Boolean True | `System.assert()` | `Assert.isTrue()` | `Assert.isTrue(result.isSuccess(), successMessage)` |
+| Boolean False | `System.assert(!condition)` | `Assert.isFalse()` | `Assert.isFalse(result.hasErrors(), errorMessage)` |
+| Null Check | `System.assertNotEquals(null, obj)` | `Assert.isNotNull()` | `Assert.isNotNull(result, nullCheckMessage)` |
+| Not Null Check | `System.assertEquals(null, obj)` | `Assert.isNull()` | `Assert.isNull(errorResult, shouldBeNullMessage)` |
+| Inequality | `System.assertNotEquals()` | `Assert.areNotEqual()` | `Assert.areNotEqual(oldValue, newValue, changedMessage)` |
+| Exception | `try/catch` block | `try/catch` block | Validate expected exceptions are thrown |
+
+**Message Variables**:
+```apex
+✅ Good Assertion Messages (System class):
+String expectedCountMessage = 'Expected 5 accounts, but got different count';
+String successMessage = 'Account creation should succeed with valid data';
+String nullCheckMessage = 'Result should not be null after successful operation';
+
+System.assertEquals(5, accounts.size(), expectedCountMessage);
+System.assert(result.isSuccess(), successMessage);
+System.assertNotEquals(null, result, nullCheckMessage);
+
+✅ Good Assertion Messages (Assert class):
+String expectedCountMessage = 'Expected 5 accounts, but got different count';
+String successMessage = 'Account creation should succeed with valid data';
+String nullCheckMessage = 'Result should not be null after successful operation';
+
+Assert.areEqual(5, accounts.size(), expectedCountMessage);
+Assert.isTrue(result.isSuccess(), successMessage);
+Assert.isNotNull(result, nullCheckMessage);
+
+❌ Bad Assertions:
+System.assertEquals(5, accounts.size());           // No message
+System.assert(result.isSuccess(), 'failed');       // Vague message
+Assert.areEqual(5, accounts.size());               // No message
+Assert.isTrue(result.isSuccess(), 'failed');       // Vague message
+```
+
+---
+
+## UT-005: Test Lifecycle Management
+
+**Scope**: Test setup and execution flow
+
+**Setup Requirements**:
+- Use `@testSetup` annotation for shared test data
+- Method name must be `testData`
+- Create minimal data required for tests
+- Organize setup data logically
+
+**Test Execution Flow**:
+```apex
+@testSetup
+static void testData() {
+    // Create shared test data here
+    // Keep minimal - only what's needed across multiple tests
+}
+
+@isTest
+static void shouldPerformActionWhenConditionMet() {
+    // Given: Setup test-specific data if needed
+    String testParameter = ValueProvider.getString('TestValue');
+    
+    // When: Execute the code under test
+    Test.startTest();
+        Result actualResult = ClassUnderTest.methodUnderTest(testParameter);
+    Test.stopTest();
+    
+    // Then: Assert expected outcomes
+    String successMessage = 'Method should return success with valid input';
+    System.assert(actualResult.isSuccess(), successMessage);
+}
+```
+
+---
+
+## UT-006: Metadata and Documentation
+
+**Scope**: Test class metadata and documentation
+
+**Metadata Requirements**:
+- Generate `.cls-meta.xml` with current Salesforce API version
+- Include class-level comments describing test purpose
+- Document complex test scenarios
+
+**Example Metadata**:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexClass xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <status>Active</status>
+</ApexClass>
+```
+
+---
+
+## Implementation Priority
+
+### High Priority (Must Fix)
+- UT-001: Test class naming and structure
+- UT-004: Assertion requirements
+- UT-006: Metadata generation
+
+### Medium Priority (Should Fix)
+- UT-002: Method naming patterns
+- UT-003: Data creation standards
+
+### Low Priority (Code Review)
+- UT-005: Test lifecycle optimization
+
+## Usage Instructions for AI Systems
+
+1. **Validation Phase**: Check test class follows naming pattern `Test_<ClassName>`
+2. **Structure Phase**: Ensure proper annotations (`@isTest`, `@testSetup`)
+3. **Method Phase**: Validate method naming follows `should<Expected>When<Condition>`
+4. **Data Phase**: Verify usage of `SObjectBuilder`, `SObjectFactory`, and `ValueProvider`
+5. **Assertion Phase**: Confirm all methods have assertions with meaningful messages
+6. **Lifecycle Phase**: Check proper `Test.startTest()`/`Test.stopTest()` usage
+7. **Metadata Phase**: Generate appropriate `.cls-meta.xml` file

@@ -1,0 +1,27 @@
+---
+description: Call when {user} ask for code review
+alwaysApply: false
+---
+
+## Key Dependency Files
+This rule depends on the following separated definition files:
+- **@rc-code-review-message-format.mdc** - Output message format definition.
+
+You are a senior code-review assistant. The user will supply {merge_request_id} or the {link} to the merge request. Your job is to:
+
+1. **Fetch User Story Context**
+   - Run `glab mr diff {merge_request_id}` console command to get:
+   - All modified and newly created files and diff hunks. Skip any without actual diff hunks.
+
+2. **Evaluation Criteria**
+   For each truly changed file and each diffed hunk, evaluate only the changed lines against all rules from:
+   - **General guidelines**: Verify the changes fits the general guidelines from `.cursor/rules/rc-apex-general-guidlines.mdc`.
+   - **Naming conventions**: Verify the changes fits the naming conventions from `.cursor/rules/rc-apex-naming-conventions.mdc`.
+   - **SOQL formatting**: Verify the changes fits the SOQL formatting from `.cursor/rules/rc-apex-soql-formatting.mdc`.
+   - **Unit test formatting**: Verify the changes fits the unit test formatting from `.cursor/rules/rc-apex-unit-test-formatting.mdc`.
+
+3. **Report issues in nested bullets**
+   IMPORTANT FOR AI ASSISTANT: SHOW OUTPUT IN THIS FORMAT ONLY:  
+   `.cursor/rules/rc-code-review-message-format.mdc`.
+
+Throughout, maintain a polite, professional tone; keep comments as brief as possible without losing clarity; and ensure you only analyze ALL files with actual content changes, without skipping any.

@@ -96,3 +96,101 @@ Skip the Pass/Blocked critique entirely. Direct-output ONLY pure, perfectly comp
   DialogflowResponseHandler.handleException(e);
   ```
 - Dialogflow Selectors must be fetched via singleton instance patterns: `CaseSelectorDialogflow.getInstance().getCaseByCaseNumber(caseNum);`
+
+## Error Handling & Defensive Programming
+- Critical Aura paths: `try/catch/finally` with `logToExceptionHistory()` writing to `Exception_and_Notification_history__c` (`Database.insert(logRecord, false)`).
+- User-facing validation in Aura controllers: return `'Error: '` strings — do not throw to LWC for expected failures.
+- DML partial success: `Database.insert(record, false)` + check `SaveResult.isSuccess()`.
+- Guard clauses: `String.isBlank()`, `results.isEmpty()`, return `new List<X>()` not `null`.
+- No empty `catch {}` blocks in new code. No `System.debug()` in production code (QUAL-001).
+
+---
+
+# 3. Apex Formatting & Code Quality (rc-apex-general-guidlines)
+
+- **FMT**: 4-space indent (no tabs); space before `{`; capitalize types (`String`, `Integer`, `List`); space after commas; spaces around operators; same-line `{`; `} else {` / `} catch`; braces on all `if/for/while`; `for (Type x : collection)`.
+- **QUAL**: No literals in logic — use `private static final` constants; sObject fields via tokens (`Account.Name`), not strings; user-facing strings via Custom Labels.
+- **CMT**: No commented-out code; comments explain WHY; prefer `/** */` Javadoc on public methods.
+- **LBR**: Break lines ~120 chars; align multi-line continuations.
+
+---
+
+# 4. Naming Conventions (rc-apex-naming-conventions)
+
+- **Components**: `UpperCamelCase`; no underscores except `Test_*` and `BatchJob_*`.
+- **Class patterns**: `ObjectSelector`, `ObjectTriggerHelper`, `ObjectHelper`, `ResourceRestAPI`, `NameScheduler`, `ResourceSvc`, `Test_ClassName`, `PageNameCtrl`, `BatchJob_Name`.
+- **Members**: constants `UPPER_SNAKE_CASE`; fields/methods/params `lowerCamelCase`; booleans `is*` / `has*`; interfaces `IMyInterface`; enums `UpperCamelCase` with `UPPER_UNDERSCORE` values.
+- **Maps**: prefer `keyToValueMap` (e.g. `accNameToApprovalMap`); avoid `By` suffix patterns.
+- **Custom fields**: `UpperCamelCase` API names; checkboxes `Is*` / `Has*`; labels drop "Is" when readable.
+- **Triggers**: `ObjectName.trigger` — no "Trigger" suffix, no `__c` in trigger name.
+- **Custom labels**: `UpperCamelCase`, always set `category` and description.
+
+---
+
+# 5. SOQL / Selector Standards (rc-apex-soql-formatting)
+
+- All selectors: `public inherited sharing class XxxSelector extends SObjectSelector`.
+- Required overrides: `getSObjectType()`, `getDefaultFieldList()` as `List<Schema.SObjectField>`.
+- Required constructors: no-arg `super()` and `super(enforceCRUD, enforceFLS)`.
+- Query methods return `QueryFactory` via `newQueryFactory().setFactoryName().selectFields().setCondition().setQueryBindings().setLimit()`.
+- `List<String>` fields only for relationship notation (`Account__r.Name`).
+- **Exception**: aggregate queries may use inline SOQL; dynamic cross-object refs may use `List<String>`.
+
+---
+
+# 6. Unit Tests (rc-apex-unit-tests)
+
+- Class: `@IsTest private class Test_ClassUnderTest`; method: `shouldReturnX_WhenY`.
+- Setup: `@TestSetup static void testData()` with `SObjectBuilder` + `ValueProvider`; never hardcode IDs; never `@seeAllData=true`.
+- Structure: `Test.startTest()` / `Test.stopTest()` with 4-space inner indent; section dividers `// ── methodName ───`.
+- Assertions: every test must assert; use `Assert.areEqual()` / `Assert.isNotNull()` with meaningful message strings.
+- Callouts: inner `implements HttpCalloutMock` + `Test.setMock(HttpCalloutMock.class, new Mock())`.
+- Generate matching `.cls-meta.xml` with current API version.
+
+---
+
+# 7. Surface Syntax & LWC Conventions
+
+- Apex: `@AuraEnabled` on its own line; group constants at class top; 4-space indent.
+- LWC bundles: camelCase folders (`jiraCommentsDisplay`); `sc*` prefix for Support Community; shared utils `lwc*` prefix.
+- LWC: `@api` with `_recordId` backing setter; `@track` for mutable state; `BaseService.errorToast()` in catch; **no `console.log` in production** (`console.error` in catch OK).
+- Labels module: `export const labels = { key: label || "Fallback" }`.
+
+---
+
+# 8. Code Review Mode (rc-code-review)
+
+**Activate when user requests MR/code review with a merge request ID or link.**
+
+1. Fetch diff via `glab mr diff {merge_request_id}`; evaluate only changed hunks.
+2. Check against: general guidelines (§3), naming (§4), SOQL (§5), unit tests (§6), architecture (§1).
+3. Output format (rc-code-review-message-format):
+   - Title: `# **Comprehensive Code Review Against RingCentral Standards**`
+   - Per rule: `### {emoji} **{Rule Name}** - **{PASS|ISSUES FOUND}**` with nested bullets: File, Issue, Fix.
+   - Close with `## **Final Assessment:**` → **Overall Score: X / 10** and **Approval Status**.
+4. Tone: polite, brief, precise; only analyze files with actual diff hunks.
+
+---
+
+# 9. Impact Analysis Modes (on-demand only)
+
+**Do not run unless user prompt contains `impact`.**
+
+## DML Impact (DML-impact-rules)
+- For DML/trigger-suppression changes: static discovery first (grep DML → Tooling API triggers → handler boundary), then bounded reasoning inside boundary only.
+- Commit modes: `impact` (workspace), `impact [commit]`, `impact [base] [target]`.
+- Output: brief chat summary + full `IMPACT_ANALYSIS.md` (Direct/Indirect handlers, dependency chain, test plan, mitigations).
+- Direct handlers: must react to approval/totals fields when triggers suppressed; never drop approval consumers or Quote→Opportunity sync handlers.
+
+## Non-DML Impact (nonDML-impact-rules)
+- For signature/logic/SOQL-field/REST/AuraEnabled/LWC changes (not DML).
+- Steps: grep callers → field availability check (transitive SOQL fields) → inheritance → async/batch/queueable → LWC/Aura/Angular/VF consumers.
+- Frontend section only if `@AuraEnabled`, `@RestResource`, or VF controller changed; name exact file paths and line numbers.
+- Output: same chat summary + `IMPACT_ANALYSIS.md` pattern as DML mode.
+
+---
+
+# 10. Legacy Awareness
+
+Do not replicate in new code: inline SOQL in controllers/triggers, monolithic trigger bodies, string-built JSON, `System.assertEquals` (prefer `Assert`), raw HTTP endpoints, concatenated Jira comments into `Action_Taken__c`.
+When editing legacy files: block new violations; full refactor only when touching the violating section.

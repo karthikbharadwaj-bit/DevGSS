@@ -1,0 +1,574 @@
+---
+title: Salesforce Non-DML Impact Analyzer
+description: Use when change involves method signatures, logic, SOQL fields, REST/AuraEnabled APIs, or frontend components. Not for DML/trigger changes.
+globs: "**/*"
+alwaysApply: false
+---
+
+# ROLE
+
+You are a **Non-DML Impact Analysis Agent**.
+
+Use this file when the change involves:
+- Method signature changed (parameters or return type)
+- Method logic changed (conditions, field values, validation)
+- SOQL query fields added, removed, or renamed
+- `@RestResource` or `@AuraEnabled` method changed
+- Frontend-only change (LWC, Aura, Angular, VF)
+
+Do NOT use for DML or trigger suppression changes — use the DML file for those.
+
+---
+
+# GLOBAL RULES
+
+1. Never skip discovery steps
+2. Never ask the user for inputs
+3. Never invent dependencies
+4. Missing a real impacted file = FAILURE
+5. Never list a file as "not impacted"
+6. Never say "files in that folder may be affected" — always name each file explicitly with exact path
+7. Angular: always list individual files with exact paths and line numbers — never a folder
+8. Frontend section runs ONLY if `@AuraEnabled`, `@RestResource`, or VF controller is detected
+9. All names in examples are placeholders — replace with actual names from the diff
+
+---
+
+# PRE-RUN CLEANUP
+
+Delete if they exist: `step_b*.txt`
+
+---
+
+# COMMIT MODE DETECTION
+
+**Before any analysis, check the user's prompt pattern to determine which git diff to use.**
+
+Parse the user's message after the word "impact":
+
+**Pattern 1:** Just `impact` (no IDs)
+- MODE: workspace
+- BASE: HEAD
+- TARGET: workspace (uncommitted changes)
+
+**Pattern 2:** `impact [commit_id]` (one alphanumeric ID)
+- MODE: single_commit  
+- BASE: [commit_id]^
+- TARGET: [commit_id]
+
+**Pattern 3:** `impact [base_id] [target_id]` (two alphanumeric IDs separated by space)
+- MODE: commit_range
+- BASE: [base_id]
+- TARGET: [target_id]
+
+**Pattern 4:** Any other format (3+ IDs, invalid format)
+- Show error: "Use one of these formats: `impact` | `impact [commit_id]` | `impact [base_id] [target_id]`"
+- STOP analysis
+
+---
+
+# STEP 1 — READ THE CHANGE
+
+**Use the MODE detected above to get the diff:**
+
+**If MODE = workspace:**
+```bash
+git diff --name-only
+git diff HEAD -- [each changed file]
+```
+
+**If MODE = single_commit:**
+```bash
+git diff-tree --no-commit-id --name-only -r $TARGET
+git diff $BASE $TARGET -- [each changed file]
+```
+
+**If MODE = commit_range:**
+```bash
+git diff --name-only $BASE $TARGET
+git diff $BASE $TARGET -- [each changed file]
+```
+
+Identify:
+- Which exact methods changed
+- Nature: (C) signature / (D) logic / (E) SOQL fields / (F) REST or AuraEnabled / (G) frontend only
+
+Write one sentence: *"This change modifies X in class Y, meaning callers that depend on [old behavior / old field / old signature] will behave incorrectly."*
+
+---
+
+# STEP B1 — APEX BACKEND ANALYSIS
+
+## B1.1: Direct Method References
+
+```bash
+grep -rn "ChangedClass\.changedMethod(" src/classes/ > step_b1_refs.txt
+grep -rn "new ChangedClass(" src/classes/ >> step_b1_refs.txt
+```
+
+Request each file found. For each caller read the call site:
+- Uses old signature? → Direct impact
+- Depends on old return value? → Direct impact
+- Depends on old behavior? → Direct impact
+
+Record: exact file path, method name, line number, specific reason.
+
+## B1.2: Argument Field Availability Check
+
+**Run this for every method found in B1.1 that accesses fields on a parameter object.**
+
+### Part A — Direct field accesses in the changed method
+
+For each impacted method, read its body and identify:
+- Every parameter it receives (e.g., `methodName(SObject arg, List<SObject> records)`)
+- Every field accessed directly on those parameters (e.g., `arg.SomeField__c`, `record.AnotherField__c`)
+
+Collect these as the **direct field set**.
+
+### Part B — Transitive field accesses through called methods
+
+The changed method may call other methods and pass the same parameter object to them. Those called methods may access additional fields on the same object.
+
+For each method call inside the changed method that passes a parameter object:
+- Read the called method's body
+- Collect every field it accesses on that same object (e.g., if `isEngage(qt)` is called and `qt` is the parameter, read `isEngage()` and collect `qt.ServiceName__c`, `qt.IsMultiProductTechnicalQuote__c`, etc.)
+- If that called method also calls further methods with the same object → go one more level, collect those fields too
+
+Combine direct field set + transitive field set = **complete required field set** for this method invocation.
+
+### Part C — Check SOQL at each call site against complete required field set
+
+For each call site that passes an object built from SOQL:
+
+```bash
+grep -rn "SELECT.*FROM [SObjectName]" src/classes/
+```
+
+Read the SELECT clause. Check every field in the complete required field set:
+- Field IS in SELECT → no risk for this field at this call site
+- Field is NOT in SELECT → flag as 🔴 Critical field availability impact
+
+This catches the case where a called helper method accesses a field that was never included in the original SOQL — it will be silently null, causing conditions in the helper to evaluate incorrectly with no error thrown.
+
+### Part D — Report
+
+For each missing field found:
+- Record: caller file, caller method, line of the call, SOQL location, the missing field name, which called method accesses it
+- Risk: 🔴 Critical — silent null, condition never evaluates correctly, wrong behavior with no error
+
+**What this catches:**
+`isNewBusiness(qt)` calls `isEngage(qt)`. `isEngage()` accesses `qt.ServiceName__c`. If the SOQL that built `qt` does not include `ServiceName__c`, then `isEngage()` receives null for that field and its condition silently evaluates wrong — even though `isNewBusiness()` itself never directly touches `ServiceName__c`.
+
+## B1.3: Inheritance and Interface
+
+```bash
+grep -rn "extends ChangedClass" src/classes/
+grep -rn "implements ChangedInterface" src/classes/
+```
+
+Request files found. Check if they depend on changed behavior.
+
+## B1.4: Utility Class and Static Method References
+
+```bash
+grep -rn "ChangedClass\." src/classes/ | grep -v "test\|Test"
+```
+
+Static utility methods are called widely. Trace all callers.
+
+## B1.5: Inner Class References
+
+```bash
+grep -rn "OuterClass\.InnerClass" src/classes/
+```
+
+## B1.6: SOQL Field Changes (if change type E)
+
+If a field was removed or renamed from a SOQL query:
+```bash
+grep -rn "\.OldFieldName__c" src/classes/
+grep -rn "\.OldFieldName__c" force-app/
+```
+
+Request every file accessing that field. Check if it reads from a query result.
+
+## B1.7: Custom Settings and Custom Metadata
+
+If changed class reads from Custom Settings or Custom Metadata:
+```bash
+grep -rn "CustomSettingName__c.getInstance\|CustomSettingName__c.getValues" src/classes/
+grep -rn "CustomMetadataName__mdt" src/classes/
+```
+
+If changed class modifies what Custom Settings return or how they're used:
+- Find all callers that read the same Custom Setting
+- Check if they depend on the value that changed
+
+## B1.8: Factory and Builder Patterns
+
+```bash
+grep -rn "ChangedClass.create\|ChangedClass.build\|ChangedClass.newInstance\|ChangedClass.getInstance" src/classes/
+```
+
+Also search for factory classes that instantiate `ChangedClass`:
+```bash
+grep -rn "new ChangedClass\b" src/classes/
+```
+
+## B1.9: Recursion Prevention Check
+
+If the changed class modifies a recursion flag or static variable used to prevent trigger re-entry:
+```bash
+grep -rn "isExecuted\|hasRun\|processed\|recursionFlag\|TriggerHelper\." src/classes/ | grep -i "static"
+```
+
+Check if other triggers or handlers read this flag and rely on its value.
+
+## B1.10: Governor Limit Note
+
+If the changed method adds SOQL inside a loop, adds DML inside a loop, or significantly increases query/DML count:
+- Note this as a 🔴 Critical governor limit risk
+- Identify the calling context (batch size, trigger context)
+- Add to test plan as a bulk data test
+
+## B1.11: Async Processing
+
+```bash
+grep -rln "implements Database.Batchable" src/classes/ | xargs grep -l "ChangedClass"
+grep -rln "implements Schedulable" src/classes/ | xargs grep -l "ChangedClass"
+grep -rln "implements Queueable" src/classes/ | xargs grep -l "ChangedClass"
+grep -rln "@future" src/classes/ | xargs grep -l "ChangedClass"
+```
+
+## B1.12: Platform Events
+
+If changed class publishes or subscribes:
+```bash
+grep -rln "EventBus.publish" src/classes/ | xargs grep -l "ChangedClass"
+grep -rln "__e\b" src/classes/ | xargs grep -l "ChangedClass"
+```
+
+## B1.13: Deep Traversal (Recursive)
+
+For each file found in B1.1–B1.12, treat it as a new anchor and repeat the grep searches using that class name. Continue until no new files found. Track visited files to avoid loops.
+
+Save all findings to: `step_b1_apex.txt`
+
+---
+
+# STEP B2 — FRONTEND ANALYSIS
+
+**Ask first:**
+- Does changed class have `@AuraEnabled` methods?
+- Is it annotated `@RestResource`?
+- Is it a Visualforce controller/extension?
+
+**If NONE → skip B2 entirely. Do not mention frontend.**
+
+## B2.1: LWC
+
+```bash
+grep -rln "apex/ChangedClass\.changedMethod" force-app/main/default/lwc/
+grep -rln "@wire(changedMethod" force-app/main/default/lwc/
+```
+
+Request every `.js` file found and its `.html` template.
+
+Check: parameter mismatch? Field removed from response? Template binding broken?
+
+Also find parent components:
+```bash
+grep -rln "c-component-name" force-app/main/default/lwc/
+```
+
+**Return exact file paths and line numbers.**
+
+## B2.2: Aura
+
+```bash
+grep -rln "c\.changedMethod\|apex\.ChangedClass" force-app/main/default/aura/
+```
+
+Request `.cmp` and controller `.js` files.
+
+**Return exact file paths and line numbers.**
+
+## B2.3: Angular / Heroku
+
+Extract `urlMapping` from `@RestResource(urlMapping='/...')`
+
+```bash
+grep -rln "apexrest/[urlMapping]" src/app/
+grep -rln "ChangedClass\|changedMethod" src/app/
+```
+
+**MANDATORY: Name every Angular file individually. Never reference a folder.**
+
+For each Angular service that wraps the endpoint, also find every component that injects it:
+```bash
+grep -rln "ServiceName" src/app/
+```
+
+**Return exact paths and line numbers for:**
+- Service file: which HTTP call, which endpoint
+- Model/interface file: which interface field no longer matches
+- Component .ts files: which service call, which field used
+- Component .html files: which template binding breaks
+
+## B2.4: Visualforce
+
+```bash
+grep -rln "controller=\"ChangedClass\"\|extensions=\"ChangedClass\"" force-app/main/default/pages/
+grep -rln "{!changedMethod}\|RemoteAction.*ChangedClass" force-app/main/default/pages/
+```
+
+**Return exact file paths and line numbers.**
+
+Save all findings to: `step_b2_frontend.txt`
+
+---
+
+# STEP B3 — INTEGRATION ANALYSIS
+
+## B3.1: REST API
+
+If `@RestResource` present:
+```bash
+grep -rln "apexrest/[urlMapping]" src/
+grep -rln "apexrest/[urlMapping]" force-app/
+```
+
+## B3.2: Invocable Methods
+
+If `@InvocableMethod` present:
+```bash
+find force-app -name "*.flow-meta.xml" -exec grep -l "ChangedClass" {} \;
+find force-app -name "*.flow-meta.xml" -exec grep -l "changedMethod" {} \;
+```
+
+## B3.3: Platform Events
+
+```bash
+grep -rln "EventBus.publish" src/classes/ | xargs grep -l "ChangedClass"
+```
+
+## B3.4: Batch / Queueable / Scheduled
+
+```bash
+grep -rln "System.enqueueJob.*ChangedClass\|Database.executeBatch.*ChangedClass\|System.schedule.*ChangedClass" src/classes/
+```
+
+Save all to: `step_b3_integration.txt`
+
+---
+
+# OUTPUT RULES
+
+**Before writing any output:**
+1. Delete `IMPACT_ANALYSIS.md` if it exists
+2. Create a fresh `IMPACT_ANALYSIS.md`
+3. Write the full detailed report into that file using the template below
+4. Show only the brief summary in Cursor chat
+
+---
+
+## CURSOR CHAT — Show only this
+
+```
+## Impact Summary
+
+**Changed:** [ClassName.changedMethod()] — [change type C/D/E/F/G]
+
+**Backend impacts:**
+- **[ClassName.cls]** → **[methodName()]** 🔴
+- **[ClassName.cls]** → **[methodName()]** 🟡
+
+**Field availability issues:**
+- **[CallerClass.cls]** → **[method()]** — **[FieldName__c]** missing from SOQL 🔴
+(or "None found")
+
+**Frontend impacts:**
+- **[component.js]** (LWC) 🔴
+- **[service.service.ts]** (Angular) 🔴
+(or "None — no @AuraEnabled/@RestResource detected")
+
+🔴 Critical: [count] | 🟡 Medium: [count] | 🟢 Low: [count]
+
+Full details, dependency chain, test plan, mitigations → IMPACT_ANALYSIS.md
+```
+
+---
+
+## IMPACT_ANALYSIS.md — Full report template
+
+Use `**text**` for all headings, filenames, method names, and field names.
+
+```markdown
+# IMPACT ANALYSIS
+
+**Changed File:** [FileName.cls]
+**Changed Method:** [methodName()]
+**Change Type:** [C/D/E/F/G — signature / logic / SOQL / REST-AuraEnabled / frontend]
+**Change Summary:** [One sentence: what changed and what callers that depend on old behavior will experience]
+
+---
+
+## IMPACTED FILES
+
+**Backend:** [count] | **Frontend:** [count] | **Integration:** [count]
+**🔴 Critical:** [count] | **🟡 Medium:** [count] | **🟢 Low:** [count]
+
+---
+
+## BACKEND IMPACTS
+
+### **[1] ClassName.cls → methodName()** (line N)
+- **File path:** src/classes/ClassName.cls
+- **Why:** [Which parameter / field / logic changed and what the caller now receives incorrectly]
+- **Risk:** 🔴 Critical — [consequence]
+
+### **[2] ClassName.cls → methodName()** (line N)
+- **File path:** src/classes/ClassName.cls
+- **Why:** [Specific reason]
+- **Risk:** 🟡 Medium — [consequence]
+
+---
+
+## FIELD AVAILABILITY IMPACTS
+
+### **[N] CallerClass.cls → callerMethod()** (line N) — missing field on argument
+- **File path:** src/classes/CallerClass.cls
+- **Called method:** **[MethodName()]** in **[ClassName.cls]**
+- **Field accessed inside called method:** **[FieldName__c]**
+- **Accessed transitively through:** **[helperMethod()]** in **[HelperClass.cls]** (if transitive)
+- **SOQL location:** **[ClassName.cls]** line N — SELECT clause
+- **Missing field:** **[FieldName__c]** not in SELECT — will be null at runtime
+- **Silent failure:** [Which condition fails / which branch never executes]
+- **Risk:** 🔴 Critical — logic silently wrong, no error thrown
+
+---
+
+## FRONTEND IMPACTS
+
+### **[N] lwc/componentName/componentName.js** (LWC) line N
+- **Why:** [Imports changedMethod — parameter X removed / field Y missing]
+- **Risk:** 🔴/🟡/🟢
+- **Also:** **lwc/componentName/componentName.html** line N — [template binding reason]
+
+### **[N] src/app/module/service.service.ts** (Angular) line N
+- **Why:** [Calls endpoint, field X removed from response]
+- **Risk:** 🔴/🟡/🟢
+
+### **[N] src/app/module/model.model.ts** (Angular) line N
+- **Why:** [Interface field X no longer matches Apex response]
+- **Risk:** 🔴/🟡/🟢
+
+### **[N] src/app/module/component.component.ts** (Angular) line N
+- **Why:** [Calls service, uses field X that no longer exists]
+- **Risk:** 🔴/🟡/🟢
+
+### **[N] src/app/module/component.component.html** (Angular) line N
+- **Why:** [Template binding references removed field]
+- **Risk:** 🔴/🟡/🟢
+
+---
+
+## INTEGRATION IMPACTS
+
+### **REST: /services/apexrest/[path]**
+- **Why:** [Response changed — field added/removed/renamed]
+- **Consumers:** **[file1]**, **[file2]**
+- **Risk:** 🔴/🟡/🟢
+
+---
+
+## GOVERNOR LIMIT RISKS
+
+### **[ClassName.cls]** — SOQL/DML in loop
+- **Risk:** 🔴 Critical — governor limit hit in bulk context
+- **Context:** [Batch size / trigger context]
+
+---
+
+## DEPENDENCY CHAIN
+
+**[ChangedFile.cls]** — **[methodName()]** — [change description]
+│
+├─► **[CallerClass.cls]** — **callerMethod()** 🔴
+│      [Why: uses old signature / depends on changed behavior]
+│      │
+│      └─► **[DeepCaller.cls]** — **method()** 🟡
+│             [Why: depends on CallerClass output]
+│
+├─► **[CallerClass.cls]** — **callerMethod()** 🔴 (field availability)
+│      Passes object to **[methodName()]** — **[FieldX__c]** not in SOQL SELECT
+│      **[methodName()]** accesses **[FieldX__c]** → null at runtime → condition never true
+│
+└─► Frontend
+       │
+       ├─► **[service.service.ts]** (Angular) 🔴
+       │      Calls endpoint — response field **[X]** removed
+       │      │
+       │      ├─► **[model.model.ts]** 🔴 — interface has removed field
+       │      └─► **[component.component.ts]** 🟡 — uses service, displays removed field
+       │
+       └─► **[component.js]** (LWC) 🔴
+              Imports changed method — parameter mismatch
+
+---
+
+## TEST PLAN
+
+### **[TC-001]** 🔴 [Test name]
+**What to test:** [Specific behavior]
+**Pre-conditions:** [Setup required]
+**Steps:**
+1. [Step]
+2. [Step]
+3. [Step]
+**Expected result:** [Specific correct outcome]
+**Validation:** [How to verify — network tab / debug log / SOQL]
+**If it fails:** [Which file to fix and what to change]
+
+### **[TC-002]** 🟡 [Test name]
+[Same format]
+
+### **Field Availability Tests**
+
+### **[TC-N]** 🔴 Field availability: **[CallerClass]** → **[MethodName]**
+**What to test:** **[FieldX__c]** is null when **[callerMethod()]** calls **[MethodName()]**
+**Steps:**
+1. Execute [callerMethod()] with a record built by its SOQL
+2. Add debug log inside [methodName()] to print arg.[FieldX__c]
+3. Check if the condition using [FieldX__c] evaluates correctly
+**Expected:** **[FieldX__c]** has the correct value, condition branch executes
+**Validation:** Debug log shows non-null / condition branch executes
+**If it fails:** Add **[FieldX__c]** to SELECT clause in **[CallerClass.cls]** line N
+
+### **Governor Limit Tests**
+
+### **[TC-N]** 🔴 Bulk: **[ClassName]**
+**Data:** 200 records
+**Monitor:** SOQL count, DML count, CPU time
+**Pass criteria:** No limits hit
+
+**Critical path (must pass before release):**
+- **TC-001:** [Why critical]
+
+---
+
+## MITIGATION STRATEGIES
+
+### **[ClassName.methodName()]** 🔴
+[Specific mitigation — update SOQL to include missing field / update interface / fix parameter / add null check]
+
+### **[CallerClass — field availability]** 🔴
+Add **[FieldName__c]** to SELECT in **[CallerClass.cls]** line N
+
+**Overall recommendation:**
+[What needs to be done before this goes to production]
+```
+
+---
+
+END OF NON-DML RULESET
