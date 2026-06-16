@@ -1,0 +1,17 @@
+<apex:page standardController="Order" showHeader="false" sidebar="false" standardStylesheets="false">
+    <apex:includeLightning />
+    <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+    <apex:includeScript value="{!$Resource.PhaseManagementDependencies + '/PMPage.js'}" />
+
+    <div id="lightning"></div>
+
+    <script>
+        $Lightning.use("c:PhaseManagementApp", function() {
+            $Lightning.createComponent("c:PhaseManagementWrapper", {
+                orderId: '{! JSENCODE(Order.Id) }',
+                opportunityId: '{! JSENCODE(Order.OpportunityId) }',
+                isStandalone: {! $CurrentPage.parameters.isStandalone == 'true' }
+            }, "lightning", function(component) {});
+        });
+    </script>
+</apex:page>

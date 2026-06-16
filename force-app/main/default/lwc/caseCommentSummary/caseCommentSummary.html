@@ -1,0 +1,91 @@
+<template>
+    <!-- loading -->
+    <template if:true={isLoading}>
+        <div class="ai-line">
+            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+            <span>Your results are on the way 🚀…</span>
+        </div>
+        <div class="ccs-skel">
+            <div class="line w90"></div>
+            <div class="line w96"></div>
+            <div class="line w70"></div>
+        </div>
+    </template>
+
+    <!-- loaded -->
+    <template if:false={isLoading}>
+        <template if:true={error}>
+            <div class="ccs-empty">⚠️ {error}</div>
+        </template>
+
+        <template if:false={error}>
+            <!-- Show rich text only when we actually have content -->
+            <template if:true={hasContent}>
+                <lightning-formatted-rich-text value={summary}></lightning-formatted-rich-text>
+            </template>
+
+            <!-- Same empty styling as email summary -->
+            <template if:false={hasContent}>
+                <div class="ccs-empty">— No case comments available —</div>
+            </template>
+
+            <!-- Actions (only when we actually have a summary) -->
+            <!-- Actions (only when we actually have a summary) -->
+            <template if:true={hasContent}>
+                <div class="cta-row">
+                    <div class="cta-inner">
+                        <!-- icons row -->
+                        <div class="cta-icons">
+                            <!-- Stateful thumbs: always shown, state persisted via JS -->
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                alternative-text="Like" title="Like" onclick={onLike} selected={isLiked}
+                                variant={likeVariant} disabled={busy}>
+                            </lightning-button-icon-stateful>
+
+                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                selected-icon-name="utility:dislike" alternative-text="Dislike" title="Dislike"
+                                onclick={onDislike} selected={isDisliked} variant={dislikeVariant} disabled={busy}>
+                            </lightning-button-icon-stateful>
+
+                            <span class="no-border-fix">
+                                <lightning-button-icon-stateful icon-name={copyIcon} 
+                                    selected-icon-name="utility:copy" alternative-text="Copy Summary"
+                                    title="Copy summary" onclick={handleCopy}>
+                                </lightning-button-icon-stateful>
+                            </span>
+                        </div>
+
+                        <template if:true={reviewed}>
+                            <span class="thanks-badge">Thanks for the review</span>
+                        </template>
+
+                        <!-- link UNDER icons; hide when feedback panel open or after review -->
+                        <template if:false={reviewed}>
+                            <template if:false={showFeedback}>
+                                <a class="cta-link" href="javascript:void(0);" onclick={toggleFeedback}>Give
+                                    Feedback</a>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <template if:true={showFeedback}>
+                    <div class="feedback-row">
+                        <div class="feedback-inner">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…" value={feedback}
+                                oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="feedback-actions">
+                                <lightning-button class="btn-compact" variant="brand" label="Send"
+                                    onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                    onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+
+        </template>
+    </template>
+</template>

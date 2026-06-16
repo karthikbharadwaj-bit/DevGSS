@@ -1,0 +1,222 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Shared Attributes -->
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry"
+                    description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="recordTypeName" type="String"/>
+    <aura:attribute name="cartItems" type="List" description="Products in Cart"/>
+    <aura:attribute name="addingToCartProds" type="Set"
+                    description="Products which are in the process of adding to cart"/>
+    <aura:attribute name="cartItemsSet" type="Set" description="Product2Ids of Products in Cart"/>
+    <aura:attribute name="quoteRecordTypeName" type="String"
+                    description="Quote RecordType Name considering old quotes with null record type"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="isCommonPhoneIsAddingToCart" type="Boolean"/>
+    <aura:attribute name="isCcEEsProductIsAddingToCart" type="Boolean"/>
+    <aura:attribute name="isIvinexUnifiedUserExperienceProductAddedToCart" type="Boolean"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="settings" type="Map"
+                    description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <!-- Component Attributes -->
+    <aura:attribute name="products" type="List" description="All PriceBookentries available on Pricebook"/>
+    <aura:attribute name="userAvailableProducts" type="List" description="PriceBookentries available for user"/>
+    <aura:attribute name="filteredProducts" type="List" description="PriceBookentries available for user filtered"/>
+    <aura:attribute name="scrollProducts" type="List" description="Products that currently visible on screen"/>
+    <aura:attribute name="listBuffer" type="Map" default="{}" description="Helper buffer data to fix scroll and sizing of the list"/>
+    <aura:attribute name="scrollBufferBottom" type="String" default="" description="Bottom Scroll buffer for Product List"/>
+    <aura:attribute name="serviceCartItem" type="Object"/>
+    <aura:attribute access="private" name="productsFor" type="Map" default="{}"
+                    description="For what quote products have been loaded"/>
+    <!-- Messages -->
+    <aura:attribute name="messages" type="Map"/>
+    <aura:attribute name="activeMessage" type="Map"/>
+
+    <!-- filters -->
+    <aura:attribute name="productNameFilter" type="String" default=""/>
+    <aura:attribute name="typeOpts" type="List"/>
+    <aura:attribute name="typeFilter" type="String" default=""/>
+    <aura:attribute name="categoryOpts" type="List"/>
+    <aura:attribute name="categoryFilter" type="String" default=""/>
+    <aura:attribute name="planOpts" type="List"/>
+    <aura:attribute name="planFilter" type="String" default=""/>
+    <aura:attribute name="editionOpts" type="List"/>
+    <aura:attribute name="editionFilter" type="String" default=""/>
+    <aura:attribute name="seatsFilter" type="Integer" default=""/>
+
+    <aura:attribute name="filterLevel" type="Integer" default="0"
+                    description="Filter level used for dependant filters"/>
+
+    <!-- hanlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler event="c:QuotingToolGetQuoteEvent" action="{!c.quoteSwitch}"/>
+
+    <!-- Attribute changes -->
+    <aura:handler name="change" value="{!v.messages}" action="{!c.messagesChanged}"/>
+    <aura:handler name="change" value="{!v.cartItems}" action="{!c.cartItemsChanged}"/>
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}"/>
+
+    <!-- filters change -->
+    <aura:handler name="change" value="{!v.productNameFilter}" action="{!c.productNameFilterChanged}"/>
+    <aura:handler name="change" value="{!v.typeFilter}" action="{!c.typeFilterChanged}"/>
+    <aura:handler name="change" value="{!v.categoryFilter}" action="{!c.categoryFilterChanged}"/>
+    <aura:handler name="change" value="{!v.planFilter}" action="{!c.planFilterChanged}"/>
+    <aura:handler name="change" value="{!v.editionFilter}" action="{!c.editionFilterChanged}"/>
+    <aura:handler name="change" value="{!v.seatsFilter}" action="{!c.seatsFilterChanged}"/>
+    <aura:handler name="change" value="{!v.filteredProducts}" action="{!c.filteredProductsChanged}"/>
+
+    <!-- Methods -->
+    <aura:method name="tabIsActive"/>
+
+    <!-- Markup -->
+    <section class="{! join(' ',
+        'slds-grid slds-grid_vertical',
+        v.Tabs.products.isOpen ? '' : 'hidden')}"
+             aura:id="productListTab">
+
+        <!-- Filters -->
+        <div class="slds-grid slds-wrap slds-m-bottom_small slds-shrink-none" aura:id="filters">
+
+            <!-- Name Filter  -->
+            <div class="slds-p-horizontal--small slds-col product-filter">
+                <lightning:input label="Product Name"
+                                 value="{!v.productNameFilter}"
+                                 name="nameFilter"/>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="slds-p-horizontal--small slds-col product-filter">
+                <lightning:select label="Type"
+                                  value="{!v.typeFilter}"
+                                  aura:id="typeFilter"
+                                  onchange="{!c.uiTypeFilterChanged}"
+                                  name="typeFilter">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.typeOpts}" var="opt">
+                        <option value="{!opt.value}" selected="{!opt.value == v.typeFilter}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="slds-p-horizontal--small slds-col product-filter">
+                <lightning:select label="Category"
+                                  value="{!v.categoryFilter}"
+                                  aura:id="categoryFilter"
+                                  onchange="{!c.uiCategoryFilterChanged}"
+                                  disabled="{! lessthanorequal(v.filterLevel, 0) }"
+                                  name="categoryFilter">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.categoryOpts}" var="opt">
+                        <option value="{!opt.value}"
+                                selected="{!opt.value == v.categoryFilter}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+
+            <!-- Plan Filter -->
+            <div class="slds-p-horizontal--small slds-col product-filter">
+                <lightning:select label="Plan"
+                                  value="{!v.planFilter}"
+                                  aura:id="planFilter"
+                                  onchange="{!c.uiPlanFilterChanged}"
+                                  disabled="{! lessthanorequal(v.filterLevel, 1) }"
+                                  name="planFilter">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.planOpts}" var="opt">
+                        <option value="{!opt.value}" selected="{!opt.value == v.planFilter}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+
+            <!-- Edition Filter -->
+            <div class="slds-p-horizontal--small slds-col product-filter" aura:id="editionFilterContainer">
+                <lightning:select label="Edition"
+                                  value="{!v.editionFilter}"
+                                  aura:id="editionFilter"
+                                  disabled="{! lessthanorequal(v.filterLevel, 2) }"
+                                  name="editionFilter">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.editionOpts}" var="opt">
+                        <option value="{!opt.value}"
+                                selected="{!opt.value == v.editionFilter}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+
+            <!-- Number Of Seats Filter -->
+            <div class="slds-p-horizontal--small slds-col product-filter" aura:id="seatsFilterContainer">
+                <lightning:input label="Number of Seats"
+                                 type="Number"
+                                 min="0"
+                                 aura:id="seatsFilter"
+                                 name="seatsFilter"
+                                 value="{!v.seatsFilter}"/>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="slds-container products-container slds-grid slds-grid_vertical" aura:id="productsListContainer">
+            <aura:if isTrue="{! empty(v.activeMessage) }">
+                <div class="header-background slds-border_bottom slds-border_top slds-shrink-none"
+                     style="{! v.listBuffer.tableWidth ? 'min-width: ' + v.listBuffer.tableWidth + 'px' : '' }"></div>
+                <div class="fixed-table-container-inner"
+                     aura:id="productList"
+                     onscroll="{! c.onTableScroll }"
+                     onwheel="{! c.onTableWheel }"
+                     style="{! v.listBuffer.tableWidth ? 'min-width: ' + v.listBuffer.tableWidth + 'px' : '' }">
+                    <table class="slds-table slds-table--bordered products-table" aura:id="productsTable">
+                        <thead aura:id="table-header">
+                        <tr class="slds-text-heading--label">
+                            <th class="fixed-th" scope="col" aura:id="table-header-name">
+                                <div class="th-inner slds-truncate">Product Name</div>
+                                <div class="th-inner-hidden slds-truncate">Product Name</div>
+                            </th>
+                            <th class="fixed-th" scope="col" aura:id="table-header-category">
+                                <div class="th-inner slds-truncate">Category</div>
+                                <div class="th-inner-hidden slds-truncate">Category</div>
+                            </th>
+                            <th class="fixed-th th_plan" scope="col" aura:id="table-header-plan">
+                                <div class="th-inner slds-truncate">Plan</div>
+                                <div class="th-inner-hidden slds-truncate">Plan</div>
+                            </th>
+                            <th class="fixed-th th_price" scope="col" aura:id="table-header-price">
+                                <div class="th-inner slds-truncate">Price</div>
+                                <div class="th-inner-hidden slds-truncate">Price</div>
+                            </th>
+                            <th class="fixed-th th_add-to-cart" scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody class="product-table__tbody">
+                        <tr style="{! 'height:' + v.listBuffer.scrollBufferTop + 'px'}" class="slds-transition-hide">
+                            <td class="product-table_hidden-row">{! v.listBuffer.name }</td>
+                        </tr>
+                        <aura:iteration items="{! v.scrollProducts }" var="pricebookEntry">
+                            <c:QuotingToolProductListEntry pricebookEntry="{! pricebookEntry }"
+                                                           activePriceBookEntry="{! v.activePriceBookEntry }"
+                                                           addingToCartProds="{! v.addingToCartProds }"
+                                                           cartItemsSet="{! v.cartItemsSet }"
+                                                           Wizard="{! v.Wizard }"
+                                                           serviceCartItem="{! v.serviceCartItem }"
+                                                           isCommonPhoneIsAddingToCart="{! v.isCommonPhoneIsAddingToCart }"
+                                                           isCcEEsProductIsAddingToCart="{! v.isCcEEsProductIsAddingToCart }"
+                                                           isIvinexUnifiedUserExperienceProductAddedToCart="{! v.isIvinexUnifiedUserExperienceProductAddedToCart }"
+                                                           settings="{! v.settings }"
+                                                           cartItems="{! v.cartItems }"/>
+                        </aura:iteration>
+                        <tr style="{! 'height:' + v.listBuffer.scrollBufferBottom + 'px' }" class="slds-transition-hide"></tr>
+                        </tbody>
+                    </table>
+                    <aura:if isTrue="{! empty(v.filteredProducts) }">
+                        <div class="message-container message-container--center">
+                            <h1 class="rc-message">No Products Found</h1>
+                        </div>
+                    </aura:if>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{! not(empty(v.activeMessage)) }">
+                <div class="message-container message-container--center">
+                    <h1 class="rc-message">{!v.activeMessage}</h1>
+                </div>
+            </aura:if>
+        </div>
+    </section>
+</aura:component>

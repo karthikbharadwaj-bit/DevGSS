@@ -1,0 +1,46 @@
+<template>
+    <div class="sc-case-comments__header">
+        <h4>{labels.comments}</h4>
+    </div>
+    <div class="sc-case-comments__wrapper">
+        <div class="sc-case-comments__input-wrapper slds-form-element" if:false={isClosed}>
+            <input
+                class="sc-case-comments__input slds-form-element__control"
+                placeholder={labels.commentsPlaceholder}
+                onkeyup={handlePressEnter}
+                disabled={loading}
+            />
+            <lightning-button-icon
+                icon-name="utility:send"
+                size="medium"
+                variant="border-inverse"
+                alternative-text={labels.addComment}
+                onclick={handleNewComment}
+                disabled={loading}
+                class="sc-case-comments__send"
+            ></lightning-button-icon>
+            <div class={loadingCls}>
+                <div class="slds-spinner_container">
+                    <div role="status" class="slds-spinner slds-spinner_small slds-spinner_brand">
+                        <span class="slds-assistive-text">{labels.uploading}</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="sc-case-comments__list">
+            <template for:each={comments} for:item="item">
+                <c-sc-case-detail-comment
+                    key={item.id}
+                    author={item.authorName}
+                    avatar={item.avatar}
+                    body={item.body}
+                    is-case-author={item.isCaseCreator}
+                    date={item.dateTimeStamp}
+                    is-current-user={item.isCurrentUser}
+                ></c-sc-case-detail-comment>
+            </template>
+        </div>
+    </div>
+</template>

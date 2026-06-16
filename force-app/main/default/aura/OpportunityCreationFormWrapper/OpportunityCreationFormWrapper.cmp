@@ -1,0 +1,802 @@
+<aura:component controller="OpportunityCreationFormController">
+    <!-- Resources -->
+    <ltng:require scripts="{! join(',', $Resource.OpportunityCreationFormDependencies + '/OC.js',
+        $Resource.RCHelper + '/RC.js') }"
+                  afterScriptsLoaded="{!c.onAfterScriptsLoaded}"/>
+
+    <!-- Preloaded attributes -->
+    <aura:attribute name="recordTypeName" type="String"/>
+    <aura:attribute name="recordTypeId" type="String"/>
+    <aura:attribute name="leadSourceValues" type="List" description="Options for Lead Source picklist from SF"/>
+    <aura:attribute name="brandValues" type="List" description="Options for Brand picklist from SF"/>
+    <aura:attribute name="brandConfiguration" type="List" description="Configured services enabling for each brand"/>
+    <aura:attribute name="serviceValues" type="List" description="Options for Service picklist from SF"/>
+    <aura:attribute name="contactRoleValues" type="List"
+                    description="Options for Opportunity Contact Role picklist from SF"/>
+    <aura:attribute name="serviceDependencies" type="Map"/>
+    <aura:attribute name="retURL" type="String"/>
+    <aura:attribute name="taskId" type="String"/>
+    <aura:attribute name="biValues" type="List"/>
+    <aura:attribute name="fromContact" type="String"/>
+    <aura:attribute name="fromContactId" type="String"/>
+    <aura:attribute name="contactCenterUsers" type="String"/>
+    <aura:attribute name="engageDigitalUsers" type="String"/>
+    <aura:attribute name="engageVoiceUsers" type="String"/>
+    <aura:attribute name="globalOfficeUsers" type="String"/>
+    <aura:attribute name="officeUsers" type="String"/>
+    <aura:attribute name="rcVideoUsers" type="String"/>
+    <aura:attribute name="oppCreationFlow" type="String"/>
+
+    <!-- Ngbs -> Legacy switch input parameters -->
+    <aura:attribute name="inputParams" type="Object"/>
+    <aura:attribute name="isTriggerSwitch" type="Boolean" default="true" description="necessary measure because of aura behavior"/>
+
+    <!-- Selected objects -->
+    <aura:attribute name="selectedTier" type="PriceBookEntry"/>
+    <aura:attribute name="selectedTierLabel" type="String"/>
+    <aura:attribute name="selectedAccount" type="Account"/>
+    <aura:attribute name="selectedContact" type="Contact"/>
+    <aura:attribute name="selectedAccountTier" type="PriceBookEntry"/>
+    <aura:attribute name="selectedAccountId" type="String"/>
+    <aura:attribute name="selectedContactId" type="String"/>
+
+
+    <!-- Form Attributes -->
+    <aura:attribute name="opportunityName" type="String"/>
+    <aura:attribute name="closeDate" type="String"/>
+    <aura:attribute name="type" type="String"/>
+    <aura:attribute name="leadSource" type="String"/>
+    <aura:attribute name="brand" type="String"/>
+    <aura:attribute name="selectedBusinessIdentity" type="String"/>
+    <aura:attribute name="service" type="String"/>
+    <aura:attribute name="edition" type="String"/>
+    <aura:attribute name="plan" type="String"/>
+    <aura:attribute name="forecastedUsers" type="String"/>
+    <aura:attribute name="newTotalUsers" type="Integer"/>
+    <aura:attribute name="contactRole" type="String"/>
+    <aura:attribute name="retention" type="String" description="retention field for new opportunity creation"/>
+    <aura:attribute name="isPackagePopulated" type="Boolean" description="Auto-filling tier fields for fax upsell"/>
+    <aura:attribute name="isAccountMigrated" type="Boolean" description="Auto-filling tier fields for "/>
+    <aura:attribute name="selectedMainAreaCodeId" type="String"/>
+    <aura:attribute name="mainAreaCodeObj" type="Map" description="Selected Main Area Code Object"/>
+    <aura:attribute name="isMainPhoneVanity" type="Boolean"/>
+    <aura:attribute name="shippingLocation" type="Map"/>
+    <aura:attribute name="provisioningDetails" type="String"/>
+    <aura:attribute name="buddyOpportunityId" type="String"/>
+    <aura:attribute name="newDLs" type="Integer"/>
+    <aura:attribute name="numberOfForecastedUsers" type="Integer"/>
+    <aura:attribute name="campaignId" type="String"/>
+
+    <!-- Picklist values(options) -->
+    <aura:attribute name="typeOpts" type="List" default="[{value:'',text:'--None--'}]"/>
+    <aura:attribute name="brandOpts" type="List"/>
+    <aura:attribute name="serviceOpts" type="List"/>
+    <aura:attribute name="editionOpts" type="List"/>
+    <aura:attribute name="planOpts" type="List"/>
+    <aura:attribute name="leadSourceOpts" type="List"/>
+    <aura:attribute name="contactRoleOpts" type="List"/>
+    <aura:attribute name="biOptions" type="List"/>
+
+    <!-- Notifications-->
+    <aura:attribute name="noQuoteForBrands" type="List"/>
+    <aura:attribute name="noQuoteForServices" type="List"/>
+    <aura:attribute name="accountServicePlanNotFound" type="Boolean"/>
+
+    <!-- Miscellaneous -->
+    <aura:attribute name="tiers" type="List"/>
+    <aura:attribute name="tiersToPick" type="List"/>
+    <aura:attribute name="numberOfLines" type="Integer"/>
+    <aura:attribute name="selectedAccountLookup" type="Object"/>
+    <aura:attribute name="selectedContactLookup" type="Object"/>
+    <aura:attribute name="isNGBSQuickOpptyEnabled" type="Boolean"/>
+    <aura:attribute name="biMapping" type="Map"/>
+    <aura:attribute name="partnerSettings" type="List"/>
+    <aura:attribute name="isQuoteCreationLocked" type="Boolean"/>
+
+    <!-- Application State Management Object -->
+    <aura:attribute name="app" type="Object"/>
+
+    <!-- Change handlers -->
+    <aura:handler name="change" value="{!v.type}" action="{!c.typeChanged}"/>
+    <aura:handler name="change" value="{!v.brand}" action="{!c.brandChanged}"/>
+    <aura:handler name="change" value="{!v.service}" action="{!c.serviceChanged}"/>
+    <aura:handler name="change" value="{!v.edition}" action="{!c.editionChanged}"/>
+    <aura:handler name="change" value="{!v.plan}" action="{!c.planChanged}"/>
+    <aura:handler name="change" value="{!v.newTotalUsers}" action="{!c.newTotalUsersChanged}"/>
+    <aura:handler name="change" value="{!v.forecastedUsers}" action="{!c.forecastedUsersChanged}"/>
+    <aura:handler name="change" value="{!v.selectedAccountLookup}" action="{!c.selectedAccountLookupChanged}"/>
+    <aura:handler name="change" value="{!v.selectedAccount}" action="{!c.selectedAccountChanged}"/>
+    <aura:handler name="change" value="{!v.selectedContactLookup}" action="{!c.selectedContactLookupChanged}"/>
+    <aura:handler name="change" value="{!v.selectedContact}" action="{!c.selectedContactChanged}"/>
+    <aura:handler name="change" value="{!v.selectedTier}" action="{!c.selectedTierChanged}"/>
+    <aura:handler name="change" value="{!v.closeDate}" action="{!c.closeDateChanged}"/>
+    <aura:handler name="change" value="{!v.opportunityName}" action="{!c.opportunityNameChanged}"/>
+    <aura:handler name="change" value="{!v.tiersToPick}" action="{!c.tiersToPickChanged}"/>
+    <aura:handler name="change" value="{!v.mainAreaCodeObj}" action="{!c.mainAreaCodeObjChanged}"/>
+    <aura:handler name="change" value="{!v.isMainPhoneVanity}" action="{!c.isMainPhoneVanityChanged}"/>
+    <aura:handler name="change" value="{!v.selectedAccountTier}" action="{!c.selectedAccountTierChanged}"/>
+    <aura:handler name="change" value="{!v.numberOfLines}" action="{!c.numberOfLinesChanged}"/>
+    <aura:handler name="change" value="{!v.shippingLocation}" action="{!c.shippingLocationChanged}"/>
+    <aura:handler name="change" value="{!v.provisioningDetails}" action="{!c.provisioningDetailsChanged}"/>
+    <aura:handler name="change" value="{!v.leadSource}" action="{!c.leadSourceChanged}"/>
+    <aura:handler name="change" value="{!v.inputParams}" action="{!c.inputParamsChanged}"/>
+
+    <aura:attribute name="selectedConversionContact" type="Contact"/>
+     <aura:attribute name="selectedConversionContactId" type="String"/>
+     <aura:attribute name="selectedConversionContactLookup" type="Object"/>
+     <aura:handler name="change" value="{!v.selectedConversionContactLookup}" action="{!c.selectedConvConLookupChanged}"/>
+     <aura:handler name="change" value="{!v.selectedConversionContact}" action="{!c.selectedConversionContactChanged}"/>
+     <aura:attribute name="fromConversionContact" type="String"/>
+     <aura:attribute name="fromConversionContactId" type="String"/>
+
+    <!-- Overlays -->
+    <c:Toasts/>
+    <c:Popover/>
+    <c:Spinner/>
+    <c:LookupItemList/>
+    <c:lwcToasts/>
+
+    <aura:if isTrue="{! v.app.isMarkupRendered }">
+        <div class="wrapper">
+            <!-- Header -->
+            <div class="slds-page-header header">
+                <div class="slds-page-header__row slds-container_x-large slds-container_center">
+                    <div class="slds-page-header__col-title">
+                        <div class="slds-media">
+                            <div class="slds-media__figure">
+                                <lightning:icon class="slds-icon-standard-opportunity"
+                                                iconName="standard:opportunity"
+                                                size="medium"
+                                                alternativeText="Opportunity"/>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title">
+                                        <h1>
+                                    <span class="slds-page-header__title slds-truncate">
+                                        Create Opportunity
+                                    </span>
+                                        </h1>
+                                    </div>
+                                </div>
+                                <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                                    <li class="slds-item">Record Type: {! v.recordTypeName }</li>
+                                </ul>
+                            </div>
+                            <!-- Temporary hide report a problem button on Quick Oppty page -->
+                            <!-- <div class="slds-grid slds-grid_align-end">
+                                <c:lwcReportProblemModal quickOpptyPage="true"></c:lwcReportProblemModal>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-p-horizontal_medium content">
+                <div class="slds-container_x-large slds-container_center">
+                    <ul class="slds-setup-assistant slds-p-horizontal_none">
+
+                        <!-- Opportunity Info Section -->
+                        <li class="slds-card slds-p-around_medium">
+                            <article class="slds-setup-assistant__step">
+                                <div class="slds-setup-assistant__step-summary">
+                                    <div class="slds-media">
+                                        <div
+                                                class="slds-setup-assistant__step-summary-content slds-media__body slds-m-right_none">
+                                            <div class="slds-grid slds-m-bottom_x-small">
+
+                                                <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                                                    Enter Opportunity Info
+                                                </h3>
+
+                                                <!-- Notifications Bar -->
+                                                <div class="slds-m-left_large slds-col">
+                                                    <c:NotificationsBar aura:id="notificationsOpportunityInfo"/>
+                                                </div>
+
+                                            </div>
+
+                                            <lightning:layout class="slds-wrap">
+                                                <lightning:layoutItem class="slds-p-right_small" size="6">
+
+                                                    <!-- Account -->
+                                                    <div class="{! join(' ', 'slds-form-element slds-m-bottom_small',
+                                                            v.app.showAccountMissedError ? 'slds-has-error': '') }">
+                                                        <c:Lookup label="Account"
+                                                                  placeholder="Start typing to search Account"
+                                                                  method="getAccounts"
+                                                                  iconCollection="standard"
+                                                                  icon="account"
+                                                                  selectedValue="{! v.selectedAccountLookup }"
+                                                                  value="{! v.selectedAccountId }"
+                                                                  required="true"
+                                                                  showRecordLink="true"
+                                                                  newRecordLabel="New Account"
+                                                                  newRecordLink='/setup/ui/recordtypeselect.jsp?ent=Account&amp;save_new_url=/001/e'
+                                                                  aura:id="accountField"/>
+                                                        <aura:if isTrue="{! v.app.showAccountMissedError }">
+                                                            <p class="slds-form-element__help">
+                                                                Account is required
+                                                            </p>
+                                                        </aura:if>
+                                                    </div>
+
+                                                    <lightning:layout class="slds-wrap slds-m-bottom_small">
+
+                                                        <!-- Primary contact -->
+                                                        <lightning:layoutItem
+                                                                size="{! v.app.featureToggle.OpptyContactRoleSelectorUpdate__c ? 12 : 7 }">
+                                                            <div class="{! join(' ', 'slds-form-element',
+                                                                    v.app.showContactMissedError ? 'slds-has-error': '') }">
+                                                                <c:Lookup label="Primary Contact"
+                                                                          placeholder="{! v.app.featureToggle.OpptyContactRoleSelectorUpdate__c ? 'Start typing to search Primary and/or Signatory Contact' : 'Start typing to search Contact' }"
+                                                                          method="getContacts"
+                                                                          iconCollection="standard"
+                                                                          icon="contact"
+                                                                          selectedValue="{! v.selectedContactLookup }"
+                                                                          value="{! v.selectedContactId }"
+                                                                          required="true"
+                                                                          showRecordLink="true"
+                                                                          newRecordLabel="New Contact"
+                                                                          newRecordLink="{! '/setup/ui/recordtypeselect.jsp?ent=Contact&amp;save_new_url=/003/e&amp;accid=' + v.selectedAccount.Id }"
+                                                                          aura:id="contactField"/>
+                                                                <aura:if isTrue="{! v.app.showContactMissedError }">
+                                                                    <p class="slds-form-element__help">
+                                                                        Contact is required
+                                                                    </p>
+                                                                </aura:if>
+                                                            </div>
+                                                        </lightning:layoutItem>
+
+                                                        <!-- Contact role -->
+                                                        <aura:if
+                                                                isTrue="{! !v.app.featureToggle.OpptyContactRoleSelectorUpdate__c }">
+                                                            <lightning:layoutItem size="5" class="slds-p-left_small">
+                                                                <lightning:select label="Contact Role"
+                                                                                  value="{! v.contactRole }"
+                                                                                  disabled="true"
+                                                                                  aura:id="contactRole">
+                                                                    <aura:iteration items="{!v.contactRoleOpts}" var="opt">
+                                                                        <option value="{!opt.value}"
+                                                                                selected="{!opt.value == v.contactRole}">
+                                                                                {!opt.label}
+                                                                        </option>
+                                                                    </aura:iteration>
+                                                                </lightning:select>
+                                                            </lightning:layoutItem>
+                                                        </aura:if>
+
+                                                        <!--Conversion Contact-->
+                                                        <lightning:layoutItem
+                                                            size="{! v.app.featureToggle.OpptyContactRoleSelectorUpdate__c ? 12 : 7 }">
+                                                               <c:Lookup label="Conversion Contact"
+                                                                          placeholder="Start typing to search Contact"
+                                                                          method="getContacts"
+                                                                          iconCollection="standard"
+                                                                          icon="contact"
+                                                                          selectedValue="{! v.selectedConversionContactLookup }"
+                                                                          value="{! v.selectedConversionContactId }"
+                                                                          required="false"
+                                                                          showRecordLink="true"
+                                                                          newRecordLabel="New Contact"
+                                                                          newRecordLink="{! '/setup/ui/recordtypeselect.jsp?ent=Contact&amp;save_new_url=/003/e&amp;accid=' + v.selectedAccount.Id }"
+                                                                          aura:id="conversionContactField"/>
+                                                        </lightning:layoutItem> 
+                                                    </lightning:layout>
+
+                                                    <!-- Opportunity Name -->
+                                                    <div class="{! join(' ', 'slds-form-element slds-m-bottom_small',
+                                                            v.app.showOpportunityNameMissedError ? 'slds-has-error': '') }">
+                                                        <lightning:input label="Opportunity Name"
+                                                                         class="field-required"
+                                                                         value="{!v.opportunityName}"/>
+                                                        <aura:if isTrue="{! v.app.showOpportunityNameMissedError }">
+                                                            <p class="slds-form-element__help">
+                                                                Opportunity Name is required
+                                                            </p>
+                                                        </aura:if>
+                                                    </div>
+
+                                                    <lightning:layout class="slds-wrap">
+
+                                                        <!-- Close Date -->
+                                                        <lightning:layoutItem class="slds-p-right_small" size="4">
+                                                            <div class="{! join(' ', 'slds-form-element',
+                                                                    v.app.showCloseDateMissedError || v.app.showCloseDateNotInRangeError ? 'slds-has-error': '') }">
+                                                                <div class="field-required" aura:id="closeDateContainer">
+                                                                    <lightning:input type="date"
+                                                                                     aura:id="closeDateField"
+                                                                                     autocomplete="off"
+                                                                                     label="Close Date"
+                                                                                     value="{!v.closeDate}"/>
+                                                                    <aura:if isTrue="{! v.app.showCloseDateMissedError }">
+                                                                        <p class="slds-form-element__help">
+                                                                            Close Date is required
+                                                                        </p>
+                                                                    </aura:if>
+                                                                    <aura:if
+                                                                            isTrue="{! v.app.showCloseDateNotInRangeError }">
+                                                                        <p class="slds-form-element__help">
+                                                                            Close Date can't be in the past
+                                                                        </p>
+                                                                    </aura:if>
+                                                                </div>
+                                                            </div>
+                                                        </lightning:layoutItem>
+
+                                                        <!-- Lead Source -->
+                                                        <lightning:layoutItem class="slds-p-right_small field-required"
+                                                                              size="5">
+                                                            <lightning:select label="Lead Source"
+                                                                              value="{!v.leadSource}"
+                                                                              aura:id="leadSourceField">
+                                                                <aura:iteration items="{!v.leadSourceOpts}" var="opt">
+                                                                    <option value="{!opt.value}"
+                                                                            selected="{!opt.value == v.leadSource}">{!opt.label}</option>
+                                                                </aura:iteration>
+                                                            </lightning:select>
+
+                                                        </lightning:layoutItem>
+
+                                                        <!-- Type -->
+                                                        <lightning:layoutItem size="3">
+
+                                                            <lightning:select label="Type"
+                                                                              value="{!v.type}"
+                                                                              aura:id="typeField"
+                                                                              disabled="true">
+                                                                <aura:iteration items="{!v.typeOpts}" var="opt">
+                                                                    <option value="{!opt.value}"
+                                                                            selected="{!opt.value == v.type}">{!opt.label}</option>
+                                                                </aura:iteration>
+                                                            </lightning:select>
+
+                                                        </lightning:layoutItem>
+
+                                                    </lightning:layout>
+
+                                                </lightning:layoutItem>
+
+                                                <lightning:layoutItem class="slds-p-left_small" size="6">
+
+                                                    <!-- Shipping Address -->
+                                                    <div class="{! join(' ', 'slds-m-bottom_small',
+                                                            v.app.showShippingLocationMissedError ? 'slds-has-error' : '',
+                                                            and(v.app.featureToggle.ShippingDetailsField__c, not(v.app.isAccountMigrated)) ? '' : 'slds-hide') }">
+                                                        <c:ShippingLocationInput label="Shipping Address"
+                                                                                 required="{! v.app.isShippingAddressRequired }"
+                                                                                 account="{! v.selectedAccount }"
+                                                                                 contactName="{! v.selectedContact.Name }"
+                                                                                 value="{! v.shippingLocation }"
+                                                                                 onclick="{! c.onShippingLocationClick }"
+                                                                                 useDefaultPicklistValue="true"
+                                                                                 disabled="{! not(v.selectedAccount) }"
+                                                                                 aura:id="shippingLocation"/>
+                                                        <aura:if isTrue="{! v.app.showShippingLocationMissedError }">
+                                                            <p class="slds-form-element__help">
+                                                                Please populate all required Shipping Address fields
+                                                            </p>
+                                                        </aura:if>
+                                                    </div>
+
+                                                    <!-- Provisioning Details -->
+                                                    <div
+                                                            class="{! and(v.app.featureToggle.ProvisioningDetailsField__c, not(v.app.isAccountMigrated)) ? '' : 'slds-hide' }">
+                                                        <lightning:textarea name="provisioningDetails"
+                                                                            label="Provisioning Details"
+                                                                            class="{! join(' ', 'textarea-vsize--2',
+                                                                                    v.app.showProvisioningDetailsMissedError ? 'slds-has-error' : '') }"
+                                                                            placeholder=""
+                                                                            required="{! v.app.isProvisioningDetailsRequired }"
+                                                                            value="{! v.provisioningDetails }"/>
+                                                        <aura:if isTrue="{! v.app.showProvisioningDetailsMissedError }">
+                                                            <div class="slds-has-error">
+                                                                <p class="slds-form-element__help slds-has-error">
+                                                                    Provisioning Details are required for Downsell
+                                                                </p>
+                                                            </div>
+                                                        </aura:if>
+                                                    </div>
+
+                                                </lightning:layoutItem>
+                                            </lightning:layout>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </li>
+
+                        <!-- Service Plan Section -->
+                        <li class="slds-card slds-p-around_medium slds-m-bottom_medium slds-m-top_medium service-plan-section">
+                            <c:Spinner aura:id="servicePlanSpinner" isGlobalSpinner="false" isFixed="false"/>
+                            <article class="slds-setup-assistant__step">
+                                <div class="slds-setup-assistant__step-summary">
+
+                                    <div class="slds-grid">
+                                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                                            Select Service Plan
+                                        </h3>
+                                        <div class="slds-m-left_large slds-col">
+                                            <c:NotificationsBar aura:id="notificationsServicePlan"/>
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-m-bottom_medium slds-grid slds-gutters">
+                                        <!-- Selected Service Plan Dropdown -->
+                                        <div class="service-plan slds-p-horizontal_small">
+
+                                            <aura:if isTrue="{! and(v.type == 'Up-Sell', not(v.isAccountMigrated)) }">
+                                                <div>
+                                                    <p class="slds-text-title slds-truncate slds-m-bottom--xx-small"
+                                                       title="Record Type">Account Service Plan</p>
+                                                    <p class="slds-text-body--regular">{! v.selectedAccountTier.Pricebook2.Name }</p>
+                                                </div>
+                                            </aura:if>
+                                            <aura:if isTrue="{! or(v.type != 'Up-Sell', v.isAccountMigrated) }">
+                                                <div style="position:relative" aura:id="selectedTierField">
+                                                    <p class="slds-text-title slds-truncate slds-m-bottom--xx-small tier-picker__text"
+                                                       title="Record Type" onclick="{!c.toggleTierPicker}">
+                                                        Selected Service Plan
+                                                        <lightning:icon iconName="utility:down"
+                                                                        size="xx-small"
+                                                                        class="slds-m-left--x-small tier-picker__icon"
+                                                                        alternativeText="Expand"/>
+                                                    </p>
+                                                    <p class="slds-text-body--regular">{!v.selectedTierLabel}</p>
+                                                    <div
+                                                            class="slds-dropdown slds-dropdown--left slds-dropdown--small slds-hide"
+                                                            style="top:-0.95rem; left: -0.75rem;" aura:id="tierPicker">
+                                                        <p class="slds-text-title slds-truncate slds-m-bottom--xx-small tier-picker__text"
+                                                           title="Record Type" style="padding: 0.5rem 0 0 2.7rem;"
+                                                           onclick="{!c.toggleTierPicker}">
+                                                            Select Service Plan
+                                                            <lightning:icon iconName="utility:up"
+                                                                            size="xx-small"
+                                                                            class="slds-m-left--x-small"
+                                                                            alternativeText="Collapse"/>
+                                                        </p>
+                                                        <ul class="slds-dropdown__list" role="menu">
+                                                            <aura:iteration items="{!v.tiersToPick}" var="tier"
+                                                                            indexVar="index">
+                                                                <li class="{!if(v.selectedTier.Pricebook2.Id == tier.Pricebook2.Id,'slds-dropdown__item slds-is-selected','slds-dropdown__item')}"
+                                                                    role="presentation">
+                                                                    <a href="javascript:void(0);"
+                                                                       role="menuitemcheckbox"
+                                                                       aria-checked="true" tabindex="0"
+                                                                       data-index="{!index}"
+                                                                       onclick="{!c.pickTier}">
+                                                                <span class="slds-truncate slds-grid">
+                                                                    <span
+                                                                            class="slds-grid slds-grid--vertical-align-center slds-m-right--x-small">
+                                                                        <span class="tier-picker_tick-square">
+                                                                            <lightning:icon
+                                                                                    iconName="utility:check"
+                                                                                    size="x-small"
+                                                                                    class="slds-icon--selected"
+                                                                                    alternativeText="Check"/>
+                                                                        </span>
+                                                                    </span>
+                                                                    <span
+                                                                            class="slds-grid slds-grid--vertical-align-center">
+                                                                        <div>
+                                                                            <div>{!tier.Pricebook2.Name}</div>
+                                                                            <div class="slds-text-body--small">
+                                                                                <span>{!if(tier.Pricebook2.Tier_ID__c == v.selectedAccountTier.Pricebook2.Tier_ID__c, 'Service Plan on Account')}</span>
+                                                                                <span>{!if(tier.Pricebook2.IsActive, ' ', ' (Inactive)')}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </span>
+                                                                </span>
+                                                                    </a>
+                                                                </li>
+                                                            </aura:iteration>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </aura:if>
+
+                                            <aura:if isTrue="{! v.app.showSelectServicePlanError }">
+                                                <div class="slds-has-error">
+                                                    <p class="slds-form-element__help">
+                                                        Please make sure that the appropriate service plan is selected
+                                                    </p>
+                                                </div>
+                                            </aura:if>
+                                        </div>
+
+                                        <!-- Billing System -->
+                                        <div class="slds-p-horizontal_small">
+                                            <p class="slds-text-title slds-m-bottom_xx-small">
+                                                Billing System
+                                            </p>
+                                            <p>Legacy</p>
+                                        </div>
+
+                                        <!-- Brand Text -->
+                                        <aura:if isTrue="{! v.app.featureToggle.SelectPackagesByBusinessIdentity__c }">
+                                            <div class="slds-p-horizontal_small">
+                                                <p class="slds-text-title slds-m-bottom_xx-small">
+                                                    Brand
+                                                </p>
+                                                <p>{!v.brand}</p>
+                                            </div>
+                                        </aura:if>
+                                    </div>
+
+                                    <lightning:layout class="slds-wrap">
+                                        <lightning:layoutItem class="slds-p-right_small slds-grid slds-wrap" size="6">
+
+                                            <aura:if isTrue="{! v.app.featureToggle.SelectPackagesByBusinessIdentity__c }">
+                                                <!-- Business Identity -->
+                                                <lightning:layoutItem class="slds-p-right--small" size="6">
+                                                    <lightning:select label="Business Identity"
+                                                                        class="slds-m-bottom--small"
+                                                                        value="{!v.selectedBusinessIdentity}"
+                                                                        aura:id="biField"
+                                                                        onchange="{!c.biChanged}"
+                                                                        disabled="true">
+                                                        <option value="">--None--</option>
+                                                        <aura:iteration items="{!v.biOptions}" var="opt">
+                                                            <option value="{!opt.value}"
+                                                                    selected="{!opt.value == v.selectedBusinessIdentity}">{!opt.label}</option>
+                                                        </aura:iteration>
+                                                    </lightning:select>
+                                                </lightning:layoutItem>
+                                            </aura:if>
+
+                                            <aura:if isTrue="{! !v.app.featureToggle.SelectPackagesByBusinessIdentity__c }">
+                                                <!-- Brand -->
+                                                <lightning:layoutItem class="slds-p-right--small" size="6">
+                                                    <lightning:select label="Brand"
+                                                                    class="slds-m-bottom--small"
+                                                                    value="{!v.brand}"
+                                                                    aura:id="brandField"
+                                                                    disabled="true">
+                                                        <option value="">--None--</option>
+                                                        <aura:iteration items="{!v.brandOpts}" var="opt">
+                                                            <option value="{!opt.value}"
+                                                                    selected="{!opt.value == v.brand}">{!opt.label}</option>
+                                                        </aura:iteration>
+                                                    </lightning:select>
+                                                </lightning:layoutItem>
+                                            </aura:if>
+
+                                            <!-- Service -->
+                                            <lightning:layoutItem size="6">
+                                                <lightning:select label="Service"
+                                                                  class="slds-m-bottom--small"
+                                                                  value="{!v.service}"
+                                                                  aura:id="serviceField"
+                                                                  disabled="true">
+                                                    <option value="">--None--</option>
+                                                    <aura:iteration items="{!v.serviceOpts}" var="opt">
+                                                        <option value="{!opt.value}"
+                                                                selected="{!opt.value == v.service}">{!opt.label}</option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </lightning:layoutItem>
+
+                                            <!-- Edition -->
+                                            <lightning:layoutItem class="slds-p-right--small" size="6">
+                                                <lightning:select label="Edition"
+                                                                  class="slds-m-bottom--small"
+                                                                  aura:id="editionField"
+                                                                  value="{!v.edition}"
+                                                                  disabled="true">
+                                                    <option value="">--None--</option>
+                                                    <aura:iteration items="{!v.editionOpts}" var="opt">
+                                                        <option value="{!opt.value}"
+                                                                selected="{!opt.value == v.edition}">{!opt.label}</option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </lightning:layoutItem>
+
+                                            <!-- Plan -->
+                                            <lightning:layoutItem size="6">
+                                                <lightning:select label="Plan"
+                                                                  class="slds-m-bottom--small"
+                                                                  aura:id="planField"
+                                                                  value="{!v.plan}"
+                                                                  disabled="true">
+                                                    <option value="">--None--</option>
+                                                    <aura:iteration items="{!v.planOpts}" var="opt">
+                                                        <option value="{!opt.value}"
+                                                                selected="{!opt.value == v.plan}">{!opt.label}</option>
+                                                    </aura:iteration>
+                                                </lightning:select>
+                                            </lightning:layoutItem>
+
+                                            <!-- Forecasted Users Block-->
+                                            <lightning:layoutItem size="12">
+                                                <lightning:layout class="slds-wrap">
+
+                                                    <!-- Forecasted Users -->
+                                                    <lightning:layoutItem size="12"
+                                                                          aura:id="forecastedUsersContainer">
+                                                        <lightning:input label="Forecasted Users"
+                                                                         class="slds-m-bottom--small"
+                                                                         type="Number"
+                                                                         min="0"
+                                                                         disabled="true"
+                                                                         aura:id="forecastedUsersField"
+                                                                         value="{!v.forecastedUsers}"/>
+                                                    </lightning:layoutItem>
+
+                                                    <!-- Number of Existing Users -->
+                                                    <lightning:layoutItem size="6"
+                                                                          aura:id="accountDLsContainer"
+                                                                          class="slds-p-right_small">
+                                                        <lightning:input label="Number of Existing Users"
+                                                                         class="slds-m-bottom--small"
+                                                                         type="Number"
+                                                                         disabled="true"
+                                                                         aura:id="existingUsersField"
+                                                                         value="{!v.numberOfLines}"/>
+                                                    </lightning:layoutItem>
+
+                                                    <!-- New Total Users -->
+                                                    <lightning:layoutItem size="6"
+                                                                          aura:id="newTotalUsersContainer">
+                                                        <lightning:input label="New Total Users"
+                                                                         type="Number"
+                                                                         min="1"
+                                                                         aura:id="newTotalUsersField"
+                                                                         value="{!v.newTotalUsers}"/>
+                                                        <aura:if isTrue="{! v.app.showNewTotalUsersError }">
+                                                            <p class="slds-form-element__help ">
+                                                                Number of New Total Users can’t be less than Number of
+                                                                Existing Users to use Confirm&amp;Close flow
+                                                            </p>
+                                                        </aura:if>
+                                                    </lightning:layoutItem>
+                                                </lightning:layout>
+                                            </lightning:layoutItem>
+                                        </lightning:layoutItem>
+
+                                        <lightning:layoutItem class="slds-p-left_small" size="6">
+
+                                            <lightning:layout class="slds-p-bottom--small"
+                                                              aura:id="mainAreaCodeComboBlock">
+
+                                                <!-- Main Area Code -->
+                                                <lightning:layoutItem class="slds-p-right--x-small" size="10"
+                                                                      aura:id="mainAreaCodeBlock">
+                                                    <div class="{! join(' ', 'slds-form-element',
+                                                            v.app.showMainAreaCodeMissedError ? 'slds-has-error': '') }">
+                                                        <c:Lookup placeholder="Start typing to search Default Area Code"
+                                                                  label="Default Area Code"
+                                                                  method="getAreaCodes"
+                                                                  iconCollection="custom"
+                                                                  icon="custom64"
+                                                                  value="{!v.selectedMainAreaCodeId}"
+                                                                  selectedValue="{!v.mainAreaCodeObj}"
+                                                                  aura:id="mainAreaCode"/>
+                                                        <aura:if isTrue="{! v.app.showMainAreaCodeMissedError }">
+                                                            <div class="slds-has-error">
+                                                                <p class="slds-form-element__help">
+                                                                    Default Area Code is required to Confirm &amp; Close
+                                                                </p>
+                                                            </div>
+                                                        </aura:if>
+                                                    </div>
+                                                </lightning:layoutItem>
+
+                                                <!-- Is Main Area Code Vanity ? -->
+                                                <lightning:layoutItem class="slds-p-left--medium" size="2"
+                                                                      aura:id="isMainPhoneVanityBlock">
+                                                    <div class="slds-form-element p-checkbox slds-grid">
+                                                        <lightning:input type="checkbox"
+                                                                         label="Vanity"
+                                                                         name="mainPhoneVanity"
+                                                                         class="slds-truncate"
+                                                                         checked="{! v.isMainPhoneVanity }"
+                                                                         disabled="true"
+                                                                         aura:id="isMainPhoneVanity"/>
+
+                                                        <c:Tooltip text="{!$Label.c.QW_Tooltip_VanityTollFree}"/>
+                                                    </div>
+                                                </lightning:layoutItem>
+
+                                            </lightning:layout>
+
+                                            <!-- Service Totals -->
+                                            <aura:if isTrue="{! v.app.selectedServicePlan }">
+
+                                                <!-- Service MRR -->
+                                                <lightning:layout class="service-totals">
+                                                    <lightning:layoutItem class="slds-p-right_small">
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label">Service MRR</label>
+                                                            <div>
+                                                                <c:outputCurrency value="{! v.app.servicePlanMRR }"
+                                                                                  currencyCode="{! v.app.selectedServicePlan.record.CurrencyIsoCode }"/>
+                                                                <aura:if
+                                                                        isTrue="{! or(v.app.isUpsell, v.app.isUpgrade )}">
+                                                            <span class="{! join(' ',
+                                                                    greaterthan(v.app.servicePlanMRRChange, 0) ? 'slds-text-color_success' : '',
+                                                                    lessthan(v.app.servicePlanMRRChange, 0) ? 'slds-text-color_error' : '',
+                                                                    v.app.servicePlanMRRChange == 0 ? 'slds-text-color_weak' : '')
+                                                                    }">
+                                                                (
+                                                                <c:outputCurrency
+                                                                        value="{! v.app.servicePlanMRRChange }"
+                                                                        currencyCode="{! v.app.selectedServicePlan.record.CurrencyIsoCode }"/>
+                                                                )
+                                                            </span>
+                                                                </aura:if>
+                                                            </div>
+                                                        </div>
+                                                    </lightning:layoutItem>
+
+                                                    <!-- Service ARR -->
+                                                    <lightning:layoutItem>
+                                                        <div class="slds-form-element">
+                                                            <label class="slds-form-element__label">Service ARR</label>
+                                                            <div>
+                                                                <c:outputCurrency value="{! v.app.servicePlanARR }"
+                                                                                  currencyCode="{! v.app.selectedServicePlan.record.CurrencyIsoCode }"/>
+                                                                <aura:if
+                                                                        isTrue="{! or(v.app.isUpsell, v.app.isUpgrade )}">
+                                                            <span class="{! join(' ',
+                                                                    greaterthan(v.app.servicePlanARRChange, 0) ? 'slds-text-color_success' : '',
+                                                                    lessthan(v.app.servicePlanARRChange, 0) ? 'slds-text-color_error' : '',
+                                                                    v.app.servicePlanARRChange == 0 ? 'slds-text-color_weak' : '')
+                                                                    }">
+                                                                (
+                                                                <c:outputCurrency
+                                                                        value="{! v.app.servicePlanARRChange }"
+                                                                        currencyCode="{! v.app.selectedServicePlan.record.CurrencyIsoCode }"/>
+                                                                )
+                                                            </span>
+                                                                </aura:if>
+                                                            </div>
+                                                        </div>
+                                                    </lightning:layoutItem>
+                                                </lightning:layout>
+                                            </aura:if>
+
+                                        </lightning:layoutItem>
+                                    </lightning:layout>
+                                </div>
+                            </article>
+                        </li>
+
+                        <!-- Add Products Section -->
+                        <aura:if isTrue="{! v.app.isQuotingAvailable }">
+                        <li class="slds-card slds-p-around_medium products-section" aura:id="productSelectorTab">
+                            <c:OpportunityCreationFormProductSelector app="{! v.app }" aura:id="productSelector"/>
+                        </li>
+                        </aura:if>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="slds-docked-form-footer buttons">
+
+                <!-- Cancel -->
+                <c:Button label="Cancel"
+                          onclick="{! c.cancel }"
+                          wrapperClass="cancel-button"/>
+
+                <!-- Discard -->
+                <c:Button label="Discard"
+                          onclick="{! c.discardForm }"
+                          aura:id="discardButton"/>
+
+                <!-- Continue to Opportunity -->
+                <c:Button label="Continue to Opportunity"
+                          onclick="{! c.saveForm }"
+                          variant="brand"
+                          aura:id="saveButton"/>
+
+                <!-- Confirm and Close -->
+                <c:Button label="Confirm &amp; Close"
+                          onclick="{! c.confirmAndClose }"
+                          show="{! v.app.buttons.confirmAndClose.show }"
+                          aura:id="confirmAndCloseButton"/>
+
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

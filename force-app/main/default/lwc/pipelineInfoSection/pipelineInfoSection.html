@@ -1,0 +1,171 @@
+<template>
+    <c-lwc-spinner if:true={isSpinnerShown}
+        is-shown={isSpinnerShown}
+        spinner-style="slds-spinner_brand"
+        text={spinnerText}
+    ></c-lwc-spinner>
+    <template if:false={isVFpage}>
+        <div class="slds-grid slds-media slds-media_center">
+            <div class="slds-media__figure">
+                <lightning-icon
+                    icon-name="standard:opportunity"
+                    size="small"
+                    alternative-text="Opportunity"
+                    title="Opportunity">
+                </lightning-icon>
+            </div>
+            <div class="slds-card__header-link slds-text-heading_small">
+                Pipeline Information
+            </div>
+        </div>
+    </template>
+
+    <template if:true={showInfo}>
+        <div class={mainClass}>
+            <div class={sectionClass}>
+                <template for:each={oppFields} for:item="field">
+                    <div key={field.key} class={rowClass}>
+                        <template if:true={editMode}>
+                            <div class="slds-form-element_horizontal">
+                                <template if:true={field.updateable}>
+                                    <lightning-input
+                                        if:true={field.isCurrencyType}
+                                        type="number"
+                                        data-api-name={field.key}
+                                        onchange={handleInputChange}
+                                        step="0.01"
+                                        label={field.label}
+                                        value={field.value}>
+                                    </lightning-input>
+                                    <template if:false={field.isCurrencyType}>
+                                        <lightning-input
+                                        if:true={field.totalSource}
+                                        type="text"
+                                        read-only="true"
+                                        disabled="true"
+                                        label={field.label}
+                                        value={field.value}>
+                                    </lightning-input>
+                                    <lightning-input
+                                        if:false={field.totalSource}
+                                        type="number"
+                                        data-api-name={field.key}
+                                        onchange={handleInputChange}
+                                        label={field.label}
+                                        value={field.value}>
+                                    </lightning-input>
+                                    </template>
+                                </template>
+                                <template if:false={field.updateable}>
+                                    <lightning-input
+                                        if:true={field.isCurrencyType}
+                                        type="number"
+                                        disabled="true"
+                                        step="0.01"
+                                        label={field.label}
+                                        value={field.value}>
+                                    </lightning-input>
+                                    <lightning-input
+                                        if:false={field.isCurrencyType}
+                                        type="number"
+                                        disabled="true"
+                                        label={field.label}
+                                        value={field.value}>
+                                    </lightning-input>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={viewMode}>
+                            <div class="slds-grid slds-border_bottom">
+                                <div class="slds-grid slds-size_4-of-12">
+                                    <span class="slds-form-element__label">
+                                        {field.label}
+                                    </span>
+                                </div>
+                                <div class="slds-grid slds-align-middle slds-size_1-of-12">
+                                    <div class="slds-size_1-of-2">
+                                        <lightning-helptext
+                                            if:true={field.helpText}
+                                            content={field.helpText}
+                                        ></lightning-helptext>
+                                    </div>
+                                    <div class="slds-size_1-of-2 slds-grid_align-end">
+                                        <lightning-helptext
+                                            icon-name="utility:quick_text"
+                                            if:true={field.overriddenText}
+                                            content={field.overriddenText}
+                                        ></lightning-helptext>
+                                        <lightning-helptext
+                                            icon-name="utility:quote"
+                                            if:true={field.usersHelpText}
+                                            content={field.usersHelpText}
+                                        ></lightning-helptext>
+                                    </div>
+
+                                </div>
+                                <div class="slds-grid slds-p-left_small slds-align-middle slds-size_7-of-12">
+                                    <div class="slds-form-element__static">
+                                        <template if:true={field.isCurrencyType}>
+                                            {field.convertedValue}
+                                        </template>
+                                        <template if:false={field.isCurrencyType}>
+                                            {field.value}
+                                        </template>
+                                    </div>
+                                    <div>
+                                        <template if:true={field.updateable}>
+                                            <lightning-button-icon
+                                                icon-class="slds-button__icon_hint"
+                                                icon-name="utility:edit"
+                                                variant="bare"
+                                                alternative-text="Edit"
+                                                onclick={handleEditClick}
+                                                title="Edit">
+                                            </lightning-button-icon>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+    <template if:true={editMode}>
+        <span class="slds-align_absolute-center">
+            <c-lwc-popover
+                style={popoverClass}
+                show={showPopover}
+                onclose={handlePopoverClose}
+                body={error}
+                header="We hit a snag."
+                size="medium"
+                variant="error" >
+            </c-lwc-popover>
+        </span>
+        <div class="slds-align_absolute-center slds-p-around_medium">
+            <template if:true={error}>
+                <lightning-icon icon-name="utility:error"
+                                onmouseover={handlePopoverShow}
+                                onmouseout={handlePopoverClose}
+                                alternative-text="Error"
+                                class="error-icon"
+                                size="small"
+                                variant="error">
+                </lightning-icon>
+            </template>
+            <lightning-button
+                label="Cancel"
+                onclick={handleCancelClick}
+                class="slds-m-around_xx-small">
+            </lightning-button>
+            <lightning-button
+                label="Save"
+                variant="brand"
+                onclick={handleSaveClick}
+                class="save-button slds-m-around_xx-small">
+            </lightning-button>
+        </div>
+    </template>
+</template>

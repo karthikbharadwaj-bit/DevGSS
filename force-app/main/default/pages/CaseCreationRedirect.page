@@ -1,0 +1,97 @@
+<apex:page showHeader="false" applyBodyTag="false" sidebar="false" tabStyle="Case" lightningStylesheets="true" applyHtmlTag="true">
+    <head>
+        <style>
+            .custom-toast {
+            position: fixed;
+            top: 175px; /* Move to top */
+            left: 50%;
+            transform: translateX(-50%); /* Center align */
+            padding: 15px;
+            min-width:300px;
+            max-width: 800px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s;
+            z-index: 10000;
+            }
+            
+            .show-toast {
+            opacity: 1;
+            visibility: visible;
+            }
+            
+            .success-toast { background-color: #2e844a; }
+            .error-toast { background-color: #b71c1c; }
+            .warning-toast { background-color: #e65100; }
+            .info-toast { background-color: #0277bd; }
+        </style>
+    </head>
+    
+    <style>
+        body{
+        background-color: lightskyblue;
+        }
+    </style>
+    <body>
+        <!-- Toast Message Container -->
+        <div id="customToast" class="custom-toast">
+            <strong id="toastTitle"></strong><br/>
+            <span id="toastMessage"></span>
+        </div>
+        
+        <script>
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.action === 'showToast') {
+                showCustomToast(event.data.title, event.data.message, event.data.variant);
+            }
+        }, false);
+        
+        function showCustomToast(title, message, variant) {
+            var toast = document.getElementById("customToast");
+            var toastTitle = document.getElementById("toastTitle");
+            var toastMessage = document.getElementById("toastMessage");
+            
+            // Set message and title
+            toastTitle.innerHTML = title;
+            toastMessage.innerHTML = message;
+            
+            // Remove existing variant classes
+            toast.classList.remove("success-toast", "error-toast", "warning-toast", "info-toast");
+            
+            // Add new variant class
+            switch (variant) {
+                case 'error': toast.classList.add("error-toast"); break;
+                case 'warning': toast.classList.add("warning-toast"); break;
+                case 'info': toast.classList.add("info-toast"); break;
+                default: toast.classList.add("success-toast");
+            }
+            
+            // Show toast
+            toast.classList.add("show-toast");
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove("show-toast");
+            }, 5000);
+            }
+                </script>
+        <apex:includeLightning />
+        <div id="LwcId"/>
+        
+        <script>
+        $Lightning.use("c:CaseCreationApp", function() {
+            $Lightning.createComponent("c:caseCreationFromVF",
+                                       {
+                                           mapParam: '{!$CurrentPage.parameters.mapParam}'
+                                       },
+                                       "LwcId",
+                                       function(cmp) {
+                                       });
+        });
+        </script>
+    </body>
+</apex:page>

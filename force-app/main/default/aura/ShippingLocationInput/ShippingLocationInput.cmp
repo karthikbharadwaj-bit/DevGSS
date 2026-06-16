@@ -1,0 +1,299 @@
+<aura:component description="InputLocation">
+    <aura:handler name="init" value="{! this }" action="{! c.doInit }" />
+
+    <!-- Attributes -->
+    <aura:attribute name="value" type="Object"/>
+    <aura:attribute name="class" type="String"/>
+    <aura:attribute name="label" type="String"/>
+    <aura:attribute name="disabled" type="Boolean"/>
+    <aura:attribute name="required" type="Boolean"/>
+    <aura:attribute name="account" type="Object"/>
+    <aura:attribute name="contactName" type="String"/>
+    <aura:attribute name="useDefaultPicklistValue" type="Boolean"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute access="private" name="nubbinPosition" type="String" default="left-top"/>
+    <aura:attribute access="private" name="style" type="String"/>
+    <aura:attribute access="private" name="backdropStyle" type="String"/>
+    <aura:attribute access="private" name="isOpen" type="Boolean"/>
+    <aura:attribute access="private" name="initialValue" type="Object"/>
+
+    <!-- Form Attributes -->
+    <aura:attribute access="private" name="country" type="String"/>
+    <aura:attribute access="private" name="city" type="String"/>
+    <aura:attribute access="private" name="state" type="String"/>
+    <aura:attribute access="private" name="addressLine" type="String"/>
+    <aura:attribute access="private" name="postalCode" type="String"/>
+    <aura:attribute access="private" name="customerName" type="String"/>
+    <aura:attribute access="private" name="additionalAddressLine" type="String"/>
+    <aura:attribute access="private" name="shipAttentionTo" type="String"/>
+    <aura:attribute access="private" name="shippingOption" type="String"/>
+    <aura:attribute access="private" name="isUseAccountBillingAddress" type="Boolean"/>
+    <aura:attribute access="private" name="multipleLocations" type="Boolean"/>
+
+    <!-- Form State -->
+    <aura:attribute access="private" name="form" type="Object"/>
+
+    <!-- Change Handlers -->
+    <aura:handler name="change" value="{! v.isUseAccountBillingAddress }" action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.value }"        action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.account }"      action="{! c.accountChanged }" />
+    <aura:handler name="change" value="{! v.country }"      action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.city }"         action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.state }"        action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.addressLine }"  action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.postalCode }"   action="{! c.updateForm }" />
+    <aura:handler name="change" value="{! v.contactName }"  action="{! c.contactNameChanged }" />
+    <aura:handler name="change" value="{! v.multipleLocations }"  action="{! c.updateForm }" />
+
+    <!-- Actions -->
+    <aura:attribute name="onclick" type="Aura.Action"/>
+    <aura:attribute name="onchange" type="Aura.Action"/>
+
+    <!-- Methods -->
+    <aura:method name="reset" />
+
+    <!-- Default Location -->
+    <div class="{! join(' ', 'location-form slds-is-relative', v.class) }">
+        <div class="{! join(' ', 'location-form',
+            v.isOpen ? '' : 'location-form_hidden',
+            'slds-nubbin_' + v.nubbinPosition) }"
+             style="{! v.style }"
+             aura:id="locationForm">
+
+            <form onsubmit="{! c.submitLocationForm }">
+
+                <lightning:layout class="location-form__header slds-p-around--small slds-wrap">
+
+                    <!-- Location Icon -->
+                    <div class="slds-p-right_medium slds-p-left_medium location-form_icon">
+                        <lightning:icon iconName="utility:checkin" alternativeText="Location"/>
+                    </div>
+
+                    <!-- Customer Name -->
+                    <div class="slds-col">
+                        <lightning:input type="text"
+                                         label="Customer Name"
+                                         value="{! v.customerName }"
+                                         aura:id="input"
+                                         placeholder="e.g John Doe"
+                                         required="{! v.required }"/>
+                    </div>
+
+                </lightning:layout>
+
+                <div class="location-form__body slds-p-around_medium">
+
+                    <aura:if isTrue="{! v.form.isHasAccountBillingAddress }">
+                        <div class="slds-text-align_right slds-m-bottom_small">
+                            <lightning:input type="checkbox"
+                                             label="Use Account Billing Address"
+                                             checked="{! v.isUseAccountBillingAddress }"
+                                             onchange="{! c.onUseAccountBillingAddressChanged }"/>
+                        </div>
+                    </aura:if>
+
+                    <lightning:layout class="slds-m-bottom_small">
+
+                        <!-- Country -->
+                        <lightning:layoutItem>
+                            <lightning:input type="text"
+                                             label="Country"
+                                             value="{! v.country }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. United States"
+                                             disabled="{! v.form.isCountryDisabled }"/>
+                        </lightning:layoutItem>
+
+                        <!-- City -->
+                        <lightning:layoutItem class="slds-p-horizontal_small">
+                            <lightning:input type="text"
+                                             label="City"
+                                             value="{! v.city }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. Alabaster"
+                                             disabled="{! v.form.isCityDisabled }"/>
+                        </lightning:layoutItem>
+
+                        <!-- State -->
+                        <lightning:layoutItem class="location-form__state">
+                            <lightning:input type="text"
+                                             label="State"
+                                             value="{! v.state }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. AL"
+                                             disabled="{! v.form.isStateDisabled }"/>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+
+                    <lightning:layout class="slds-m-bottom_small">
+
+                        <!-- Address Line -->
+                        <lightning:layoutItem size="8" class="slds-p-right_small">
+                            <lightning:input type="text"
+                                             label="Address Line"
+                                             value="{! v.addressLine }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. 120 1st St. SW"
+                                             disabled="{! v.form.isAddressLineDisabled }"/>
+                        </lightning:layoutItem>
+
+                        <!-- Postal Code -->
+                        <lightning:layoutItem size="4">
+                            <lightning:input type="text"
+                                             label="Zip Code"
+                                             value="{! v.postalCode }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. 35007"
+                                             disabled="{! v.form.isPostalCodeDisabled }"/>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+
+                    <lightning:layout class="slds-m-bottom_small">
+
+                        <!-- Additional Address Line -->
+                        <lightning:layoutItem size="12">
+                            <lightning:input type="text"
+                                             label="Additional Address Line"
+                                             value="{! v.additionalAddressLine }"
+                                             aura:id="input"
+                                             placeholder="e.g. Suite 500 or Building A, Floor 3"/>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+
+                    <lightning:layout class="slds-m-bottom_small">
+
+                        <!-- Multiple Shipping location -->
+                        <lightning:input type="checkbox"
+                                         label="Multiple Shipping Locations"
+                                         checked="{! v.multipleLocations }"
+                                         aura:id="input"
+                        />
+                        <c:Tooltip text="Order should not be automatically provisioned to the single shipping address provided. Please provide details in the Provisioning Details section."/>
+
+                    </lightning:layout>
+
+                    <lightning:layout class="slds-m-bottom_small">
+
+                        <!-- Ship Attention To -->
+                        <lightning:layoutItem size="8" padding="right-small">
+                            <lightning:input type="text"
+                                             label="Ship Attention To"
+                                             value="{! v.shipAttentionTo }"
+                                             aura:id="input"
+                                             required="{! v.required }"
+                                             placeholder="e.g. John Doe"
+                                             class="slds-p-right_small"/>
+                        </lightning:layoutItem>
+
+                        <!-- Shipping Option -->
+                        <lightning:layoutItem size="4">
+                            <c:SelectField sObjectName="Quote"
+                                           fieldName="Shipping_Option__c"
+                                           recordTypeName="Sales Quote"
+                                           required="{! v.required }"
+                                           onready="{! c.onShippingOptionReady }"
+                                           value="{! v.shippingOption }"/>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+                </div>
+
+                <footer class="slds-modal__footer slds-modal__footer_directional">
+                    <lightning:button type="button" label="Cancel" onclick="{! c.cancelLocationForm }"/>
+                    <lightning:button type="submit"
+                                      label="Apply"
+                                      variant="brand"/>
+                </footer>
+            </form>
+        </div>
+
+        <p class="slds-form-element__label">
+            <aura:if isTrue="{! v.required }">
+                <abbr class="slds-required" title="required">*</abbr>
+            </aura:if>
+            {! v.label }
+        </p>
+        <div class="{! join(' ', 'shipping-location-input slds-media slds-media_center slds-input slds-combobox__input input',
+                v.disabled ? 'input_disabled' : '')}"
+             onclick="{! c.openLocationForm }"
+             disabled="{! v.disabled }">
+
+            <!-- Location String -->
+            <div class="slds-media__body slds-grid">
+                <div class="value-string">
+                    <dl class="slds-list_horizontal slds-wrap">
+                        <!-- Customer Name -->
+                        <dt class="slds-item_label slds-text-color_weak slds-truncate slds-m-bottom_xx-small"
+                            title="Customer Name">
+                            Customer Name:
+                        </dt>
+                        <dd class="slds-item_detail slds-truncate customer-name-container" title="Customer Name">
+                            <aura:text value="{! v.form.customerName }"/>
+                        </dd>
+
+                        <!-- Address -->
+                        <dt class="slds-item_label slds-text-color_weak slds-m-bottom_xx-small"
+                            title="Address">
+                            Address:
+                        </dt>
+                        <dd class="slds-item_detail slds-truncate" title="Address">
+                            <aura:text value="{! v.form.locationString }"/>
+                        </dd>
+
+                        <!-- Ship Attention To -->
+                        <dt class="slds-item_label slds-text-color_weak slds-truncate slds-m-bottom_xx-small"
+                            title="Ship Attention To">
+                            Ship Attention To:
+                        </dt>
+                        <dd class="slds-item_detail slds-truncate" title="Ship Attention To">
+                            <aura:text value="{! v.form.shipAttentionTo }"/>
+                        </dd>
+
+                        <!-- Shipping Option -->
+                        <dt class="slds-item_label slds-text-color_weak slds-truncate slds-m-bottom_xx-small"
+                            title="Shipping Option">
+                            Shipping Option:
+                        </dt>
+                        <dd class="slds-item_detail slds-truncate" title="Shipping Option">
+                            <aura:text value="{! v.form.shippingOption }"/>
+                        </dd>
+
+                        <aura:if isTrue="{! v.value.multipleLocations }">
+                            <!-- Multiple Shipping Locations -->
+                            <dt class="slds-item_label slds-text-color_weak slds-truncate slds-m-bottom_xx-small"
+                                title="Multiple Shipping Locations">
+                                Multiple Shipping Locations:
+                            </dt>
+                            <dd class="slds-item_detail slds-truncate" title="Multiple Shipping Locations">
+                                <lightning:icon iconName="utility:check"
+                                                alternativeText="Multiple Shipping Locations"
+                                                size="xx-small"/>
+                            </dd>
+                        </aura:if>
+                    </dl>
+                </div>
+
+                <!-- Edit Location Button -->
+                <aura:if isTrue="{! not(v.disabled) }">
+                    <div class="slds-m-left_x-small edit-button" aura:id="editIcon">
+                        <lightning:buttonIcon iconName="utility:edit"
+                                              alternativeText="Edit Location"
+                                              variant="bare"
+                                              onclick="{! c.openLocationForm }"/>
+                    </div>
+                </aura:if>
+            </div>
+        </div>
+    </div>
+
+    <div class="{! join(' ', 'slds-backdrop shipping-backdrop', v.isOpen ? '' : 'slds-hide') }" style="{! v.backdropStyle }"></div>
+</aura:component>

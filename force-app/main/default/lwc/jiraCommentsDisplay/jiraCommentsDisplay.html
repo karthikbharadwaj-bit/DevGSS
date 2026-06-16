@@ -1,0 +1,51 @@
+<template>
+    <lightning-card title="Jira Comments" icon-name="standard:feedback">
+        <div class="slds-p-around_medium">
+            <template if:true={isLoading}>
+                <div class="slds-is-relative slds-p-vertical_medium">
+                    <lightning-spinner size="small" alternative-text="Loading Jira comments"></lightning-spinner>
+                </div>
+            </template>
+
+            <template if:true={error}>
+                <p class="slds-text-color_weak">Jira Comments is not accessible for your profile/recordtype</p>
+            </template>
+
+            <template if:true={showAccessMessage}>
+                <p class="slds-text-color_weak">{accessMessage}</p>
+            </template>
+
+            <template if:true={showCommentsTable}>
+                <lightning-datatable
+                    key-field="id"
+                    data={paginatedComments}
+                    columns={columns}
+                    hide-checkbox-column>
+                </lightning-datatable>
+
+                <template if:true={showPagination}>
+                    <div class="slds-m-top_medium slds-grid slds-grid_align-center">
+                        <lightning-button 
+                            label="Previous" 
+                            onclick={handlePrevious} 
+                            disabled={isFirstPage} 
+                            class="slds-m-right_small">
+                        </lightning-button>
+
+                        <lightning-button 
+                            label="Next" 
+                            onclick={handleNext} 
+                            disabled={isLastPage}>
+                        </lightning-button>
+                    </div>
+                </template>
+            </template>
+
+            <template if:true={hasNoComments}>
+                <div class="slds-text-align_center slds-p-top_medium">
+                    <p>No Jira comments found</p>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,75 @@
+<aura:component description="LookupItemList">
+    <!-- Shared Attributes -->
+    <aura:attribute name="iconCollection" type="String" default="standard" />
+    <aura:attribute name="icon" type="String" />
+    <aura:attribute name="iconSize" type="String" default="small" />
+    <aura:attribute name="searchResult" type="List" description="result return from apex" />
+    <aura:attribute name="currentLimit" type="Integer" description="Results to return within current search session"/>
+    <aura:attribute name="targetRect" type="Map" description="getBoundingClientRect result of HTML element on which the list is opened "/>
+    <aura:attribute name="isLoading" type="Boolean" default="false" />
+    <aura:attribute name="guid" type="Map" description="Lookup guid"/>
+    <aura:attribute name="listBoxHeight" type="String" />
+    <aura:attribute name="newRecordLabel" type="String" />
+    <aura:attribute name="newRecordLink" type="String" />
+
+    <!-- Component Attributes -->
+    <aura:attribute name="styles" type="String" default="" description="CSS styles to position list" />
+
+    <!-- Handlers -->
+    <aura:handler event="c:LookupEvent" action="{!c.lookupEventHandler}" />
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <div role="listbox" class="slds-is-open listbox listbox--hidden" style="{!v.styles}" aura:id="lookupItemList">
+
+        <ul aura:id="listbox"
+            style="{! 'height:'+ v.listBoxHeight + 'px'}"
+            class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-scrollable"
+            role="presentation">
+
+            <!-- no results -->
+            <li class="{! empty(v.searchResult) &amp;&amp; !v.isLoading ? 'slds-text-color_weak slds-p-vertical--small slds-text-align--center' : 'slds-hide'}">
+                No result
+            </li>
+
+            <!-- list results -->
+            <aura:iteration items="{!v.searchResult}" var="item" >
+                <c:LookupItem
+                        item="{!item}"
+                        icon="{!v.icon}"
+                        iconCollection="{!v.iconCollection}"
+                        iconSize="{!v.iconSize}"
+                        guid="{!v.guid}"/>
+            </aura:iteration>
+
+            <!-- load more -->
+            <li class="{!v.searchResult.length == v.currentLimit ? '' : 'slds-hide'}">
+                <button class="slds-button slds-p-vertical--xx-small slds-size--1-of-1 slds-p-left_medium"
+                        onmousedown="{!c.loadMore}">
+                    Load more
+                </button>
+            </li>
+
+            <!-- spinner -->
+            <li class="{!v.isLoading ? '' : 'slds-hide'}">
+                <div class="item-spinner">
+                    <div role="status" class="slds-spinner slds-spinner_small">
+                        <span class="slds-assistive-text">Loading</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+            </li>
+
+            <!-- New Record Link -->
+            <aura:if isTrue="{! v.newRecordLink }">
+                <li>
+                    <lightning:button class="slds-button slds-p-vertical--xx-small slds-size--1-of-1 slds-listbox__option slds-p-left_medium"
+                                      iconName="utility:add"
+                                      variant="base"
+                                      label="{! v.newRecordLabel }"
+                                      onclick="{! c.onNewRecordClick }"/>
+                </li>
+            </aura:if>
+        </ul>
+    </div>
+</aura:component>

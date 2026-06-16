@@ -1,0 +1,198 @@
+<aura:component controller="LookupController">
+
+    <!-- Public attributes -->
+    <aura:attribute name="label" type="String"/>
+    <aura:attribute name="value" type="String" description="Id of selected record"/>
+    <aura:attribute name="selectedValue" type="Map" description="Selected Value"/>
+    <aura:attribute name="searchText" type="String" default="" description=""/>
+    <aura:attribute name="method" type="String" description="Apex controller method name"/>
+    <aura:attribute name="sObjectName" type="String" description="sobject to search. Applied if v.method = getRecords"/>
+    <aura:attribute name="options" type="Map" default="{}" description="Params for apex method"/>
+    <aura:attribute name="iconCollection" type="String" default="standard"/>
+    <aura:attribute name="icon" type="String"/>
+    <aura:attribute name="iconSize" type="String" default="small"/>
+    <aura:attribute name="class" type="String"/>
+    <aura:attribute name="placeholder" type="String"/>
+    <aura:attribute name="searchResult" type="List" description="result return from apex"/>
+    <aura:attribute name="listIsRelative" type="Boolean"/>
+    <aura:attribute name="limit" type="Integer" default="5" description="How many results to return"/>
+    <aura:attribute name="disabled" type="Boolean" default="false"/>
+    <aura:attribute name="params" type="Map" default="{}" description="Additional parameters to send to apex method"/>
+    <aura:attribute name="onchange" type="Aura.Action" default="{!c.doNothing}"
+                    description="Callback when user selected new value"/>
+    <aura:attribute name="guid" type="Map" description="Lookup guid"/>
+    <aura:attribute name="required" type="Boolean"/>
+    <aura:attribute name="tooltipText" type="String"/>
+    <aura:attribute name="showRecordLink" type="String" default="false"/>
+    <aura:attribute name="newRecordLabel" type="String"/>
+    <aura:attribute name="newRecordLink" type="String"/>
+
+    <aura:attribute name="isLoading" type="Boolean" default="false"/>
+    <aura:attribute name="showSpinner" type="Boolean" default="false"/>
+    <aura:attribute name="loadMore" type="Boolean" default="false"/>
+    <aura:attribute name="listBoxHeight" type="Integer"/>
+    <aura:attribute name="timer" type="Object"/>
+
+    <!-- Private attributes -->
+    <aura:attribute name="currentLimit" type="Integer" description="Results to return within current search session"/>
+    <aura:attribute name="isRendered" type="Boolean" default="false"/>
+
+    <!-- System Event Handlers -->
+    <aura:handler name="init" value="{! this }" action="{! c.doInit }"/>
+
+    <!-- Event Handlers -->
+    <aura:handler event="c:LookupEvent" action="{! c.lookupEventHandler }"/>
+
+    <!-- Attribte Change Handlers -->
+    <aura:handler name="change" value="{!v.value }" action="{! c.valueChanged }"/>
+    <aura:handler name="change" value="{! v.searchResult }" action="{! c.searchResultChanged }"/>
+    <aura:handler name="change" value="{! v.isLoading }" action="{! c.isLoadingChanged }"/>
+    <aura:handler name="change" value="{! v.disabled }" action="{! c.disabledChanged }"/>
+
+    <!-- Registerd Events -->
+    <aura:registerEvent name="LookupEvent" type="c:LookupEvent"/>
+
+
+    <div class="{!v.class}">
+        <!-- Lookup -->
+        <div class="slds-form-element">
+
+            <!-- Label -->
+            <aura:if isTrue="{! not(empty(v.label)) }">
+                <label class="slds-form-element__label" for="combobox-unique-id">
+                    <aura:if isTrue="{!v.required}">
+                        <abbr class="slds-required" title="required" aura:id="emailReq">*</abbr>
+                    </aura:if>
+                    {!v.label}
+                    <aura:if isTrue="{!v.tooltipText}">
+                        <c:Tooltip text="{!v.tooltipText}"/>
+                    </aura:if>
+                </label>
+            </aura:if>
+
+            <!-- Input -->
+            <div class="slds-form-element__control">
+                <div
+                    class="{!join(' ', (v.selectedValue.Id ? 'slds-has-inline-listbox' : ''), 'slds-combobox_container')}"
+                    aura:id="comboboxContainer">
+                    <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-combobox-lookup"
+                         aria-expanded="false"
+                         aria-haspopup="listbox"
+                         role="combobox"
+                         aura:id="combobox">
+
+                        <!-- Selected -->
+                        <div class="{!!v.selectedValue.Id ?
+                            'slds-hide' :
+                            'slds-combobox__form-element slds-input-has-icon slds-input-has-icon_left-right'}"
+                             title="{!v.selectedValue.Text + '' +v.selectedValue.Meta}">
+
+                            <lightning:icon iconName="{!v.iconCollection+':'+v.icon}"
+                                            size="x-small"
+                                            class="slds-combobox__input-entity-icon"
+                                            alternativeText="{!v.icon}"/>
+
+                            <div class="slds-input slds-combobox__input">
+                                <aura:if isTrue="{! v.showRecordLink }">
+                                    <a target="_blank" href="{! '/' + v.selectedValue.Id}">{!v.selectedValue.Text}</a>
+                                    <aura:set attribute="else">
+                                        {!v.selectedValue.Text}
+                                    </aura:set>
+                                </aura:if>
+                            </div>
+
+                            <lightning:buttonIcon iconName="utility:close"
+                                                  variant="bare"
+                                                  class="{! join(' ',
+                                                      'slds-input__icon slds-input__icon_right',
+                                                      v.disabled ? 'slds-hide' : '' )}"
+                                                  alternativeText="Remove value"
+                                                  onclick="{!c.inputClear}"/>
+
+                            <aura:if isTrue="{! v.showSpinner }">
+                                <lightning:spinner size="small" class="inline-spinner" alternativeText="Loading..."/>
+                            </aura:if>
+                        </div>
+                        <!-- end Selected -->
+
+                        <!-- Empty -->
+                        <div class="{!v.selectedValue.Id ?
+                            'slds-hide' :
+                            'slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right'}">
+                            <lightning:input name="comboboxInput"
+                                             label="Combobox Input"
+                                             class="slds-combobox__input"
+                                             value="{!v.searchText}"
+                                             placeholder="{!v.placeholder}"
+                                             onfocus="{!c.inputFocus}"
+                                             onblur="{!c.inputBlur}"
+                                             onchange="{!c.search}"
+                                             disabled="{!v.disabled}"
+                                             autocomplete="off"
+                                             aura:id="comboboxInput"/>
+                            <input value="{!v.selectedValue.Id}" required="{!v.required}" title="Combobox Input"
+                                   class="require-checker-field"/>
+
+                            <lightning:buttonIcon iconName="utility:search"
+                                                  variant="bare"
+                                                  class="{! join(' ',
+                                                      'slds-input__icon slds-input__icon_right',
+                                                      v.disabled ? 'slds-hide' : '' )}"
+                                                  alternativeText="Search"
+                                                  onclick="{!c.inputSearch}"/>
+                        </div>
+                        <!-- end Empty -->
+
+                        <!-- Relative Listbox -->
+                        <aura:if isTrue="{!v.listIsRelative}">
+
+                            <div role="listbox">
+
+                                <ul aura:id="listbox"
+                                    style="{! 'height:'+ v.listBoxHeight + 'px'}"
+                                    class="'slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-scrollable slds-is-relative'"
+                                    role="presentation">
+
+                                    <!-- no results -->
+                                    <li class="{! empty(v.searchResult) &amp;&amp; !v.isLoading ? 'slds-text-color_weak slds-p-vertical--small slds-text-align--center' : 'slds-hide'}">
+                                        No result
+                                    </li>
+
+                                    <!-- list results -->
+                                    <aura:iteration items="{!v.searchResult}" var="item">
+                                        <c:LookupItem item="{!item}" icon="{!v.icon}"
+                                                      iconCollection="{!v.iconCollection}"
+                                                      iconSize="{!v.iconSize}"/>
+                                    </aura:iteration>
+
+                                    <!-- load more -->
+                                    <li class="{!v.searchResult.length == v.currentLimit ? '' : 'slds-hide'}">
+                                        <button class="slds-button slds-p-vertical--xx-small slds-size--1-of-1 slds-p-left_medium"
+                                                onmousedown="{!c.loadMore}">
+                                            Load more
+                                        </button>
+                                    </li>
+
+                                    <!-- spinner -->
+                                    <li class="{!v.isLoading ? '' : 'slds-hide'}">
+                                        <div class="item-spinner">
+                                            <div role="status" class="slds-spinner slds-spinner_small">
+                                                <span class="slds-assistive-text">Loading</span>
+                                                <div class="slds-spinner__dot-a"></div>
+                                                <div class="slds-spinner__dot-b"></div>
+                                            </div>
+                                        </div>
+                                    </li>
+
+                                </ul>
+                            </div>
+
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end Lookup -->
+    </div>
+
+</aura:component>

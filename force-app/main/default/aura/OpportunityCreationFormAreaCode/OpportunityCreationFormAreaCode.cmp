@@ -1,0 +1,73 @@
+<aura:component description="OpportunityCreationFormAreaCode">
+    <aura:attribute name="areaCode" type="Object"/>
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="index" type="Integer"/>
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="removeAreaCode" type="c:ComponentEvent"/>
+    <aura:registerEvent name="areaCodeQuantityChange" type="c:ComponentEvent"/>
+
+    <tr>
+        <!-- Buffer Show Details button -->
+        <td></td>
+        <td></td>
+
+        <!-- Area Code -->
+        <th scope="row" data-label="Area Code">
+            <div class="slds-truncate" title="Area Code">
+                <div class="{! join(' ', 'slds-form-element',
+                    and(v.app, v.areaCode.isMissingAreaCodeErrorShown) ? 'slds-has-error': '') }">
+                    <c:Lookup placeholder="Start typing to search Area Code"
+                              method="getAreaCodes"
+                              iconCollection="custom"
+                              icon="custom64"
+                              onchange="{! c.userChangedAreaCode }"
+                              params="{! v.areaCode.areaCodeLookupParams }"
+                              value="{! v.areaCode.areaCodeInput.value }"
+                              selectedValue="{! v.areaCode.areaCodeInput.valueObj }"
+                              aura:id="areaCode"/>
+
+                    <!-- Errors -->
+                    <aura:if isTrue="{! and(v.app, v.areaCode.isMissingAreaCodeErrorShown) }">
+                        <div class="slds-has-error">
+                            <p class="slds-form-element__help">
+                                Please populate Area Code or delete record
+                            </p>
+                        </div>
+                    </aura:if>
+                </div>
+            </div>
+        </th>
+
+        <td colspan="4"></td>
+
+        <!-- Quantity -->
+        <td data-label="Quantity" class="col__qty">
+            <div class="slds-truncate" title="Quantity">
+
+                <lightning:input label="Quantity"
+                                 type="Number"
+                                 variant="label-hidden"
+                                 value="{! v.areaCode.quantityInput.value }"
+                                 min="{! v.areaCode.quantityInput.min }"
+                                 step="1"
+                                 class="slds-show_inline-block quantity-input"
+                                 aura:id="quantityInput"
+                                 onchange="{! c.onQuantityInputChange }"
+                                 onblur="{! c.onQuantityInputBlur }"/>
+
+            </div>
+        </td>
+
+        <td class="col__selected">
+            <div class="slds-truncate" title="Delete Area Code">
+                <lightning:buttonIcon iconName="utility:delete"
+                                      variant="bare"
+                                      size="medium"
+                                      alternativeText="Delete Area Code"
+                                      aura:id="deleteButton"
+                                      onclick="{! c.removeAreaCode }"/>
+            </div>
+        </td>
+    </tr>
+</aura:component>

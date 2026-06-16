@@ -1,0 +1,189 @@
+<!-- 
+*LWC Component Name	: recordSearcher
+
+*Description 	: Search for accounts, contacts, opportunities irrespective of the access of the user.
+                The component will fetch all the records with system mode. 
+                Linked apex class to this component is recordSearchController 
+                Used Lightning Table to display the records.
+                This component is available in the homepage.
+                    
+*Developer Name 	: Manovasanth Balasankar
+Modification History:
+*--------------------------------------------------------------------------------------------------------------------
+Date              User Story#                   Developer Name                    Changes done
+*-------------------------------------------------------------------------------------------------------------------
+11/03/2022         CRM 4864                   Manovasanth Balasankar            New LWC
+-->
+<template>
+	<template if:true={isModalOpen}>
+		<!-- Modal/Popup Box LWC starts here -->
+		<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+			<div class="slds-modal__container">
+				<!-- Modal/Popup Box LWC header here -->
+				<header class="slds-modal__header">
+					<button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+	                      <lightning-icon icon-name="utility:close"
+	                          alternative-text="close"
+	                          variant="inverse"
+	                          size="small" ></lightning-icon>
+	                      <span class="slds-assistive-text">Close</span>
+	                  </button>
+					<h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Account Hierarchy</h2>
+				</header>
+				<!-- Modal/Popup Box LWC body starts here -->
+				<div class="slds-modal__content " id="modal-content-id-1">
+					
+						<c-account-Hierarchy-Table recid={currentRecordId}></c-account-Hierarchy-Table>
+				</div>
+				<!-- Modal/Popup Box LWC footer starts here -->
+				<footer class="slds-modal__footer">
+					<button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel">Cancel</button>
+					<button class="slds-button slds-button_brand" onclick={closeModal} title="OK">OK</button>
+				</footer>
+			</div>
+		</section>
+		<div class="slds-backdrop slds-backdrop_open blackscreen" id="backdrop"></div>
+	</template>
+	<article class="slds-card">
+		<div class="slds-card__header slds-grid">
+			<header class="slds-media slds-media_center slds-has-flexi-truncate">
+				<div class="slds-media__figure">
+					<lightning-icon icon-name="standard:record_lookup" alternative-text="record_lookup"
+						title="record_lookup"></lightning-icon>
+					<!-- <span class="slds-icon_container slds-icon-standard-account" title="Search for Account, Contact and Opportunity here">
+	                <svg class="slds-icon slds-icon_small" aria-hidden="true">
+	                  <use xlink:href="/assets/icons/standard-sprite/svg/symbols.svg#account"></use>
+	                </svg>
+	                <span class="slds-assistive-text"></span>
+	              </span> -->
+				</div>
+				<div class="slds-media__body">
+					<h2 class="slds-card__header-title">
+	
+						<span class="slds-text-heading_small">Account/Ownership Lookup</span>
+	
+					</h2>
+				</div>
+			</header>
+		</div>
+		
+		<div class="slds-card__body slds-card__body_inner">
+			<div class="slds-grid slds-gutters slds-m-around_medium">
+				<div class="slds-col slds-size_2-of-6">
+					<lightning-input name="input1" value={onChangeInput} onchange={handleChangeSearchTerm} placeholder="Search here"
+						type="text"></lightning-input>
+				</div>
+				<div class="slds-col slds-size_2-of-6">
+					<button type="button"  disabled = {disableButton} onclick={handleClick}  class="slds-button slds-m-top_medium slds-button_neutral">Search</button>
+	
+				</div>
+			</div>
+			
+
+	
+			
+			<template if:true={searchTerm}>
+					<lightning-tabset>
+						<lightning-tab key={accountRecords.columnName} label={accountRecords.columnName}>
+							<template if:true={accountRecords.data}>
+								<template if:true={accountRecords.data.length}>
+									<c-lightning-Table-Pagination records={accountRecords.data} show-table="true"
+										columns={accountRecords.columns} recordsperpage="100" hide-check-box="true" onactions={handleRowAction}
+										onpagination={handlePagination}></c-lightning-Table-Pagination>
+								</template>
+							</template>
+							<template if:false={accountRecords.isloading}>
+								<template if:false={accountRecords.data.length}>
+									<h1 class="slds-align_absolute-center slds-m-around_x-large">Account records not found...</h1>
+								</template>
+							</template>
+							<template if:false={accountRecords.isloading}>
+								<template if:true={accountRecords.error}>
+									<h1 class="slds-align_absolute-center slds-m-around_x-large">{accountRecords.error.body.message}</h1>
+								</template>
+							</template>
+							<template if:true={accountRecords.isloading}>
+								<div class="demo-only" style="height:6rem;position:relative">
+									<div class="slds-spinner_container">
+										<div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+											<span class="slds-assistive-text">Loading</span>
+											<div class="slds-spinner__dot-a"></div>
+											<div class="slds-spinner__dot-b"></div>
+										</div>
+									</div>
+								</div>
+							</template>
+						</lightning-tab>
+							<lightning-tab key={opportunityRecords.columnName} label={opportunityRecords.columnName}>
+								<template if:true={opportunityRecords.data}>
+									<template if:true={opportunityRecords.data.length}>
+										<c-lightning-Table-Pagination records={opportunityRecords.data} show-table="true"
+											columns={opportunityRecords.columns} recordsperpage="100" hide-check-box="true"
+											onactions={handleRowAction} onpagination={handlePagination}></c-lightning-Table-Pagination>
+									</template>
+								</template>
+								<template if:false={opportunityRecords.isloading}>
+									<template if:false={opportunityRecords.data.length}>
+										<h1 class="slds-align_absolute-center slds-m-around_x-large">Opportunity records not found...</h1>
+									</template>
+								</template>
+								<template if:false={opportunityRecords.isloading}>
+									<template if:true={opportunityRecords.error}>
+										<h1 class="slds-align_absolute-center slds-m-around_x-large">{accountRecords.error.body.message}</h1>
+									</template>
+								</template>
+								<template if:true={opportunityRecords.isloading}>
+									<div class="demo-only" style="height:6rem;position:relative">
+										<div class="slds-spinner_container">
+											<div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+												<span class="slds-assistive-text">Loading</span>
+												<div class="slds-spinner__dot-a"></div>
+												<div class="slds-spinner__dot-b"></div>
+											</div>
+										</div>
+									</div>
+								</template>
+							</lightning-tab>
+							<lightning-tab key={contactRecords.columnName} label={contactRecords.columnName}>
+								<template if:true={contactRecords.data}>
+									<template if:true={contactRecords.data.length}>
+										<c-lightning-Table-Pagination records={contactRecords.data} show-table="true"
+											columns={contactRecords.columns} recordsperpage="100" hide-check-box="true" onactions={handleRowAction}
+											onpagination={handlePagination}></c-lightning-Table-Pagination>
+									</template>
+								</template>
+								<template if:false={contactRecords.isloading}>
+									<template if:false={contactRecords.data.length}>
+										<h1 class="slds-align_absolute-center slds-m-around_x-large">Contact records not found...</h1>
+									</template>
+								</template>
+								<template if:false={contactRecords.isloading}>
+									<template if:true={contactRecords.error}>
+										<h1 class="slds-align_absolute-center slds-m-around_x-large">{accountRecords.error.body.message}</h1>
+									</template>
+								</template>
+								<template if:true={contactRecords.isloading}>
+									<div class="demo-only" style="height:6rem;position:relative">
+										<div class="slds-spinner_container">
+											<div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+												<span class="slds-assistive-text">Loading</span>
+												<div class="slds-spinner__dot-a"></div>
+												<div class="slds-spinner__dot-b"></div>
+											</div>
+										</div>
+									</div>
+								</template>
+							</lightning-tab>
+					</lightning-tabset>
+					
+
+					
+				
+			</template>
+			
+		</div>
+		
+	</article>
+
+</template>

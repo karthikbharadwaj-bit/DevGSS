@@ -1,0 +1,179 @@
+<template>  
+    <div class="container">
+        <div class="slds-grid slds-wrap slds-gutters">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_3-of-12">
+                <div class="slds-box slds-p-around_medium fixed-filters">
+
+                    <div class="filter_container">
+                        <lightning-combobox
+                            label="Chart data: "
+                            value='{applyingFilters.dataType}'
+                            options={chartsDataTypeOptions}
+                            onchange={handleDataTypeFilterChange}
+                        ></lightning-combobox>
+                    </div>
+                    <div class="filter_container">
+                        <lightning-combobox
+                            label="Date Filter: "
+                            value={applyingFilters.dateOption}
+                            options={dateFilterOptions}
+                            onchange={handleDateFilterChange}
+                        ></lightning-combobox>
+                    </div>
+                    <div class="inner_filter">
+                        <template if:true={showYearOptions}>
+                            <lightning-combobox
+                                label="From"
+                                value={applyingFilters.dateRangeFrom}
+                                options={yearFromOptions}
+                                onchange={handleYearFromFilterChange}
+                            ></lightning-combobox>
+                        </template>
+                    </div>
+                    <div class="inner_filter">
+                        <template if:true={showYearOptions}>
+                            <lightning-combobox
+                                label="To"
+                                value={applyingFilters.dateRangeTo}
+                                options={yearToOptions}
+                                onchange={handleYearToFilterChange}
+                            ></lightning-combobox>
+                        </template>
+                    </div>
+                    <div class="multiselect_filter">
+                        <c-multi-select-combobox
+                            label="Opportunity Brand"
+                            name="brandOptions"
+                            select-all-option=true
+                            options={brandOptions}
+                            onchange={handleBrandChange}
+                        ></c-multi-select-combobox>
+                    </div>
+                    <div class="multiselect_filter">
+                        <c-multi-select-combobox
+                            label="Opportunity Type"
+                            name="typeOptions"
+                            select-all-option=true
+                            options={typeOptions}
+                            onchange={handleTypeChange}
+                        ></c-multi-select-combobox>
+                    </div>
+                    <div class="multiselect_filter">
+                        <c-multi-select-combobox
+                            label="Opportunity Record Type"
+                            name="oppRecordTypeOptions"
+                            select-all-option=true
+                            options={oppRecordTypeOptions}
+                            onchange={handleOppRecordTypeChange}
+                        ></c-multi-select-combobox>
+                    </div>
+                    <div class="multiselect_filter">
+                        <c-multi-select-combobox
+                            label="Account Segment"
+                            name="accountSegmentOptions"
+                            select-all-option=true
+                            options={accountSegmentOptions}
+                            onchange={handleSegmentChange}
+                        ></c-multi-select-combobox>
+                    </div>
+                    <div class="filter_container">
+                        <div class="slds-form-element slds-p-around_small">
+                            <div class="slds-grid slds-grid_vertical-align-center">
+                                <label class="slds-checkbox">
+                                    <input type="checkbox" onchange={handleShowNDaysCheckboxChange} checked={applyingFilters.lastNDaysApply}></input>
+                                    <span class="slds-checkbox_faux"></span>
+                                </label>
+                                <span class="slds-form-element__label filter-text">Show only quotes closed at the last</span>
+                                <div class="select_container ">
+                                    <select onchange={handleNDaysChange}>
+                                        <template for:each={nDaysOptions} for:item="o">
+                                            <option value={o.value} key={o.label} selected={o.selected}>{o.label}</option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <span class="slds-form-element__label filter-text">days of</span>
+                                <div class="select_container">
+                                    <select onchange={handleMonthQuarterChange}>
+                                        <option value="month">Month</option>
+                                        <option value="quarter" selected>Quarter</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-align_absolute-center slds-m-top_medium">
+                        <div class="slds-grid slds-gutters">
+                            <div class="slds-col">
+                                <button class={clearButtonClass} onclick={handleClearFilters} disabled={isClearDisabled}>Clear</button>
+                            </div>
+                            <div class="slds-col">
+                                <button class={applyButtonClass} onclick={handleApplyFilters} disabled={isApplyDisabled}>Apply Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Charts -->
+            <div class="slds-col slds-size_1-of-1 slds-large-size_9-of-12">
+                
+                <template if:true={isLoading}>
+                    <div class="slds-spinner_container">
+                        <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </template>
+
+                <template if:false={isLoading}>
+                    <div class="slds-grid slds-wrap slds-gutters scrollable-charts">
+                        <div class="slds-col slds-size_1-of-1 chart-card">
+                            <lightning-card icon-name="utility:graph">
+                                <h3 slot="title">Number of quotes without approvals</h3>
+                                <c-chart-builder 
+                                    if:true={displayChart}
+                                    chart-data={chartsDataBuilder.chartDataQuotesNumberWithoutApprovals}
+                                    percentage-sizes={defaultPercentageSizes}>
+                                </c-chart-builder>
+                            </lightning-card>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 chart-card">
+                            <lightning-card icon-name="utility:graph">
+                                <h3 slot="title">Number of quotes with approvals</h3>
+                                <c-chart-builder 
+                                    if:true={displayChart}
+                                    chart-data={chartsDataBuilder.chartDataQuotesNumberWithApprovals}
+                                    percentage-sizes={defaultPercentageSizes}>
+                                </c-chart-builder>
+                            </lightning-card>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 chart-card">
+                            <lightning-card icon-name="utility:graph">
+                                <h3 slot="title">Time to quote without approvals</h3>
+                                <c-chart-builder
+                                    if:true={displayChart}
+                                    chart-data={chartsDataBuilder.chartDataTimeToQuoteWithoutApprovals}
+                                    percentage-sizes={defaultPercentageSizes}>
+                                </c-chart-builder>
+                            </lightning-card>
+                        </div>
+                        <div class="slds-col slds-size_1-of-1 chart-card">
+                            <lightning-card icon-name="utility:graph">
+                                <h3 slot="title">Time to quote with approvals</h3>
+                                <c-chart-builder
+                                    if:true={displayChart}
+                                    chart-data={chartsDataBuilder.chartDataTimeToQuoteWithApprovals}
+                                    percentage-sizes={defaultPercentageSizes}>
+                                </c-chart-builder>
+                            </lightning-card>
+                        </div>
+                        
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,1255 @@
+<aura:component
+    implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+    access="global" controller="PartnerLeads">
+    <!-- INIT METHOD -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:registerEvent type="c:ModalRequestEvent" name="responseModal" />
+
+    <aura:attribute name="currentUser" type="PartnerLeads.UserInfoWrapper" />
+
+    <aura:attribute name="leadList" type="Lead[]" />
+    <aura:attribute name="partnerAccounts" type="List" />
+    <aura:attribute name="selectedValue" type="string" access="public" />
+    <aura:attribute name="ShowListView" type="boolean" default="true" />
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="Message" type="boolean" default="false" />
+    <aura:attribute name="recordID" type="String" />
+    <aura:attribute name="leadRecord" type="Lead" />
+    <aura:attribute name="duplicateIdList" type="String[]" />
+    <aura:attribute name="showMitelShare" type="boolean" /><!--PBC-9705 P2CSharing-->
+    <aura:attribute name="ShowComponentButtons" type="boolean" default="false" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" />
+    <aura:attribute name="ShowConvertedSection" type="boolean" default="false" />
+    <aura:attribute name="viewAll" type="boolean" default="false" />
+
+    <!-- PAGINATION ATTRIBUTES -->
+    <aura:attribute name="pageNumber" type="integer" default="1" />
+    <aura:attribute name="totalPages" type="integer" default="0" />
+    <aura:attribute name="totalRecords" type="integer" default="0" />
+    <aura:attribute name="recordStart" type="integer" default="0" />
+    <aura:attribute name="recordEnd" type="integer" default="0" />
+
+    <!-- DISPLAY SPINNER -->
+    <aura:attribute name="ShowSpinnerLead" type="boolean" default="true" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+
+    <aura:attribute name="partnerAccountName" type="String" />
+
+    <aura:attribute name="ShowConAcc" type="boolean" default="false" />
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false" />
+    <aura:attribute name="isReadOnly" type="boolean" default="true" />
+    <aura:attribute name="RespectiveTabURL" type="string" />
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false" />
+    <aura:attribute name="ShowAvayaAus" type="boolean" default="false" />
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    <aura:attribute name="CountryReq" type="boolean" default="false" />
+    <aura:attribute name="isAvaya" type="boolean" default="false" />
+    <aura:attribute name="isLeadConvertAvailable" type="boolean" default="false" />
+    <aura:attribute name="isIgniteDisabledBrand" type="boolean" default="false" />
+
+    <aura:attribute name="searchBy" type="String" default="Company" />
+    <aura:attribute name="searchKeyword" type="String" />
+    <aura:attribute name="showLeadRequestConv" type="boolean" default="false" />
+
+    <!-- COUNTRY STATE ATTRIBUTES -->
+    <aura:attribute name="countriesAvailable" type="String[]" />
+    <aura:attribute name="mapCountryKeys" type="object" />
+    <aura:attribute name="mapCountryValueKeys" type="String[]" />
+    <aura:attribute name="mapData" type="Map" />
+
+    <aura:attribute name="mapDataBrand" type="Map" />
+
+    <aura:attribute name="partnerCommunity" type="List" />
+    <aura:attribute name="OpportunityURLLink" type="string" />
+
+    <aura:attribute name="mapCompData" type="Map" />
+    <aura:attribute name="mapCountryCompKeys" type="object" />
+    <aura:attribute name="mapCountryCompValKeys" type="List" />
+    <aura:attribute name="selectedCompItems" type="List" default="[]" />
+
+    <aura:attribute name="mapEmpData" type="Map" />
+    <aura:attribute name="mapEmpCompKeys" type="object" />
+    <aura:attribute name="mapEmpCompValKeys" type="List" />
+
+    <aura:attribute name="communityDetailsRecord" type="Object" />
+    <aura:attribute name="isInvalidUsers" type="boolean" default="false" />
+
+    <aura:handler name="populatePartnerEvent" event="c:Partner_SearchContactEvent"
+                  action="{!c.handlePartnerComponentEvent}" />
+    <aura:attribute name="partnerhasAllCntryAcess" type="boolean" default="true" />
+
+    <!-- Avaya Cloud Specialist Assignment-->
+    <aura:handler name="cloudSpecialistValueEvent" event="c:Partner_CloudSpecialistSearchEvent"
+                  action="{!c.handleCloudSpecialistEvent}" />
+    <aura:attribute name="cloudSpecialistContactId" type="String" />
+
+    <!-- Added for multiple countries in ACO 3.0 -->
+    <aura:attribute name="partnerAvailableCountries" type="String[]" />
+
+    <aura:attribute name="tierNames" type="List" default="['Office']" />
+    <aura:attribute name="ShowOnlyAtos" type="boolean" default="false" />
+
+    <aura:attribute name="RCMeetings" type="boolean" default="false" />
+    <aura:attribute name="Est12MPriceStd" type="string" />
+    <aura:attribute name="Est12MPriceRCMeetings" type="string" />
+
+    <aura:attribute name="leadFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+
+    <aura:if isTrue="{!v.ShowSpinnerLead}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide"
+                                   size="medium" />
+            </div>
+        </div>
+    </aura:if>
+    <!-- LIST VIEW START -->
+    <aura:if isTrue="{!v.ShowListView}">
+        <div>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                        title="Leads">
+                        <lightning:icon iconName="standard:lead" />
+                        <b> &nbsp;{!v.translationsMap.Leads}</b></h1>
+                </div>
+                <!--TOGGLE FILTER BY SECTION-->
+                <aura:if isTrue="{!v.ShowConAcc}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5 slds-p-top_small slds-p-left_small">
+                        <div class="slds-grid slds-grid_align-left">
+                            <div class="slds-col slds-grow-none durationtoggle">
+                                <div class="slds-grid togglewrap">
+                                    <label for="filterType" class="slds-form-element__label
+                                                                   slds-grid_align-center">{!v.translationsMap.Filter_By}
+                                        : </label>
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                         &nbsp; {!v.translationsMap.Partner_Account}
+                                    </span>
+                                    <lightning:input aura:id="filterType" type="toggle"
+                                                     name="filterAccounts" checked="{!v.viewAll}"
+
+                                                     onchange="{!c.toggleFilterBy}" />
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                        &nbsp; {!v.translationsMap.All_Accounts}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5">
+
+                    </div>
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5">
+
+                    </div>
+                </aura:if>
+
+                <!--PARTNER ACCOUNT SECTION-->
+                <aura:if isTrue="{!!v.viewAll}">
+                    <aura:if isTrue="{!v.ShowConAcc}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+
+                            <label for="partnerAccountIdDiv"
+                                   class="slds-form-element__label">{!v.translationsMap.View_Records_by_Partner}
+                                :</label>
+
+                            <lightning:buttonIcon iconName="utility:search" variant="bare"
+                                                  onclick="{!c.createAccountLookup}"
+                                                  alternativeText="Please choose a Partner Account" />
+                            <div id="partnerAccountIdDiv"
+                                 class="slds-p-top_x-small slds-box slds-box_xx-small slds-truncate box-height">
+                                {!v.partnerAccountName}
+                            </div>
+                        </div>
+                    </aura:if>
+                </aura:if>
+                <!--LEADS PER PAGE-->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                    <lightning:input label="{!v.translationsMap.Keyword}" value="{!v.searchKeyword}"
+                                     placeholder="{!v.translationsMap.search_placeholder +'...'}"
+                                     aura:id="searchField" />
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                    <lightning:select name="searchBy" value="{!v.searchBy}" label="{!v.translationsMap.Search_by +':'}">
+                        <option value="Company">{!v.translationsMap.Name}</option>
+                        <option value="Status">{!v.translationsMap.Status}</option>
+                        <option value="Name">{!v.translationsMap.Contact_Name}</option>
+                        <option value="Number_of_Users__c">{!v.translationsMap.Number_Of_Users}</option>
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <option value="Owner.Name">{!v.translationsMap.Lead_Owner}</option>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <option value="Owner.Name">Lead Owner/Concierge Rep</option>
+                        </aura:if>
+                        <!-- Added Rainbow Office condition for ALE -->
+                        <aura:if
+                            isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                            <option
+                                value="Portal_Cloud_Specialist__r.Name">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</option>
+                        </aura:if>
+                        <option value="Country__c">{!v.leadFieldsMap.Country__c}</option>
+                        <option value="State__c">{!v.translationsMap.State}</option>
+                        <aura:if isTrue="{!v.isSingleLogin}">
+                            <option value="Partner_Account__r.Partner_ID__c">{!v.translationsMap.Partner_ID}</option>
+                            <option value="Partner_Account__r.name">{!v.translationsMap.Partner_Name}</option>
+                        </aura:if>
+                    </lightning:select>
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium searchBtnWrap">
+                    <lightning:button onclick="{!c.doFilterSearch}"
+                                      variant="brand"
+                                      label="{!v.translationsMap.Search}" iconName="utility:search" />
+                </div>
+                <aura:if isTrue="{!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium" />
+                </aura:if>
+                <aura:if isTrue="{!!v.ShowConAcc}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium" />
+                </aura:if>
+                <aura:if isTrue="{!!v.viewAll}">
+                    <div
+                        class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium slds-float_right">
+                        <lightning:select aura:id="pageSize" label="{!v.translationsMap.Display_Leads_Per_Page+':'}"
+                                          onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true" />
+                            <option text="100" value="100" />
+                            <option text="150" value="150" />
+                            <option text="200" value="200" />
+                        </lightning:select>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!v.viewAll}">
+                    <div
+                        class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium slds-float_right">
+                        <lightning:select aura:id="pageSizeForAll"
+                                          label="{!v.translationsMap.Display_Leads_Per_Page +':'}"
+                                          onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true" />
+                            <option text="100" value="100" />
+                            <option text="150" value="150" />
+                            <option text="200" value="200" />
+                        </lightning:select>
+                    </div>
+                </aura:if>
+            </div>
+        </div>
+        <!-- MESSAGE -->
+        <aura:if isTrue="{!v.Message}">
+            <div class="errorMessageDiv">
+                <div class="slds-is-relative errorMessageDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        <!-- LIST OF RECORDS -->
+        <aura:if isTrue="{!!v.Message}">
+            <div class="slds-m-around_xx-small slds-wrap">
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                    <thead>
+                    <tr>
+                        <th scope="col" style="width:14rem;">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.Company_Name}">{!v.translationsMap.Company_Name}</div>
+                            </strong>
+                        </th>
+                        <th scope="col">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.Status}">{!v.translationsMap.Status}</div>
+                            </strong>
+                        </th>
+                        <th scope="col">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.Contact_Name}">{!v.translationsMap.Contact_Name}</div>
+                            </strong>
+                        </th>
+                        <th scope="col">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.Number_Of_Users}">{!v.translationsMap.Number_Of_Users}</div>
+                            </strong>
+                        </th>
+
+                        <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate"
+                                         title="{!v.translationsMap.Partner_Account}">{!v.translationsMap.Partner_Account}</div>
+                                </strong>
+                            </th>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate"
+                                         title="{!v.translationsMap.Partner_ID}">{!v.translationsMap.Partner_ID}</div>
+                                </strong>
+                            </th>
+                            <aura:if isTrue="{!v.ShowConAcc}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate"
+                                             title="{!v.translationsMap.Partner_Contact}">{!v.translationsMap.Partner_Contact}</div>
+                                    </strong>
+                                </th>
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate"
+                                         title="{!v.translationsMap.Lead_Owner}">{!v.translationsMap.Lead_Owner}</div>
+                                </strong>
+                            </th>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="Lead Owner/Concierge Rep">Lead Owner/Concierge
+                                        Rep
+                                    </div>
+                                </strong>
+                            </th>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="Ignite AE">Ignite AE</div>
+                                </strong>
+                            </th>
+                        </aura:if>
+                        <!-- Added Rainbow Office condition for ALE -->
+                        <aura:if
+                            isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate"
+                                         title="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">{!v.PRMSpecificTranslationsMap.Portal_Cloud_Specialist}</div>
+                                </strong>
+                            </th>
+                        </aura:if>
+                        <!-- condition Added for ALE -->
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate"
+                                         title="{!v.leadFieldsMap.Country__c}">{!v.leadFieldsMap.Country__c}</div>
+                                </strong>
+                            </th>
+                        </aura:if>
+                        <th scope="col">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.State}">{!v.translationsMap.State}</div>
+                            </strong>
+                        </th>
+                        <th scope="col">
+                            <strong>
+                                <div class="slds-truncate"
+                                     title="{!v.translationsMap.Created_Date}">{!v.translationsMap.Created_Date}</div>
+                            </strong>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <aura:iteration items="{!v.leadList}" var="lead">
+                        <tr>
+                            <th scope="row" data-label="Company" style="width:14rem;">
+                                <div class="slds-truncate" title="{!lead.Company}"
+                                     data-value="{!lead.Id}">
+                                    <a href="{!v.RespectiveTabURL +'?id=' +lead.Id}">
+                                        {!lead.Company}
+                                    </a>
+                                </div>
+                            </th>
+                            <th scope="row" data-label="Status">
+                                <div class="slds-truncate" title="{!lead.Status}">
+                                    {!lead.Status}
+                                </div>
+                            </th>
+                            <th scope="row" data-label="Contact">
+                                <div class="slds-truncate" title="{!lead.Name}">
+                                    {!lead.Name}
+                                </div>
+                            </th>
+                            <th scope="row" data-label="Forecasted Users">
+                                <div class="slds-truncate" title="{!lead.Number_of_Users__c}">
+                                    {!lead.Number_of_Users__c}
+                                </div>
+                            </th>
+                            <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                <th scope="row" data-label="Partner Account">
+                                    <div class="slds-truncate" title="{!lead.PartnerAccount}">
+                                        {!lead.PartnerAccount}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="PartnerId">
+                                    <div class="slds-truncate" title="{!lead.PartnerId}">
+                                        {!lead.PartnerId}
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{!v.ShowConAcc}">
+                                    <th scope="row" data-label="Partner Contact">
+                                        <div class="slds-truncate" title="{!lead.PartnerContact}">
+                                            {!lead.PartnerContact}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                            </aura:if>
+                            <th scope="row" data-label="Lead Owner">
+                                <div class="slds-truncate" title="{!lead.Owner.Name}">
+                                    {!lead.Owner.Name}
+                                </div>
+                            </th>
+                            <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <th scope="row" data-label="Ignite AE">
+                                    <div class="slds-truncate" title="{!lead.Ignite_AE__r.Full_Name__c}">
+                                        {!lead.Ignite_AE__r.Full_Name__c}
+                                    </div>
+                                </th>
+                            </aura:if>
+                            <!-- Added Rainbow Office condition for ALE -->
+                            <aura:if
+                                isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                                <th scope="row" data-label="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">
+                                    <div class="slds-truncate" title="{!lead.PortalCloudSpecialist}">
+                                        {!lead.PortalCloudSpecialist}
+                                    </div>
+                                </th>
+                            </aura:if>
+                            <!-- Added for ALE -->
+                            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                <th scope="row" data-label="Country">
+                                    <div class="slds-truncate" title="{!lead.Country__c}">
+                                        {!lead.Country__c}
+                                    </div>
+                                </th>
+                            </aura:if>
+                            <th scope="row" data-label="State">
+                                <div class="slds-truncate" title="{!lead.State__c}">
+                                    {!lead.State__c}
+                                </div>
+                            </th>
+                            <th scope="row" data-label="Created Date">
+                                <div class="slds-truncate">
+                                    <lightning:formattedDateTime value="{!lead.CreatedDate}"
+                                                                 month="numeric"
+                                                                 day="numeric"
+                                                                 year="numeric"
+                                                                 hour="2-digit"
+                                                                 minute="2-digit"
+                                                                 timeZone="{!$Locale.timezone}" />
+                                </div>
+                            </th>
+                        </tr>
+                    </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <!--PREVIOUS/NEXT-->
+            <div class="slds-clearfix">
+                <div class="slds-float_right">
+                    <lightning:button disabled="{!v.pageNumber == 1}"
+                                      variant="brand" aura:id="prevPage"
+                                      label="{!v.translationsMap.Previous}" onclick="{!c.handlePrev}"
+                                      iconName="utility:chevronleft" iconPosition="left" />
+                    <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                      aura:id="nextPage" variant="brand"
+                                      label="{!v.translationsMap.Next}" onclick="{!c.handleNext}"
+                                      iconName="utility:chevronright" iconPosition="right" />
+                </div>
+                <p class="slds-truncate">{!v.translationsMap.Displaying}&nbsp;{!v.recordStart}-{!v.recordEnd}
+                    &nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalRecords} | {!v.translationsMap.Page}
+                    &nbsp;{!v.pageNumber}&nbsp;{!v.translationsMap.Of}&nbsp; {!v.totalPages}</p>
+            </div>
+        </aura:if>
+    </aura:if>
+    <!--LEAD DETAIL SECTION-->
+    <aura:if isTrue="{!v.ShowRecordDetail}">
+        <lightning:recordEditForm
+            aura:id="editRecordForm"
+            onsubmit="{!c.handleSubmit}"
+            onsuccess="{!c.handleSuccessNew}"
+            onerror="{!c.handleError}"
+            recordId="{!v.recordID}"
+            objectApiName="Lead">
+            <lightning:card variant="narrow" title="{!v.translationsMap.Edit_Leads}" iconName="standard:lead">
+                <aura:set attribute="actions">
+                    <aura:if isTrue="{!v.ShowComponentButtons}">
+                        <lightning:button variant="neutral" label="{!v.translationsMap.Go_Back}"
+                                          iconName="action:recall" iconPosition="left"
+                                          onclick="{!c.goBackToViewList}" />
+
+                        <aura:if isTrue="{!not(v.isReadOnly)}">
+                            <lightning:button variant="brand" label="{!v.translationsMap.Edit}"
+                                              iconName="action:edit" iconPosition="left"
+                                              onclick="{!c.showEditSectionAres}" />
+                            <aura:if isTrue="{!not(v.ShowOnlyRC)}">
+                                <lightning:button variant="brand"
+                                                  label="{!v.translationsMap.Convert_to_Opportunity}"
+                                                  disabled="{!v.isInvalidUsers}"
+                                                  onclick="{!c.convertLead}" />
+                            </aura:if>
+                            <aura:if isTrue="{!v.isLeadConvertAvailable}">
+                                <lightning:button variant="brand"
+                                                  label="{!v.translationsMap.Request_Lead_Conversion}"
+                                                  iconName="action:lead_convert" iconPosition="left"
+                                                  onclick="{!c.requestLeadConversion}"
+                                                  aura:id="requestLeadConvertbtn" />
+                            </aura:if>
+                        </aura:if>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowEditSection}">
+                        <lightning:button variant="brand" label="{!v.translationsMap.Save}" type="submit"
+                                          iconName="action:check" iconPosition="left" />
+                        <lightning:button variant="destructive" type="reset" name="Cancel"
+                                          label="{!v.translationsMap.Cancel}"
+                                          iconName="action:close" iconPosition="left" onclick="{!c.goBack}" />
+                    </aura:if>
+                </aura:set>
+                <aura:if isTrue="{!!v.isReadOnly}">
+                    <aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <aura:if isTrue="{!and(v.isInvalidUsers,!v.showLeadRequestConv)}">
+                            <div class="slds-text-color_error slds-p-left_large slds-p-right_large slds-p-bottom_small">{!v.translationsMap.Help_Text_Lead}</div>
+                        </aura:if>
+                    </aura:if>
+                    <aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <aura:if isTrue="{!and(!v.isInvalidUsers,!v.showLeadRequestConv)}">
+                            <div class="slds-text-color_error slds-p-left_large slds-p-right_large slds-p-bottom_small">{!v.translationsMap.Help_Text_Lead}</div>
+                        </aura:if>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!v.showLeadRequestConv}">
+                    <div class="errorMessageDetailDiv slds-align_absolute-center">
+                        <div class="slds-is-relative errorMessageDetailDiv">
+                            <div class="slds-notify slds-notify_toast slds-theme_info" role="alert">
+                                <div class="slds-notify__content slds-align_absolute-center">
+                                    <span>{!v.translationsMap.The_lead_has_been_submitted_for_conversi}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>
+                <div class="slds-grid slds-wrap slds-grid_align-space">
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.FirstName}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="firstName"
+                                                      fieldName="FirstName" value="{!v.leadRecord.FirstName}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="FirstName" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.LastName}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="lastName"
+                                                      fieldName="LastName" value="{!v.leadRecord.LastName}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="LastName" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Business_Title}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="businessTitle"
+                                                      fieldName="Title" value="{!v.leadRecord.Title}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Title" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Company_Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="companyName"
+                                                      fieldName="Company" value="{!v.leadRecord.Company}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Company" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Email_Address}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3 slds-grid slds-truncate_container_66">
+                            <span class="slds-truncate" title="{!v.leadRecord.Email}">
+                                <lightning:outputField fieldName="Email" variant="label-hidden" />
+                            </span>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Phone_Number}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="phoneNumber"
+                                                      fieldName="Phone" value="{!v.leadRecord.Phone}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Phone" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Street}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="addressStreet"
+                                                      fieldName="Street" value="{!v.leadRecord.Street}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Street" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.City}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="addressCity"
+                                                      fieldName="City" value="{!v.leadRecord.City}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="City" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.State_Province}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:select aura:id="selectedState"
+                                                  class="label-hidden"
+                                                  name="State__c"
+                                                  readonly="{!not(v.ShowEditSection)}"
+                                                  required="{!and(v.isAvaya, v.CountryReq)}"
+                                                  variant="label-hidden">
+                                    <aura:iteration items="{!v.mapCountryValueKeys}" var="mapKey">
+                                        <option value="{!mapKey}">{!mapKey}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="State__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Postal_Code}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField aura:id="addressPostalCode"
+                                                      fieldName="PostalCode" value="{!v.leadRecord.PostalCode}"
+                                                      required="true"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="PostalCode" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Country__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:select aura:id="selectedCountry"
+                                                  class="label-hidden"
+                                                  name="Country__c"
+                                                  readonly="{!not(v.ShowEditSection)}"
+                                                  onchange="{!c.onchangeCountry}"
+                                                  disabled="{!v.partnerhasAllCntryAcess}"
+                                                  variant="label-hidden">
+                                    <aura:iteration items="{!v.countriesAvailable}" var="mapKey">
+                                        <option value="{!mapKey}">{!mapKey}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Country__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Tier_Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!and(v.ShowOnlyAtos, v.ShowEditSection)}">
+                                <lightning:select aura:id="tierSelected"
+                                                  name="Lead_Tier_Name__c"
+                                                  variant="label-hidden"
+                                                  readonly="{!not(v.ShowEditSection)}"
+                                                  value="{!v.leadRecord.Lead_Tier_Name__c}"
+                                                  onchange="{!c.onTierChange}">
+                                    <aura:iteration items="{!v.tierNames}" var="tier">
+                                        <option value="{!tier.value}">{!tier}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Lead_Tier_Name__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Brand_Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <lightning:outputField aura:id="leadBrandName" fieldName="Lead_Brand_Name__c"
+                                                   variant="label-hidden" />
+                        </div>
+                    </div>
+                    <aura:if isTrue="{!v.RCMeetings}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.translationsMap.Forecasted_Video_Users}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <aura:if isTrue="{!v.ShowEditSection}">
+                                    <lightning:inputField aura:id="forecastedVideoUsers"
+                                                          fieldName="Forecasted_RingCentral_Video_Users__c"
+                                                          value="{!v.leadRecord.Forecasted_RingCentral_Video_Users__c}"
+                                                          readonly="{!not(v.ShowEditSection)}"
+                                                          required="true"
+                                                          variant="label-hidden" />
+                                    <aura:set attribute="else">
+                                        <lightning:outputField fieldName="Forecasted_RingCentral_Video_Users__c"
+                                                               variant="label-hidden" />
+                                    </aura:set>
+                                </aura:if>
+                            </div>
+                        </div>
+                        <aura:set attribute="else">
+                            <div
+                                class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                    <span>{!v.translationsMap.Number_Of_Users}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-3">
+                                    <aura:if isTrue="{!v.ShowEditSection}">
+                                        <lightning:inputField aura:id="numberOfUsers"
+                                                              fieldName="Number_of_Users__c"
+                                                              value="{!v.leadRecord.Number_of_Users__c}"
+                                                              required="true"
+                                                              variant="label-hidden" />
+                                        <aura:set attribute="else">
+                                            <lightning:outputField fieldName="Number_of_Users__c"
+                                                                   variant="label-hidden" />
+                                        </aura:set>
+                                    </aura:if>
+                                </div>
+                            </div>
+                        </aura:set>
+                    </aura:if>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Inside_Sales_Rep__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <lightning:formattedText aura:id="channelManager" value="{!v.leadRecord.ChannelManager}" />
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Number_Of_Employees}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:select aura:id="selectedEmp"
+                                                  class="label-hidden"
+                                                  name="NumberOfEmployees__c"
+                                                  readonly="{!not(v.ShowEditSection)}"
+                                                  variant="label-hidden">
+                                    <aura:iteration items="{!v.mapEmpCompValKeys}" var="mapEmpKey">
+                                        <option value="{!mapEmpKey}">{!mapEmpKey}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="NumberOfEmployees__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Number_of_Locations__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Number_of_Locations__c"
+                                                      value="{!v.leadRecord.Number_of_Locations__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Number_of_Locations__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Industry}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Industry" value="{!v.leadRecord.Industry}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Industry" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Estimated_Close_Date__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Estimated_Close_Date__c"
+                                                      value="{!v.leadRecord.Estimated_Close_Date__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Estimated_Close_Date__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.How_did_you_acquire_this_Lead__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="How_did_you_acquire_this_Lead__c"
+                                                      value="{!v.leadRecord.How_did_you_acquire_this_Lead__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden"
+                                                      class="help-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="How_did_you_acquire_this_Lead__c"
+                                                           variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Description}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Description" value="{!v.leadRecord.Description}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden"
+                                                      class="help-hidden"/>
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Description" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Website}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Website" value="{!v.leadRecord.Website}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Website" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Decision_Maker__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Decision_Maker__c"
+                                                      value="{!v.leadRecord.Decision_Maker__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Decision_Maker__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Prompting_Change__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Prompting_Change__c"
+                                                      value="{!v.leadRecord.Prompting_Change__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Prompting_Change__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Competitors__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:dualListbox aura:id="competitor"
+                                                       name="Competitors"
+                                                       readonly="{!not(v.ShowEditSection)}"
+                                                       sourceLabel="{!v.translationsMap.Available}"
+                                                       selectedLabel="{!v.translationsMap.Chosen}"
+                                                       options="{!v.mapCountryCompValKeys}"
+                                                       onchange="{!c.handleChange}"
+                                                       disableReordering="true"
+                                                       size="4" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Competitors__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Existing_Solution_Provider__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Existing_Solution_Provider__c"
+                                                      value="{!v.leadRecord.Existing_Solution_Provider__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Existing_Solution_Provider__c"
+                                                           variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Currently_in_a_contract__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Currently_in_a_contract__c"
+                                                      value="{!v.leadRecord.Currently_in_a_contract__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Currently_in_a_contract__c"
+                                                           variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Project_budget__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="Project_budget__c"
+                                                      value="{!v.leadRecord.Project_budget__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="Project_budget__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.RC_Overlay__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <aura:if isTrue="{!v.ShowEditSection}">
+                                <lightning:inputField fieldName="RC_Overlay__c" value="{!v.leadRecord.RC_Overlay__c}"
+                                                      readonly="{!not(v.ShowEditSection)}"
+                                                      required="true"
+                                                      variant="label-hidden" />
+                                <aura:set attribute="else">
+                                    <lightning:outputField fieldName="RC_Overlay__c" variant="label-hidden" />
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.leadFieldsMap.Deal_Registration__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <lightning:formattedText title="{!v.leadRecord.Deal_Registration__r.Name}"
+                                                     value="{!v.leadRecord.Deal_Registration__r.Name}" />
+                        </div>
+                    </div>
+                    <aura:if isTrue="{!or(v.ShowOnlyRC, v.ShowConAcc, v.isSingleLogin)}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.translationsMap.Partner_Account}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <lightning:formattedText title="{!v.leadRecord.Partner_Account__r.Name}"
+                                                         value="{!v.leadRecord.Partner_Account__r.Name}" />
+                            </div>
+                        </div>
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.translationsMap.Partner_Contact}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <lightning:formattedText title="{!v.leadRecord.Partner_Contact__r.Name}"
+                                                         value="{!v.leadRecord.Partner_Contact__r.Name}" />
+                            </div>
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!and(not(v.ShowOnlyRC), v.ShowOnlyAvaya)}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.leadFieldsMap.Sales_Notes__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <aura:if isTrue="{!v.ShowEditSection}">
+                                    <lightning:inputField fieldName="Sales_Notes__c"
+                                                          readonly="{!not(v.ShowEditSection)}"
+                                                          required="true"
+                                                          variant="label-hidden"
+                                                          value="{!v.leadRecord.Sales_Notes__c}" />
+                                    <aura:set attribute="else">
+                                        <lightning:outputField fieldName="Sales_Notes__c" variant="label-hidden" />
+                                    </aura:set>
+                                </aura:if>
+                            </div>
+                        </div>
+                    </aura:if>
+                    <div
+                        class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                        <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            <span>{!v.translationsMap.Status}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-3">
+                            <lightning:outputField fieldName="Status" variant="label-hidden" />
+                        </div>
+                    </div>
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.leadFieldsMap.Partner_Program__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <lightning:outputField fieldName="Partner_Program__c" variant="label-hidden" />
+                            </div>
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                       <div
+                           class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                           <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                               <span>{!v.leadFieldsMap.Installation_Service_Provider__c}</span>
+                           </div>
+                           <div class="slds-col slds-size_2-of-3">
+                               <lightning:outputField fieldName="Installation_Service_Provider__c" variant="label-hidden" />
+                           </div>
+                       </div>
+                    </aura:if>	
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                           <div
+                               class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                               <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                            </div>
+                               <div class="slds-col slds-size_2-of-3">
+                               </div>
+                        </div>
+                        </aura:if>
+                    <aura:if isTrue="{!v.communityDetailsRecord.Brand_Name__c=='Rainbow Office'}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <aura:if isTrue="{!v.ShowEditSection}">
+                                    <lightning:inputField fieldName="Partners_CRM_Opporunity_ID__c"
+                                                          readonly="{!not(v.ShowEditSection)}"
+                                                          variant="label-hidden"
+                                                          value="{!v.leadRecord.Partners_CRM_Opporunity_ID__c}" />
+                                    <aura:set attribute="else">
+                                        <lightning:outputField fieldName="Partners_CRM_Opporunity_ID__c"
+                                                               variant="label-hidden" />
+                                    </aura:set>
+                                </aura:if>
+
+                            </div>
+                        </div>
+                    </aura:if>
+                    <aura:if
+                        isTrue="{!or(and(not(v.ShowOnlyRC),v.communityDetailsRecord.Brand_Name__c!='Rainbow Office'), v.communityDetailsRecord.Brand_Name__c=='Rainbow Office')}">
+                        <div
+                            class="slds-col slds-size_2-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <c:Partner_CloudSpecialistSearch
+                                searchUser="{!v.leadRecord.Portal_Cloud_Specialist__r.Name}"
+                                communityDetailsRecord="{!v.communityDetailsRecord}" />
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!v.leadRecord.Type_of_Customer_or_Prospect__c}">
+                        <div
+                            class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                            <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                <span>What type of Mitel Customer or Prospect?</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-3">
+                                <aura:if isTrue="{!v.ShowEditSection}">
+                                    <lightning:inputField fieldName="Type_of_Customer_or_Prospect__c"
+                                                          readonly="{!not(v.ShowEditSection)}"
+                                                          variant="label-hidden"
+                                                          value="{!v.leadRecord.Type_of_Customer_or_Prospect__c}" />
+                                    <aura:set attribute="else">
+                                        <lightning:outputField fieldName="Type_of_Customer_or_Prospect__c"
+                                                               variant="label-hidden" />
+                                    </aura:set>
+                                </aura:if>
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!v.showMitelShare}">
+                            <div
+                                class="slds-col slds-size_1-of-2 slds-grid slds-border_top slds-grid_vertical-align-center slds-gutters_small">
+                                <div class="slds-col slds-size_1-of-3 slds-color__text_gray-9 slds-p-vertical_small">
+                                    <span>Allow sharing this deal data with Mitel?</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-3">
+                                    <aura:if isTrue="{!v.ShowEditSection}">
+                                        <lightning:inputField fieldName="Mitel_Data_Sharing__c"
+                                                              readonly="{!not(v.ShowEditSection)}"
+                                                              variant="label-hidden"
+                                                              value="{!v.leadRecord.Mitel_Data_Sharing__c}" />
+                                        <aura:set attribute="else">
+                                            <lightning:outputField fieldName="Mitel_Data_Sharing__c"
+                                                                   variant="label-hidden" />
+                                        </aura:set>
+                                    </aura:if>
+                                </div>
+                            </div>
+                        </aura:if>
+                    </aura:if>
+                </div>
+            </lightning:card>
+        </lightning:recordEditForm>
+    </aura:if>
+    <div aura:id="lookupSearchDiv"></div>
+    <c:Modals />
+</aura:component>

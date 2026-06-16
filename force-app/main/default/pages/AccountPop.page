@@ -1,0 +1,460 @@
+<!--****************************************************************************************************************
+Updated By: eugenebasianomutya
+Update details: Case # 03523403 - highlight on the account when a "Customer Success Manager" is flagged on the account
+                Case # 03531598 - Account Highlights for First Group Accounts
+                Case # 04208518 - Account Highlight for Glip User Accounts (12/22/2015)
+                Case # 04307805 - Franchise Account Highlights (1/26/2016)
+                Case # 05713106 - [QW] Update in Account Highlight for "QuikCard Solutions Inc" UID: 510298024
+                Case # 09178146 - Account Highlights for Fujitsu Accounts
+*****************************************************************************************************************-->
+
+<apex:page standardController="Account" extensions="AccInfo" id="accountPopUpPage"
+           showHeader="false" sidebar="false" action="{!PopulateATM}" lightningStylesheets="true">
+
+    <style>
+        .backCss {
+            background-color: #fffcce !important;
+            border: 1px solid #cd9e5a !important;
+            border-radius: 5px;
+            -moz-border-radius: 5px !important;
+            -webkit-border-radius: 5px !important;
+        }
+
+        .tableBorder {
+            border-top: 1px solid #cd9e5a;
+            border-bottom: 1px solid #cd9e5a;
+            border-left: 1px solid #cd9e5a;
+        }
+
+        .tableBorder th {
+            color: #cd9e5a;
+            border-right: 1px solid #cd9e5a;
+        }
+
+        .tableBorder td {
+            border-top: 1px solid #cd9e5a;
+            border-right: 1px solid #cd9e5a;
+        }
+
+        .panelgridClass {
+            vertical-align: top;
+        }
+
+        .elBannerLayout > tbody > tr > td:nth-child(2) {
+            padding-left: 20px;
+        }
+
+        .dupes-table {
+            width: 50%;
+            padding: 0;
+            margin: 1em 0;
+            border: 1px solid #000;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 10pt;
+        }
+
+        .dupes-table th, tr {
+            border: 1px solid #000;
+        }
+
+        .fullWidthBanner {
+            width: 100%;
+            border: 1px solid #000;
+        }
+        .fullWidthBanner tr{
+            border: none;
+        }
+    </style>
+
+    <apex:form rendered="{!AND(isBTApproved, isBTCloudWork==false, isBTEnterprise==false)}">
+        <div class="backCss">
+            <apex:panelGrid columns="2" id="Paneltable">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                            height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                    <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                    <apex:outputText escape="false">
+                        <font style="font-size:15px; font-weight:bold;"> BT SME Account. This record is being managed by BT. Only the Carrier Sales Team
+                            should engage with this record.</font>
+                    </apex:outputText>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+    </apex:form>
+
+    <apex:form rendered="{!AND(isBTApproved, isBTCloudWork==true)}">
+        <div class="backCss">
+            <apex:panelGrid columns="2" id="Paneltable">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                            height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                    <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                    <apex:outputText escape="false">
+                        <font style="font-size:15px; font-weight:bold;"> BT Corporate Account. This is being managed by BT.
+                            Only Carrier sales team should engage with this record.</font>
+                    </apex:outputText>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+    </apex:form>
+
+    <apex:form rendered="{!AND(isBTApproved, isBTEnterprise==true)}">
+        <div class="backCss">
+            <apex:panelGrid columns="2" id="Paneltable">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                            height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                    <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                    <apex:outputText escape="false">
+                        <font style="font-size:15px; font-weight:bold;"> BT Corporate Account. This is being managed by BT.
+                            Only Carrier sales team should engage with this record.</font>
+                    </apex:outputText>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+    </apex:form>
+
+    <!-- Case 09178146 -->
+    <apex:form rendered="{!isFujitsuBrand}">
+        <div class="backCss">
+            <apex:panelGrid columns="2" id="Fujitsutable">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                            height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                    <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                    <apex:outputText escape="false">
+                        <font style="font-size:15px; font-weight:bold;"> This record is being managed by Fujitsu. Only the Carrier Sales
+                            Team should engage with the record</font>
+                    </apex:outputText>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+     </apex:form>
+     <!-- Case 09178146 -->
+    <apex:form rendered="{!isGPAAccount}">
+        <div class="fullWidthBanner">
+            <apex:panelGrid columns="2" id="gpaAccount">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                            height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                <apex:outputText escape="false">
+                    <font style="font-size:15px; font-weight:bold;">{!$Label.GPA_Account_Highlight}</font>
+                </apex:outputText>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+    </apex:form>
+    <apex:form rendered="{!(warnHighlighter || warn1 || warn2 || warn3 || warn4 || warn5 || warn6 || warn7 || warn8 || warn9 || warn10
+        || boolTrailAccountMsg || bRedAccount || IsFlagshipAccount
+        || ProfServDevExists || ProfServSalesOwnerExists
+        || IsInTransitionToRcDirect || IsInMigrationToAcquistionTier)}"
+               style="padding-top:5px;" id="accountFom">
+        <div class="backCss">
+            <apex:outputPanel id="message">
+                <apex:dataTable value="{!tempList}" var="a" id="theTable">
+                    <apex:column id="thecolumn1">
+                        <apex:outputPanel rendered="{!!bRedAccount}">
+                            <apex:image id="warning" value="{!imgPath}" width="48.7"
+                                height="48.7" style="padding:5px;"
+                                rendered="{! warnHighlighter || warn1 || warn2 || warn3 || warn4 || boolTrailAccountMsg
+                                    || bRedAccount || IsInTransitionToRcDirect || IsInMigrationToAcquistionTier }" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!bRedAccount}">
+                            <apex:image id="warningred" value="/resource/WarningRed"
+                                width="48.7" height="48.7" style="padding:5px;"
+                                rendered="{! warnHighlighter || warn1 || warn2 || warn3 || warn4 || boolTrailAccountMsg
+                                    || bRedAccount || IsInTransitionToRcDirect || IsInMigrationToAcquistionTier }" />
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column id="thecolumn2">
+                        <apex:panelGrid columns="2" columnClasses="panelgridClass"
+                            id="Paneltable">
+                            <apex:outputLabel escape="false" rendered="{!warnHighlighter}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warnHighlighter}">
+                                This Customer is participating in the Customer Advisory Board. <br />
+                                Customer Advisory Board Contact: <b> {!customerContactName}
+                                </b>&nbsp;RC Executive Contact: <b>{!RcExecutiveName}</b>
+                            </apex:outputText>
+                            <apex:outputLabel escape="false" rendered="{!bRedAccount}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!bRedAccount}" style="color:red">
+                                <!-- Case: 04668955 BRD QuickWin P0: Critical Account Indicator for CSM - START -->
+                                <!--
+                                <font color='#FFF'
+                                    style="background:red; font-size:15px; font-weight:bold;">
+                                    This is a Red Account. Handle with Care. Please see <a
+                                    href="/{!strRedAccountId}" target='_blank'
+                                    style="font-weight:normal;"><b>here</b> </a> for details. </font>
+                                -->
+                                <font color='#FFF'
+                                    style="background:red; font-size:15px; font-weight: bold;">
+                                    This is a Critical Account. Please Handle with Care. </font>
+                                <!-- Case: 04668955 BRD QuickWin P0: Critical Account Indicator for CSM - END -->
+
+                            </apex:outputText>
+                            <apex:outputLabel escape="false" rendered="{!bRedAccount}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!bRedAccount}" style="color:red">
+                                <B>S</B>ee this <a href="/{!strRedAccountId}" target="_blank">{!strRedAccount}</a> for more details.
+                            </apex:outputText>
+                            <apex:outputLabel escape="false" rendered="{!warn1}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn1}">
+                                <B>T</B>he account is under a sales agreement <a href="/{!salsAgreeId}" target="_blank">{!salsAgreeName}</a> until :
+                            <b>{!salsAgreeDate}</b>.
+                            </apex:outputText>
+
+                            <!-- Case # 04727988 - Updated SFDC language for Franchise accounts - START -->
+
+                            <apex:outputLabel escape="false" rendered="{!warn2}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn2}">
+                                <B>T</B>his is a Franchise Account. Direct Sales should not make any changes to Franchise Accounts. Please connect customer to the Franchise Account Support team at
+                                <B>800.378.8110</B> for any help needed.
+                            </apex:outputText>
+
+                            <apex:outputLabel escape="false" rendered="{!warn10}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn10}">
+                                <B>C</B>ritical account, do not touch, contact the Deal Management team for assistance with opportunities.
+                            </apex:outputText>
+
+                            <!-- Case # 04727988 - Updated SFDC language for Franchise accounts - END -->
+
+                            <!-- Case Case 05029010 - SFDC Account Highlights Error -->
+                            <apex:outputLabel escape="false" rendered="{!warn3}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn3}">
+                                <B>T</B>his is a Reseller Account. Direct sales should not make any changes to Reseller Accounts. Please request reseller to contact the Reseller Support team at 800-595-8110 if they need help.<br />
+                                <B>Do not give 800-595-8110 to Customers with reseller accounts</B>, Tier 1 should assist for support and sales concerns. Please see 411 for more information on support boundaries for Customers with Reseller accounts.
+                            </apex:outputText>
+                            <!-- Case Case 05029010 - SFDC Account Highlights Error -->
+
+                            <apex:outputLabel escape="false" rendered="{!warn4}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn4}">
+                                <B>T</B>his is a Free Trial Account. This Account should NOT be cancelled without the approval of the Account Manager.
+                            </apex:outputText>
+
+                            <apex:outputLabel escape="false" rendered="{!warn5}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn5}">
+                                <B>T</B>his account is handled by a Technical Account Manager,&nbsp;<a href="#" onclick="window.top.location='/{!strTAMId}';">{!strTAM}</a>.
+                            </apex:outputText>
+
+
+                            <!-- Case# 03523403 Start -->
+                            <apex:outputLabel escape="false" rendered="{!warn6}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn6}">
+                                <B>T</B>his account is handled by a Customer Success Manager (CSM),&nbsp;<a href="#" onclick="window.top.location='/{!strCSMId}';">{!strCSM}</a>.
+                            </apex:outputText>
+                            <!-- Case# 03523403 End -->
+
+
+                            <!-- Case# 03531598 Start -->
+                            <apex:outputLabel escape="false" rendered="{!warn7}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn7}">
+                                <B>A</B>uthorized Users: Holly Therrell, Lloyd Brown, Dena Rees, Scott Allman, Kristy Goodwin, Scott Evans, Stephen Pruitt, Mark Williams
+                                <br/>They may use the following security question/answer for authorization: What city were you born in? Answer: London
+                                <br/>If you cannot help the end user/location caller or need to authorize, please re direct them to the FGA Service Desk at 866-550-3375.
+                                <br/>
+                                <br/>
+                                This is an AT&amp;T Office@Hand National Account. Please grant access to the following users from First Group America help desk supported by GLS (Outtask) and  the AT&amp;T Lifecycle Team.
+                                <br/>
+                            </apex:outputText>
+                            <!-- Case# 03531598 End -->
+
+                            <!-- Case# 04079900 Start -->
+                            <apex:outputLabel escape="false" rendered="{!warn8}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn8}">
+                                <B>T</B>his is a Contact Center Account, please do NOT change the main account phone number without prior discussion with {!ccdesk}
+                            </apex:outputText>
+                            <!-- Case# 04079900 End -->
+
+                            <!-- Case# 04208518 Start -->
+                            <apex:outputLabel escape="false" rendered="{!warn9}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!warn9}">
+                                <B>T</B>his account is only to be used for <B>Glip</B> Customers without RingCentral Accounts.
+                            </apex:outputText>
+                            <!-- Case# 04208518 End -->
+
+                            <apex:outputLabel escape="false"
+                                rendered="{!boolTrailAccountMsg}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!boolTrailAccountMsg}">
+                                This account is <b>Office 30-Day Free Trial</b> account. Remember to upsell
+                                account to <b>Office 20+</b> before the end of the <b>30
+                                day trial</b> on <b>{!strPaidDate}</b>.
+                            </apex:outputText>
+
+                            <apex:outputText value="{!Account.Technical_Account_Manager__c}" rendered="false" />
+                            <apex:outputText value="{!Account.Most_Recent_Implementation_Contact__c}" rendered="false" />
+                            <apex:outputText value="{!Account.Preferred_Language__c}" rendered="false" />
+
+                            <!-- CASE 06373054 (Flagship account) && 06455352 (Prof Service fields) -->
+                            <apex:outputLabel escape="false" rendered="{!IsFlagshipAccount}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!IsFlagshipAccount}">
+                                This is a Flagship account. Please support this account as a VIP customer and notify the assigned CSM of any urgent/escalated issues immediately
+                            </apex:outputText>
+
+                            <!-- Case 07094046 (QW) O@H to RC Migration Account Highlight Updates https://rc.my.salesforce.com/50034000012julb -->
+                            <apex:outputLabel escape="false" rendered="{!IsInTransitionToRcDirect}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!IsInTransitionToRcDirect}">
+                                If this account is contacting RingCentral regarding transitioning to RC direct, please route all transition inquiries to the migration hotline - 800-523-8075
+                            </apex:outputText>
+
+                            <apex:outputLabel escape="false" rendered="{!IsInMigrationToAcquistionTier}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!IsInMigrationToAcquistionTier}">
+                                This account has transitioned to RC Office from Office@Hand. The account may have received special pricing or configuration to achieve its transition. Handle with Care.
+                            </apex:outputText>
+
+                            <apex:outputLabel escape="false" rendered="{!ProfServDevExists}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!ProfServDevExists}">
+                                Custom PS Dev contact {!ProfServDevName}
+                            </apex:outputText>
+
+                            <apex:outputLabel escape="false" rendered="{!ProfServSalesOwnerExists}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!ProfServSalesOwnerExists}">
+                                For additional Professional Services engagements please contact {!ProfServSalesOwnerName}
+                            </apex:outputText>
+
+                             <apex:outputPanel rendered="{!refreshBool}">
+                               <script>
+                                  window.top.location='/{!Account.id}';
+                               </script>
+                            </apex:outputPanel>
+                        </apex:panelGrid>
+                    </apex:column>
+                </apex:dataTable>
+            </apex:outputPanel>
+        </div>
+    </apex:form>
+
+    <apex:form rendered="{!(!isELBannerEmpty)}" styleClass="backCss" style="margin-top:5px;">
+        <apex:outputpanel >
+            <apex:panelGrid columns="2">
+                <apex:image value="{!imgPath}" width="48.7" height="48.7" style="padding:5px;"/>
+                <apex:panelGrid columns="2" styleClass="elBannerLayout" columnClasses="panelgridClass">
+
+                    <apex:outputText escape="false" rendered="{!OR(NOT(ISBLANK(completedEngageLegal.sla)),
+                                                                   NOT(ISBLANK(completedEngageLegal.slaContactCenter)),
+                                                                   NOT(ISBLANK(completedEngageLegal.slaMeetingsOnly)),
+                                                                   NOT(ISBLANK(completedEngageLegal.slaGss)),
+                                                                   NOT(ISBLANK(completedEngageLegal.slaIncidentManagement)))}">
+                        <b style="position:relative; top:3px;">SLA:</b>
+                    </apex:outputText>
+                    <apex:panelGrid style="position:relative; left:-3px;" columns="1" columnClasses="panelgridClass"
+                                    rendered="{!OR(NOT(ISBLANK(completedEngageLegal.sla)),
+                                                   NOT(ISBLANK(completedEngageLegal.slaContactCenter)),
+                                                   NOT(ISBLANK(completedEngageLegal.slaMeetingsOnly)),
+                                                   NOT(ISBLANK(completedEngageLegal.slaGss)),
+                                                   NOT(ISBLANK(completedEngageLegal.slaIncidentManagement)))}">
+                        <apex:outputText escape="false" rendered="{!NOT(ISBLANK(completedEngageLegal.sla))}">
+                            <span>Office – <i>{!completedEngageLegal.sla}</i></span>
+                        </apex:outputText>
+                        <apex:outputText escape="false" rendered="{!NOT(ISBLANK(completedEngageLegal.slaContactCenter))}">
+                            <span>Contact Center – <i>{!completedEngageLegal.slaContactCenter}</i></span>
+                        </apex:outputText>
+                        <apex:outputText escape="false" rendered="{!NOT(ISBLANK(completedEngageLegal.slaMeetingsOnly))}">
+                            <span>Meetings Only – <i>{!completedEngageLegal.slaMeetingsOnly}</i></span>
+                        </apex:outputText>
+                        <apex:outputText escape="false" rendered="{!NOT(ISBLANK(completedEngageLegal.slaGss))}">
+                            <span>GSS – <i>{!completedEngageLegal.slaGss}</i></span>
+                        </apex:outputText>
+                        <apex:outputText escape="false" rendered="{!NOT(ISBLANK(completedEngageLegal.slaIncidentManagement))}">
+                            <span>Incident Management – <i>{!completedEngageLegal.slaIncidentManagement}</i></span>
+                        </apex:outputText>
+                    </apex:panelGrid>
+
+                    <apex:outputText escape="false" rendered="{!OR(NOT(ISBLANK(completedEngageLegal.elasticity)),
+                                                                   NOT(ISBLANK(completedEngageLegal.elasticityDetails)))}">
+                        <b>Elasticity:</b>
+                    </apex:outputText>
+                    <apex:outputText escape="false" rendered="{!AND(NOT(ISBLANK(completedEngageLegal.elasticity)),
+                                                                    NOT(ISBLANK(completedEngageLegal.elasticityDetails)))}">
+                        <i>{!completedEngageLegal.elasticity} ({!completedEngageLegal.elasticityDetails})</i>
+                    </apex:outputText>
+                    <apex:outputText escape="false" rendered="{!AND(NOT(ISBLANK(completedEngageLegal.elasticity)),
+                                                                    ISBLANK(completedEngageLegal.elasticityDetails))}">
+                        <i>{!completedEngageLegal.elasticity}</i>
+                    </apex:outputText>
+                    <apex:outputText escape="false" rendered="{!AND(ISBLANK(completedEngageLegal.elasticity),
+                                                                    NOT(ISBLANK(completedEngageLegal.elasticityDetails)))}">
+                        <i>{!completedEngageLegal.elasticityDetails}</i>
+                    </apex:outputText>
+
+                    <apex:outputText escape="false" rendered="{!NOT(stepUps.empty)}">
+                        <b style="position:relative; top:3px;">Step Ups:</b>
+                    </apex:outputText>
+                    <apex:dataTable value="{!stepUps}" var="stepUp" cellpadding="2" styleClass="tableBorder" rendered="{!NOT(stepUps.empty)}">
+                        <apex:column >
+                            <apex:facet name="header">Step Up Name</apex:facet>
+                            <apex:outputText ><i>{!stepUp.stepUpName}</i></apex:outputText>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Step Up DLs</apex:facet>
+                            <apex:outputText ><i>{!stepUp.stepUpDLs}</i></apex:outputText>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Step Up Date</apex:facet>
+                            <i><apex:outputText value="{0, date, M/d/yyyy}">
+                                <apex:param value="{!stepUp.stepUpDate}"/>
+                            </apex:outputText></i>
+                        </apex:column>
+                    </apex:dataTable>
+                </apex:panelGrid>
+            </apex:panelGrid>
+        </apex:outputpanel>
+    </apex:form>
+
+    <apex:form rendered="{!isAccountMessage}" style="padding-top:5px;">
+        <div class="backCss">
+            <apex:outputpanel >
+                <apex:panelGrid columns="2" id="PaneltableMessage">
+                    <apex:image id="AccountMsg" value="/resource/WarningRed" width="48.7"
+                                height="48.7" style="padding:5px;"/>
+                    <apex:outputpanel >
+                        <apex:outputText escape="false" style="font-size:15px;" value="{!Account.Account_Highlights_Message__c}"/>
+                    </apex:outputpanel>
+                </apex:panelGrid>
+            </apex:outputpanel>
+        </div>
+    </apex:form>
+
+    <apex:form rendered="{!IsDuplicatedPartnerAccountFound}">
+        <table class="dupes-table">
+            <thead>
+                <tr>
+                    <th>Partner IDs</th>
+                    <th>Partner Account Name</th>
+                    <th>Ultimate Parent Account Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td rowspan="{!DuplicatePartnerAccounts.size}">
+                        <i><apex:outputText value="{!IF(ISBLANK(DuplicatePartnerAccounts[0].RC_User_ID__c), 'NONE',DuplicatePartnerAccounts[0].RC_User_ID__c)}"/></i>
+                        <apex:repeat value="{!DuplicatePartnerAccounts}" first="1" var="a">
+                            <apex:outputText value=", "></apex:outputText>
+                            <apex:outputLink value="{!URLFOR('/' + a.Id)}" target="_blank">
+                                <apex:outputText value="{!IF(ISBLANK(a.RC_User_ID__c), 'NONE', a.RC_User_ID__c)}"></apex:outputText>
+                            </apex:outputLink>
+                        </apex:repeat>
+                    </td>
+                    <td>
+                        <i><apex:outputText value="{!DuplicatePartnerAccounts[0].Name}"></apex:outputText></i>
+                    </td>
+                    <td>
+                        <i><apex:outputText value="{!DuplicatePartnerAccounts[0].Ultimate_Parent_Account_Name__c}"></apex:outputText></i>
+                    </td>
+                </tr>
+                <apex:repeat value="{!DuplicatePartnerAccounts}" first="1" var="a">
+                    <tr>
+                        <td>
+                            <apex:outputLink value="{!URLFOR('/' + a.Id)}" target="_blank">
+                                <apex:outputText value="{!a.Name}"></apex:outputText>
+                            </apex:outputLink>
+                        </td>
+                        <td>
+                            <apex:outputText value="{!a.Ultimate_Parent_Account_Name__c}"></apex:outputText>
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:form>
+
+</apex:page>

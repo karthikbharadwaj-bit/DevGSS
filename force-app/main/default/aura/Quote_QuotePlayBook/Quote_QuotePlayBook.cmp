@@ -1,0 +1,289 @@
+<aura:component implements="force:lightningQuickAction,force:hasRecordId" extends="c:Quote_BaseComponent"
+                access="global">
+    <aura:attribute name="playBookDisplay" type="Boolean" default="false"/>
+    <aura:attribute name="isAvaya" type="Boolean" default="false" />
+    <aura:attribute name="partnerContractTypeWrapperList" type="List" />
+    <aura:attribute name="initialDisplay" type="Boolean"/>
+    <aura:attribute name="partnerContractId" type="String" />
+    <aura:attribute name="partnerCountry" type="String" />
+    <aura:attribute name="BrandName" type="String" />
+    <aura:attribute name="approvalDisplay" type="Boolean" />
+    <aura:attribute name="partnerQuoteId" type="String" />
+    <aura:attribute name="inputWrapper" type="Map" default="{'freeCredit' : 0,
+                                                            'digitalLines' : 0,
+                                                            'elasticityPercent' : 30,
+                                                            'elasticityDigitalLines' : 0,
+                                                            'featureAdditionEdition' : '',
+                                                            'featureAdditions' : '',
+                                                            'priceProtectionPercent' : 0}" />
+    
+    <aura:attribute name="partnerContractServiceList" type="Partner_Contract_Service__c[]"/> 
+    <aura:attribute name="partnerContractWrapperList" type="List" /> 
+    <aura:attribute name="showCreateContractCMP" type="Boolean" default="false"/>
+    
+    <!--Added by Ishwarya to get respective Community Details-->
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <!-- <p>{!v.isAvaya}</p>
+    <p>{!v.playBookDisplay}</p> -->
+    <aura:if isTrue = "{!v.playBookDisplay}">	
+        
+        <aura:if isTrue="{!v.isAvaya}">
+            <div class="slds-grid slds-wrap">
+                <h1 class="heading slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"><b>
+                    <span>
+                        Self Approved:
+                    </span>
+                    </b></h1>
+                <aura:iteration items="{!v.partnerContractWrapperList}" var="partnerContractWrapper" indexVar="i">
+
+                    <aura:if isTrue="{!partnerContractWrapper.selfApproved == true}">
+                        <div class="slds-col slds-size_12-of-12 slds-p-top_medium slds-p-bottom_small slds-border_bottom" style="font-size : 110%;">
+                            <span><b>{!partnerContractWrapper.term}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-12 slds-p-top_small" style="text-align:center;font-size : 105%;">
+                            <span><b>Select</b></span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-right_small slds-p-top_small" style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[0]}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-horizontal_small slds-p-top_small"  style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[1]}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_7-of-12 slds-p-horizontal_small slds-p-top_small" style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[2]}</b></span>
+                        </div>	
+                        <div class="slds-col slds-size_1-of-12 slds-p-vertical_medium slds-p-vertical_small" style="text-align:center;">
+                            <span>
+                                <lightning:input type="checkbox" name="Select" checked="{!partnerContractWrapper.isSelected}"/>
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-right_small slds-p-vertical_medium">
+                            <span>{!partnerContractWrapper.term}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-horizontal_small">
+                                <lightning:select aura:id="OptionList" onchange="{!c.handleOptionChange}">
+                                    <aura:iteration items="{!partnerContractWrapper.options}" var="option">
+                                        <option text="{!option}" value="{!option}"/>
+                                    </aura:iteration> 
+                                </lightning:select>  
+                                <aura:if isTrue="{!partnerContractWrapper.isNumberInputNeeded}">
+                                    <aura:if isTrue="{!partnerContractWrapper.term == 'Free Services (Credit) 1 month'}">
+                                        <lightning:input type="number" label="Enter credit here:" value="{!v.inputWrapper.freeCredit}" />
+                                    </aura:if>
+                                </aura:if>
+                        </div>
+                        <div class="{!'slds-col slds-size_7-of-12 slds-p-horizontal_small slds-p-top_medium slds-p-bottom_small '+ partnerContractWrapper.term+partnerContractWrapper.approvalRequired}">
+                            <aura:if isTrue="{!!partnerContractWrapper.isGridInputNeeded}">                        
+                                <span>                                    
+                                    <aura:if isTrue="{!v.partnerContractId == undefined}">                                     
+                                        <div class='slds-p-bottom_small text'>{!partnerContractWrapper.mappingsWrapper[0].text}</div>
+                                        <aura:if isTrue="{!partnerContractWrapper.mappingsWrapper[0].frenchtext}">
+                                            <div class='slds-p-top_small slds-border_top frenchtext'>{!partnerContractWrapper.mappingsWrapper[0].frenchtext}</div>
+                                        </aura:if>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.partnerContractId != undefined}">
+                                        <aura:iteration items="{!partnerContractWrapper.mappingsWrapper}" var="mapping">                                        	
+                                            <aura:if isTrue="{!mapping.isSelectedOption == true}">
+                                               <div class='slds-p-bottom_small text'>{!mapping.text}</div>
+                                                    <aura:if isTrue="{!mapping.frenchtext}">
+                                                       <div class='slds-p-top_small slds-border_top frenchtext'>{!mapping.frenchtext}</div>
+                                                </aura:if>
+                                            </aura:if>
+                                        </aura:iteration> 
+                                    </aura:if>
+                                </span>
+                            </aura:if>
+                            <aura:if isTrue="{!partnerContractWrapper.isGridInputNeeded}">
+                                <aura:if isTrue="{!v.partnerContractId == undefined}">
+                                <div class='slds-p-bottom_small'>{!partnerContractWrapper.mappingsWrapper[0].text}</div>
+                                 <aura:if isTrue="{!partnerContractWrapper.mappingsWrapper[0].frenchtext}">
+                                    <div class='slds-p-top_small slds-border_top'>{!partnerContractWrapper.mappingsWrapper[0].frenchtext}</div>
+                                </aura:if>
+                                <br/>
+                                </aura:if>
+                                <div class="slds-border_right slds-border_left slds-border_top">
+                                    <div style="font-size : 105%;" class="slds-p-vertical_small slds-p-left_small">
+                                        <span><b>Plan Services</b></span>
+                                    </div>
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer mintargetTable"> 
+                                        <thead>
+                                            <tr class="slds-text-title_caps">                                            
+                                                <th scope="col">
+                                                    <div class="slds-truncate" title="Minimum Target">Minimum Target</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate" title="Minimum Target Effective Date">Minimum Target Effective Date</div>
+                                                </th> 
+                                                <th scope="col"  style="text-align:center;">
+                                                    <div class="slds-truncate" title="Delete">Delete</div>
+                                                </th>
+                                            </tr>
+                                        </thead>   
+                                        <tbody> 
+                                            <aura:iteration items="{!v.partnerContractServiceList}" var="pcs" indexVar="index">                                    		                                           
+                                                <tr>                                                
+                                                    <td>
+                                                        <lightning:input name="minTarget" type="number" value="{!pcs.Minimum_Target__c}"/>
+                                                    </td>
+                                                    <td>
+                                                        <lightning:input name="minTargetEffectiveDate" type="Date" value="{!pcs.Minimum_Target_Effective_Date__c}"/>
+                                                    </td>                                              
+                                                    <td style="text-align:center;">
+                                                        <a onclick="{!c.removeRow}" data-record="{!index}">
+                                                            <lightning:icon iconName="utility:delete" size="small" alternativeText="Delete"/>
+                                                            <span class="slds-assistive-text">Delete</span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="slds-float_left slds-p-top_small slds-text-title_caps">
+                                    <h1>
+                                        <lightning:buttonIcon iconName="utility:add"  size="large" variant="bare" alternativeText="Add" onclick="{!c.addRow}"/>   &nbsp;&nbsp;<b>Add Row</b>
+                                    </h1>                                
+                                    
+                                </div> 
+                                <br/><br/><br/>
+                                <div class='slds-p-bottom_small'>{!partnerContractWrapper.footer}</div>
+                                <aura:if isTrue="{!partnerContractWrapper.footerTranslation}">
+                                    <div class='slds-p-top_small slds-border_top'>{!partnerContractWrapper.footerTranslation}</div>
+                                </aura:if>
+                            </aura:if>
+                        </div>
+                    </aura:if>
+                </aura:iteration>
+                
+                <aura:if isTrue="{!v.approvalDisplay == true}">
+                <h1 class="heading slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"><b>
+                    <span>
+                        Approval Required:
+                    </span>
+                    </b></h1></aura:if>
+                <aura:iteration items="{!v.partnerContractWrapperList}" var="partnerContractWrapper" indexVar="i">
+                    <aura:if isTrue="{!partnerContractWrapper.approvalRequired == true}">
+                        <div class="slds-col slds-size_12-of-12 slds-p-top_medium slds-p-bottom_small slds-border_bottom" style="font-size : 110%;">
+                            <span><b>{!partnerContractWrapper.term}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-12 slds-p-top_small" style="text-align:center;font-size : 105%;">
+                            <span><b>Select</b></span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-right_small slds-p-top_small" style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[0]}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-horizontal_small slds-p-top_small"  style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[1]}</b></span>
+                        </div>
+                        <div class="slds-col slds-size_7-of-12 slds-p-horizontal_small slds-p-top_small" style="font-size : 105%;">
+                            <span><b>{!partnerContractWrapper.headings[2]}</b></span>
+                        </div>	
+                        <div class="slds-col slds-size_1-of-12 slds-p-vertical_medium slds-p-vertical_small" style="text-align:center;">
+                            <span>
+                                <lightning:input type="checkbox" name="Select" checked="{!partnerContractWrapper.isSelected}"/>
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-right_small slds-p-vertical_medium">
+                            <span>{!partnerContractWrapper.term}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-12 slds-p-horizontal_small">
+                            <span>
+                                <lightning:select aura:id="OptionList" onchange="{!c.handleOptionChange}">
+                                    <aura:iteration items="{!partnerContractWrapper.options}" var="option">
+                                        <option text="{!option}" value="{!option}"/>
+                                    </aura:iteration> 
+                                </lightning:select>
+                                <aura:if isTrue="{!partnerContractWrapper.isNumberInputNeeded}">
+                                    <aura:if isTrue="{!partnerContractWrapper.term == 'Elasticity Clause for Office Services'}">
+                                        <lightning:input type="number" label="Enter number of digital lines here:" value="{!v.inputWrapper.digitalLines}" />
+                                    </aura:if>
+                                    <aura:if isTrue="{!partnerContractWrapper.term == 'Business Downturn Elasticity'}">
+                                        <lightning:input type="number" label="Enter percent here:" value="{!v.inputWrapper.elasticityPercent}" />
+                                        <lightning:input type="number" label="Enter number of digital lines here:" value="{!v.inputWrapper.elasticityDigitalLines}" />
+                                    </aura:if>
+                                    <aura:if isTrue="{!partnerContractWrapper.term == 'Feature Addition'}">
+                                        <lightning:input type="text" label="Enter edition here:" value="{!v.inputWrapper.featureAdditionEdition}" />
+                                        <lightning:textarea label="Enter additions here:" value="{!v.inputWrapper.featureAdditions}" />
+                                    </aura:if>
+                                    <aura:if isTrue="{!partnerContractWrapper.term == 'Price Protection'}">
+                                        <lightning:input type="text" label="Enter percent here:" value="{!v.inputWrapper.priceProtectionPercent}" />
+                                    </aura:if>
+                                </aura:if>
+                            </span>
+                        </div>
+                        <div class="{!'slds-col slds-size_7-of-12 slds-p-horizontal_small slds-p-vertical_medium '+partnerContractWrapper.term+partnerContractWrapper.approvalRequired}">
+                            <aura:if isTrue="{!!partnerContractWrapper.isGridInputNeeded}">
+                                <span>                                    
+                                    <aura:if isTrue="{!v.partnerContractId == undefined}">                                    
+                                        <div class='text'>{!partnerContractWrapper.mappingsWrapper[0].text}</div>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.partnerContractId != undefined}">
+                                        <aura:iteration items="{!partnerContractWrapper.mappingsWrapper}" var="mapping">                                        	
+                                            <aura:if isTrue="{!mapping.isSelectedOption == true}">
+                                                <div class='text'>{!mapping.text}</div>
+                                            </aura:if>
+                                        </aura:iteration> 
+                                    </aura:if>
+                                </span>
+                            </aura:if>
+                            <aura:if isTrue="{!partnerContractWrapper.isGridInputNeeded}">
+                                <div class="slds-border_right slds-border_left slds-border_top">
+                                    <div style="font-size : 105%;" class="slds-p-vertical_small slds-p-left_small">
+                                        <span><b>Plan Services</b></span>
+                                    </div>
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer"> 
+                                        <thead>
+                                            <tr class="slds-text-title_caps">                                            
+                                                <th scope="col">
+                                                    <div class="slds-truncate" title="Minimum Target">Minimum Target</div>
+                                                </th>
+                                                <th scope="col">
+                                                    <div class="slds-truncate" title="Minimum Target Effective Date">Minimum Target Effective Date</div>
+                                                </th> 
+                                                <th scope="col"  style="text-align:center;">
+                                                    <div class="slds-truncate" title="Delete">Delete</div>
+                                                </th>
+                                            </tr>
+                                        </thead>   
+                                        <tbody> 
+                                            <aura:iteration items="{!v.partnerContractServiceList}" var="pcs" indexVar="index">                                    		                                           
+                                                <tr>                                                
+                                                    <td>
+                                                        <lightning:input name="minTarget" type="number" value="{!pcs.Minimum_Target__c}"/>
+                                                    </td>
+                                                    <td>
+                                                        <lightning:input name="minTargetEffectiveDate" type="Date" value="{!pcs.Minimum_Target_Effective_Date__c}"/>
+                                                    </td>                                              
+                                                    <td style="text-align:center;">
+                                                        <a onclick="{!c.removeRow}" data-record="{!index}">
+                                                            <lightning:icon iconName="utility:delete" size="small" alternativeText="Delete"/>
+                                                            <span class="slds-assistive-text">Delete</span>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="slds-float_left slds-p-top_small slds-text-title_caps">
+                                    <h1>
+                                        <lightning:buttonIcon iconName="utility:add"  size="large" variant="bare" alternativeText="Add" onclick="{!c.addRow}"/>   &nbsp;&nbsp;<b>Add Row</b>
+                                    </h1>                                
+                                    
+                                </div>                                
+                            </aura:if>
+                        </div>
+                    </aura:if>
+                </aura:iteration>
+                
+            </div>
+            <br/>
+        </aura:if>
+        <!--<aura:if isTrue="{!v.isAvaya}">
+            <div style="font-size:120%">Provide Inputs for Legal below</div>
+            <lightning:textarea value="{!v.nonStandardInputValue}"/>
+        </aura:if>-->
+    </aura:if>
+</aura:component>

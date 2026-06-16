@@ -1,0 +1,31 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="SupportCommunityShareButton">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="buttons" type="List" default="[]" />
+    <aura:attribute name="label" type="String" default="Share" />
+
+    <aura:attribute name="share_1" type="String" default="Facebook" />
+    <aura:attribute name="share_2" type="String" default="Twitter" />
+    <aura:attribute name="share_3" type="String" default="LinkedIn" />
+    <aura:attribute name="share_4" type="String" default="Email" />
+    <aura:attribute name="share_5" type="String" default="Bookmark" />
+    <aura:attribute name="share_6" type="String" default="Print" />
+    <aura:attribute name="share_7" type="String" default="" />
+    <aura:attribute name="share_8" type="String" default="" />
+    <aura:attribute name="share_9" type="String" default="" />
+    <aura:attribute name="share_10" type="String" default="" />
+    <aura:handler event="c:SupportCommunityUserEvent" action="{!c.handleUpdate}"/>
+    <div>
+        <div class="share__button">
+        <label>{!v.label}</label>
+        <ul class="share__list">
+            <aura:iteration items="{!v.buttons}" var="button">
+                <li class="share__item">
+                    <a href="{!button.link}" title="{!button.title}" target="_blank" onclick="{!c.shareClick}">
+                        <c:SupportCommunityIcon Id="{!button.icon}" size="small" />
+                    </a>
+                </li>
+            </aura:iteration>
+        </ul>
+        </div>
+    </div>
+</aura:component>

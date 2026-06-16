@@ -1,0 +1,26 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="Support Community Topic" controller="SupportCommunityKnowledgeController">
+    <aura:attribute name="title" type="String" default="Topic title" />
+    <aura:attribute name="count" type="Integer" default="4" />
+    <aura:attribute name="topics" type="List" default="[]" />
+    <aura:attribute name="place" type="String" default="Trending" />
+    <aura:attribute name="targetAttr" type="String" default="Tab" />
+    <aura:attribute name="target" type="String" />
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdateUser}"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="viewall" type="String" default="https://ringcentral.com" />
+    <div class="sc-topic">
+        <div class="sc-topic__header">{! v.title }</div>
+        <div class="sc-topic__body">
+            <ul>
+                <aura:iteration start="0" items="{!v.topics}" end="{!v.count}" var="item">
+                    <li><a href="{!item.Url}" target="{!v.target}">
+                            <span>{!item.Name}</span>
+                        </a></li>
+                </aura:iteration>
+
+            </ul>
+        </div>
+        <div class="sc-topic__footer"><a href="{!v.viewall}" target="{!v.target}">{!$Label.c.SC_viewAllTopics}</a></div>
+    </div>
+</aura:component>

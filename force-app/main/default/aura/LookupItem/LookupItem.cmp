@@ -1,0 +1,34 @@
+<aura:component>
+
+    <aura:attribute name="item" type="Map"/>
+    <aura:attribute name="iconCollection" type="String"/>
+    <aura:attribute name="icon" type="String"/>
+    <aura:attribute name="iconSize" type="String"/>
+    <aura:attribute name="guid" type="Map" description="Lookup guid"/>
+    <!-- Registered Events -->
+    <aura:registerEvent name="LookupEvent" type="c:LookupEvent"/>
+
+    <li role="presentation"
+        class="slds-listbox__item"
+        onmousedown="{!c.select}"
+        title="{!v.item.Text + '' +v.item.Meta}">
+
+        <span class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta"
+              role="option">
+
+            <span class="slds-media__figure">
+                <lightning:icon iconName="{!v.iconCollection+':'+v.icon}"
+                                size="{!v.iconSize}"
+                                alternativeText="{!v.icon}"/>
+            </span>
+
+            <span class="slds-media__body">
+                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!v.item.Text}</span>
+                <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">{!v.item.Meta}</span>
+            </span>
+
+        </span>
+
+    </li>
+
+</aura:component>

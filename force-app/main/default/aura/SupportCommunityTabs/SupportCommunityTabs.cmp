@@ -1,0 +1,71 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="Support Community Tabs" controller="SupportCommunityUsers">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="show" type="Boolean" default="false" />
+    <aura:attribute name="infoRight" type="Boolean" default="true" />
+    <aura:attribute name="showBilling" type="Boolean" default="false" />
+    <aura:attribute name="adminPortalLink" type="String" default="#" />
+    <aura:attribute name="viewAllCases" type="String" default="#" />
+    <aura:attribute name="caseLink" type="String" default="https://success.ringcentral.com/RCSupportAdvCaseDetail?Id=" />
+    <aura:attribute name="checkSystemStatus" type="String" default="#" />
+    <aura:attribute name="loading" type="Boolean" default="true"/>
+    <aura:attribute name="isGuest" type="Boolean" default="true"/>
+    <aura:attribute name="cases" type="Object"/>
+    <aura:attribute name="account" type="Object"/>
+    <aura:attribute name="contact" type="Object"/>
+    <div class="slds-grid slds-wrap slds-grid--vertical slds-grid--align-center slds-grid_vertical-align-center">
+        <div class="slds-col slds-size_12-of-12">
+            <c:scTabsData
+                caseLink="{!v.caseLink}"
+                onchangeuser="{!c.handleChangeUser}"
+                onchangecases="{!c.handleChangeCases}"/>
+            <aura:if isTrue="{!!v.show}">
+            <div class="sc-notlogin">
+                <div class="sc-notlogin__button" onclick="{!c.loginClick}">{!$Label.c.SC_loginForMore}</div>
+            </div>
+            </aura:if>
+            <lightning:tabset variant="scoped">
+            <lightning:tab label="{!$Label.c.SC_cases}">
+                <c:SupportCommunityCases
+                    show="{!v.show}"
+                    viewAllCases="{!v.viewAllCases}"
+                    checkSystemStatus="{!v.checkSystemStatus}"
+                    caseLink="{!v.caseLink}"
+                    data="{!v.cases}"
+                    hasCases="{!v.cases.length > 0}"
+                    hasAccount="{!v.account.hasAccount}"
+                    CSM_Name="{!v.account.CSM.Name}"
+                    CSM_Email="{!v.account.CSM.Email}"
+                    CSM_Photo="{!v.account.CSM.Photo}"
+                />
+            </lightning:tab>
+            <aura:if isTrue="{!!v.isGuest}">
+                <lightning:tab label="{!$Label.c.SC_billing}">
+                        <c:SupportCommunityBilling
+                            adminPortalLink="{!v.adminPortalLink}"
+                            isGuest="{!v.isGuest}"
+                            nextBillingDate="{!v.account.nextBillingDate}"
+                            billingCycle="{!v.account.billingCycle}"
+                            paymentSchedule="{!v.account.paymentSchedule}"
+                            servicePlan="{!v.contact.ServicePlan}"
+                            numberOfDigitalLines="{!v.contact.numberOfDigitalLines}"
+                        />
+                </lightning:tab>
+            </aura:if>
+            <lightning:tab label="{!$Label.c.SC_contactInfo}">
+                <c:SupportCommunityContact
+                    adminPortalLink="{!v.adminPortalLink}"
+                    show="{!v.show}"
+                    contactName="{!v.contact.Name}"
+                    contactRole="{!v.contact.Role}"
+                    contactEmail="{!v.contact.Email}"
+                    contactPhone="{!v.contact.Phone}"
+                    mainContact="{!v.contact.OwnerName}"
+                    companyAddress="{!v.account.BillingAddress}"
+                    isGuest="{!v.isGuest}"
+                />
+            </lightning:tab>
+        </lightning:tabset>
+            <c:lwcSpinner isShown="{!v.loading}" type="local"/>
+        </div>
+    </div>
+</aura:component>

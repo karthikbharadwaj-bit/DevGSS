@@ -1,0 +1,85 @@
+<aura:component description="RefundManagementItem">
+    <aura:attribute name="app" type="object"/>
+    <aura:attribute name="item" type="object"/>
+
+    <aura:attribute name="padding" type="Integer"/>
+    <aura:attribute name="offset" type="Integer"/>
+
+    <tr class="{! join(' ', v.item.isExpandable ? 'clickable' : '') }"
+        onclick="{! v.item.isExpandable ? c.toggleExpand : null }">
+
+        <!-- Name -->
+        <!-- There can be 8 or 9 columns, depending on whether "Refunded amount" column is shown, and totalOfColumns shows that number -->
+        <td colspan="{! v.app.totalOfColumns - (v.app.approval.record.Account__r.Billing_ID__c ? 5 : 4) }"
+            style="{!'padding-left: ' + v.padding + 'rem;'}"
+            class="slds-truncate"
+            title="{!v.item.name}">
+            <aura:if isTrue="{# v.item.isExpandable }">
+                <lightning:buttonIcon class="slds-m-right_small expand-icon"
+                                      variant="bare"
+                                      iconName="{! v.item.isExpanded ? 'utility:down' : 'utility:right'}"
+                                      size="small"
+                                      alternativeText="{! v.item.isExpanded ? 'Collapse' : 'Expand'}"/>
+            </aura:if>
+            {# v.item.name }
+        </td>
+
+        <!-- Transaction Amount -->
+        <td>
+            <c:outputCurrency value="{! v.item.amount }"
+                              currencyCode="{! v.item.currencyCode }"/>
+        </td>
+
+        <!-- AVAILABLE REFUND AMOUNT -->
+        <td>
+            <c:outputCurrency value="{! v.item.availableRefund }"
+                              currencyCode="{! v.item.currencyCode }"/>
+        </td>
+
+        <!-- REFUNDED AMOUNT -->
+        <aura:if isTrue="{! !empty(v.app.approval.record.Account__r.Billing_ID__c) }">
+            <td>
+                <aura:if isTrue="{# !!v.item.isBillingTransaction }">
+                    <c:outputCurrency value="{! v.item.refundedAlready }"
+                                    currencyCode="{! v.item.currencyCode }"/>
+                </aura:if>
+            </td>
+        </aura:if>
+
+        <!-- Refund Amount -->
+        <td colspan="{! v.app.totalOfColumns - (v.app.approval.record.Account__r.Billing_ID__c ? 7 : 6) }" aura:id="refundCell">
+            <aura:if isTrue="{! v.item.isRefunded }">
+                Refunded
+                <aura:set attribute="else">
+                    <span title="{! v.item.currencyCode + ' ' + v.item.refundedAmount }">
+                        <c:outputCurrency value="{! v.item.refundedAmount }"
+                                            currencyCode="{! v.item.currencyCode }"/>
+                    </span>
+                </aura:set>
+            </aura:if>
+        </td>
+    </tr>
+
+    <aura:if isTrue="{! v.item.isExpanded }">
+
+        <!-- Childs Header -->
+        <tr class="slds-text-title--caps header product-sub-items-header">
+            <th colspan="{! v.app.totalOfColumns }" class="product-sub-items-header__name"
+                style="{!'padding-left: ' + ( v.padding + v.offset ) + 'rem;'}">
+                <div class="slds-truncate">{! v.item.childsName }&nbsp;</div>
+            </th>
+        </tr>
+
+        <!-- Childs -->
+        <aura:iteration items="{! v.item.childs }" var="child">
+            <c:RefundManagementItem
+                app="{! v.app }"
+                item="{! child }"
+                padding="{! v.padding + v.offset }"
+                offset="{! v.offset }"
+            />
+        </aura:iteration>
+
+    </aura:if>
+
+</aura:component>

@@ -1,0 +1,104 @@
+<aura:component controller="OrderHistoryViewController">
+
+  <aura:attribute name="accId" type="String" />
+  <aura:attribute name="data" type="List" />
+  <aura:attribute name="isLoad" type="Boolean" default="false" />
+  <aura:attribute name="prompt" type="Map" default="{ text: '' }" />
+  <aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+
+  <div>
+
+    <table class="slds-table slds-table--bordered slds-table--cell-buffer">
+      <thead>
+        <tr class="slds-text-title--caps">
+          <th class="col-20pct" scope="col">
+            <div class="slds-truncate" title="Quote Name">Quote Name</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Order Name">Order Type</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Created Date">Created Date</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Submitted Date">Submitted Date</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Provisioned Date">Provisioned Date</div>
+          </th>
+          <th class="col-20pct" scope="col">
+            <div class="slds-truncate" title="Item Name">Item Name</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Quantity">Quantity</div>
+          </th>
+          <th class="col-10pct" scope="col">
+            <div class="slds-truncate" title="Your price">Your price</div>
+          </th>
+        </tr>
+      </thead>
+    </table>
+
+    <div class="scroll">
+      <table class="table-quotes slds-table slds-table--bordered slds-table--cell-buffer">
+        <tbody>
+          <aura:iteration items="{!v.data}" var="item">
+            <tr class="">
+
+              <!-- Quote -->
+              <th class="col-20pct slds-border--right" scope="row" data-label="">
+                <div class="slds-truncate" title="{!item.Name}">
+                  <a href="{!'/'+item.Id}" onclick="{!c.preventShow}" target="_blank">{!item.Name}</a>
+                </div>
+              </th>
+              <td class="col-80pct no-padding" colspan="7">
+                <c:OrderHistoryOrderRow data="{!item.Orders}" />
+              </td>
+            </tr>
+          </aura:iteration>
+        </tbody>
+      </table>
+
+      <aura:if isTrue="{!empty(v.data) &amp;&amp; !v.isLoad }">
+        <div class="slds-grid slds-grid--vertical-align-center slds-grid--align-center message-block">
+          <p>No Orders found.</p>
+        </div>
+      </aura:if>
+
+    </div>
+
+    <!-- spinner -->
+    <aura:if isTrue="{!v.isLoad}">
+      <div class="slds-spinner_container">
+        <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+          <span class="slds-assistive-text">Loading</span>
+          <div class="slds-spinner__dot-a"></div>
+          <div class="slds-spinner__dot-b"></div>
+        </div>
+      </div>
+    </aura:if>
+
+    <!-- error prompt -->
+    <div aura:id="modal" role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id" aria-describedby="prompt-message-wrapper" class="slds-modal slds-modal--prompt slds-hide">
+      <div class="slds-modal__container">
+        <div class="slds-modal__header slds-theme--error slds-theme--alert-texture">
+          <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close" onclick="{!c.closePrompt}">
+            <lightning:icon iconName="utility:close" variant="bare" size="small" class="slds-button__icon slds-button__icon--large" alternativeText="Close" />
+            <span class="slds-assistive-text">Close</span>
+          </button>
+          <h2 class="slds-text-heading--medium" id="prompt-heading-id">Service Unavailable</h2>
+        </div>
+        <div class="slds-modal__content slds-p-around--medium">
+          <p>{!v.prompt.text}</p>
+        </div>
+        <div class="slds-modal__footer slds-theme--default">
+          <button class="slds-button slds-button--neutral" onclick="{!c.confirmPrompt}">Try again</button>
+        </div>
+      </div>
+    </div>
+    <div aura:id="modal-bg" class="slds-backdrop"></div>
+
+  </div>
+
+</aura:component>

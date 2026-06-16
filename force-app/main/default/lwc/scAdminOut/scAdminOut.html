@@ -1,0 +1,44 @@
+<template>
+    <article class="slds-card slds-card_narrow">
+        <header class="slds-card__header slds-grid">
+            <div class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:merge" alternative-text="Out"></lightning-icon>
+                </div>
+                <div class="slds-media__body slds-truncate">
+                    <h2><span class="slds-text-heading_small">Out</span></h2></div>
+            </div>
+        </header>
+        <div class="slds-card__body">
+            <div class="slds-p-horizontal_small">
+                <ul class={listStyle}>
+                    <template for:each={outList} for:item="slot" for:index="inx">
+                        <li class={slot.cName}
+                            ondrop={dragDrop}
+                            key={slot.id}
+                            data-id={slot.id}
+                            data-pos={slot.position}
+                            title={slot.name}
+                            ondragenter={dragEnter}
+                            ondragleave={dragLeave}
+                            ondragover={dragOver}
+                            onmouseleave={highlightEnd}
+                            onmouseover={highlightStart}
+                            ondblclick={searchIt}>
+                            <a href={slot.link}
+                               target="_blank"
+                               if:false={slot.isEmpty}>{slot.name}</a>
+                            <span if:true={slot.isEmpty}>{slot.name}</span>
+                            <lightning-button-icon icon-name="utility:delete"
+                                                   variant="bare"
+                                                   alternative-text="Set to default value"
+                                                   class="slds-m-left_xx-small delete"
+                                                   data-id={slot.id}
+                                                   onclick={clearSlot} ></lightning-button-icon>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </article>
+</template>

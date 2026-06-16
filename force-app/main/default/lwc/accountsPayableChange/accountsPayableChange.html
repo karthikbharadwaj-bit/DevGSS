@@ -1,0 +1,48 @@
+<template>
+  <c-lwc-spinner if:true={isSpinnerShown}
+    is-shown={isSpinnerShown}
+    spinner-style="slds-spinner_brand"
+    theme="no-background"
+    text={spinnerText}
+  ></c-lwc-spinner>
+  <lightning-quick-action-panel header="Change Accounts Payable Contact">
+    <lightning-layout
+      class="slds-gutters slds-m-bottom_small slds-grid_vertical slds-grid_vertical-align-start" if:true={approvalInfo}>
+      <lightning-layout-item padding="horizontal-small">
+        <h4 class="slds-form-element__label">
+          Please select new Accounts Payable Contact:
+        </h4>
+      </lightning-layout-item>
+      <lightning-layout-item size="12" padding="horizontal-small">
+        <c-input-lookup
+          method="getContacts"
+          icon="standard:contact"
+          placeholder="Start typing to search Accounts Payable Contact"
+          value={selectedAccountPayableId}
+          params={accountPayableParams}
+          forced-attributes={forcedDropdownAttributes}
+          onchange={onSelectedAccountPayableChange}
+          label="Accounts Payable Contact"
+          required="true"
+        ></c-input-lookup>
+      </lightning-layout-item>
+      <lightning-layout-item size="12" padding="horizontal-small" if:true={isPartnerPayableShown}>
+        <c-input-lookup
+          method="getContacts"
+          icon="standard:contact"
+          placeholder="Start typing to search Partner's Accounts Payable Contact"
+          value={selectedPartnerPayableId}
+          params={partnerPayableParams}
+          forced-attributes={forcedDropdownAttributes}
+          onchange={onSelectedPartnerPayableChange}
+          label="Partner's Accounts Payable Contact"
+          required="true"
+        ></c-input-lookup>
+      </lightning-layout-item>
+    </lightning-layout>
+    <div slot="footer" class="slds-grid slds-grid--align-end">
+      <lightning-button variant="neutral" label="Cancel" onclick={onClose}></lightning-button>
+      <lightning-button variant="brand" label="Confirm and Submit for Approval" onclick={onSave} disabled={isSaveDisabled}></lightning-button>
+    </div>
+  </lightning-quick-action-panel>
+</template>

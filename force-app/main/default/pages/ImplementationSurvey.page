@@ -1,0 +1,283 @@
+<apex:page controller="ImplementationSurveyController" standardStylesheets="true" cache="false" id="ImplementationSurvey" showHeader="false">
+<style>
+input[type="radio"] {
+	  border:none !important;
+	  border-color: white !important;
+	  margin-top: 0px;
+	  position: relative;
+	  padding-left:14px !important;
+	  width:12px!important;
+	  height:12px!important;
+
+	   }
+	/* input[type="radio"] {
+			border:none !important;
+			margin-top: 0px;
+			position: relative;
+			width:10px!important;
+			height:10px!important;
+	} */
+   	label{
+	  vertical-align:middle !important;
+	  font-size:12px;
+	  float:right;
+	  margin-left:5px;
+
+    	}
+   b {color:#798496;font-family:Verdana,Geneva,Arial,Helvetica,sans-serif; font-size:11px; font-style:normal; line-height:20px;}
+    .content{background: white; border: 1px solid #919191; width: 693px;box-shadow: 0px 0px 30px 1px; padding: 10px;margin: 0px auto;border-radius: 15px 15px 15px 15px;border-radius: 15px 15px 15px 15px;-moz-border-radius: 15px 15px 15px 15px;-webkit-border-radius: 15px 15px 15px 15px;}
+   .body {background: rgb(243, 243, 243)}
+   .message {margin-left: 0%;}
+    
+   p{
+     color:black;
+     font-weight:bold;
+     margin:0;
+    }
+</style>
+<apex:stylesheet value="{!URLFOR($Resource.Style_Resources, 'default2.style.css')}"/>
+<div class='content'>
+
+	<!--<apex:image url="{!$Resource.ATTSurveyHeader}" width="480px"/><br/><br/>-->
+	<div style="padding-left:4%;">
+		<apex:dynamicComponent componentValue="{!logo}"/><br/><br/>
+	</div>
+	<apex:form id="theForm" style="padding-left:4%;">
+	<div style="text-align:center;">
+		<apex:dynamicComponent componentValue="{!rogersHeader}" rendered="{!rogersHeaderFlag}"/>
+	</div>
+	<apex:outputText escape="false" rendered="{!errorflag }"><b>Invalid Survey</b></apex:outputText>
+	<!-- <apex:dynamicComponent componentValue="{!ThanksMsg}"/>  -->
+	<!-- <apex:dynamicComponent componentValue="{!UserMsg}"/>-->
+	<apex:PageMessages escape="false"></apex:PageMessages>
+	<!-- <apex:dynamicComponent componentValue="{!alradyFilled}" rendered="{!RespondFlag}"/> -->
+	<!-- <apex:dynamicComponent componentValue="{!ImplementationSurvey}" rendered="{!isEmpty && !(isExpired)}"/> -->
+	<apex:PanelGrid id="thePanel" columns="1" rendered="{!isEmpty && !(isExpired)}">
+		<apex:outputText value="{!UserMsg}" escape="false"/>
+		<apex:outputText value="{!Header}" escape="false" style="text-align:center;margin-left: 0.5%;margin-right: 5% !important;"/>
+        <apex:outputPanel rendered="{!IF(BEGINS(surveyObj.Implementation__r.Brand__c, 'RingCentral'),true,false)}">
+            <apex:outputPanel rendered="{!(!surveyObj.Implementation__r.ProfessionalServices__c)}">
+                <apex:outputText value="{!Q7}" escape="false"/>
+                <br/>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font>1. Overall satisfaction with your Implementation Advisor.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!Q71Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font>2. Implementation Advisor’s ability to fulfill your requirements.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!Q72Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font>3. Communication and updates you received from your Implementation Advisor.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!Q73Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp; &nbsp; &nbsp;4. If Porting: Please rate your Satisfaction with your Porting experience (not relevant to RC Meetings).<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!Q74Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="<b><font color=black> Please let us know any comments you have about your Implementation experience or<br/>suggestions on how we can improve</font></b>" escape="false"/>
+                <apex:InputTextArea Rows="4" cols="100" id="comment" style="width:88%;" onchange="checkLength(this, 2000);" value="{!comments}" disabled="{!(isExpired || respondFlag)}"/>
+            </apex:outputPanel>
+    
+            <apex:outputPanel rendered="{!surveyObj.Implementation__r.ProfessionalServices__c}">
+                <apex:outputText value="<b><font color=black> RingCentral Professional Services Project Manager Feedback:<br/></font></b>" escape="false"/>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font> Overall, how satisfied are you with your RingCentral project management?<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!psquestion1}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="Thinking about your experience with your RingCentral project manager, please rate your satisfaction with the following:<br/>" escape="false"/>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;1. Knowledge of project manager.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!psquestion11}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;2. Communication throughout the project.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!psquestion12}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;3. Responded in a timely manner.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!psquestion13}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;4. Acted in your best interest throughout the project.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!psquestion14}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="Please share any additional comments about your RingCentral Professional Services Project Management experience or<br/>suggestions on how we can improve:" escape="false"/>
+                <apex:InputTextArea Rows="4" cols="100" id="ProfServicesComment" style="width:88%;" onchange="checkLength(this, 2000);" value="{!pscomment}" disabled="{!(isExpired || respondFlag)}"/>
+            </apex:outputPanel>
+    
+            <apex:outputPanel rendered="{!surveyObj.Implementation__r.PlanningAndDesign__c}">
+                <apex:outputText value="<b><font color=black> RingCentral Planning and Design Feedback:<br/></font></b>" escape="false"/>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font> Overall, how satisfied are you with your RingCentral planning and design service?<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!pndquestion1}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;1. Was the Length of the Planning and Design appropriate?<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Too long and 10 just right)</font>" escape="false"/>
+                <apex:SelectRadio value="{!pndquestion11}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;2. Do you feel your Planning & Design Engineer acted in a professional manner throughout the deployment?<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all and 10 definitely yes)</font>" escape="false"/>
+                <apex:SelectRadio value="{!pndquestion12}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;3. Was the knowledge transfer from Planning & Design Engineer to Project Manager adequate?<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all and 10 definitely yes)</font>" escape="false"/>
+                <apex:SelectRadio value="{!pndquestion13}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="How do you feel your Planning & Design could have gone better?" escape="false"/>
+                <apex:InputTextArea Rows="4" cols="100" id="PlanDesignImprovement" style="width:88%;" onchange="checkLength(this, 2000);" value="{!pndimprove}" disabled="{!(isExpired || respondFlag)}"/>
+                <br/>
+                <apex:outputText value="Please share any additional comments about your planning and design experience or suggestions on how we can improve:" escape="false"/>
+                <apex:InputTextArea Rows="4" cols="100" id="PlanDesignComment" style="width:88%;" onchange="checkLength(this, 2000);" value="{!pndcomment}" disabled="{!(isExpired || respondFlag)}"/>
+            </apex:outputPanel>
+    
+            <apex:outputPanel rendered="{!surveyObj.Implementation__r.OnsiteDeployment__c}">
+                <apex:outputText value="<b><font color=black> RingCentral On-Site Deployment Feedback:<br/></font></b>" escape="false"/>
+    
+                <apex:outputText value="&nbsp; &nbsp;<font color=red>*</font> Overall, how satisfied are you with your RingCentral on-site deployment?<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion1}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="Thinking about your experience with your on-site deployment team, please rate your satisfaction with the following:<br/>" escape="false"/>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;1. Knowledge of on-site team.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion11}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;2. Information received before the deployment was started.<br/>&nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion12}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;3. Execution of on-site deployment.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion13}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;4. Adequate time spent by team onsite.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion14}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;5. On-site training.<br/>&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;<font color =#798496>(0 Not at all Satisfied and 10 extremely satisfied)</font>" escape="false"/>
+                <apex:SelectRadio value="{!osdquestion15}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                    <apex:selectOptions value="{!Values3}"/>
+                </apex:SelectRadio>
+    
+                <apex:outputText value="Please share any additional comments about your on-site deployment experience or suggestions on how we can improve:" escape="false"/>
+                <apex:InputTextArea Rows="4" cols="100" id="OnsiteDeploymentComment" style="width:88%;" onchange="checkLength(this, 2000);" value="{!osdcomment}" disabled="{!(isExpired || respondFlag)}"/>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!surveyObj.Implementation__r.Brand__c=='Vodafone Business with RingCentral'}" style="background-color:white">
+              <p style="border-style:solid;border-color:#0a0a0a; padding:2px 15px;background-image: linear-gradient(to right,#FE7D7D,#FF9C9C,#FFB8B8,#F7C6C6,#f7dfdf);font-family: Arial, Helvetica, sans-serif; border-width:thin;">
+                          Umfrage zum Vodafone Technischen Onboarding</p>
+               <br/>
+                <apex:outputText value="(0 Überhaupt nicht zufrieden und 10 sehr zufrieden)<br/>" escape="false"/>
+                 <br/>
+                 <apex:outputText value="1. Wie zufrieden sind Sie mit Ihrem Berater für die Umsetzung?" escape="false"/>
+                    <apex:SelectRadio value="{!Q71Value}" style="padding-left:3%;margin:10px;">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+    
+                    <apex:outputText value="2. Wie gut hat der Implementierungsberater Ihre Anforderungen erfüllt?" escape="false"/>
+                    <apex:SelectRadio value="{!Q72Value}" style="padding-left:3%;margin:10px;">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+    
+                    <apex:outputText value="3. Wie zufrieden sind Sie mit der Kommunikation und den Aktualisierungen, die Sie bekommen haben?" escape="false"/>
+                    <apex:SelectRadio value="{!Q73Value}" style="padding-left:3%;margin:10px;">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+    
+                    <apex:outputText value="4. Wie zufrieden sind Sie mit den Materialien, die Sie bekommen haben, z.B. Customer On-Boarding Guide oder Vodafone Business App?" escape="false"/>
+                    <apex:SelectRadio value="{!Q74Value}" style="padding-left:3%;margin:10px;">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+                 
+                     <apex:outputText value="</br>sKommentare, Kritikpunkte, Anregungen?" escape="false"/>
+                    <apex:InputTextArea Rows="4" cols="100" id="commentVBR" style="width:88%;margin:5px" onchange="checkLength(this, 2000);" value="{!comments}"/>
+             </apex:outputPanel>
+             <apex:outputPanel rendered="{!surveyObj.Implementation__r.Brand__c=='Frontier with RingCentral'}" style="background-color:white">
+                 	<apex:outputText value="{!Q7}" escape="false"/>
+                 <apex:outputText value="<br/><i>(0 Not at all Satisfied and 10 extremely satisfied)</i><br/>" style="font-weight:thin" escape="false"/>
+                 
+                 <apex:outputText value="<br/>1. Overall satisfaction with your Technical Onboarding Advisor.<br/>" escape="false"/>
+                    <apex:SelectRadio value="{!Q71Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+        			
+                    <apex:outputText value="2. Technical Onboarding Advisor’s ability to fulfill your requirements.<br/>" escape="false"/>
+                    <apex:SelectRadio value="{!Q72Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+        
+                    <apex:outputText value="3. Communication and updates you received from your Technical Onboarding Advisor.<br/>" escape="false"/>
+                    <apex:SelectRadio value="{!Q73Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+        
+                    <apex:outputText value="{!Q74}" escape="false"/>
+                    <apex:SelectRadio value="{!Q74Value}" style="padding-left:3%;" disabled="{!(isExpired || respondFlag)}">
+                        <apex:selectOptions value="{!Values3}"/>
+                    </apex:SelectRadio>
+        
+                 <apex:outputText value="</br>Please let us know any comments you have about your Technical Onboarding experience or suggestions on how we can improve.</br></br>" escape="false"/>
+                    <apex:InputTextArea Rows="4" cols="100" id="commentFR" style="width:88%;" onchange="checkLength(this, 2000);" value="{!comments}" disabled="{!(isExpired || respondFlag)}"/>
+             </apex:outputPanel>
+		<apex:outputText value="{!footer}" escape="false"/>
+	    <apex:outputPanel rendered="{!brand = 'RingCentral EU'}">
+	        <div>
+	            <a title="Privacy Policy" href="https://www.ringcentral.com/legal/privacy-policy.html" target="_blank">Privacy Policy</a>
+	        </div>
+	    </apex:outputPanel>
+		<apex:commandButton value="Submit" action="{!save}" style="margin-left:40%;" />
+	</apex:PanelGrid>
+
+	</apex:form>
+	<div style="margin-left:28px;">
+		<apex:dynamicComponent componentValue="{!rogersFooter}" rendered="{!rogersFooterFlag}"/>
+	</div>
+</div>
+<script>
+var maximumLength = 2000;
+
+function checkLength(control, maximum) {
+    var length = control.value.length;
+
+    if (length > maximum) {
+        alert('Please limit your message to ' + maximumLength
+        + ' characters. There are currently ' + length + '.');
+    return false;
+    }
+return true;
+}
+
+function validate(form) {
+    var controls = form.elements;
+    if (!checkLength(controls.textArea, maximumLength))
+    return false;
+
+return true;
+}
+</script>
+
+</apex:page>

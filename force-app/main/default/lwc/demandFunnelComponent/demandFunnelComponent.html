@@ -1,0 +1,50 @@
+<template>
+  <lightning-layout class="slds-var-m-top_x-small">
+    <c-placeholder-loading
+      type="line"
+      width="20rem"
+      if:true={isLoading}
+    ></c-placeholder-loading>
+    <template if:false={isLoading}>
+      <article class="slds-card lightning-card">
+        <div class="slds-card__header slds-grid slds-theme_shade">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-media__figure">
+              <lightning-icon
+                icon-name="action:new_note"
+                alternative-text="Demand Funnel"
+                title="Demand Funnel"
+                size="xx-small"
+              ></lightning-icon>
+            </div>
+            <div class="slds-media__body">
+              <h2 class="slds-card__header-title">
+                <a
+                  class="slds-card__header-link"
+                  onclick={handleGotoRelatedList}
+                >
+                  Demand Funnel ({getTotalDFR})</a
+                >
+              </h2>
+            </div>
+          </header>
+        </div>
+        <template if:true={dfrsAvailable}>
+          <div>
+            <lightning-datatable
+              key-field="Id"
+              data={dfrs}
+              columns={columns}
+              hide-checkbox-column="true"
+              resize-column-disabled="true"
+            >
+            </lightning-datatable>
+          </div>
+          <footer class="slds-card__footer">
+            <a onclick={handleGotoRelatedList}>View All</a>
+          </footer>
+        </template>
+      </article>
+    </template>
+  </lightning-layout>
+</template>

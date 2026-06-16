@@ -1,0 +1,76 @@
+<aura:component controller="DowngradeWizardController">
+    <ltng:require scripts="{!join(',', $Resource.underscoreJs + '/underscore-min.js')}"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <aura:attribute name="panels" type="Aura.Component[]"/>
+    <aura:attribute name="isInline" type="Boolean" default="false"/>
+    <aura:attribute name="isEditable" type="Boolean" default="false"/>
+    <aura:attribute name="canSave" type="Boolean" default="false"/>
+    <aura:attribute name="wizardType" type="String"/>
+    <aura:attribute name="wizardName" type="String"/>
+    <aura:attribute name="accId" type="String"/>
+    <aura:attribute name="global" type="Map" default="{isLoading: false}"/>
+    <aura:attribute name="oppInfo" type="String"/>
+    <aura:attribute name="oppId" type="String"/>
+    <aura:attribute name="opportunityId" type="String"/>
+    <aura:attribute name="opportunityWizardData" type="Map"/>
+
+    <aura:handler event="c:OptionsPanelEvent" action="{!c.onOptionsPanelEvent}"/>
+
+    <aura:if isTrue="{!v.wizardType}">
+        <div>
+            <aura:if isTrue="{!v.isInline}">
+                <!-- header -->
+                <div class="header-panel slds-is-fixed slds-size_full slds-theme--shade slds-border--bottom slds-p-around--medium slds-text-align--center">
+                    <aura:if isTrue="{!not(v.isEditable)}">
+                        <button class="slds-button slds-button--brand" onclick="{!c.toggleEditMode}">Edit</button>
+                    </aura:if>
+                    <aura:if isTrue="{!v.isEditable}">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.cancel}" disabled="{!v.global.isLoading}">Cancel</button>
+                        <aura:if isTrue="{!v.canSave}">
+                            <button class="slds-button slds-button--brand" onclick="{!c.submit}" disabled="{!v.global.isLoading}">Submit</button>
+                        </aura:if>
+                    </aura:if>
+                </div>
+
+                <!-- content -->
+                <div class="slds-grid slds-wrap slds-grid--align-start slds-grid--vertical-align-start slds-grid_vertical-stretch slds-p-top_xx-large slds-p-bottom_small slds-p-horizontal_small">
+                    {!v.panels}
+                </div>
+
+                <aura:set attribute="else">
+                    <!-- header -->
+                    <div class="slds-page-header">
+                        <div class="slds-grid slds-grid--vertical-align-center">
+                            <div class="slds-col slds-has-flexi-truncate">
+                                <lightning:icon iconName="custom:custom3" size="medium"
+                                                class="slds-icon slds-icon-standard-coaching slds-m-right--small"
+                                                alternativeText="wizard"/>
+                                <h1 class="slds-page-header__title slds-m-right--small slds-align-middle slds-truncate slds-show--inline-block"
+                                    title=""><span class="capitalize">{!v.wizardName}</span> Wizard</h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- content -->
+                    <div class="slds-grid slds-wrap slds-grid--align-start slds-grid--vertical-align-start slds-grid_vertical-stretch slds-p-around_small">
+                        {!v.panels}
+                    </div>
+
+                    <!-- footer -->
+                    <div class="footer-panel slds-theme--shade slds-border--top slds-p-around--medium slds-text-align--center">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.cancel}">Cancel</button>
+                        <aura:if isTrue="{!v.canSave}">
+                            <button class="slds-button slds-button--brand" onclick="{!c.submit}">Submit</button>
+                        </aura:if>
+                    </div>
+                </aura:set>
+            </aura:if>
+        </div>
+    </aura:if>
+
+    <c:Toasts/>
+    <c:Spinner/>
+    <c:Modals/>
+
+</aura:component>

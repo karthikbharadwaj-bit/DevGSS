@@ -1,0 +1,644 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" Controller="RCSupportControllerHandler"
+           cache="false" docType="html-5.0" id="LC_Form">
+    <apex:pageMessage escape="false" summary="{!$Label.Prepare_Unused_Pages_For_Deletion_Part_1}" 
+        severity="error" strength="3" />
+
+    <!-- Case 06385311 Added 2017-11-16  -->
+    <script type="text/javascript">
+        var _kiq = _kiq || [];
+        (function () {
+            setTimeout(function () {
+                var d = document,
+                        f = d.getElementsByTagName('script')[0],
+                        s = d.createElement('script');
+                s.type = 'text/javascript';
+                s.async = true;
+                s.src = 'https://s3.amazonaws.com/ki.js/64960/f4p.js';
+                f.parentNode.insertBefore(s, f);
+            }, 1);
+        })();
+    </script>
+
+    <style>
+        .more-support-videos ul li:nth-child(5n+5) {
+            margin-right: 0px !important;
+            -prefix-animation: slide 1s ease 3.5s forwards;
+        }
+
+        @-prefix-keyframes slide {
+            from {
+                height: 0;
+            }
+
+            to {
+                height: 300px;
+            }
+        }
+        th.labelCol.vfLabelColTextWrap {
+            padding-right: 5px !important;
+        }
+        .dockableContainer {
+            max-height: 498px !important;
+        }
+        .coveo-labels{
+            margin: .95rem 0;
+        }
+         .slds-button {
+            line-height: 1.875rem;
+        }
+         .cSnapInsPreChat .form__name-row {
+            line-height: 1.5;
+        }
+         .cSnapInsPreChat .form__name-row {
+            line-height: 1.5;
+        }
+        .dockableContainer .slds-input {
+            line-height: 1.875rem;
+        }
+        .dockableContainer .slds-input:focus {
+            box-shadow: rgb(0, 112, 210) 0px 0px 3px;
+            border: 1px solid #e4e5e6 !important;
+        }
+        .dockableContainer .pre-chat__form label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+        }
+        .pre-chat__message {
+            font-weight: 500 !important;
+        }
+        .helpButtonLabel .message {
+            background: none !important;
+            border: none !important;
+            color: rgb(255, 255, 255) !important;
+        }
+        .dockableContainer .message {
+            background: none !important;
+            border: none !important;
+            color: rgb(255, 255, 255) !important;
+        }
+        .dockableContainer .content {
+            background: none!important;
+            border: none!important;
+            box-shadow: none!important;
+            min-width: 0!important;
+            width: auto!important;
+            min-height: 0!important;
+            margin: auto!important;
+        }
+        .message {
+            background-color: #c00;
+            border-style: solid;
+            border-width: 1px;
+            color: #000;
+            padding: 6px 8px 6px 6px;
+            margin: 4px 20px;
+            color: white;
+        }
+
+        .message .messageText {
+            margin-left: 8px;
+            color: white;
+        }
+    </style>
+    <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/favicon.ico')}" type="image/vnd.microsoft.icon"
+          rel="icon"/>
+    <!-- <table colspan="0" cellpadding="0" bor der="0" class="sitemethods" style="text-align:left;">
+    <tr><th> $Site.Name </th><th> {!$Site.Name} </th></tr>
+    <tr><td> $CurrentPage.URL </td><td> {!$CurrentPage.URL} </td></tr>
+    <tr><td> $CurrentPage.Name</td><td> {!$CurrentPage.Name} </td></tr>
+    <tr><td> $Site.Name </td><td> {!$Site.Name} </td></tr>
+    <tr><td> $Site.Domain </td><td> {!$Site.Domain} </td></tr>
+    <tr><td> $Site.CustomWebAddress </td><td> {!$Site.CustomWebAddress} </td></tr>
+    <tr><td> $Site.OriginalUrl </td><td> {!$Site.OriginalUrl} </td></tr>
+    <tr><td> $Site.CurrentSiteUrl </td><td> {!$Site.CurrentSiteUrl} </td></tr>
+    <tr><td> $Site.LoginEnabled </td><td> {!$Site.LoginEnabled} </td></tr>
+    <tr><td> $Site.RegistrationEnabled </td><td> {!$Site.RegistrationEnabled} </td></tr>
+    <tr><td> $Site.IsPasswordExpired </td><td> {!$Site.IsPasswordExpired} </td></tr>
+    <tr><td> $Site.AdminEmailAddress </td><td> {!$Site.AdminEmailAddress} </td></tr>
+    <tr><td> $Site.Prefix </td><td> {!$Site.Prefix} </td></tr>
+
+    <tr><td> $Site.Template </td><td> {!$Site.Template} </td></tr>
+    <tr><td> $Site.ErrorMessage </td><td> {!$Site.ErrorMessage} </td></tr>
+    <tr><td> $Site.ErrorDescription </td><td> {!$Site.ErrorDescription} </td></tr>
+    <tr><td> $Site.AnalyticsTrackingCode </td><td> {!$Site.AnalyticsTrackingCode} </td></tr>
+    <tr><td> $Site.BaseCustomUrl </td><td> {!$Site.BaseCustomUrl} </td></tr>
+
+    <tr><td> $Site.BaseInsecureUrl </td><td> {!$Site.BaseInsecureUrl} </td></tr>
+    <tr><td> $Site.BaseRequestUrl </td><td> {!$Site.BaseRequestUrl} </td></tr>
+    <tr><td> $Site.BaseSecureUrl </td><td> {!$Site.BaseSecureUrl} </td></tr>
+    <tr><td> $Site.BaseUrl </td><td> {!$Site.BaseUrl} </td></tr>
+    <tr><td> $Site.MasterLabel </td><td> {!$Site.MasterLabel} </td></tr>
+
+    <tr><td> $Site.SiteId </td><td> {!$Site.SiteId} </td></tr>
+    <tr><td> $Site.SiteType </td><td> {!$Site.SiteType} </td></tr>
+    <tr><td> $Site.SiteTypeLabel </td><td> {!$Site.SiteTypeLabel} </td></tr>
+</table>  -->
+    <apex:outputtext escape="false"
+                     rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCSupportPortalHome'), true, false)}">
+        <title>{!pageTitle}</title>
+        <link rel="canonical" href="{!$Site.currentSiteUrl}"/>
+        <meta name="description"
+              content="RingCentral self-service support center featuring knowledgebase documents, videos, and community."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false"
+                     rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCSupportPortalKnowledgebase'), true, false)}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}RCSupportPortalKnowledgebase"/>
+        <meta name="description"
+              content="RingCentral knowledgebase documents and videos are full of useful information available by search, or through the list of popular topics."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false"
+                     rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCSupportPortalGuidesVideos'), true, false)}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}RCSupportPortalGuidesVideos"/>
+        <meta name="description"
+              content="Use RingCentral's how-to videos to learn about the system. Read User and Administrator Guides for more in-depth descriptions of features and functionality."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false"
+                     rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCSupportPortalDownloads'), true, false)}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}RCSupportPortalDownloads"/>
+        <meta name="description"
+              content="Find the latest application software for RingCentral for Desktop, RingCentral Meetings and your mobile devices."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCContactSupp'), true, false)}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}RCContactSupp"/>
+        <meta name="description"
+              content="Contact RingCentral by asking the Community, Chat, Opening a Case, or calling Support."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!IF(LOWER($CurrentPage.Name) == LOWER('RCCallSupport'), true, false)}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}RCCallSupport"/>
+        <meta name="description" content="Call RingCentral for critical issue support or help opening a case."/>
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!isArticleDetailsPage}">
+        <link rel="canonical" href="{!$Site.currentSiteUrl}articles/RC_Knowledge_Article/{!urlName}"/>
+        <meta name="description" content="{!articleSummary}"/>
+        <title>Knowledge Base: {!pageTitle}</title>
+    </apex:outputtext>
+
+    <!--Search Result Sorting  -->
+
+
+    <apex:variable var="varSupportCenterName"
+                   value="{!if(UKPortal,'RingCentral Customer Resource Centre','RingCentral Customer Care Center')}"/>
+    <!--<title>{!varSupportCenterName}</title>-->
+    <!-- <title>RingCentral Customer Resource Center</title> -->
+
+    <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'/>
+
+    <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/css/uniform.form.min.css')}" type="text/css"
+          rel="stylesheet" media="screen"/>
+
+    <apex:variable var="newStyleUK" value="newStyleUK" rendered="{!!UKPortal}">
+        <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/css/style.css')}" type="text/css"
+              rel="stylesheet" media="screen"/>
+    </apex:variable>
+    <apex:variable var="newStyle" value="newStyle" rendered="{!UKPortal}">
+        <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/css/styleUK.css')}" type="text/css"
+              rel="stylesheet" media="screen"/>
+    </apex:variable>
+    <apex:variable var="isShowSocialLinksVar" value="true">
+    </apex:variable>
+
+
+    <!-- ADDED BY VIREN -->
+    <apex:stylesheet value="{!URLFOR($Resource.RCHeaderFooter, 'header-footer-rc/includes/css/stylefooter.css')}"/>
+    <link href="{!URLFOR($Resource.RCHeaderFooter, 'header-footer-rc/includes/css/font-awesome/css/font-awesome.min.css')}"
+          media="screen" rel="stylesheet" type="text/css"/>
+
+    <apex:variable var="newUI" value="newSkinOn" rendered="{!isArticleDetailsPage}">
+        <link type="text/css" rel="stylesheet" href="{!URLFOR($Resource.extended)}" class="user"/>
+        <style>ul li, ol li {
+            margin-left: 0;
+        }</style>
+    </apex:variable>
+    <apex:variable var="change" value="update" rendered="{!($CurrentPage.parameters.popup)=='true'}">
+        <style>
+            header {
+                display: none;
+            }
+
+            footer {
+                display: none;
+            }
+
+            .search-area {
+                display: none;
+            }
+
+            .bg_search_wrapper {
+                display: none;
+            }
+
+            .search-bar-footer {
+                display: none;
+            }
+        </style>
+    </apex:variable>
+
+    <apex:includeScript value="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/modernizr.js')}"/>
+
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/jquery-1.8.2.js')}"></script>
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/uniform.form.min.js')}"></script>
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/jquery.pajinate.js')}"></script>
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/script.js')}"></script>
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/jquery.validate.min.js')}"></script>
+    <script src="{!URLFOR($Resource.RCBlockUI, 'blockUI/js/jquery.blockUI.js')}"></script>
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/jquery.prettyPhoto.js')}"></script>
+
+
+    <!-- SHARE SOCIAL MEDIA
+        <script type="text/javascript">var switchTo5x=true;</script>
+        <script type="text/javascript" src="http://w.sharethis.com/button/buttons.js"></script>
+        <script type="text/javascript" src="http://s.sharethis.com/loader.js"></script>
+    <!-- SHARE SOCIAL MEDIA -->
+    <style>
+        .searchTextStyle {
+            font-style: italic !important;
+            color: #ababab !important;
+            font-weight: normal !important;
+            font-size: 13px !important;
+        }
+
+        .searchTextStyle2 {
+            /* font-weight: bold;
+             color:#000 !important;*/
+        }
+
+        .search-bar .input {
+            color: #000;
+            font-weight: bold;
+            font: 16px arial, sans-serif;
+            height: 20px;
+        }
+
+        .search .gsc-input {
+            background: none !important;
+            border: 0 none;
+            color: #FFF;
+            font-size: 12px;
+            padding-right: 3px;
+            padding-top: 0;
+            left: 60px;
+            top: 5px;
+            width: 166px;
+        / / background-image: none !important;
+        }
+
+        .bottom_menu .botmenu {
+            width: 630px;
+        }
+
+        #search {
+            display: none;
+        }
+
+        .gsc-search-button {
+            display: none;
+        }
+
+        .search {
+
+        }
+
+        .search input {
+            float: left;
+            display: inline;
+            margin: 0px;
+            padding: 0px;
+            position: absolute;
+        }
+
+        .cse .gsc-control-cse, .gsc-control-cse {
+            padding: 0px !important;
+            background: none !important;
+            border: 0px !important;
+            width: 215px !important;
+        }
+
+        .menu .column {
+            width: 125px !important;
+        }
+
+        .breadcrumblink {
+            color: #666666;
+            font-weight: 300;
+            font-family: 'Lato', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: normal;
+        }
+
+        div.share {
+            display: none;
+        }
+
+        .blockOverlay {
+            z-index: 10000 !important;
+        }
+
+        .blockPage {
+            z-index: 10011 !important;
+        }
+
+        #LP_DIV_1371060597644 .lpchat-label {
+            color: #636565 !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            margin: 0 !important;
+            padding: 7px 5px 5px 15px !important;
+            /*z-index:2 !important;*/
+            /*zIndex:2 !important;*/
+        }
+
+        #LP_DIV_1374515731753 .lpchat-label {
+            color: #636565 !important;
+            font-size: 13px !important;
+            font-weight: bold !important;
+            margin: 0 !important;
+            padding: 7px 5px 5px 15px !important;
+            /*z-index:2 !important;*/
+            /*zIndex:2 !important;*/
+        }
+
+        .overLay {
+            -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
+            /* IE 5-7 */
+            filter: alpha(opacity=60);
+            /* Netscape */
+            -moz-opacity: 0.6;
+            /* Safari 1.x */
+            -khtml-opacity: 0.6;
+            /*cursor: wait;*/
+        }
+    </style>
+    <!-- SiteCatalyst code version: H.25.4.
+    Copyright 1996-2013 Adobe, Inc. All Rights Reserved
+    More info available at http://www.omniture.com -->
+    <apex:outputtext escape="false" rendered="{!UKPortal}">
+        <apex:outputtext escape="false" rendered="{!if($Site.Name == 'RCSupportPortalUK',true,false)}">
+            <apex:includeScript value="{!URLFor($Resource.SUPPORT_PORTAL_SITECATALYST_UK,'SiteCatalyst/s_code.js')}"/>
+        </apex:outputtext>
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!!UKPortal}">
+        <apex:outputtext escape="false" rendered="{!if($Site.Name == 'rcsupport2013',true,false)}">
+            <apex:includeScript value="{!URLFor($Resource.SUPPORT_PORTAL_SITECATALYST,'SiteCatalyst/s_code.js')}"/>
+        </apex:outputText>
+        <apex:outputtext escape="false"
+                         rendered="{!if($Site.Name != 'rcsupport2013' && $Site.Name != 'RCSupportPortalUK',true,false)}">
+            <apex:includeScript value="{!URLFor($Resource.SUPPORT_PORTAL_SITECATALYST_CA,'SiteCatalyst/s_code.js')}"/>
+        </apex:outputtext>
+    </apex:outputtext>
+    <script language="JavaScript" type="text/javascript">
+        /* You may give each page an identifying name, server, and channel on
+        the next lines. */
+
+        s.pageName = window.location.href;
+        s.server = ""
+        s.channel = "SupportPortal";
+        s.pageType = ""
+        s.prop1 = ""
+        s.prop2 = ""
+        s.prop3 = ""
+        s.prop4 = ""
+        s.prop5 = ""
+        /* Conversion Variables */
+        s.campaign = ""
+        s.state = ""
+        s.zip = ""
+        s.events = ""
+        s.products = ""
+        s.purchaseID = ""
+        s.eVar1 = ""
+        s.eVar2 = ""
+        s.eVar3 = ""
+        s.eVar4 = ""
+        s.eVar5 = ""
+
+        if (!{!isTokenFound}) {
+            var s_code = s.t();
+            if (s_code) document.write(s_code)//-->
+        }
+    </script>
+    <apex:outputtext escape="false" rendered="{!UKPortal&&!isTokenFound}">
+        <apex:outputtext escape="false" rendered="{!if($Site.Name == 'RCSupportPortalUK',true,false)}">
+            <script language="JavaScript"><!--
+            if (navigator.appVersion.indexOf('MSIE') >= 0 && navigator.appVersion.indexOf('MSIE 10.0') != -1 && navigator.appVersion.indexOf('MSIE 10.0') != 17) document.write(unescape("%3C") + '\!-' + "-")
+            //--></script>
+            <noscript><a href="" title="Web Analytics"><img
+                    src="https://rcentral-dev.112.2O7.net/b/ss/rcentral-dev/1/H.19.4--NS/0"
+                    height="1" width="1" border="0" alt=""/></a></noscript><!--/DO NOT REMOVE/--></apex:outputtext>
+        <!-- End SiteCatalyst code version: H.19.4. -->
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!!UKPortal&&!isTokenFound}">
+        <apex:outputtext escape="false" rendered="{!if($Site.Name == 'rcsupport2013',true,false)}">
+            <script language="JavaScript" type="text/javascript"><!--
+            if (navigator.appVersion.indexOf('MSIE') >= 0 && navigator.appVersion.indexOf('MSIE 10.0') != -1 && navigator.appVersion.indexOf('MSIE 10.0') != 17) document.write(unescape("%3C") + '\!-' + "-")
+            //--></script>
+            <noscript><img alt="som" border="0" height="1"
+                           src="https://som.ringcentral.com/b/ss/rcentral-dev/1/H.25.4--NS/0" width="1"/></noscript>
+            <!--/DO NOT REMOVE/--></apex:outputtext>
+
+        <apex:outputtext escape="false"
+                         rendered="{!if($Site.Name != 'rcsupport2013' && $Site.Name != 'RCSupportPortalUK' && !isTokenFound,true,false)}">
+            <script language="JavaScript" type="text/javascript"><!--
+            if (navigator.appVersion.indexOf('MSIE') >= 0 && navigator.appVersion.indexOf('MSIE 10.0') != -1 && navigator.appVersion.indexOf('MSIE 10.0') != 17) document.write(unescape("%3C") + '\!-' + "-")
+            //--></script>
+            <noscript><a href="http://www.omniture.com" title="Web Analytics"><img
+                    src="http://ringcentral.112.2o7.net/b/ss/rc-canada/1/H.20.3--NS/0"
+                    height="1" width="1" border="0" alt=""/></a></noscript><!--/DO NOT REMOVE/--></apex:outputtext>
+
+        <!-- End SiteCatalyst code version: H.25.4. -->
+    </apex:outputtext>
+
+    <apex:outputtext escape="false" rendered="{!!UKPortal}">
+        <script>
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r;
+                i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+                a = s.createElement(o),
+                        m = s.getElementsByTagName(o)[0];
+                a.async = 1;
+                a.src = g;
+                m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-36051195-5', 'ringcentral.com');
+            ga('send', 'pageview');
+        </script>
+
+    </apex:outputtext>
+    <apex:outputtext escape="false" rendered="{!UKPortal}">
+        <script>
+            (function (i, s, o, g, r, a, m) {
+                i['GoogleAnalyticsObject'] = r;
+                i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+                a = s.createElement(o),
+                        m = s.getElementsByTagName(o)[0];
+                a.async = 1;
+                a.src = g;
+                m.parentNode.insertBefore(a, m)
+            })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+            ga('create', 'UA-36051195-6', 'ringcentral.co.uk');
+            ga('send', 'pageview');
+        </script>
+    </apex:outputtext>
+
+    <!-- Case 05633488 -->
+    <script type="text/javascript">
+        (function () {
+            var didInit = false;
+
+            function initMunchkin() {
+                if (didInit === false) {
+                    didInit = true;
+                    Munchkin.init('075-DTB-715');
+                }
+            }
+
+            var s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.async = true;
+            s.src = '//munchkin.marketo.net/munchkin.js';
+            s.onreadystatechange = function () {
+                if (this.readyState == 'complete' || this.readyState == 'loaded') {
+                    initMunchkin();
+                }
+            };
+            s.onload = initMunchkin;
+            document.getElementsByTagName('head')[0].appendChild(s);
+        })();
+    </script>
+
+    <!-- END Case 05633488 -->
+
+
+    <apex:outputtext rendered="{!isTokenFound}">
+        <div class='overLay' style="display:block;z-index:99999;"></div>
+        <div class="loader-static" style='z-index:100000;'>
+            <div class="loader-static-panel">
+                <!--  <img src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/loader_small.gif')}" alt="" />-->
+                <div style='margin-top:0px;font-weight:bold;'>Please wait...</div>
+            </div>
+            <div class="loader-fix"></div>
+        </div>
+    </apex:outputtext>
+    <apex:pagemessages />
+    <apex:insert name="systemstatus"/>
+    <apex:outputpanel id="test" rendered="{!!UKPortal}">
+        <apex:insert name="searchcomponent"/>
+    </apex:outputpanel>
+    <section class="main-content">
+        <apex:insert name="content"/>
+
+        <apex:outputPanel rendered="{!isArticleDetailsPage}">
+
+            <!--   <apex:include pageName="RCSupportPortalLearningWithoutTemplate" />-->
+            <div style='margin-top:10px;' class='submit-case'>
+                <div style="display: none">
+                    <apex:pageBlock >
+                        <apex:pageBlockSection >
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="Last Modified" for="lastModifiedDate"/>
+                                <apex:outputText value="{!articleLastModifiedDate}" id="lastModifiedDate"/>
+                            </apex:pageBlockSectionItem>
+                        </apex:pageBlockSection>
+                    </apex:pageBlock>
+                </div>
+                <!-- <knowledge:articleRendererToolbar canvote="false"   rendered="{!isGuestUser}" articleId="{!$CurrentPage.parameters.id}"></knowledge:articleRendererToolbar> -->
+
+                <apex:insert name="header"/>
+                <apex:insert name="body"/>
+                <apex:include pageName="RCSupportRatingNew"/>
+            </div>
+            <script>
+                var getRatingDiv = document.getElementById("j_id0:LC_Form:j_id86:j_id87:toolbar");
+                if (getRatingDiv != null && getRatingDiv != '') {
+                    //  getRatingDiv.style.display = "block";
+                }
+                //$('.main-content span div span div:eq(0)').hide();
+                $('.articleDetailToolBar').hide();
+                $(".knowledgeTOCRenderer-body").children().eq(3).hide();
+            </script>
+
+            <style>
+                .x-toolbar-left-row {
+                    display: none;
+                }
+
+                .hover {
+                    display: block;
+                }
+            </style>
+        </apex:outputPanel>
+
+    </section>
+
+    <c:RCSupportPortalFooterNew rendered="{!!UKPortal}" isShowSocialLinks="{!isShowSocialLinksVar}"/>
+    <c:RCSupportPortalFooterUK rendered="{!UKPortal}" isShowSocialLinks="{!isShowSocialLinksVar}"/>
+
+    <script>
+        $(".noSecondHeader").css("font-size", "20px");
+        if ('{!isTokenFound}' == 'true') {
+
+        }
+        if ($(".configLinks").parent('a').parent(".links").html() != null) {
+            $('.ptBreadcrumb').append("<div style='float:right;'>" + $(".configLinks").parent('a').parent(".links").html() + "</div>");
+            $(".configLinks").parent('a').parent(".links").html('');
+            $(".pageTitleIcon").parent('.content').css('width', '100%');
+        }
+        try {
+            var articleNum = '{!articleNum}';
+            $(".mainTitle").html("Article Number : " + articleNum);
+            $(".mainTitle").html("Article Number : " + articleNum.replace(/^0+/, ''));
+            //$(".mainTitle").html("Article Number : "+$("table.propertiesTable td:nth-child(3) td:nth-child(2) span").html());
+            //$(".mainTitle").html("Article Number : "+$("table.propertiesTable td:nth-child(3) td:nth-child(2) span").html().replace(/^0+/,''));
+
+        } catch (e) {
+
+        }
+        /*$( document ).ready(function() {
+
+            // propertiesTableColumn
+            $( "td.propertiesTableColumn" ).find( "span" ).each( function() {
+                if(($( this ).attr("id")) != null && ($( this ).attr("id")) != undefined && ($( this ).attr("id")).indexOf("articleNumber") != -1) {
+                    var textAltr = $(this).text();
+                    $(this).text(textAltr.replace(/^0+/, ''));
+                }
+            });
+
+        });*/
+    </script>
+    <script type="text/javascript">
+        setTimeout(function () {
+            var a = document.createElement("script");
+            var b = document.getElementsByTagName("script")[0];
+            a.src = document.location.protocol + "//dnn506yrbagrg.cloudfront.net/pages/scripts/0012/9291.js?" + Math.floor(new Date().getTime() / 3600000);
+            a.async = true;
+            a.type = "text/javascript";
+            b.parentNode.insertBefore(a, b)
+        }, 1);
+    </script>
+
+    <script src="{!urlDomain}" type="text/javascript"></script>
+        <script type="text/javascript">
+        var firstName = '';
+        var lastName = '';
+        var email = '';
+
+        if(!{!isTokenFound}) {
+            firstName = '{!objUser.Contact.FirstName}';
+            lastName = '{!objUser.Contact.LastName}';
+            email = '{!objUser.Contact.Email}';
+        }
+          
+        initSnapInsChat({
+            params: {
+                FIRSTNAME: firstName,
+                LASTNAME: lastName,
+                EMAIL: email
+            }
+          });
+    </script>
+</apex:page>

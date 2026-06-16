@@ -1,0 +1,159 @@
+<aura:component>
+
+    <!-- shared attributes -->
+    <aura:attribute name="data" type="Map"/>
+
+    <!-- component attributes -->
+    <aura:attribute access="private" name="isShowOrders" type="Boolean" default="false"/>
+    <aura:attribute access="private" name="display" type="Map"/>
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <!-- ent -->
+    <tr class="entitlement-row slds-border--top" onclick="{!c.showOrders}">
+        <th scope="row">
+
+            <!-- Expand Button -->
+            <lightning:icon class="arrow-icon left-padding"
+                            iconName="{!v.isShowOrders ? 'utility:down' : 'utility:right'}" size="xx-small"
+                            alternativeText="{!v.isShowOrders ? 'down' : 'right'}"/>
+
+            <!-- Name -->
+            <aura:if isTrue="{!v.data.Product__r}">
+                <div class="slds-truncate left-padding" title="{!v.data.Product__r.Name}">
+                    <aura:if isTrue="{!v.data.Id}">
+                        <a href="{!'/'+v.data.Id}" onclick="{!c.preventShow}" target="_blank">{!v.data.Product__r.Name}</a>
+                        <aura:set attribute="else">
+                            <span>{!v.data.Product__r.Name}</span>
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <aura:set attribute="else">
+                    <div class="slds-truncate left-padding" title="{!v.data.Product2.Name}">
+                        <aura:if isTrue="{!v.data.Id}">
+                            <a href="{!'/'+v.data.Id}" onclick="{!c.preventShow}" target="_blank">{!v.data.Product2.Name}</a>
+                            <aura:set attribute="else">
+                                <span>{!v.data.Product2.Name}</span>
+                            </aura:set>
+                        </aura:if>
+                    </div>
+                </aura:set>
+            </aura:if>
+        </th>
+
+        <!-- Start Date -->
+        <td>
+            <div class="slds-truncate" title="">
+                <ui:outputDate value="{!v.data.Start_Date__c}"/>
+            </div>
+        </td>
+
+        <!-- End Date -->
+        <td>
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.End_Date__c}"/>
+            </div>
+        </td>
+
+        <!-- Charge Term -->
+        <td>
+            <div class="slds-truncate"
+                 title="{!v.display.chargeTerm}">{!v.display.chargeTerm}</div>
+        </td>
+
+        <!-- Quantity -->
+        <td>
+            <div class="slds-truncate" title="{!v.display.quantity}">{!v.display.quantity}</div>
+        </td>
+
+        <!-- List Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.price, false) }">
+                    <c:outputCurrency value="{!v.display.price}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Discount -->
+        <td>
+            <aura:if isTrue="{! notequals(v.display.discount, false) }">
+                <c:outputCurrency value="{!v.display.discount}"
+                                  currencyCode="{!v.display.discountCurrencyCode}"
+                                  precision="{!v.display.currencyPrecision}"/>
+            </aura:if>
+        </td>
+
+        <!-- Your Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.yourPrice, false) }">
+                        <c:outputCurrency value="{!v.display.yourPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                          precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Total Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.price, false) }">
+                    <c:outputCurrency value="{!v.display.totalPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+    </tr>
+
+    <!-- Orders List -->
+    <aura:if isTrue="{!v.isShowOrders}">
+
+        <aura:if isTrue="{!empty(v.data.Order_Products__r)}">
+
+            <tr class="order-row">
+                <td colspan="9">
+                    <p class="no-result slds-text-align--center slds-p-vertical--x-small">No results</p>
+                </td>
+            </tr>
+
+            <aura:set attribute="else">
+                <tr class="order-row slds-text-title--caps row-head">
+                    <th class="" scope="col">
+                        <div class="slds-truncate" title="">Orders</div>
+                    </th>
+                    <th colspan="8" scope="col">
+                        <div class="slds-truncate" title="">Submitted Date</div>
+                    </th>
+                </tr>
+                <aura:iteration items="{!v.data.Order_Products__r}" var="orderItem" indexVar="i">
+                    <c:OrderItemRow data="{!orderItem}"
+                                    index="{!i}"
+                                    last="{!(v.data.Order_Products__r.length-1) == i}"
+                                    even="{! i % 2 == 0 }"
+                                    parentData="{!v.data}"/>
+                </aura:iteration>
+            </aura:set>
+        </aura:if>
+        <aura:if isTrue="{!!empty(v.data.rampUps)}">
+            <tr class="order-row slds-text-title--caps row-head">
+                <th class="" scope="col">
+                    <div class="slds-truncate" title="">Ramp ups</div>
+                </th>
+                <th class="" scope="col">
+                    <div class="slds-truncate" title="">Start Date</div>
+                </th>
+                <th colspan="8" scope="col">
+                    <div class="slds-truncate" title="">End Date</div>
+                </th>
+            </tr>
+            <aura:iteration items="{!v.data.rampUps}" var="rampUp" indexVar="i">
+                <c:RampUpRow data="{!rampUp}"
+                             index="{!i}"
+                             last="{!(v.data.rampUps.length-1) == i}"
+                             even="{! i % 2 == 0 }"/>
+            </aura:iteration>
+        </aura:if>
+    </aura:if>
+</aura:component>

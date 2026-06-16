@@ -1,0 +1,69 @@
+<!--
+* Created By     : Vishal
+* Created Date   : 20-05-2020
+* Description    : Component invoked when 'Submit for Approval' button is clicked on lead in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader" access="global"
+                controller="Approval_SubmitForApproval_Controller">
+
+    <aura:attribute name="isDisableSubmitButton" type="Boolean" default="false"/>
+    <aura:attribute name="isExistAttachment" type="Boolean" default="false"/>
+    <aura:attribute name="isExistAmountToIncrease" type="Boolean" default="false"/>
+    <aura:attribute name="recordTypeDeveloperName" type="String"/>
+    <aura:attribute name="comments" type="String"/>
+    <aura:attribute name="onLoad" type="Boolean" default="false"/>
+
+	  <aura:html tag="style">
+        .cuf-content {
+            padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+            padding: 0rem !important;
+        }       
+        .slds-modal__content{
+            overflow-y:hidden !important;
+            height:unset !important;
+            max-height:unset !important;
+        }
+        .slds-spinner_container{
+          width: 100vw;
+          left: min(-25vw, calc(-50vw + 20rem));
+        }
+      </aura:html>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+        
+    <header class="slds-modal__header">
+        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Submit for Approval?</h2>
+    </header>
+    <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+        <lightning:spinner aura:id="mySpinner" alternativeText="Processing.." title="Processing.."  size="small" class="slds-hide"/>
+        <div>
+            <aura:if isTrue="{!v.onLoad}">
+                <aura:if isTrue="{!v.recordTypeDeveloperName == 'Credit_Limit_Increase'}">
+                    <lightning:textarea name="comments" label="Comments" value="{!v.comments}" />
+                    <aura:set attribute="else">
+                        Submit for Approval? Record will be locked for editing after submitting for approval.
+                    </aura:set>
+                </aura:if>
+            </aura:if>
+        </div>
+    </div>
+    
+    <footer class="slds-modal__footer">
+            <div class="slds-float_left">
+                <lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{!c.closeModal}" />
+            </div>
+            <lightning:button variant="brand" label="Submit" title="Yes" onclick="{!c.submitApproval}"  disabled="{!v.isDisableSubmitButton}"/>
+           <div class="slds-is-relative">
+        </div>
+    </footer>
+
+</aura:component>

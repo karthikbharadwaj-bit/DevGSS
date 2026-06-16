@@ -1,0 +1,179 @@
+<template>
+    <div class="sc-case-info__header">{title}</div>
+    <div class="sc-case-info__body">
+        <lightning-input
+                    name="subject"
+                    label={labels.subject}
+                    type="text"
+                    required
+                    message-when-value-missing={labels.missing.subject}
+                    onchange={subjectHandleChange}
+                    value={subject}
+                    onblur={subjectBlur}
+                    if:false={loading}
+                ></lightning-input>
+        <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+        <br/>
+        <p class="sc-case-info__label">{labels.productAssistancelvl1}</p>
+        <lightning-combobox
+            name="op-level-1"
+            required
+            placeholder={labels.productPlaceholder}
+            options={l1Options}
+            value={selectedOptions.l1}
+            message-when-value-missing={labels.missing.default}
+            onchange={optionsHandleChange}
+            if:false={loading}
+        ></lightning-combobox>
+        <c-placeholder-loading if:true={loading} height="32px"></c-placeholder-loading>
+        <template if:false={isGDPR}>
+            <br/>
+            <c-placeholder-loading if:true={loading} height="32px"></c-placeholder-loading>
+            <lightning-combobox
+                name="op-level-2"
+                label={labels.productAssistancelvl2}
+                placeholder={labels.issuePlaceholder}
+                options={l2Options}
+                value={selectedOptions.l2}
+                required
+                message-when-value-missing={labels.missing.default}
+                onchange={optionsHandleChange}
+                if:false={loading}
+            ></lightning-combobox>
+            <p class="sc-case-info__note" if:false={loading}>
+                {labels.note}
+            </p>
+            <br/>
+            <template if:false={hasMessage}>
+                <div class="sc-case-info__severity-helper">
+                    <a onclick={showSeverity} if:false={loading}>{labels.severityDefinitions}</a>
+                    <c-placeholder-loading if:true={loading} width="103px"></c-placeholder-loading>
+                </div>
+                <lightning-combobox
+                    name="severity"
+                    label={labels.severity}
+                    placeholder={labels.severityPlaceholder}
+                    options={severitiesOptions}
+                    required
+                    onchange={severityHandleChange}
+                    value={severityLevel}
+                    if:false={loading}
+                    message-when-value-missing={labels.missing.default}
+                ></lightning-combobox>
+                <c-placeholder-loading if:true={loading} height="32px"></c-placeholder-loading>
+                <div if:false={loading}>
+                    {labels.severityHelp}&nbsp;
+                    <a href={callUrl} target="_blank">{labels.severityHelpLink}</a>.
+                </div>
+                <c-placeholder-loading if:true={loading} width="100px"></c-placeholder-loading>
+                <c-placeholder-loading if:true={loading} height="32px"></c-placeholder-loading>
+                <br/><br/>
+                <lightning-textarea
+                    name="desc"
+                    label={labels.description}
+                    required
+                    message-when-value-missing={labels.missing.description}
+                    onchange={descriptionHandleChange}
+                    value={description}
+                    if:false={loading}
+                ></lightning-textarea>
+            </template>
+        </template>
+        <div class={messageCls} data-id={messageId} lwc:dom="manual"></div>
+        <template if:true={isGDPR}>
+            <h4>{labels.userRequiringPA}</h4>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-input
+                        type="text"
+                        label={labels.firstName}
+                        name="firstName"
+                        value={GDPRInfo.firstName}
+                        message-when-value-missing={labels.missing.default}
+                        onchange={handleGDPRChange}
+                        required
+                    ></lightning-input>
+                </div>
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-input
+                        type="text"
+                        label={labels.lastName}
+                        name="lastName"
+                        value={GDPRInfo.lastName}
+                        onchange={handleGDPRChange}
+                        message-when-value-missing={labels.missing.default}
+                        required
+                    ></lightning-input>
+                </div>
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-input
+                        type="email"
+                        label={labels.emailPA}
+                        name="email"
+                        onchange={handleGDPRChange}
+                        value={GDPRInfo.email}
+                        pattern={emailPattern}
+                        message-when-pattern-mismatch={labels.missing.email}
+                        message-when-value-missing={labels.missing.email}
+                        required
+                    ></lightning-input>
+                </div>
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-input
+                        type="tel"
+                        label={labels.phonePA}
+                        name="rcPhone"
+                        onchange={handleGDPRChange}
+                        value={GDPRInfo.rcPhone}
+                    ></lightning-input>
+                </div>
+            </div>
+            <lightning-input
+                type="toggle"
+                label={labels.citizenEU}
+                name="euCitizen"
+                message-toggle-active={labels.yes}
+                message-toggle-inactive={labels.no}
+                message-when-value-missing={labels.missing.citizen}
+                checked={GDPRInfo.euCitizen}
+                onchange={handleGDPRChange}
+                required
+            ></lightning-input>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-checkbox-group
+                        name="action"
+                        label={labels.describe}
+                        options={describeOptions}
+                        value={describeValue}
+                        onchange={handleChangeDescribe}
+                    ></lightning-checkbox-group>
+                </div>
+                <div class="slds-col slds-size_6-of-12 slds-grid slds-grid_vertical-align-end">
+                    <lightning-checkbox-group
+                        name="actionAdditional"
+                        label=""
+                        options={describeAdlOptions}
+                        value={describeAdlValue}
+                        onchange={handleChangeAdlDescribe}
+                        if:true={describeDeleteSelected}
+                    ></lightning-checkbox-group>
+                </div>
+            </div>
+            <lightning-textarea
+                name="comments"
+                label={labels.comments}
+                value={GDPRInfo.comments}
+                onchange={handleGDPRChange}
+            ></lightning-textarea>
+        </template>
+        <template if:false={hasMessage}>
+            <p if:false={loading}>{labels.availableattachments}</p>
+            <p if:false={loading}>{labels.attachments}</p>
+            <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+            <div class="sc-case-info__submit-wrapper">
+                <button class="sc-button" onclick={validateSubmit} disabled={loading}>{labels.submit}</button>
+            </div>
+        </template>
+    </div>
+</template>

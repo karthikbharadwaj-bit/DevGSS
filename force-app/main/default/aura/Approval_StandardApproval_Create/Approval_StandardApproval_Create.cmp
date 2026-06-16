@@ -1,0 +1,76 @@
+<!--
+* Created By     : Vishal
+* Created Date   : 17-06-2020
+* Description    : Component invoked when 'New' button is clicked on case in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+
+<aura:component implements="force:appHostable,force:hasSObjectName,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction,lightning:actionOverride,lightning:isUrlAddressable" access="global"
+                controller="Approval_StandardApprovalCreate">
+
+    <aura:attribute name="retURL" type="String"/>
+    <aura:attribute name="recordTypes" type="String[]" access="public"/>
+    <aura:attribute name="recordTypesMap" type="Map" access="public"/>
+    <aura:attribute name="recordId" type="Id" access="public"/>
+    <aura:attribute name="recTypeId" type="Id" access="public"/>
+    <aura:attribute name="parentObject" type="String" access="public"/>
+    <aura:attribute name="partnerAccountId" type="Id" access="public"/>
+    <aura:attribute name="payingContactId" type="Id" access="public"/>
+    <aura:attribute name="defaultFieldValues" type="Object" access="public"/>
+    <aura:attribute name="payingContactsExists" type="Boolean" access="public"/>
+    <aura:attribute name="partnerPayingContactsExists" type="Boolean" access="public"/>
+    <aura:attribute name="partnerPayingContactId" type="Id" access="public"/>
+    <aura:attribute name="isTaxExemptionAvailable" type="Boolean" access="public"/>
+    <aura:attribute name="isInvoiceApprovalRequestDisabled" type="Boolean" access="public"/>
+    <aura:attribute name="showSEHelpText" type="Boolean" access="public"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <lightning:navigation aura:id="navigate" />
+    <div class="slds-is-relative">
+
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="large" variant="brand"/>
+        </div>
+    </div>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <div class="wrapper">
+        <!-- modal body starts here -->
+        <div tabindex="-1" aria-labelledby="header43" aria-hidden="false" id="newClientSectionId" role="dialog" class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-backdrop slds-backdrop--open">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <h2 id="header43" class="slds-text-heading--medium">New Approval</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium">
+                        <p class="selectRecordType">Select a record type</p>
+                        <br/>
+                        <div class="recordTypesWrapper">
+                            <aura:iteration items="{!v.recordTypes}" var="rt">
+                                <ol class="slds-list--vertical slds-list--vertical-space">
+                                    <input type="radio" class="recordTypeItem" disabled="{!rt.Disabled}" value="{!rt.Name}" name="recordTypeRadio" id="{!rt.Id}"/>
+                                    <span class="recordTypeName">{!rt.Name}</span>
+                                    <aura:if isTrue="{!rt.Disabled}">
+                                        <lightning:icon iconName="utility:warning" alternativeText="Warning!" class="invoiceRequestDisabled" size="xx-small" title="{!rt.Notification}"/>
+                                    </aura:if>
+                                    <div class="recordTypeDescription">{!rt.Description}</div>
+                                </ol>
+                            </aura:iteration>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.cancelApprovalCreation}">Cancel</button>
+                        <button class="slds-button slds-button--brand" onclick="{!c.createApproval}">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</aura:component>

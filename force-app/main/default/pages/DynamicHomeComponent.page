@@ -1,0 +1,271 @@
+<!-- /**************************************************************************************************
+ * Project Name................: Dynamic Component for Partner Portal                             *
+ * Class Name .................: DynamicHomeComponentctrl                                         *
+ * Created by..................: Simplion Technologies                                            *
+ * Last Modified by............: Simplion Technologies                                            *
+ * Last Modified Date..........: 10-12-2014                                                       *
+ * Description.................: This is VF page for the Partner Portal Home Component            *
+ * UPDATE:                                                                                        *
+ * By..........................: eugenebasianomutya                                               *
+ * Date........................: 05052015
+ * Details.....................: update Events and Webinar (csv)                                  *
+ *                               update Announcement                                              *
+ **************************************************************************************************/-->
+
+<apex:page controller="DynamicHomeComponentctrl">
+    <link href="{!URLFOR($Resource.RCPartnerResource, 'PartnerPortalSystemSts/style.css')}" type="text/css" rel="stylesheet" media="screen"/>
+    <script src="{!URLFOR($Resource.RCPartnerResource, 'PartnerPortalSystemSts/jquery-1.8.2.js')}"></script>
+<style>
+    .announcementDiv {
+        margin-top: 2px;
+    }
+    .announcementDiv .contentDiv {
+        width: auto;
+        margin-left: 19px;
+    }
+    .announcementDiv .headingDiv {
+        font-size: 21px;
+        color: #0d436a;
+        font-family: arial;
+        margin-left: 120px;
+        display: block;
+    }
+    .announcementDiv .subHeadingDiv {
+        display: block;
+        color: #0d436a;
+        font-size: 14px;
+        font-weight: bold;
+        margin-left: 250px;
+    }
+    .csvTable {
+        border: 1px solid rgb(13, 67, 106);
+        text-decoration-color: red;
+        border-collapse: collapse;
+        margin-top: -5px;
+        min-width: 802px;
+        Margin-top: 5px;
+    }
+    .csvTable td a {
+        color: #2c404e !important;
+        cursor: pointer;
+    }
+    .csvTable td,th {
+        padding: 5px;
+        color: #2c404e;
+    }
+    .webinarLink {
+        color: blue;
+    }
+    .webinarLink:HOVER {
+        color: blue;
+    }
+    th.headerRow {
+        background: #2c404e !important;
+        color: white !important;
+        text-align: center;
+    }
+    .webinarLink {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    .winDiv{
+        padding-top: 30px;
+    }
+    td.winDivtd{
+        color: #585858;
+        font-weight:300;
+        font-family: Lato, Helvetica, Arial;
+        font-size: 48px;
+        line-height: 1.1;
+        padding-left: 60px;
+        padding-bottom:20px;
+    }
+    td.winLvl{
+        align:left;
+        valign:top;
+        color: #ffffff;
+        font-weight:300;
+        font-family: Lato, Helvetica, Arial;
+        line-height: 1.3;
+    }
+    td.winLvlHeadFontSize{
+        font-size: 31px;
+    }
+    td.winLvlFontSize{
+        font-size: 21px;
+    }
+
+    .clear {
+        clear: both;
+    }
+
+    div.div0001 {
+        height: 355px;
+        width: 1170px;
+        position: relative; 
+        width: 100%;
+        background-image: url("http://go.ringcentral.com/rs/ringcentral/images/KID-4757-3.jpg");
+        background-repeat: no-repeat;
+    }
+
+    div.textX {
+        font-size: 26px; 
+        font-family: Helvetica, Arial, sans-serif;
+        color: #ff8800; 
+        font-weight: normal; 
+        text-align: left; 
+        line-height:30px; 
+    }
+
+    div.text {
+        font-size: 34px; 
+        font-family: Helvetica, Arial, sans-serif; 
+        color: #ffffff; 
+        font-weight: 200; 
+        text-align: left; 
+        line-height:45px; 
+    }
+
+    div.text1 {
+        position: absolute;
+        top: 135px; 
+        left: 80px;
+    }
+    
+    div.text2 {
+        position: absolute;
+        top: 185px;
+        left: 80px;
+    }
+
+    div.text3 {
+        position: absolute;
+        top: 135px;
+        left: 834px;
+    }
+
+    div.text4 {
+        position: absolute;
+        top: 185px;
+        left: 860px;
+    }
+
+
+
+</style>
+
+    <apex:form >
+
+        <table style="display: block;" cellspacing="0" cellpadding="0" width="800">
+            <tbody>
+                <!--**** Display CSV table stored in document on the Page in this column //***** -->
+                <tr>
+                    <div class='div0001'>
+                        <div class="text text1">Offer extended until</div>
+                        <div class="text text2">September 30.</div> 
+                        <div class="text text3">Click 
+                            <span class="linkhere">
+                                <a href="http://go.ringcentral.com/rs/ringcentral/images/KID-4757%20VAR%20Q3%2050K%20Promo%20Extension_r2.pdf" target="_blank" style="color:#ff8800;text-decoration:none;font-weight:bold">
+                                    here 
+                                </a>
+                                to
+                            </span> 
+                        </div><br/>
+                        <div class="text text4">
+                            learn more. 
+                        </div>
+                    </div>
+                </tr>               
+
+                <tr>
+                    <td>
+                        <div style="font-weight: bold; font-size: 25px; padding-top: 30px;">
+                            <h2>Upcoming Partner Events &amp; Webinars</h2>
+                        </div>
+                        <br/>
+
+                        <apex:outputpanel id="results">
+                        <table title="CSV Output" bgcolor="white" border="1" cellspacing="0" cellpadding="0" class="csvTable">
+                        <tr>
+                            <!-- Header of column in  CSV table  -->
+                            <th class="headerRow ">Day</th>
+                            <th class="headerRow ">Date</th>
+                            <th class="headerRow ">Time</th>
+                            <th class="headerRow ">Webinar/Event</th>
+                            <th class="headerRow ">Location</th>
+                        </tr>
+                        <!-- This repeat tag is used to read CSV table data on VF page    -->
+                        <apex:repeat value="{!results}" var="row">
+                        <tr>
+                            <td style="text-align: center;">{!row.eventDay}</td>
+                            <td style="text-align: center;">{!row.eventDate}</td>
+                            <td style="text-align: center;">{!row.eventTime}</td>
+                            <td style="text-align: center;">
+                                <a href="{!row.eventUrl}" target="_blank" class="webinarLink">{!row.eventLocation}</a>
+                            </td>
+                            <td style="text-align: center;">{!row.webinar}</td>
+
+                        </tr>
+                        </apex:repeat>
+                        </table>
+                        </apex:outputpanel>
+                    </td>
+                </tr>
+
+                <!-- *************** ANNOUNCEMENT BELOW EVENTS & WEBINARS ************* -->
+
+                
+
+
+
+
+                <tr>
+                    <!--*************//  Two Sections For Partner Support with "Ring Me image " //******************* -->
+                    <td>
+                        <br/>
+                        <div style="font-weight: bold; font-size: 20px;">
+                            Partner Support
+                        </div>
+                        <br/>
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <!-- This section  for the US/CANADA ,and we can change width and height of Ring Me image  here  -->
+                                    <td style="padding-top: 7px;" valign="top" rowspan="3" width="149">
+                                        <a onclick="win_Open('http://www.ringcentral.com/ringme/ringme.asp?uc=0389CC7D4F51967AF85FD91DFCE0589B847064075611,0,&amp;s=no&amp;v=2',true)" href="#">
+                                        <apex:image id="theImageringme" value="{!$Resource.PartnerRingme}" width="116" height="26"/>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <!-- we can change the written content in front of "Ring Me" image here    -->
+                                    <td style="color: rgb(13, 0, 0); font-family: Arial; font-size: 13px;">
+                                        <b> US/CANADA </b>Partner Support Line:1.800.595.8110&nbsp; <a style="color: rgb(0, 110, 170);" href="mailto:partners@ringcentral.com">partners@ringcentral.com</a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    </tr>
+                                        <tr>
+                                            <!-- This section  for the UNITED KINGDOM,and we can change width and height of Ring Me image  here  -->
+                                            <td style="padding-top: 7px;" valign="top" rowspan="3" width="149">
+                                                <a onclick="win_Open('http://www.ringcentral.com/ringme/ringme.asp?uc=0389CC7D4F51967AF85FD91DFCE0589B847064075611,0,&amp;s=no&amp;v=2',true)" href="#">
+                                                <apex:image id="theImageringme1" value="{!$Resource.PartnerRingme}" width="116" height="26"/>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <!-- we can change the written content in front of "Ring Me" image here    -->
+                                            <td style="color: rgb(13, 0, 0); font-family: Arial; font-size: 13px;">
+                                                <b> UNITED KINGDOM </b>UK Partner Support Line: 0800.024.6777&nbsp; <a style="color: rgb(0, 110, 170);" href="mailto:partners@ringcentral.co.uk">partners@ringcentral.co.uk</a>
+                                            </td>
+                                        </tr>
+                                    <tr>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </apex:form>
+</apex:page>

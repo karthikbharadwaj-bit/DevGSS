@@ -1,0 +1,18 @@
+<aura:component controller="ForecastNotCountedMsgController" implements="flexipage:availableForRecordHome,force:hasRecordId" access="global">
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="Opportunity" type="Opportunity" />
+    <aura:attribute name="isVisible" type="Boolean" />
+
+    <aura:handler event="force:refreshView" action="{!c.afterScriptsLoaded}" />
+
+    <aura:if isTrue="{!v.isVisible}">
+        <div aura:id="message-container">
+            <div class="message-text">
+                The opportunity with stage name '{!v.Opportunity.StageName}' for '{!v.Opportunity.Brand_Name__c}' is not counted in forecasting reports
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

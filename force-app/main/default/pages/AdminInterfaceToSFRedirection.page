@@ -1,0 +1,30 @@
+<!--
+Created By : Vidya Sampath
+Purpose : Redirect to SF page based on account UID parameter passed from Admin Interface (admin.ringcentral.com) 
+-->
+
+<apex:page sidebar="false" showHeader="false" applyHtmlTag="false" applyBodyTag="false" controller="AdminInterfaceToSFRedirectionController">
+    
+    <script>
+    
+    (function() {
+        
+        var redirectionURL = '';               
+        
+        /*Construct the final redirection URL*/
+        redirectionURL = '{!baseURL}';
+        
+        if('{!sfAccountID}' != ''){
+            redirectionURL = redirectionURL + '/lightning/r/Account/' + '{!sfAccountID}' + '/view';            
+        }
+       
+        console.log('redirectionURL : ' + redirectionURL);
+        
+        /*Redirect to the designated page*/
+        window.location.href = redirectionURL;
+        
+    })();
+    
+    </script>
+    
+</apex:page>

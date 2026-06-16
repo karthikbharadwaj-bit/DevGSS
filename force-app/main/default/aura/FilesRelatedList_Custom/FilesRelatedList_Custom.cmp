@@ -1,0 +1,97 @@
+<aura:component controller ="FilesAndAttachment_RelatedList_Handler" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >
+
+    <aura:attribute name="data" type="Object"/>
+    <aura:attribute name="columns" type="List"/>
+    <aura:attribute name="recordId" type="string" default=""/>  
+    <aura:attribute name="accept" type="List" default="['.jpg','.png', '.jpeg','.pdf','.csv','.xlsx','.doc','rtf']"/>  
+    <aura:attribute name="multiple" type="Boolean" default="true"/>      
+    <aura:attribute name="Spinner" type="boolean" default="false"/>
+    <aura:attribute name="isDeleteAccessAvailable" type="Boolean"/>
+    <aura:attribute name="deleteAvailableForOwner" type="Boolean"/>
+    <aura:attribute name="currentUser" type="User" default="{'sObjecttype': 'User'}" />
+    <aura:attribute name="isModalOpen" type="boolean" default="false"/>
+    <aura:attribute name="pressedButton" type="String" />
+    <aura:attribute name="fileToDelete" type="String" />
+
+    <aura:handler name="init" value="{! this }" action="{! c.init }"/>
+    <lightning:notificationsLibrary aura:id="notifLib"/>
+
+    <div class="slds-page-header slds-page-header_record-home">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning:icon iconName="standard:file" alternativeText="fileicon" title="fileicon" />
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title slds-p-top_small">
+                                <h1>
+                                    <span  style=" font-size : 16px;font-weight: bold; color:black;"><p style="color:black; " >Notes &amp; Attachments ({!v.data.length})</p></span>
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-media__figure" style="line-height: 2px">
+                <lightning:fileUpload  label="" multiple="{!v.multiple}"   
+                                                  accept="{!v.accept}" recordId="{!v.recordId}"   
+                                                  onuploadfinished="{!c.UploadFinished}" />
+                    </div>
+                </div>
+            </div>
+           
+        </div>
+    </div>
+       
+<aura:if isTrue="{!v.isModalOpen}">
+<!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Delete File?</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <center><p>Deleting a file also removes it from any records or posts it's attached to.</p></center>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button aura:id="cancel" variant="neutral"
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button aura:id="delete" variant="brand"
+                                          label="Delete"
+                                          title="Delete"
+                                          onclick="{!c.nameThatButton}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    <div>
+        <lightning:datatable
+            columns="{! v.columns }"
+            data="{! v.data }"
+            keyField="id"
+            onrowaction="{! c.handleRowAction }"
+            hideCheckboxColumn="true" />
+    </div>
+
+    <aura:if isTrue="{!v.Spinner}">
+        <div class="slds-spinner_container">
+            <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="alert">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+
+
+</aura:component>

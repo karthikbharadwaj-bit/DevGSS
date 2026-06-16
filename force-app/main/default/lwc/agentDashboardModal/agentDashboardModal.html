@@ -1,0 +1,168 @@
+<template>
+    <lightning-modal-header label={modalTitle}>
+        <p class="slds-m-top_x-small">{modalSubtitle}</p>
+    </lightning-modal-header>
+
+    <lightning-modal-body>
+        <!-- Loading State -->
+        <template if:true={isDashboardLoading}>
+            <div class="slds-align_absolute-center slds-m-vertical_large loading-container">
+                <img src={Processing} alt="Loading" class="loading-logo" />
+                <p class="loading-message">{loadingMessage}</p>
+            </div>
+        </template>
+
+        <!-- Data Loaded -->
+        <template if:false={isDashboardLoading}>
+
+            <!-- Summary Tiles -->
+            <div class="summary-cards">
+                <div class="summary-card summary-card-open">
+                    <span class="summary-card-label">Open Cases</span>
+                    <span class="summary-card-value">{openCasesCount}</span>
+                </div>
+                <div class="summary-card summary-card-high">
+                    <span class="summary-card-label">High Priority Cases</span>
+                    <span class="summary-card-value summary-card-value-high">{highPriorityCount}</span>
+                </div>
+                <div class="summary-card summary-card-aged">
+                    <span class="summary-card-label">Case Age &gt; 1 Month Old</span>
+                    <span class="summary-card-value">{openCasesOverOneMonthCount}</span>
+                </div>
+                <div class="summary-card summary-card-closed">
+                    <span class="summary-card-label">Closed Cases (Last 1 Month)</span>
+                    <span class="summary-card-value">{closedCasesLastMonth}</span>
+                </div>
+            </div>
+
+            <!-- Cases Table -->
+            <template if:true={hasCases}>
+                <div class="case-table-container list-view-redesign">
+                    <table class="list-view-table">
+                        <thead>
+                            <tr class="list-view-header-row">
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="caseNumber">
+                                    <span class="list-view-header-text">Case Number</span>
+                                    <lightning-icon icon-name={getSortIcon.caseNumber} size="xx-small" class={getSortIconClass.caseNumber}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="caseAge">
+                                    <span class="list-view-header-text">Case Age</span>
+                                    <lightning-icon icon-name={getSortIcon.caseAge} size="xx-small" class={getSortIconClass.caseAge}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="status">
+                                    <span class="list-view-header-text">Status</span>
+                                    <lightning-icon icon-name={getSortIcon.status} size="xx-small" class={getSortIconClass.status}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="recordTypeName">
+                                    <span class="list-view-header-text">Record Type</span>
+                                    <lightning-icon icon-name={getSortIcon.recordTypeName} size="xx-small" class={getSortIconClass.recordTypeName}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="priority">
+                                    <span class="list-view-header-text">Priority</span>
+                                    <lightning-icon icon-name={getSortIcon.priority} size="xx-small" class={getSortIconClass.priority}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="assignedDate">
+                                    <span class="list-view-header-text">Assigned Date</span>
+                                    <lightning-icon icon-name={getSortIcon.assignedDate} size="xx-small" class={getSortIconClass.assignedDate}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="lastModifiedByName">
+                                    <span class="list-view-header-text">Last Modified By</span>
+                                    <lightning-icon icon-name={getSortIcon.lastModifiedByName} size="xx-small" class={getSortIconClass.lastModifiedByName}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="lastModifiedDate">
+                                    <span class="list-view-header-text">Last Modified Date</span>
+                                    <lightning-icon icon-name={getSortIcon.lastModifiedDate} size="xx-small" class={getSortIconClass.lastModifiedDate}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="sentiment">
+                                    <span class="list-view-header-text">Case Sentiment</span>
+                                    <lightning-icon icon-name={getSortIcon.sentiment} size="xx-small" class={getSortIconClass.sentiment}></lightning-icon>
+                                </th>
+                                <th class="list-view-header sortable-header" scope="col" onclick={handleSort} data-field="escalationSentiment">
+                                    <span class="list-view-header-text">Escalation Insight</span>
+                                    <lightning-icon icon-name={getSortIcon.escalationSentiment} size="xx-small" class={getSortIconClass.escalationSentiment}></lightning-icon>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={caseList} for:item="caseItem">
+                                <tr key={caseItem.caseId} class="list-view-row">
+                                    <td class="list-view-cell list-view-cell-id" data-label="Case Number">
+                                        <a href={caseItem.caseLink} target="_blank" class="list-view-link">{caseItem.caseNumber}</a>
+                                    </td>
+                                    <td class="list-view-cell" data-label="Case Age">{caseItem.caseAge}</td>
+                                    <td class="list-view-cell" data-label="Status">{caseItem.status}</td>
+                                    <td class="list-view-cell" data-label="Record Type">{caseItem.recordTypeName}</td>
+                                    <td class="list-view-cell" data-label="Priority">
+                                        <span class={caseItem.priorityClass}>{caseItem.priority}</span>
+                                    </td>
+                                    <td class="list-view-cell" data-label="Assigned Date">{caseItem.assignedDate}</td>
+                                    <td class="list-view-cell" data-label="Last Modified By">{caseItem.lastModifiedByName}</td>
+                                    <td class="list-view-cell" data-label="Last Modified Date">{caseItem.lastModifiedDate}</td>
+                                    <td class="list-view-cell" data-label="Case Sentiment">
+                                        <div class="sentiment-cell">
+                                            <span class={caseItem.sentimentClass}>{caseItem.sentiment}</span>
+                                            <template if:true={caseItem.sentimentReason}>
+                                                <div class="sentiment-reason"
+                                                     data-reason={caseItem.sentimentReason}
+                                                     onmouseenter={handleReasonHover}
+                                                     onmouseleave={handleReasonLeave}>
+                                                    <lightning-icon icon-name="utility:info" size="x-small" class="info-icon"></lightning-icon>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </td>
+                                    <td class="list-view-cell list-view-cell-escalation" data-label="Escalation Insight">
+                                        <div class="sentiment-cell">
+                                            <span class={caseItem.escalationSentimentClass}>{caseItem.escalationSentiment}</span>
+                                            <template if:true={caseItem.escalationReason}>
+                                                <div class="sentiment-reason"
+                                                     data-reason={caseItem.escalationReason}
+                                                     onmouseenter={handleReasonHover}
+                                                     onmouseleave={handleReasonLeave}>
+                                                    <lightning-icon icon-name="utility:info" size="x-small" class="info-icon"></lightning-icon>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="slds-m-top_medium pagination-container">
+                    <div class="pagination-info">
+                        Showing {startRecord} - {endRecord} of {totalRecords} records
+                    </div>
+                    <div class="pagination-controls">
+                        <lightning-button label="Previous" icon-name="utility:chevronleft" onclick={handlePrevious} disabled={isFirstPage}></lightning-button>
+                        <span class="slds-m-horizontal_small">Page {currentPage} of {totalPages}</span>
+                        <lightning-button label="Next" icon-name="utility:chevronright" icon-position="right" onclick={handleNext} disabled={isLastPage}></lightning-button>
+                    </div>
+                </div>
+
+                <div class="Warning" style="color: #275ABA; font-size: 0.8rem;">
+                    <span style="font-weight: bold; color: #000000;">Disclaimer </span>
+                     : The dashboard displays a maximum of 30 open cases. Initial setup may take a moment, but subsequent loads are faster.
+                </div>
+            </template>
+
+            <!-- No Cases State -->
+            <template if:false={hasCases}>
+                <div class="slds-align_absolute-center slds-m-vertical_large">
+                    <lightning-icon icon-name="utility:info" size="medium"></lightning-icon>
+                    <p class="slds-m-top_small slds-text-heading_small">No open cases found</p>
+                </div>
+            </template>
+        </template>
+    </lightning-modal-body>
+
+    <lightning-modal-footer>
+        <lightning-button label="Close" onclick={handleClose}></lightning-button>
+    </lightning-modal-footer>
+
+    <template if:true={_tooltipVisible}>
+        <div class="reason-tooltip" style={_tooltipStyle} role="tooltip">{_tooltipText}</div>
+    </template>
+</template>

@@ -1,0 +1,192 @@
+<template>
+
+    <lightning-card>
+		<div if:true={isLoading}  class="slds-backdrop slds-backdrop_open positionInherit" role="presentation">
+			<lightning-spinner alternative-text="Please wait while we save the Case Information...">
+			</lightning-spinner>
+		</div>
+        <div class="slds-m-around_medium">
+            <template if:false={caseStatusClosed}>
+                <lightning-record-edit-form object-api-name="Case" record-id={recordId} data-id="caseInformation" onsubmit={handleSave}>
+                    <lightning-messages>
+                    </lightning-messages>
+						<div class="slds-grid slds-wrap">					
+						
+						
+							<div class="slds-size_2-of-2 slds-text-align_left slds-p-bottom_medium">
+								<h3 class="slds-text-heading_medium">Closed Loop Outcome</h3>
+							</div>
+							
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="inputPadding">
+                                    <lightning-input-field field-name="OutcomeLevel1__c" data-id="OutcomeLevel1__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="inputPadding">
+                                    <lightning-input-field field-name="OutcomeLevel2__c" data-id="OutcomeLevel2__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+							
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="inputPadding">
+                                    <lightning-input-field field-name="OutcomeLevel3__c" data-id="OutcomeLevel3__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+
+                            <div class="slds-col slds-size_1-of-2">
+                                <div class="inputPadding">
+                                    <lightning-input-field field-name="OutcomeLevel4__c" data-id="OutcomeLevel4__c">
+                                    </lightning-input-field>
+                                </div>
+                            </div>
+								<div class="slds-col slds-size_1-of-2">
+								<div class="inputPadding">
+									<lightning-output-field field-name="Root_Cause__c" data-id="rootCause" required>
+									</lightning-output-field>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Sales Root Cause</label>
+									<c-medallia-case-root-cause onselectedvalues={selectedRootCauseValues}></c-medallia-case-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Product Root Cause</label>
+									<c-medallia-product-root-cause onselectedvalues={productRootCauseValues}>
+									</c-medallia-product-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Implementation Root Cause</label>
+									<c-medallia-implementation-root-cause onselectedvalues={implementationRootCauseValues}>
+									</c-medallia-implementation-root-cause>
+					
+								</div>
+							</div>
+					
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Support Root Cause</label>
+									<c-medallia-support-root-cause onselectedvalues={supportRootCauseValues}>
+									</c-medallia-support-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Account Management Root Cause</label>
+									<c-medallia-management-root-cause onselectedvalues={managementRootCauseValues}>
+									</c-medallia-management-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Policy Root Cause</label>
+									<c-medallia-policy-root-cause onselectedvalues={policyRootCauseValues}></c-medallia-policy-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">CSM Root Cause</label>
+									<c-medallia-c-s-m-root-cause onselectedvalues={csmRootCauseValues}></c-medallia-c-s-m-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Billing Root Cause</label>
+									<c-medallia-billing-root-cause onselectedvalues={billingRootCauseValues}>
+									</c-medallia-billing-root-cause>
+								</div>
+							</div>
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">SMS Root Cause</label>
+									<c-medallia-s-m-s-root-cause onselectedvalues={smsRootCauseValues}></c-medallia-s-m-s-root-cause>
+								</div>
+							</div> 
+							<div class="slds-col slds-size_1-of-1">
+								<div class="inputPadding">
+									<label class="slds-form-element__label"
+					                                    style="font-size: 14px;font-weight: 700;">Other Root Cause</label>
+									<c-medallia-other-root-cause onselectedvalues={otherRootCauseValues}></c-medallia-other-root-cause>
+								</div>
+							</div>
+						</div>
+						<div class="slds-m-around_medium">
+							<div class="slds-m-top_medium">
+								<lightning-button variant="brand" label="Save" type="submit"></lightning-button>
+							</div>
+						</div>
+					
+                </lightning-record-edit-form>
+            </template>
+            <template if:true={caseStatusClosed}>
+                <lightning-record-edit-form object-api-name="Case" record-id={recordId} data-id="caseInformation" onsubmit={handleSave}>
+                    <div class="slds-m-around_large">
+                        <div if:true={isLoading} class="slds-is-relative">
+                        <lightning-spinner
+                            alternative-text="Please wait while we save the Case Information...">
+                        </lightning-spinner>
+                    </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                       
+                      	<div class="slds-size_2-of-2 slds-text-align_left slds-p-bottom_medium">
+							<h3 class="slds-text-heading_medium">Closed Loop Outcome</h3>
+						</div>
+						
+						<div class="slds-col slds-size_1-of-2">
+							<div class="inputPadding">
+								<lightning-output-field field-name="OutcomeLevel1__c" data-id="OutcomeLevel1__c">
+								</lightning-output-field>
+							</div>
+						</div>
+						<div class="slds-col slds-size_1-of-2">
+							<div class="inputPadding">
+								<lightning-output-field field-name="OutcomeLevel2__c" data-id="OutcomeLevel2__c">
+								</lightning-output-field>
+							</div>
+						</div>
+						<div class="slds-col slds-size_1-of-2">
+							<div class="inputPadding">
+								<lightning-output-field field-name="OutcomeLevel3__c" data-id="OutcomeLevel3__c">
+								</lightning-output-field>
+							</div>
+						</div>
+
+						<div class="slds-col slds-size_1-of-2">
+							<div class="inputPadding">
+								<lightning-output-field field-name="OutcomeLevel4__c" data-id="OutcomeLevel4__c">
+								</lightning-output-field>
+							</div>
+						</div>
+						<div class="slds-col slds-size_1-of-2">
+                            <div class="inputPadding">
+                                <lightning-output-field field-name="Root_Cause__c" data-id="rootCause">
+                                </lightning-output-field>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </lightning-record-edit-form>
+            </template>
+        </div>
+
+    </lightning-card>
+
+</template>

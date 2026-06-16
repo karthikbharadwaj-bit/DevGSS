@@ -1,0 +1,50 @@
+<template>
+
+        <!-- icon -->
+        <div if:true={item.isBlocked} class="slds-progress__marker"></div>
+
+        <template if:false={item.isBlocked}>
+
+            <!-- synced -->
+            <span if:true={item.isSync} class="slds-icon_container slds-icon-utility-success slds-progress__marker slds-progress__marker_icon slds-progress__marker_icon-success" title="Complete">
+                <lightning-icon icon-name="utility:success" alternative-text="Success" variant="success" size="x-small" class="icon-x-small"></lightning-icon>
+            </span>
+
+            <template if:false={item.isSync}>
+                <!-- skipped -->
+                <span if:true={item.isSkip} class="slds-icon_container slds-icon-utility-skip slds-progress__marker slds-progress__marker_icon slds-progress__marker_icon-warning" title="skip">
+                    <lightning-icon icon-name="utility:skip" alternative-text="skip" variant="warning" size="x-small" class="icon-x-small"></lightning-icon>
+                </span>
+
+                <!-- not synced -->
+                <div if:false={item.isSkip} class="slds-progress__marker"></div>
+            </template>
+        </template>
+
+
+        <!-- text -->
+        <div class="slds-grid slds-wrap item-style">
+            <div if:false={isHideLabel} class={isSyncedClass}>
+                <div class="slds-col slds-size_1-of-1 slds-truncate">
+                    <span class="step-label">{step.label}</span>
+                </div>
+                <template if:true={step.description}>
+                    <lightning-formatted-text class="description slds-size_1-of-1" data-ui-auto="step-description" value={step.description}></lightning-formatted-text>
+                </template>
+                <div class="slds-col slds-size_1-of-1 slds-truncate">
+                    <lightning-formatted-date-time
+                        if:true={isStepTimingExist}
+                        class="step-completion-date"
+                        value={item.timing}
+                        year="numeric"
+                        month="numeric"
+                        day="numeric"
+                        hour="2-digit"
+                        minute="2-digit"
+                        time-zone={currentUserTimeZone}
+                    ></lightning-formatted-date-time> <span if:true={isExecutorExist} class="step-completion-date">{item.executorName}</span>
+                </div>
+            </div>
+        </div>
+
+</template>

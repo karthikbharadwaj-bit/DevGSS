@@ -1,0 +1,21 @@
+<aura:component controller="OpportunityWarningMessageController" implements="flexipage:availableForRecordHome,force:hasRecordId" access="global">
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="message" type="String" />
+    <aura:attribute name="showComponent" type="Boolean" />
+
+    <aura:handler event="force:refreshView" action="{!c.afterScriptsLoaded}" />
+
+    <aura:if isTrue="{!v.showComponent}">
+        <div class="slds-scoped-notification slds-media slds-media_center slds-theme_warning" role="status">
+            <div class="slds-media__figure">
+                <lightning:icon iconName="utility:warning" alternativeText="Warning!" size="xx-small"/>
+            </div>
+            <div class="slds-media__body">
+                <aura:unescapedHtml value="{!v.message}" />
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

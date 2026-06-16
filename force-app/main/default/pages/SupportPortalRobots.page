@@ -1,0 +1,23 @@
+<apex:page contentType="text/plain" controller="SupportPortalRobotsController">
+#
+# robots.txt for success.ringcentral.com.
+#
+# For use by success.ringcentral
+#
+User-agent: *    # applies to all robots
+Disallow:
+Allow: /
+
+# disallow URLs with token parameter
+Disallow: /*?*token=* 
+
+# disallow live agent chat pages
+Disallow: /liveagent
+
+#disallow branded articles
+<apex:repeat value="{!disallowUrls}" var="url">
+Disallow:<apex:outputText value="{!' ' + url}"/>$
+</apex:repeat>
+
+Sitemap: http://success.ringcentral.com/SupportPortalSiteMap
+</apex:page>

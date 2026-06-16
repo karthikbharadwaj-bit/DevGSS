@@ -1,0 +1,50 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+                access="global" controller="Partner_CloudSpecialistSearchController" >
+    
+    
+    <aura:attribute name="portalUserList" type="List" />
+    <aura:attribute name="searchUser" type="String"/>
+    <aura:attribute name="SFBrandName" type="String"/><!--pbc-10695-->
+    <aura:registerEvent name="cloudSpecialistValueEvent" type="c:Partner_CloudSpecialistSearchEvent"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+  
+    <div aura:id="userPane" class="slds-form-element slds-lookup slds-is-close" >
+        <div class='slds-grid'>
+        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;padding-top: 2.5%;">
+            <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}:</span>
+        </div>                        
+         <div class="slds-col slds-size_2-of-7 slds-p-around_x-small dropdownwrap">             
+        <div class="slds-form-element__control" >
+              <div class="slds-text-color_error">Please <b>Click User</b> from the List displayed</div>
+            <ui:inputText aura:id="usersearch"  placeholder="Search Users.."
+                          class="slds-lookup__search-input slds-input input-no-border" value="{!v.searchUser}" updateOn="keyup" keyup="{!c.onInputChange}" click="{!c.onSearchInputClick}" />
+                 </div>
+           
+        
+                <!--<div class="slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open"  aura:id="ddId" aria-haspopup="listbox" role="combobox"  onblur="{!c.hideOnBlur}" >-->
+        <div id="listbox-unique-id"  class="lookup-container cloudspecdropdown slds-p-horizontal_x-small" role="listbox" >
+            <ul class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu" aura:id="dropDownList" role="presentation">
+               <aura:if isTrue="{!not(empty(v.portalUserList))}">
+                <aura:iteration var="userRecord" items="{!v.portalUserList}" indexVar="index">
+                    <li role="presentation" class="slds-listbox__item" onclick="{!c.selectedUser}" data-contactname="{!userRecord.Name}" 
+                                                                                                   data-contactid="{!userRecord.Id}" >
+                        <div id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+                           
+                            <span class="slds-media__body">
+                                <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!userRecord.Name}</span>
+                                <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">{!userRecord.Email}</span>
+                            </span>
+                        </div>
+                    </li>
+                </aura:iteration>
+                </aura:if>
+                <aura:if isTrue="{!(empty(v.portalUserList))}">
+                    <div class="slds-text-color_error">No Users Found..</div>
+                </aura:if>
+            </ul>
+        </div>
+            
+            </div>
+    </div>
+   </div>
+</aura:component>

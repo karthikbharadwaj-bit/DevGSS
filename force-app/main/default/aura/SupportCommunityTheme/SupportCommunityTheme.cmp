@@ -1,0 +1,102 @@
+<aura:component implements="forceCommunity:themeLayout"  controller="SupportCommunityUsers">
+    <aura:attribute name="search" type="Aura.Component[]"/>
+    <aura:attribute name="navBar" type="Aura.Component[]" required="false" />
+    <aura:attribute name="sales" type="Aura.Component[]" required="false" />
+    <aura:attribute name="sidebarFooter" type="Aura.Component[]"/>
+    <aura:attribute name="SPrefix" type="String" default="{!$Site.Prefix}" />
+    <aura:attribute name="showTitle" type="Boolean" default="true" />
+    <aura:attribute name="preloader" type="Boolean" default="true" />
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleEvent}"/>
+    <aura:attribute name="loginUrl" type="String" default="/support/services/auth/sso/RC_ServiseConnect" />
+    <aura:attribute name="VideoURL" type="String" default="https://www.ringcentral.com/content/ringcentral/en_us/community/external/PieBanner/jcr%3acontent/par/download_d1f5/file.res/Pie_Search_Banner_24fps_20181004_rac_v2.mov" />
+    <aura:attribute name="VideoType" type="String" default="video/mov" />
+    <aura:attribute name="Phone" type="String" default="https://support.ringcentral.com/" />
+    <aura:attribute name="UK_domain" type="String" default="https://www.ringcentral.co.uk/" />
+    <aura:attribute name="icons" type="String" default="{!$Resource.sc_icons}" />
+    <aura:handler event="forceCommunity:routeChange" action="{!c.handleRouteChange}"/>
+    <aura:attribute name="logo" type="String" default="" />
+    <aura:attribute name="pageLang" type="String" default="en_US" />
+    <aura:attribute name="formFactor" type="String" default="DESKTOP" />
+    <aura:registerEvent name="userEvent" type="c:SupportCommunityUserEvent" />
+    <aura:attribute name="loginFirstClick" type="Boolean" default="true" />
+    <aura:attribute name="snapInsInit" type="Boolean" default="false" />
+    <aura:attribute name="showSnapIns" type="Boolean" default="true" />
+    <aura:attribute name="hasUser" type="Boolean" default="false" />
+    <ltng:require scripts="{!join(',', $Resource.RCHelper + '/RC.js', $Resource.SupportCommunityDependencies + '/SC.js', $Resource.jquery172)}" afterScriptsLoaded="{!c.doInit}"/>
+    <div class="body" data-formfactor="{!v.formFactor}">
+        <c:sciconsprite/>
+        <link rel="stylesheet" href="{!$Resource.sc_style}"/>
+        <aura:if isTrue="{!v.preloader}">
+            <div class="preloader">
+                <lightning:spinner alternativeText="Loading" size="large" />
+            </div>
+        </aura:if>
+        <div class="wrapper">
+            <header class="header">
+                <div class="container container_wrap">
+                <div class="header__part header__part_left">
+                    <a href="../" class="logo">
+                        <img src="{!v.logo}"/>
+                    </a>
+                    <c:scLanguageSelector pageLang="{!v.pageLang}"/>
+                    <a href="javascript:void(0)" class="sc-mobile-nav-btn" onclick="{!c.hamburger}">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </a>
+                </div>
+                <div class="header__part header__part_right">
+                    {!v.sales}
+                    <div class="login">
+                        <c:scLoginButton loginUrl="{!v.loginUrl}" hasUser="{!v.hasUser}"/>
+                    </div>
+                </div>
+                </div>
+            </header>
+            <div class="search">
+                <div class="container container_wrap">
+                    <div class="search__title">{!$Label.c.SC_help}</div>
+                    <div class="search__container">{!v.search}</div>
+                </div>
+                <div class="video">
+                    <video loop="true" autoplay="true" preload="auto" muted="true">
+                        Your browser does not support the video tag.
+                        You should <a href="http://whatbrowser.org/">consider updating</a>.
+                        <source src="{!v.VideoURL}" type="{!v.VideoType}"/>
+                        <source src="{!$Resource.sc_video_webm}" type="video/webm"/>
+                        <source src="{!$Resource.sc_video_mp4}" type="video/mp4"/>
+                    </video>
+                    <div class="img" style="{!'background-image:url('+$Resource.sc_video_img+')'}"></div>
+                </div>
+            </div>
+            <div class="navigation">
+                <div class="container container_wrap">
+                    <c:SupportCommunityNavigation/>
+                </div>
+            </div>
+                <div class="body">
+                    {!v.body}
+                </div>
+        </div>
+        <aura:if isTrue="{!v.showSnapIns || v.snapInsInit}">
+            <div class="{!v.showSnapIns?'':'hidden'}">
+            {!v.sidebarFooter}
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!!v.showSnapIns}">
+            <c:scDimeloFrame
+                modals="true"
+                scripts="true"
+                forms="true"
+                sameOrigin="true"
+                popups="true"
+                geolocation="true"
+                microphone="true"
+                camera="true"
+            />
+        </aura:if>
+        <c:SupportCommunityFooter/>
+    </div>
+</aura:component>

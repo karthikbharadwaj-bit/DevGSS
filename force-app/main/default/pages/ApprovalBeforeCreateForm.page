@@ -1,0 +1,128 @@
+<apex:page showHeader="true" sidebar="true" tabStyle="Approval" controller="ApprovalBeforeCreateController">    
+    <apex:includeScript value="{!URLFOR($Resource.rcnotify, 'rcnotify.js')}" />
+
+    <apex:form id="approvalCreationForm">
+        <apex:pageBlock id="pageBlockCtrl" title="Submit for an approval">
+            <apex:pageMessages />
+            <apex:pageBlockSection id="blockSectionCtrl" title="Your assistance is required to submit an approval. Please, fill required fields" columns="1">
+                <apex:outputLabel value="You working with opportunity: {!CurrentOpportunity.Name}" />
+                <apex:inputTextArea value="{!ReasonForSharing}" required="true" label="Reason for sharing" id="reasonForSharingCtrl"></apex:inputTextArea>
+                <apex:inputTextArea value="{!CustomerLocation}" required="true" label="Customer location" id="customerLocationCtrl"></apex:inputTextArea>
+                <apex:inputTextArea value="{!JustifyAndDescr}" required="true" label="Justification and description" id="justifyAndDescrCtrl"></apex:inputTextArea>
+                <apex:outputLabel styleClass="error-label hide-error-label" value="Please, fill all required fields" id="formHasErrorsCtrl" />
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons id="blockButtonsCtrl">
+                <apex:commandButton action="{!create}" id="submitCtrl" value="Submit for Approval" disabled="{!ISNULL(CurrentOpportunity)}"/>
+                <apex:commandButton id="cancelCtrl" value="Cancel"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+
+    <style>
+        .has-error {
+            color: red;
+            border: 1px solid red;
+        }
+        .hide-error-label {
+            display: none;
+        }
+        .show-error-label {
+            display: inline-block;
+        }
+        .error-label {
+            color: red;
+            font-weight: bold;
+        }
+        .note-label {
+            font-weight: bold;
+            color: #4a4a56;
+            vertical-align: top;
+            margin: 0 0 0 2em;
+            font-size: 8pt;
+        }
+    </style>
+
+    <script type="text/javascript" defer="defer">
+        (function() {
+            if (document.attachEvent ? document.readyState === 'complete' : document.readyState !== 'loading') {
+                onDocumentReady();
+            } else {
+                document.addEventListener('DOMContentLoaded', onDocumentReady);
+            }
+        })();
+
+        function onDocumentReady() {
+            let form = document.getElementById('{!$Component.ApprovalCreationForm}');
+            form.addEventListener('submit', function(e) {                
+                if (onBeforeSubmitValidate() === false) {
+                    e.preventDefault();
+                }
+            });
+
+            let cancelBtn = document.getElementById('{!$Component.approvalCreationForm.pageBlockCtrl.blockButtonsCtrl.cancelCtrl}');
+            cancelBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                let b = window.confirm('Are you sure you want to cancel this operation?');
+                if (b === true) {
+                    window.location.href = '{!$Site.BaseSecureUrl}/{!OpportunityId}';
+                }
+            });
+
+            let label = document.createElement('label');
+            label.appendChild(document.createTextNode('If a partner has been identified, please indicate the Partner ID'));
+            label.setAttribute('class', 'note-label');
+
+            let textArea = document.getElementById('{!$Component.approvalCreationForm.pageBlockCtrl.blockSectionCtrl.justifyAndDescrCtrl}');
+            textArea.parentNode.appendChild(label);
+
+            showToast();
+        }
+
+        function onBeforeSubmitValidate() {
+            let inputsToValidate = new Array(
+                '{!$Component.approvalCreationForm.pageBlockCtrl.blockSectionCtrl.reasonForSharingCtrl}',
+                '{!$Component.approvalCreationForm.pageBlockCtrl.blockSectionCtrl.customerLocationCtrl}',
+                '{!$Component.approvalCreationForm.pageBlockCtrl.blockSectionCtrl.justifyAndDescrCtrl}');
+
+            let errorLabelId = '{!$Component.approvalCreationForm.pageBlockCtrl.blockSectionCtrl.formHasErrorsCtrl}';
+            let allInputsValid = true;
+
+            for(let i = 0; i < inputsToValidate.length; i++) {
+                allInputsValid = allInputsValid && isValidInputValue(inputsToValidate[i]);
+            }
+            document.getElementById(errorLabelId).setAttribute('class', (allInputsValid === true ? 'error-label hide-error-label' : 'error-label show-error-label'));
+            return allInputsValid;
+        }
+
+        function isValidInputValue(id) {
+            let ctrl = document.getElementById(id);
+            let hasError = ctrl.value.trim().length === 0;
+            ctrl.setAttribute('class', (hasError === true ? 'has-error' : ''));
+            return !hasError;
+        }
+
+        function showToast() {
+            let showToast = {!!ISNULL(OpResult)};
+
+            if (showToast === false) {
+                return;
+            }
+
+            let isSuccess = {!OpResult.IsSuccess};
+            let message = '{!OpResult.Message}';
+            let redirectTo = '{!OpResult.RedirectTo}';
+
+            rcnotify.addToast({
+                theme: isSuccess === true ? 'info' : 'error',
+                header: message,
+                details : redirectTo ? 'You will be redirected in next 5 seconds...' : ''
+            });
+
+            if (redirectTo) {
+                window.setTimeout(function() {
+                    window.location.href = redirectTo;
+                }, 5000);
+            }
+        }
+    </script>
+</apex:page>

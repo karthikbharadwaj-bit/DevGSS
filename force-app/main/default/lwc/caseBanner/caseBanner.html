@@ -1,0 +1,105 @@
+<template>
+    <template if:true={shouldShow}>
+        <div class="shell" style={shellStyle}>
+            <div class="case-banner-grid">
+
+                <template if:true={waitingGcp}>
+                    <div class="loading-chip" role="status" aria-live="polite">
+                        Analyzing case
+                        <span class="loading-dots"><span></span><span></span><span></span></span>
+                    </div>
+                </template>
+
+                <!-- Case Age -->
+                <div class="banner-item">
+                    <div class="banner-label">Case Age</div>
+                    <template if:true={waitingGcp}>
+                        <div class="banner-value"><span class="skel skel-age"></span></div>
+                    </template>
+                    <template if:false={waitingGcp}>
+                        <div class="banner-value">{caseAgeLabel}</div>
+                    </template>
+                </div>
+
+                <!-- Case Sentiment -->
+                <div class="banner-item">
+                    <div class="banner-label">Case Sentiment</div>
+                    <template if:true={waitingGcp}>
+                        <div class="banner-value"><span class="skel skel-pill"></span></div>
+                    </template>
+                    <template if:false={waitingGcp}>
+                        <div class="banner-value value-row">
+                            <!-- success path -->
+                            <template if:true={hasSentiment}>
+                                <span class={sentimentClass}>{sentimentLabel}</span>
+                                <template if:true={sentimentReason}>
+                                    <span class="hint" tabindex="-1">
+                                        <button class="bulb" aria-label="Explanation">
+                                            <lightning-icon icon-name="utility:light_bulb" size="xx-small"
+                                                class="bulb-icon"></lightning-icon>
+                                        </button>
+                                        <span class="hint-pop" role="tooltip">{sentimentReason}</span>
+                                    </span>
+                                </template>
+                            </template>
+
+                            <!-- error path -->
+                            <template if:false={hasSentiment}>
+                                <span class="error-pill">Unavailable</span>
+                                <template if:true={sentimentError}>
+                                    <span class="hint" tabindex="-1">
+                                        <button class="bulb" aria-label="Error details">
+                                            <lightning-icon icon-name="utility:light_bulb" size="xx-small"
+                                                class="bulb-icon"></lightning-icon>
+                                        </button>
+                                        <span class="hint-pop" role="tooltip">{sentimentError}</span>
+                                    </span>
+                                </template>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Escalation Insight -->
+                <div class="banner-item">
+                    <div class="banner-label">Escalation Insight</div>
+                    <template if:true={waitingGcp}>
+                        <div class="banner-value"><span class="skel skel-bar"></span></div>
+                    </template>
+                    <template if:false={waitingGcp}>
+                        <div class="banner-value value-row">
+                            <!-- success path -->
+                            <template if:true={hasEscalation}>
+                                <span class={escalationClass}>{escalationLabel}</span>
+                                <template if:true={escalationReason}>
+                                    <span class="hint" tabindex="-1">
+                                        <button class="bulb" aria-label="Explanation">
+                                            <lightning-icon icon-name="utility:light_bulb" size="xx-small"
+                                                class="bulb-icon"></lightning-icon>
+                                        </button>
+                                        <span class="hint-pop">{escalationReason}</span>
+                                    </span>
+                                </template>
+                            </template>
+
+                            <!-- error path -->
+                            <template if:false={hasEscalation}>
+                                <span class="error-pill">Unavailable</span>
+                                <template if:true={escalationError}>
+                                    <span class="hint" tabindex="-1">
+                                        <button class="bulb" aria-label="Error details">
+                                            <lightning-icon icon-name="utility:light_bulb" size="xx-small"
+                                                class="bulb-icon"></lightning-icon>
+                                        </button>
+                                        <span class="hint-pop">{escalationError}</span>
+                                    </span>
+                                </template>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+            </div>
+        </div>
+    </template>
+</template>

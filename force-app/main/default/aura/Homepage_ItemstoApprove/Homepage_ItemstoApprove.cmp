@@ -1,0 +1,76 @@
+<aura:component controller="Approverejectcontroller" implements="flexiPage:availableForAllPageTypes,force:appHostable">
+    
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/> 
+    
+
+    <aura:attribute name="columns" type="list" description="Captures the value of column names of the data table"/>
+    <aura:attribute name="data" type="object" description="Captures the records displayed in the data table"/>
+    <aura:attribute name="viewAllData" type="object" description="Captures the records displayed in the data table"/>
+    <aura:attribute name="sortedBy" type="string" description="Captures the column name used for sorting"/>
+    <aura:attribute name="sortDirection" type="string" description="Captures the direction of sorting(ascending or descending)"/>
+    <aura:attribute name="selectedRows" type="List"/>
+    <aura:attribute name="loaded" type="Boolean" default="false" />
+    <aura:attribute name="viewAllBool" type="Boolean" default="false"/>
+    <lightning:spinner aura:id="spinnerId" variant="brand" size="medium"/>
+    <div class="exampleHolder">
+        <aura:if isTrue="{! v.loaded }">
+          <lightning:spinner alternativeText="Loading" />
+         </aura:if>
+    </div>
+    <div class="slds-page-header" role="banner">
+        
+    	<span class="slds-page-header__title">Items to Approve</span>
+        
+        <aura:if isTrue="{!not(v.viewAllBool)}">
+            <div>
+                <center><lightning:button label="View All" title="Neutral action" onclick="{! c.loadAll }"/></center>
+            </div>
+      </aura:if>
+        <div align ='Right'>
+          <lightning:button aura:id="approvalButtonId" label="Approve" variant="brand" disabled="true"
+                          onclick="{!c.handleApproveAction}"/>
+        <lightning:button aura:id="rejectButtonId" label="Reject" variant="brand" disabled="true"
+                          onclick="{!c.handleRejectAction}"/>
+        </div>
+    </div>
+   
+  
+   
+    <div style="max-height:300px;">
+      
+        <aura:if isTrue="{!not(v.viewAllBool)}">
+    	<lightning:datatable aura:id="approvalRecordsTableId"
+                             keyField="RelatedToid"
+                             columns="{!v.columns}"
+                             data="{!v.data}"
+                             sortedBy="{!v.sortedBy}"
+                             sortedDirection="{!v.sortDirection}"
+                             onsort="{!c.handleSortingOfRows}"
+                             onrowselection="{!c.handleRowSelection}"
+                           />
+        </aura:if>
+        <aura:if isTrue="{!v.viewAllBool}">
+    	<lightning:datatable aura:id="approvalRecordsTableId"
+                             keyField="RelatedToid"
+                             columns="{!v.columns}"
+                             data="{!v.data}"
+                             sortedBy="{!v.sortedBy}"
+                             sortedDirection="{!v.sortDirection}"
+                             onsort="{!c.handleSortingOfRows}"
+                             onrowselection="{!c.handleRowSelection}"
+                           />
+        </aura:if>
+        
+        <br/>
+        
+     <!-- <aura:if isTrue="{!not(v.viewAllBool)}">
+            <div>
+                <center><lightning:button label="View All" title="Neutral action" onclick="{! c.loadAll }"/></center>
+            </div>
+      </aura:if> -->
+ 
+    </div>
+   
+  
+</aura:component>

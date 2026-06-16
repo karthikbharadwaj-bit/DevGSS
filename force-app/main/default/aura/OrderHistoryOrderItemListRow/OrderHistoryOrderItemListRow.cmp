@@ -1,0 +1,26 @@
+<aura:component>
+  <aura:attribute name="data" type="Map" />
+  <aura:attribute name="isShowOrderItems" type="Boolean" default="false" />
+
+  <div onclick="{!c.showOrderItems}" class="action-wrapper">
+    <div class="show-action">
+      <lightning:icon class="arrow-icon" iconName="{!v.isShowOrderItems ? 'utility:down' : 'utility:right'}" size="xx-small" alternativeText="{!v.isShowOrderItems ? 'down' : 'right'}" />
+      <p class="slds-text-color--weak slds-p-left--medium">{!v.isShowOrderItems ? 'Hide all items' : 'Show all items'}</p>
+    </div>
+  </div>
+
+  <div>
+    <aura:if isTrue="{!v.isShowOrderItems}">
+
+      <table class="slds-table table-order-items">
+        <tbody>
+          <aura:iteration items="{!v.data}" var="orderItem">
+            <c:OrderHistoryOrderItemRow data="{!orderItem}" />
+          </aura:iteration>
+        </tbody>
+      </table>
+
+    </aura:if>
+  </div>
+
+</aura:component>

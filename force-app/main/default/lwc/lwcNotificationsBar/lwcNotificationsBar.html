@@ -1,0 +1,43 @@
+<template>
+    <div class="notifications-wrapper" if:true={hasNotifications} onclick={toggleIsOpen}>
+        <div data-auto-ui="notification-bar"
+             class={containerCss}
+             title="Click to show/hide all notifications">
+
+            <!-- Notifications container -->
+            <div class="notifications-container slds-grow">
+                <!-- Notifications List -->
+                <div class="notifications slds-scrollable_y">
+                    <!-- Notification -->
+                    <template for:each={notifications} for:item="n">
+                        <div class="slds-media slds-media_center notification" key={n.key}>
+                            <div class="notification__figure">
+                                <lightning-icon icon-name={n.iconName} size="x-small" alternative-text="info"
+                                                variant="inverse"
+                                                class={n.iconCSSClasses}></lightning-icon>
+                            </div>
+                            <div class="slds-media__body notification__text" data-auto-ui="notification-text">
+                                <b>{n.header}</b><br>
+                                <lightning-formatted-rich-text value={n.details}></lightning-formatted-rich-text>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            <!-- Right Info -->
+            <div class="notifications-info" if:true={showMoreNotificationsButton}>
+                <div class="notifications-button-container">
+                    <button class="slds-button slds-button_icon-border notifications-button" type="button">
+                        <span class="slds-badge slds-badge_inverse">
+                            <span>
+                                <span style="font-size:0.8rem">+</span>
+                                {moreNotificationsCount}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</template>

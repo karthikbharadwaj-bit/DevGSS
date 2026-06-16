@@ -1,0 +1,32 @@
+<template>
+    <div class={eventSectionClasses}>
+        <div class="slds-progress slds-progress_vertical">
+            <c-sn-progress-section header="Preparing Data" status={firstStepStatus}>
+                <div class="slds-m-top_x-small text" data-ui-auto="evt-step">{step}</div>
+            </c-sn-progress-section>
+        </div>
+    
+    <template if:false={isMultiProd}>
+        <div class="slds-progress slds-progress_vertical first">
+            <c-sn-progress-section header="Add General Information"
+                                status={secondStepStatus}>
+                <div class="dropdown-container">
+                    <c-searchable-dropdown
+                        combobox-options={options}
+                        slds-modal-el={sldsModalEl}
+                        disabled={disableTimezone}
+                        placeholder={timezonePlaceholder}
+                        label="Timezone"
+                        onchange={handleChangeTimezone}>
+                    </c-searchable-dropdown>
+                </div>
+            </c-sn-progress-section>
+        </div>
+    </template>
+    <div class="slds-progress slds-progress_vertical last">
+        <c-sn-progress-section header={signUpSectionHeader} status={lastStepStatus} last>
+               <div if:false={isStartedSignUp} class="slds-m-vertical_xx-small text">Not started</div>
+        </c-sn-progress-section>  
+    </div>
+    </div>
+</template>

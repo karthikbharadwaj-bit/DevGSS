@@ -1,0 +1,295 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Shared -->
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="cartItems" type="List" default="[]" />
+    <aura:attribute name="unmatchedCartItems" type="List" default="[]" />
+    <aura:attribute name="areaCodeItems" type="List" default="[]" description="Saved Are Code Line Items"/>
+    <aura:attribute name="areaCodeItemsInOperation" type="List" default="[]" description="Saved and unsaved Are Code Line Items"/>
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="oldQuote" type="Quote" />
+    <aura:attribute name="entitlements" type="List" />
+    <aura:attribute name="deletingItems" type="Set" description="QLIs deleting in progress"/>
+    <aura:attribute name="deletingAreaCodeItems" type="Set" description="Area Code Line Items delete in progress"/>
+    <aura:attribute name="addingToCartProds" type="Set" description="Products which are in the process of adding to cart"/>
+    <aura:attribute name="addingToCartProductsList" type="List" description="List for products that are adding to cart"/>
+    <aura:attribute name="quoteRecordTypeName" type="String" description="Quote RecordType Name considering old quotes with null record type"/>
+    <aura:attribute name="addingToCartProdsUpdated" type="Integer" />
+    <aura:attribute name="products" type="List" description="List of PriceBook Entries"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="serviceCartItem" type="Object" />
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <!-- atributes -->
+    <aura:attribute name="user" type="User" />
+    <aura:attribute name="stage" type="Integer" />
+    <aura:attribute name="CurrencyIsoCode" type="String" />
+    <aura:attribute name="monthlyContractDiscount" type="Map" />
+    <aura:attribute name="completeAction" type="String" />
+    <aura:attribute name="isAtLeastOneActiveEnt" type="Map" default="{ value: false }"/>
+    <aura:attribute name="Ent" type="Map" default="{ entitlements: [], isAtLeastOneActiveEnt: false }" />
+    <aura:attribute name="params" type="Map" default="{ Seat: {} }" />
+    <aura:attribute name="updateTrigger" type="Integer" />
+    <aura:attribute name="accountLines" type="String" description="Lines on Account"/>
+    <aura:attribute name="columns" type="Map" default="{}" description="Size of each column"/>
+    <aura:attribute name="freshItems" type="List" default="[]" />
+    <aura:attribute name="addToCartQueue" type="Object" description="Represents Add To Cart Process"/>
+    <aura:attribute name="isAllowedEditDiscount" type="Boolean" default="false" description="if user's profile is allowed to edit" />
+    <!-- Totals -->
+    <aura:attribute name="InitialDiscount" type="Integer" />
+    <aura:attribute name="InitialPayment" type="Integer" />
+    <aura:attribute name="YearDiscount" type="Integer" />
+    <aura:attribute name="YearCost" type="Integer" />
+    <aura:attribute name="RecurringRevenue" type="Integer" />
+    <aura:attribute name="lastDeactivatedItems" type="List" default="[]" />
+    <aura:attribute name="isNeedUpdateQuoteTotalValues" type="Boolean" default="false" />
+
+    <aura:attribute name="isBypassGetQuoteTotalValues1" type="Boolean" default="false" />
+    <aura:attribute name="isBypassGetQuoteTotalValues2" type="Boolean" default="false" />
+
+    <!-- *** -->
+    <aura:attribute name="calcItems" type="List" default="[]" description="Products with longest names to calculate table"/>
+    <aura:attribute name="currentCartItems" type="List" default="[]" />
+    <!-- *** -->
+
+    <aura:handler event="aura:doneRendering" action="{!c.doneRendering}"/>
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:QuotingToolCartSaveEvent" action="{!c.saveCart}" />
+    <aura:handler event="c:QuotingToolModalResponseEvent" action="{!c.modalResponse}" />
+    <aura:handler event="c:QuotingToolNewQuoteEvent" action="{!c.emptyCart}" />
+    <aura:handler event="c:QuotingToolMonthlyContractDiscountEvent" action="{!c.updateMonthlyContract}" />
+    <aura:handler event="c:QuotingToolGetTaxesEvent" action="{!c.onGetTaxesEvent}" />
+    <aura:handler event="c:QuotingToolNotificationActionEvent" action="{!c.notificationAction}" />
+    <aura:handler event="c:QuotingToolDiscardCardEvent" action="{!c.discardCart}" />
+    <aura:handler event="c:QuotingToolRefreshCartEvent" action="{!c.onRefreshCartEvent}" />
+    <aura:handler event="c:QuotingToolAddToCartEvent" action="{!c.onAddToCartEvent}" />
+    <aura:handler name="QuotingToolCartListEntryEvent" action="{!c.onCartListEntryEventHandler}" />
+    <aura:handler name="QuotingToolAreaCodeListEntryEvent" action="{!c.onAreaCodeListEntryEvent}" />
+
+    <!-- Change Handlers -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChange}" />
+    <aura:handler name="change" value="{!v.cartItems}" action="{!c.cartItemsChanged}" />
+    <aura:handler name="change" value="{!v.updateTrigger}" action="{!c.updateTriggerChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}" />
+    <aura:handler name="change" value="{! v.addingToCartProds }" action="{! c.addingToCartProdsChanged }"/>
+    <aura:handler name="change" value="{! v.deletingItems }" action="{! c.deletingItemsChanged }"/>
+    <aura:handler name="change" value="{! v.Tabs }" action="{! c.tabsChanged }"/>
+
+    <!-- Registered events -->
+    <aura:registerEvent name="switchServicePlan" type="c:QuotingToolSwitchServicePlanEvent" />
+    <aura:registerEvent name="QuotingToolCartListEntryEvent" type="c:QuotingToolCartListEntryEvent" />
+    <aura:registerEvent name="QuotingToolAreaCodeListEntryEvent" type="c:QuotingToolAreaCodeListEntryEvent" />
+
+    <!-- Methods -->
+    <aura:method name="save" action="{! c.saveCart }" description="Save changes made by user"/>
+    <aura:method name="refresh" action="{! c.onRefreshCartEvent }" description="Refreshes the cart"/>
+    <aura:method name="discard" action="{! c.discard }" description="Discard changes made by user"/>
+    <aura:method name="deleteCartItem" description="Delete Specified Cart Item from SalesForce">
+        <aura:attribute name="quoteLineItemToDelete" type="QuoteLineItem" />
+    </aura:method>
+
+    <section aura:id="cart"
+             class="slds-container hidden cart cart-hide--existing-qty cart-hide--new-total-qty cart-hide--provisioned-by-incontact cart-hide--delivered-qty">
+
+        <div class="cart-table slds-scrollable_x">
+
+            <!-- Fixed table header  -->
+            <div aura:id="cart-table-head" class="cart-table-head">
+                <table class="cart-header cart-table-entry slds-table slds-table--bordered slds-no-row-hover">
+                    <thead>
+                    <!-- slds-table_fixed-layout -->
+                    <tr class="slds-text-heading--label">
+                        <th aura:id="detailsAction-col-external" class="cart__details-action"></th>
+                        <th aura:id="name-col-external" class="cart__name">
+                            <div class="slds-truncate" title="Product Name">Product Name</div>
+                        </th>
+                        <th aura:id="icons-col-external" class="cart__icons"></th>
+                        <th aura:id="plan-col-external" class="cart__plan">
+                            <div class="slds-truncate" title="Plan">Plan</div>
+                        </th>
+                        <th aura:id="qty-col-external" class="cart__qty">
+                            <div class="slds-truncate" title="Quantity">Quantity</div>
+                        </th>
+                        <th aura:id="existingQty-col-external" class="cart__existing-qty">
+                            <div class="slds-truncate" title="Existing Quantity">Existing Quantity</div>
+                        </th>
+                        <th aura:id="deliveredQty-col-external" class="cart__delivered-qty">
+                            <div class="slds-truncate" title="Delivered Quantity">Delivered Quantity</div>
+                        </th>
+                        <th aura:id="newTotalQty-col-external" class="cart__new-total-qty">
+                            <div class="slds-truncate" title="New Total Quantity">New Total Quantity</div>
+                        </th>
+                        <th aura:id="listPrice-col-external" class="cart__list-price">
+                            <div class="slds-truncate" title="List Price">List Price</div>
+                        </th>
+                        <th aura:id="yourPrice-col-external" class="cart__your-price">
+                            <div class="slds-truncate" title="Your Price">Your Price</div>
+                        </th>
+                        <th aura:id="discount-Col-external" class="slds-cell-wrap cart__discount">
+                            <div class="slds-truncate" title="Discount">Discount</div>
+                        </th>
+                        <th aura:id="discountType-col-external" class="cart__discount-type">
+                            <div class="slds-truncate" title="Type">Type</div>
+                        </th>
+                        <th aura:id="totalPrice-col-external" class="cart__total-price">
+                            <div class="slds-truncate" title="Total Price">Total Price</div>
+                        </th>
+                        <th aura:id="provisionedByInContact-col-external" class="cart__provisioned-by-incontact">
+                            <div class="slds-truncate" title="Provisioned by inContact">
+                                InContact
+
+                                <span onmouseover="{!c.mouseOverProvisionedIcon}"
+                                      onmouseout="{!c.hidePopover}">
+
+                                    <lightning:icon iconName="utility:info"
+                                                    size="xx-small"
+                                                    alternativeText="If checked, Line Item will be provisioned by inContact"/>
+
+                           </span>
+
+                            </div>
+                        </th>
+                        <th aura:id="actions-col-external" class="col-1 cart__actions"></th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
+            <div aura:id="cart-table-body" class="cart-table-body slds-scrollable_y" onwheel="{! c.onTableWheel }">
+                <table class="slds-table slds-table--bordered slds-no-row-hover">
+                    <!-- Dummy table header to calc width header width. -->
+                    <thead>
+                    <!-- slds-table_fixed-layout -->
+                    <tr class="slds-text-heading--label">
+                        <th aura:id="detailsAction-col" class="cart__details-action"></th>
+                        <th aura:id="name-col" class="cart__name">
+                            <div class="slds-truncate" title="Product Name">Product Name</div>
+                        </th>
+                        <th aura:id="icons-col" class="cart__icons"></th>
+                        <th aura:id="plan-col" class="cart__plan">
+                            <div class="slds-truncate" title="Plan">Plan</div>
+                        </th>
+                        <th aura:id="qty-col" class="cart__qty">
+                            <div class="slds-truncate" title="Quantity">Quantity</div>
+                        </th>
+                        <th aura:id="existingQty-col" class="cart__existing-qty">
+                            <div class="slds-truncate" title="Existing Quantity">Existing Quantity</div>
+                        </th>
+                        <th aura:id="deliveredQty-col" class="cart__delivered-qty">
+                            <div class="slds-truncate" title="Delivered Quantity">Delivered Quantity</div>
+                        </th>
+                        <th aura:id="newTotalQty-col" class="cart__new-total-qty">
+                            <div class="slds-truncate" title="New Total Quantity">New Total Quantity</div>
+                        </th>
+                        <th aura:id="listPrice-col" class="cart__list-price">
+                            <div class="slds-truncate" title="List Price">List Price</div>
+                        </th>
+                        <th aura:id="yourPrice-col" class="cart__your-price">
+                            <div class="slds-truncate" title="Your Price">Your Price</div>
+                        </th>
+                        <th aura:id="discount-Col" class="slds-cell-wrap cart__discount">
+                            <div class="slds-truncate" title="Discount">Discount</div>
+                        </th>
+                        <th aura:id="discountType-col" class="cart__discount-type">
+                            <div class="slds-truncate" title="Type">Type</div>
+                        </th>
+                        <th aura:id="totalPrice-col" class="cart__total-price">
+                            <div class="slds-truncate" title="Total Price">Total Price</div>
+                        </th>
+                        <th aura:id="provisionedByInContact-col" class="cart__provisioned-by-incontact">
+                            <div class="slds-truncate" title="Provisioned by inContact">
+                                Provisioned
+
+                                <span onmouseover="{!c.mouseOverProvisionedIcon}"
+                                      onmouseout="{!c.hidePopover}">
+
+                                  <lightning:icon iconName="utility:info"
+                                                  size="xx-small"
+                                                  alternativeText="If checked Line Item would be provisioned by inContact"/>
+
+                              </span>
+
+                            </div>
+                        </th>
+                        <th aura:id="actions-col" class="col-1 cart__actions"></th>
+                    </tr>
+                    </thead>
+
+
+                    <aura:iteration items="{!v.currentCartItems}" var="group" indexVar="index">
+                        <c:QuotingToolCartGroup group="{!group}"
+                                                items="{!group.items}"
+                                                options="{!group.options}"
+                                                isShowList="{!group.expanded}"
+                                                columns="{!v.columns}"
+                                                areaCodeItems="{!v.areaCodeItems}"
+                                                areaCodeItemsInOperation="{!v.areaCodeItemsInOperation}"
+                                                updateTrigger="{!v.updateTrigger}"
+                                                quoteRecordTypeName="{!v.quoteRecordTypeName}"
+                                                quote="{!v.quote}"
+                                                activePriceBookEntry="{!v.activePriceBookEntry}"
+                                                state="{!v.state}"
+                                                settings="{!v.settings}"
+                                                deletingAreaCodeItems="{!v.deletingAreaCodeItems}"
+                                                isCartChanged="{! v.isCartChanged }"
+                                                deletingItems="{! v.deletingItems }"
+                                                Wizard="{! v.Wizard }"
+                        />
+                    </aura:iteration>
+
+                </table>
+            </div>
+        </div>
+
+        <!-- totals -->
+        <div class="totals slds-grid slds-m-top--medium fit-content">
+            <div class="slds-col total-col-first">
+                <aura:if isTrue="{! not(v.Wizard.currentQuote.isCCorProServ) }">
+
+                    <!-- Totals to show for Sales Quotes -->
+                    <span class="padding-left">
+                        <span class="total-label">First Year Total Cost:</span>
+                        <c:outputCurrency value="{!v.YearCost}" currencyCode="{!v.CurrencyIsoCode}"/>
+                    </span>
+                    <span class="padding-left">
+                        <span class="total-label">First Year Discount:</span>
+                        <c:outputCurrency value="{!v.YearDiscount}" currencyCode="{!v.CurrencyIsoCode}"/>
+                    </span>
+                    <span class="padding-left">
+                        <span class="total-label">Initial Payment:</span>
+                        <c:outputCurrency value="{!v.InitialPayment}" currencyCode="{!v.CurrencyIsoCode}"/>
+                    </span>
+                    <span class="padding-left">
+                        <span class="total-label">Initial Discount:</span>
+                        <c:outputCurrency value="{!v.InitialDiscount}" currencyCode="{!v.CurrencyIsoCode}"/>
+                    </span>
+
+                    <aura:set attribute="else">
+                        <!-- Totals to show for (CC) ProServ Quotes -->
+                        <span class="padding-left">
+                            <span class="total-label">Total ProServ SOW:</span>
+                            <c:outputCurrency value="{!v.Wizard.currentQuote.record.Total_One_Time__c}"
+                                              currencyCode="{!v.CurrencyIsoCode}"/>
+                        </span>
+                        <span class="padding-left">
+                            <span class="total-label">Total ProServ SOW Discount:</span>
+                            <c:outputCurrency value="{!v.Wizard.currentQuote.record.Total_One_Time_Discount__c}"
+                                              currencyCode="{!v.CurrencyIsoCode}"/>
+                        </span>
+                    </aura:set>
+                </aura:if>
+
+                <!-- Totals to show for all types of quotes-->
+                <span class="padding-left">
+                    <span class="total-label">Monthly Recurring Revenue:</span>
+                    <c:outputCurrency value="{!v.Wizard.currentQuote.record.Total_MRR_New__c}" currencyCode="{!v.CurrencyIsoCode}"/>
+                </span>
+            </div>
+        </div>
+
+    </section>
+
+</aura:component>

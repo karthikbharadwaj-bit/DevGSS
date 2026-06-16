@@ -1,0 +1,74 @@
+<aura:component implements="lightning:actionOverride,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" controller ='Opportunity_CloseController' >
+    <aura:attribute name="CaseCategory" type="String"/>
+    <aura:attribute name="Type" type="String"/>
+    <aura:attribute name="Description" type="String" />
+    <aura:attribute name="Priority" type="String"/>
+    <aura:attribute name="Urgency" type="String"/>
+    <aura:attribute name="Accountid" type="String"/>
+    <aura:attribute name="options" type="List" default="[
+    {'label': 'Engage Deals Desk', 'value': 'Engage Deals Desk'},
+    {'label': 'Contact SalesOps', 'value': 'Contact SalesOps'}
+    ]"/>
+    <aura:attribute name="value" type="String" default="option1"/>
+     <aura:attribute name="listControllingValues" type="list" default="[]" description="to store controller field values"/>
+    <aura:attribute name="listDependingValues" type="list" default="['--- None ---']" description="to store dependent field values"/>
+    <aura:attribute name="dependentFieldMap" type="map" description="map to store dependent values with controlling value"/>
+    <aura:attribute name="bDisabledDependentFld" type="boolean" default="true"/> 
+    
+    <aura:attribute name="objDetail" type="Case" default="{'sobjectType' : 'Case'}"/>
+    <aura:attribute name="controllingFieldAPI" type="string" default="Case_Category__c" description="store field API name of Controller field"/>
+    <aura:attribute name="dependingFieldAPI" type="string" default="Type1__c" description="store field API name of dependent field"/>
+    
+     <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <b><lightning:quickActionAPI aura:id="quickActionAPI" /></b>
+    <lightning:recordEditForm aura:id="CreateCaseForm"  objectApiName="Case" onsubmit="{!c.handleSubmit}" >
+        <lightning:messages />
+          
+		<lightning:radioGroup name="radioGroup"
+                         options="{! v.options }"
+                          value="{! v.value }"
+                          type="radio"
+                          variant="label-inline"
+                          style="display:inline-block !important"/>
+        
+
+        <lightning:select name="CaseCategory" label="Case Category" required="true" value="{!v.CaseCategory}" onchange ="{!c.onControllerFieldChange}">
+        <aura:if isTrue="{!v.value == 'Engage Deals Desk' }" >
+             <option value="SalesOrderExceptDesk" default='True'>Sales Order Except Desk</option>
+            </aura:if>  
+            
+           <aura:if isTrue="{!v.value == 'Contact SalesOps' }" >  
+        <option value="--- None ---">--- None ---</option>
+        <option value="Channel Operations">Channel Operations</option>
+        <option value="Compensation">Compensation</option>
+        <option value="Reporting &amp; Analytics">Reporting and Analytics</option>
+        <option value="Sales Enablement">Sales Enablement</option>
+        <option value="Systems, Process &amp; Tools">Systems, Process and Tools'</option>
+        </aura:if>
+        <aura:iteration items="{!v.listControllingValues}" var="val">
+                <option value="{!val}">{!val}</option>
+            </aura:iteration>
+
+        </lightning:select>
+         
+          <lightning:select name="Type1"
+                          value="{!v.Type}"
+                          label="Type"
+                          disabled="{!v.bDisabledDependentFld}">
+              <option value="">--- None ---</option>
+            <aura:iteration items="{!v.listDependingValues}" var="val">
+                <option value="{!val}">{!val}</option>
+            </aura:iteration>
+        </lightning:select>
+        
+        <lightning:inputField fieldName="Description" value="{!v.Description}" />
+        Note: Screenshots and attachments can be added to the case after hitting Submit.
+        <div>
+          <lightning:button  variant="brand" type="submit" name="submit" label="submit" />
+          <lightning:button  variant="brand" type="Cancel" name="Cancel" label="Cancel" onclick="{!c.handlecancel}" />
+        </div>
+                
+    </lightning:recordEditForm>
+ </aura:component>

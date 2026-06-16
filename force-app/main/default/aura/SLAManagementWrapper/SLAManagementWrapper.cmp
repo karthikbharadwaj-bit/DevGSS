@@ -1,0 +1,394 @@
+<aura:component description="SLACreateWrapper" controller="SLAController">
+    <ltng:require
+        scripts="{! join(',',
+            $Resource.RCHelper + '/RC.js',
+            $Resource.SLADependencies + '/SLA.js',
+            $Resource.underscoreJs + '/underscore-min.js')}"
+        afterScriptsLoaded="{!c.afterScriptsLoaded}"
+    />
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="view" type="Object"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="approvalId" type="String"/>
+    <aura:attribute name="engageLegalLookupParams" type="Map" default="{}"/>
+
+    <c:Toasts/>
+    <c:LookupItemList/>
+
+    <div class="slds-page-header">
+        <div class="slds-grid slds-gutters_large slds-grid_vertical-align-center slds-grid_align-spread">
+
+            <div class="slds-col slds-size_3-of-12">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning:icon class="slds-page-header__icon"
+                                        alternativeText="SLA"
+                                        iconName="standard:drafts"/>
+                    </div>
+                    <div class="slds-media__body">
+
+                        <nav>
+                            <ol class="slds-breadcrumb slds-line-height_reset">
+                                <li class="slds-breadcrumb__item">
+                                    <span>SLA Management</span>
+                                </li>
+                            </ol>
+                        </nav>
+
+                        <aura:if isTrue="{!v.view.Account}">
+                            <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate">
+                                <a href="{! '/' + v.view.Account.Id}">{! v.view.Account.Name}</a>
+                            </h1>
+                        </aura:if>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_9-of-12 slds-grid slds-grid_vertical-align-center slds-grid_align-end">
+                <div class="slds-col slds-size_9-of-12 notification-bar slds-m-top_medium">
+                    <c:NotificationsBar notifications="{! v.app.notifications }" aura:id="NotificationsBar"/>
+                </div>
+                <div class="slds-col slds-grow-none">
+                    <aura:if isTrue="{!v.view.ServiceTypeOptions.length > 0}">
+                        <lightning:select label="Service Type"
+                                          value="{!v.view._serviceType}"
+                                          onchange="{!c.changeServiceType}"
+                                          disabled="{!not(v.view.CanChangeServiceType)}">
+                            <aura:iteration items="{!v.view.ServiceTypeOptions}" var="option">
+                                <option value="{!option.value}"
+                                        selected="{!option.value == v.view._serviceType }">{!option.label}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slds-grid slds-nowrap slds-grid_align-center">
+        <div class="slds-grow slds-show_large"></div>
+        <div class="slds-grid slds-size_12-of-12 slds-large-size_6-of-12 slds-gutters_direct-medium slds-wrap slds-grid_vertical-align-start">
+            <aura:if isTrue="{!v.view.SLA}">
+                <div class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-gutters_medium slds-p-vertical_medium slds-grid_align-spread">
+                    <div class="slds-col slds-size_12-of-12 slds-nowrap slds-text-heading_medium slds-m-vertical_x-small">
+                        <h2>Service Level Agreement</h2>
+                    </div>
+                    <div class="slds-col slds-grid slds-nowrap slds-size_12-of-12 slds-p-vertical_x-small">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <c:Lookup placeholder="Start typing to search Engage Legal Approvals"
+                                      label="Engage Legal Approval"
+                                      iconCollection="standard"
+                                      icon="approval"
+                                      showRecordLink="true"
+                                      value="{! v.view.SLA._engageLegalId}"
+                                      onchange="{!c.changeEngageLegalValue}"
+                                      method="getEngageLegalApprovals"
+                                      aura:id="engageLegalApproval"
+                                      params="{! v.engageLegalLookupParams }"
+                                      selectedValue="{! v.view.SLA._engageLegal }"
+                                      disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                            />
+                        </div>
+                    </div>
+                    <div class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-p-vertical_x-small">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Min. Downtime"
+                                             value="{!v.view.SLA._minDowntime.value}"
+                                             min="{!v.view.SLA._minDowntime.min}"
+                                             max="{!v.view.SLA._minDowntime.max}"
+                                             step="1"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:select label="Availability Unit"
+                                              value="{!v.view.SLA.AvailabilityUnit}"
+                                              disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                              onchange="{!c.updateValue}">
+                                <aura:iteration items="{!v.view.SLA.AvailabilityUnitOptions}" var="option">
+                                    <option value="{!option.value}"
+                                            selected="{!option.value == v.view.SLA._availabilityUnit }">{!option.label}</option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <aura:if isTrue="{!v.view.SLA._availabilityUnit == 2}">
+                            <div class="slds-col slds-size_4-of-12 sla-form-element">
+                                <lightning:input type="Number"
+                                                 label="Unit Size"
+                                                 value="{!v.view.SLA._unitSize.value}"
+                                                 min="{!v.view.SLA._unitSize.min}"
+                                                 max="{!v.view.SLA._unitSize.max}"
+                                                 step="1"
+                                                 disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                                 onblur="{!c.updateValue}"/>
+                            </div>
+                        </aura:if>
+                    </div>
+                </div>
+
+                <div class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-gutters_medium slds-p-vertical_medium slds-grid_align-spread">
+                    <div class="slds-col slds-size_12-of-12 slds-nowrap slds-text-heading_medium slds-m-vertical_x-small">
+                        <h2>Maximum Credit Trigger</h2>
+                    </div>
+                    <div class="slds-col slds-grid slds-nowrap slds-size_12-of-12 slds-p-vertical_x-small slds-grid_vertical-align-center">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Max. Credit (% of MRR)"
+                                             value="{!v.view.SLA._maxCreditAmount.value}"
+                                             min="{!v.view.SLA._maxCreditAmount.min}"
+                                             max="{!v.view.SLA._maxCreditAmount.max}"
+                                             step="0.01"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_8-of-12 slds-form-element slds-m-top_medium">
+                            <ui:inputCheckbox
+                                class="sla-checkbox_input"
+                                label="Dollar-To-Dollar Calculation"
+                                labelClass="slds-p-right_xx-small"
+                                change="{!c.changeValue}"
+                                value="{!v.view.SLA._dollarToDollarCalculation}"
+                            />
+                        </div>
+                    </div>
+                    <div class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-p-vertical_x-small">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:select label="Max. Credit Trigger"
+                                              value="{!v.view.SLA.TriggerType}"
+                                              onchange="{!c.changeValue}"
+                                              disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}">
+                                <aura:iteration items="{!v.view.SLA.TriggerTypeOptions}" var="option">
+                                    <option value="{!option.value}"
+                                            selected="{!option.value == v.view.SLA._triggerType }">{!option.label}</option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:select label="Trigger Relation"
+                                              value="{!v.view.SLA.TriggerRelation}"
+                                              onchange="{!c.updateValue}"
+                                              disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}">
+                                <aura:iteration items="{!v.view.SLA.TriggerRelationOptions}" var="option">
+                                    <option value="{!option.value}"
+                                            selected="{!option.value == v.view.SLA._triggerRelation }">{!option.label}</option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Trigger Value"
+                                             value="{!v.view.SLA._triggerValue.value}"
+                                             min="{!v.view.SLA._triggerValue.min}"
+                                             max="{!v.view.SLA._triggerValue.max}"
+                                             step="0.01"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-grid slds-nowrap slds-size_12-of-12 slds-p-vertical_x-small">
+                        <aura:if isTrue="{!v.view.SLA._triggerType == 2}">
+                            <div class="slds-col slds-size_12-of-12 sla-form-element">
+                                <lightning:textarea label="Trigger Formula"
+                                                    value="{!v.view.SLA.TriggerFormula}"
+                                                    onblur="{!c.updateValue}"
+                                                    disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"/>
+                            </div>
+                        </aura:if>
+                    </div>
+
+                </div>
+
+                <div class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-gutters_medium slds-p-vertical_medium">
+                    <div class="slds-col slds-size_12-of-12 slds-text-heading_medium slds-m-vertical_x-small">
+                        <h2>Chronic Service Failure</h2>
+                    </div>
+                    <div class="slds-col slds-grid slds-wrap slds-size_12-of-12">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="No. of Strikes"
+                                             value="{!v.view.SLA._strikeCount.value}"
+                                             min="{!v.view.SLA._strikeCount.min}"
+                                             max="{!v.view.SLA._strikeCount.max}"
+                                             step="1"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Strike Period"
+                                             value="{!v.view.SLA._strikePeriod.value}"
+                                             min="{!v.view.SLA._strikePeriod.min}"
+                                             max="{!v.view.SLA._strikePeriod.max}"
+                                             step="1"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Strike Value"
+                                             value="{!v.view.SLA._strikeValue.value}"
+                                             min="{!v.view.SLA._strikeValue.min}"
+                                             max="{!v.view.SLA._strikeValue.max}"
+                                             step="0.01"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                    </div>
+                    <div class="slds-col slds-grid slds-nowrap slds-size_12-of-12 slds-grid_align-center slds-p-vertical_small">
+                        <span class="slds-text-color_weak">&mdash; OR &mdash;</span>
+                    </div>
+                    <div class="slds-col slds-grid slds-wrap slds-size_12-of-12">
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="No. of Strikes"
+                                             value="{!v.view.SLA._sbStrikeCount.value}"
+                                             min="{!v.view.SLA._sbStrikeCount.min}"
+                                             max="{!v.view.SLA._sbStrikeCount.max}"
+                                             step="1"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Strike Period"
+                                             value="{!v.view.SLA._sbStrikePeriod.value}"
+                                             min="{!v.view.SLA._sbStrikePeriod.min}"
+                                             max="{!v.view.SLA._sbStrikePeriod.max}"
+                                             step="1"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 sla-form-element">
+                            <lightning:input type="Number"
+                                             label="Strike Value"
+                                             value="{!v.view.SLA._sbStrikeValue.value}"
+                                             min="{!v.view.SLA._sbStrikeValue.min}"
+                                             max="{!v.view.SLA._sbStrikeValue.max}"
+                                             step="0.01"
+                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                             onchange="{!c.changeValue}"
+                                             onblur="{!c.updateValue}"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div
+                    class="slds-col slds-grid slds-wrap slds-size_12-of-12 slds-gutters_medium slds-grid_align-center slds-grid_vertical-align-start slds-p-vertical_medium">
+
+                    <div class="slds-col slds-size_12-of-12 slds-text-heading_medium slds-m-vertical_x-small">
+                        <h2>Credit Charts</h2>
+                    </div>
+                    <div class="slds-col slds-grid slds-size_12-of-12">
+                        <div class="slds-col slds-size_12-of-12">
+                            <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                                <thead class="slds-text-body_regular">
+                                <tr class="slds-line-height_reset">
+                                    <th scope="col" class="slds-text-align_center slds-size_2-of-8">
+                                        Min Availability, %
+                                    </th>
+                                    <th scope="col" class="slds-text-align_center slds-size_2-of-8">
+                                        Max Availability, %
+                                    </th>
+                                    <th scope="col" class="slds-text-align_center slds-size_3-of-8">
+                                        Service Credit, % MRR
+                                    </th>
+                                    <th scope="col" class="slds-text-align_center slds-size_1-of-8">
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <aura:iteration items="{!v.view.SLA.CreditCharts }" var="item" indexVar="index">
+                                    <tr>
+                                        <td scope="col" class="slds-text-align_center">{! item.MinAvailability }</td>
+                                        <td scope="col" class="slds-text-align_center">{! item.MaxAvailability }</td>
+                                        <td scope="col" class="slds-text-align_center">{! item.Credit }</td>
+                                        <aura:if isTrue="{! index == v.view.SLA.CreditCharts.length - 1}">
+                                            <td scope="col" class="slds-text-align_center slds-p-vertical_none">
+                                                <lightning:buttonIcon
+                                                    iconName="utility:delete"
+                                                    variant="border"
+                                                    class="slds-button_icon-small"
+                                                    disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                                    onclick="{!c.removeRangeItem}"/>
+                                            </td>
+                                            <aura:set attribute="else">
+                                                <td>
+                                                </td>
+                                            </aura:set>
+                                        </aura:if>
+                                    </tr>
+                                </aura:iteration>
+                                <aura:if isTrue="{!v.view.SLA._nextChart}">
+                                    <tr>
+                                        <td>
+                                            <lightning:input type="number" label="Min Availability" variant="label-hidden"
+                                                             value="{!v.view.SLA._nextChart.MinAvailability}"
+                                                             min="{!v.view.SLA._nextChart._min.min}"
+                                                             max="{!v.view.SLA._nextChart._min.max}"
+                                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                                             onblur="{!c.changeNewChartValue}"
+                                                             step="0.001"/>
+                                        </td>
+                                        <td>
+                                            <lightning:input type="number" label="Max Availability" variant="label-hidden"
+                                                             disabled="true"
+                                                             value="{!v.view.SLA._nextChart.MaxAvailability}"
+                                                             min="{!v.view.SLA._nextChart._max.min}"
+                                                             max="{!v.view.SLA._nextChart._max.max}"
+                                                             onblur="{!c.changeNewChartValue}"
+                                                             step="0.001"/>
+                                        </td>
+                                        <td>
+                                            <lightning:input type="number" label="Service Credit, % MRR" variant="label-hidden"
+                                                             value="{!v.view.SLA._nextChart.Credit}"
+                                                             min="{!v.view.SLA._nextChart._credit.min}"
+                                                             max="{!v.view.SLA._nextChart._credit.max}"
+                                                             disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                                             onblur="{!c.changeNewChartValue}"
+                                                             step="0.01"/>
+                                        </td>
+                                        <td>
+                                            <lightning:buttonIcon
+                                                class="slds-button_icon-small" variant="border" iconName="utility:add"
+                                                disabled="{!or(not(v.view.SLA.NextChart.IsValid), v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                                onclick="{!c.saveRangeItem}"/>
+                                        </td>
+                                    </tr>
+                                </aura:if>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+
+            <div
+                class="slds-col slds-grid slds-size_12-of-12 slds-grid_align-center slds-text-align_center slds-p-vertical_medium">
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning:button label="Cancel" variant="neutral"
+                                      disabled="{!or(v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                      onclick="{!c.cancel}"/>
+                </div>
+                <div class="slds-col slds-size_2-of-12">
+                    <lightning:button label="Save" variant="brand"
+                                      disabled="{!or(not(v.view.SLA.IsValid), v.view.IsRequestInProgress, v.view.IsReadOnly)}"
+                                      onclick="{!c.submit}"/>
+                </div>
+            </div>
+        </div>
+        <div class="slds-grow slds-show_large"></div>
+    </div>
+
+</aura:component>

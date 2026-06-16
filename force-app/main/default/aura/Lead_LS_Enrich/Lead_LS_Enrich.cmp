@@ -1,0 +1,51 @@
+<!--
+* Created By     : Namitha
+* Created Date   : 20-03-2020
+* Description    : Component invoked when 'LS Enrich' button is clicked on lead in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component controller="Lead_LS_Enrich_Controller" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickActionWithoutHeader" access="global" >
+    <aura:html tag="style">
+        .cuf-content {
+            padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+            padding: 0rem !important;
+        }       
+        .slds-modal__content{
+            overflow-y:hidden !important;
+            height:unset !important;
+            max-height:unset !important;
+        }
+    </aura:html>
+    <aura:attribute name="displayButtons" type="Boolean" default="true"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <header class="slds-modal__header">
+        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">LS Enrichment</h2>
+    </header>
+    <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+            </div>
+        </div>
+        <div>                        
+            Are you sure that you want to enrich the lead data?
+        </div>
+    </div>
+    <footer class="slds-modal__footer">
+        <aura:if isTrue="{!v.displayButtons}">
+            <div class="slds-float_left">
+                <lightning:button variant="neutral" label="Cancel" title="Cancel"  onclick="{!c.closeModal}"/>
+            </div>
+            <lightning:button variant="brand" label="Yes" title="Yes"  onclick="{!c.handleLSEnrich}"/> 
+    	</aura:if>
+    </footer>
+</aura:component>

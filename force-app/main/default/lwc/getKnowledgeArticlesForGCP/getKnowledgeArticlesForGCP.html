@@ -1,0 +1,221 @@
+<template>
+    <template if:true={embedded}>
+        <div>
+            <template lwc:if={isLoading}>
+                <div class="ai-line">
+                    <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                    <span>Your results are on the way ...</span>
+                </div>
+                <div class="ka-skel">
+                    <div class="line w90"></div>
+                    <div class="line w96"></div>
+                    <div class="line w70"></div>
+                </div>
+            </template>
+
+            <template lwc:elseif={isError}>
+                <p class="slds-text-color_error slds-p-horizontal_small">{rawResponse}</p>
+            </template>
+
+            <template lwc:else>
+                <template if:true={formattedResponse}>
+                    <ul class="custom-list slds-p-horizontal_small">
+                        <template for:each={formattedResponse} for:item="articleItem" for:index="index">
+                            <li key={articleItem.article_number} class="article-item">
+                                <lightning-icon icon-name="standard:knowledge" size="small"
+                                    class="article-icon"></lightning-icon>
+
+                                <div class="article-details">
+                                    <div>
+                                        <strong>Article: </strong>
+                                        <template lwc:if={articleItem.articleUrl}>
+                                            <a href={articleItem.articleUrl}
+                                                target="_blank">{articleItem.article_number}</a>
+                                        </template>
+                                        <template lwc:else>{articleItem.article_number}</template>
+                                    </div>
+                                    <div class="article-title">{articleItem.title}</div>
+                                </div>
+
+                                <div class="actions-right">
+                                    <div class="inline-actions">
+                                        <lightning-button-icon-stateful icon-name="utility:like"
+                                            selected-icon-name="utility:like" alternative-text="Like" data-idx={index}
+                                            onclick={onLike} selected={articleItem.isLiked}
+                                            variant={articleItem.likeVariant} disabled={articleItem.actionBusy}>
+                                        </lightning-button-icon-stateful>
+
+                                        <lightning-button-icon-stateful icon-name="utility:dislike"
+                                            selected-icon-name="utility:dislike" alternative-text="Dislike"
+                                            data-idx={index} onclick={onDislike} selected={articleItem.isDisliked}
+                                            variant={articleItem.dislikeVariant} disabled={articleItem.actionBusy}>
+                                        </lightning-button-icon-stateful>
+                                    </div>
+
+                                    <div class="feedback-right">
+                                        <template if:false={articleItem.showFeedback}>
+                                            <template if:false={articleItem.reviewed}>
+                                                <a href="javascript:void(0);" data-idx={index}
+                                                    onclick={toggleFeedback}>Give Feedback</a>
+                                            </template>
+                                        </template>
+                                    </div>
+
+                                    <template if:true={articleItem.reviewed}>
+                                        <span class="thanks-badge">Thanks for the review</span>
+                                    </template>
+                                </div>
+
+                                <template if:true={articleItem.showFeedback}>
+                                    <div class="feedback-row">
+                                        <textarea class={articleItem.feedbackClass} rows="2"
+                                            placeholder="Share a quick note…" data-idx={index}
+                                            oninput={onFeedbackChange}
+                                            onkeydown={onFeedbackKeydown}>{articleItem.feedback}</textarea>
+
+                                        <div class="feedback-actions">
+                                            <lightning-button class="btn-compact" variant="brand" label="Send"
+                                                data-idx={index} onclick={onSendFeedback}
+                                                disabled={articleItem.sendDisabled}>
+                                            </lightning-button>
+                                            <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                                data-idx={index} onclick={onCancelFeedback}>
+                                            </lightning-button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+
+                <template lwc:if={rawResponse}>
+                    <p class="slds-text-color_error slds-p-horizontal_small">{rawResponse}</p>
+                </template>
+            </template>
+        </div>
+    </template>
+
+    <template if:false={embedded}>
+        <template if:false={isVisible}>
+            <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header">
+                <div class="toggle-label" onclick={toggleContent}>
+                    Show
+                    <lightning-icon icon-name="utility:chevrondown" size="x-small" class="chevron-icon">
+                    </lightning-icon>
+                </div>
+                <div class="slds-text-color_weak" style="font-size: 0.8rem;">
+                    Powered by <strong>AI</strong> ✨
+                </div>
+            </div>
+        </template>
+
+        <template if:true={isVisible}>
+            <div>
+                <template lwc:if={isLoading}>
+                    <div class="ai-line">
+                        <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                        <span>Your results are on the way🚀 ...</span>
+                    </div>
+                    <div class="ka-skel">
+                        <div class="line w90"></div>
+                        <div class="line w96"></div>
+                        <div class="line w70"></div>
+                    </div>
+                </template>
+
+                <template lwc:elseif={isError}>
+                    <p class="slds-text-color_error slds-p-horizontal_small">{rawResponse}</p>
+                </template>
+
+                <template lwc:else>
+                    <template if:true={formattedResponse}>
+                        <ul class="custom-list slds-p-horizontal_small">
+                            <template for:each={formattedResponse} for:item="articleItem" for:index="index">
+                                <li key={articleItem.article_number} class="article-item">
+                                    <lightning-icon icon-name="standard:knowledge" size="small"
+                                        class="article-icon"></lightning-icon>
+
+                                    <div class="article-details">
+                                        <div>
+                                            <strong>Article: </strong>
+                                            <template lwc:if={articleItem.articleUrl}>
+                                                <a href={articleItem.articleUrl}
+                                                    target="_blank">{articleItem.article_number}</a>
+                                            </template>
+                                            <template lwc:else>{articleItem.article_number}</template>
+                                        </div>
+                                        <div class="article-title">{articleItem.title}</div>
+                                    </div>
+
+                                    <div class="actions-right">
+                                        <div class="inline-actions">
+                                            <lightning-button-icon-stateful icon-name="utility:like"
+                                                selected-icon-name="utility:like" alternative-text="Like" data-idx={index}
+                                                onclick={onLike} selected={articleItem.isLiked}
+                                                variant={articleItem.likeVariant} disabled={articleItem.actionBusy}>
+                                            </lightning-button-icon-stateful>
+
+                                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                                selected-icon-name="utility:dislike" alternative-text="Dislike"
+                                                data-idx={index} onclick={onDislike} selected={articleItem.isDisliked}
+                                                variant={articleItem.dislikeVariant} disabled={articleItem.actionBusy}>
+                                            </lightning-button-icon-stateful>
+                                        </div>
+
+                                        <div class="feedback-right">
+                                            <template if:false={articleItem.showFeedback}>
+                                                <template if:false={articleItem.reviewed}>
+                                                    <a href="javascript:void(0);" data-idx={index}
+                                                        onclick={toggleFeedback}>Give Feedback</a>
+                                                </template>
+                                            </template>
+                                        </div>
+
+                                        <template if:true={articleItem.reviewed}>
+                                            <span class="thanks-badge">Thanks for the review</span>
+                                        </template>
+                                    </div>
+
+                                    <template if:true={articleItem.showFeedback}>
+                                        <div class="feedback-row">
+                                            <textarea class={articleItem.feedbackClass} rows="2"
+                                                placeholder="Share a quick note…" data-idx={index}
+                                                oninput={onFeedbackChange}
+                                                onkeydown={onFeedbackKeydown}>{articleItem.feedback}</textarea>
+
+                                            <div class="feedback-actions">
+                                                <lightning-button class="btn-compact" variant="brand" label="Send"
+                                                    data-idx={index} onclick={onSendFeedback}
+                                                    disabled={articleItem.sendDisabled}>
+                                                </lightning-button>
+                                                <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                                    data-idx={index} onclick={onCancelFeedback}>
+                                                </lightning-button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+
+                    <template lwc:if={rawResponse}>
+                        <p class="slds-text-color_error slds-p-horizontal_small">{rawResponse}</p>
+                    </template>
+                </template>
+            </div>
+
+            <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header bottom-toggle">
+                <div class="toggle-label" onclick={toggleContent}>
+                    Hide
+                    <lightning-icon icon-name="utility:chevronup" size="x-small" class="chevron-icon">
+                    </lightning-icon>
+                </div>
+                <div class="slds-text-color_weak" style="font-size: 0.8rem;">
+                    Powered by <strong>AI</strong> ✨
+                </div>
+            </div>
+        </template>
+    </template>
+</template>

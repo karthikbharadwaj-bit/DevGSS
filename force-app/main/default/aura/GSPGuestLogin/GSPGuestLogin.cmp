@@ -1,0 +1,157 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,force:appHostable,lightning:isUrlAddressable" access="global" controller="GSPGuestLoginController" >
+    
+    <aura:attribute name="GuestEmail" type="String" />
+    <aura:attribute name="createdPartnerContact" type="String" />
+    <aura:attribute name="contactReltoDomain" type="Contact" />
+    <aura:attribute name="PartnerReltoDomain" type="Account" />
+    <aura:attribute name="contactReltoEmail" type="Contact" />
+    <aura:attribute name="partnerContact" type="Map" default="{}" />
+    <aura:attribute name="ShowValidateEmail" type="boolean" default="true" />
+    <aura:attribute name="showContactForm" type="boolean" default="false" />
+    <aura:attribute name="showNewDealReg" type="boolean" default="false" />
+    
+    <aura:attribute name="GeneratedCode" type="String" />
+    <aura:attribute name="enteredCode" type="String" />
+    
+    <aura:attribute name="contact" type="Contact"
+                    default="{
+                             'SObjectType': 'Contact',
+                             'FirstName': '',
+                             'LastName': '',
+                             'Email': '',
+                             'Phone': '',
+                             'Partner_Portal_View__c': 'Limited'
+                             }">            
+    </aura:attribute>
+    
+    <!--<aura:handler name="init" value="{!this}" action="{!c.init}" />-->
+    
+    <lightning:navigation aura:id="navService"/>
+    <lightning:notificationsLibrary aura:id="notifLib"/>
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    
+    <aura:attribute name="disableVerify" type="boolean" default="true" />    
+    <aura:attribute name="verifyEmail" type="boolean" default="false" />
+    
+    <aura:if isTrue="{!v.ShowSpinnerOpp}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+            </div>
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.ShowValidateEmail}">
+        <lightning:card title="Guest Login" iconName="standard:user">
+            <div class="slds-grid slds-wrap"> 
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <abbr class="slds-required slds-float_right">* </abbr>
+                    <span>Email:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-top_medium slds-p-bottom_large slds-p-horizontal_x-small">
+                    <lightning:input aura:id='GuestEmail' class='emailinput mar20' type="email" name="guestemail" required="true" variant="label-hidden" value="{!v.GuestEmail}" />
+                 
+                </div>
+                <div class="slds-col slds-size_2-of-6"></div>
+            </div>
+            <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                <lightning:button variant="brand" label="Validate" name="Validate" type="button" onclick="{!c.GuestLogin}" />   
+                <lightning:button variant="brand-outline" label="Go Back" title="Brand action" onclick="{! c.GoBacktoLogin }" />
+            </div>
+            
+            <div class='help'>Need help? Please email <span class='helpemail'>adrian.adulta@ringcentral.com</span></div>
+        </lightning:card>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.verifyEmail}" >
+        <lightning:card title="Guest Login" iconName="standard:user">
+            <div class="slds-grid slds-wrap"> 
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <span>Email:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <span>{!v.GuestEmail}</span>
+                    
+                </div>
+                <div class="slds-col slds-size_2-of-6"></div>
+                
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <abbr class="slds-required slds-float_right">* </abbr>
+                    <span>Verification code:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-top_medium slds-p-bottom_large slds-p-horizontal_x-small">
+                    <lightning:input aura:id='VerificationCode' class='emailinput mar20' type="text" name="verificationcode" required="true" variant="label-hidden"
+                                     value="{!v.enteredCode}" onchange="{!c.enableVerify}"/>
+                </div>
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <lightning:button variant="brand" label="Send Code" name="SendCode" type="button" onclick="{!c.sendEmail}" />
+                </div>
+                
+            </div>
+            <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                <lightning:button variant="brand" label="Verify" name="Verify" type="button" onclick="{!c.verifyEmail}" disabled="{!v.disableVerify}" />   
+                <lightning:button variant="brand-outline" label="Go Back" title="Brand action" onclick="{! c.GoBacktoGuestLogin }" />
+            </div>
+        </lightning:card>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.showContactForm}">
+        <lightning:card title="New Contact Creation" iconName="standard:user">
+            <lightning:recordEditForm
+                                      aura:id="newContactFormSection"
+                                      objectApiName="Contact">
+                <div class="slds-grid slds-wrap"> 
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Email:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span>{!v.GuestEmail}</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <span>First Name:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="FirstName" value="{!v.contact.FirstName}" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Last Name:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="LastName" value="{!v.contact.LastName}" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Phone:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="Phone" value="{!v.contact.Phone}" variant="label-hidden" aura:id="phoneNumberforContact" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                </div>
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                    <lightning:button variant="brand" label="Submit" name="Submit" type="button" iconName="action:check" iconPosition="left" onclick="{!c.createContact}"/>
+                    <lightning:button variant="brand" type="cancel" name="Cancel" label="Cancel" iconName="action:close" iconPosition="left" onclick="{!c.cancelContact}"/>            
+                </div>
+            </lightning:recordEditForm>
+        </lightning:card>
+    </aura:if>
+    <aura:if isTrue="{!v.showNewDealReg}">
+        <c:Partner_DealRegistration isGuest="true" partnerContact = "{!v.partnerContact}" GuestEmail="{!v.GuestEmail}" ShowSpinnerOpp="false" />
+    </aura:if>
+</aura:component>

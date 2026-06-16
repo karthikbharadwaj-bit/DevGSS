@@ -1,0 +1,41 @@
+<apex:page StandardController="Case" extensions="CompleteJeopardyPopupCtrl" showHeader="false" sidebar="false" >
+	<apex:slds />
+
+    <script language="JavaScript" type="text/javascript">
+        function closeAndRefresh(){
+            window.opener.location.href="/{!Case.Id}";
+          self.close();
+      }
+    </script>
+
+    <apex:form >
+        <div class="slds-text-heading_small slds-align_absolute-center slds-m-around_medium">
+            Jeopardy Closure Action
+        </div>
+
+        <div class="slds-grid slds-wrap slds-gutters slds-m-around_medium" id="saveParentBlock">
+            <div class="slds-col slds-size_6-of-6 slds-align_absolute-center">
+
+                <apex:actionStatus id="saveStatusCompletd">
+                    <apex:facet name="stop">
+                        <apex:commandButton value="Completed" action="{!ResolveComp}" status="saveStatusCompletd" rerender="saveParentBlock" styleClass="slds-button slds-button_outline-brand slds-m-around_small" oncomplete="closeAndRefresh()"/>
+                    </apex:facet>
+                    <apex:facet name="start">
+                        <apex:commandButton value="Completing..." disabled="true" status="saveStatusCompletd" styleClass="slds-button slds-button_outline-brand slds-m-around_small"/>
+                    </apex:facet>
+                </apex:actionStatus>
+
+                <apex:actionStatus id="saveStatusCancelled">
+                    <apex:facet name="stop">
+                        <apex:commandButton value="Cancelled" action="{!ResolveCanc}" status="saveStatusCancelled" rerender="saveParentBlock" styleClass="slds-button slds-button_outline-brand slds-m-around_small" oncomplete="closeAndRefresh()" />
+                    </apex:facet>
+                    <apex:facet name="start">
+                        <apex:commandButton value="Cancelling..." disabled="true" status="saveStatusCancelled" styleClass="slds-button slds-button_outline-brand slds-m-around_small"/>
+                    </apex:facet>
+                </apex:actionStatus>
+
+            </div>
+        </div>
+    </apex:form>
+
+</apex:page>

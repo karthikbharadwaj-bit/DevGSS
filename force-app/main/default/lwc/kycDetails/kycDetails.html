@@ -1,0 +1,555 @@
+<template>
+    <div lwc:dom="manual"></div>
+    <form class="content border-radius">
+        <!--Header-->
+        <div class="slds-page-header">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media slds-media--center">
+                        <div class="slds-media__figure">
+                            <span class="slds-icon_container">
+                                <lightning-icon icon-name="standard:file"
+                                                aria-hidden="true"
+                                                alternative-text="icon">
+                                </lightning-icon>
+                            </span>
+                        </div>
+                        <div class="slds-media__body">
+                            <h1>
+                                <span class="slds-page-header__title slds-truncate">
+                                    KYC Details ({attachmentCounter})
+                                </span>
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section slds-grid slds-wrap">
+            <c-lwc-spinner if:true={isLoading}
+                           is-shown={isLoading}
+                           type="local"
+                           text="Save in progress">
+            </c-lwc-spinner>
+            <c-kyc-section-details is-open={isShowSectionDetails}
+                                  files={activeSectionFiles}
+                                  section-name={activeSectionName}
+                                  accepted-file-formats={acceptedFileFormats}
+                                  section-id={activeSectionId}
+                                  is-form-locked={isFormLocked}>
+            </c-kyc-section-details>
+
+            <!--Identity document of company:-->
+            <div class="slds-section section-title" data-id="identityDocumentSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="identityDocument"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>Identity document of company:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="0"
+                                    data-id="0"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Identity document file details section-->
+                        <span if:true={detailsSection.i0.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i0.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i0"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i0.title}>
+                                    {detailsSection.i0.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i0.date} • {detailsSection.i0.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i0.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i0"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i0.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <!--Identity document input section-->
+                <div class="slds-section__content">
+                    <c-kyc-document 
+                        doc={identityDocument} 
+                        is-form-locked={isFormLocked}
+                        is-valid-document={isValidIdentityDocument}
+                        files={identityAttachmentFiles}
+                        section={identityDocumentSectionId}>
+                    </c-kyc-document>
+                </div>
+            </div>
+            <!--Photo Id-->
+            <div class="slds-section section-title" data-id="photoIdDocumentSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="photoIdDocument"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>Photo ID Proof Type of Authorised Signatory:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="1"
+                                    data-id="1"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    maxlength="4154557"
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Photo Id file details section-->
+                        <span if:true={detailsSection.i1.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i1.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i1"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i1.title}>
+                                    {detailsSection.i1.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i1.date} • {detailsSection.i1.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i1.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i1"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i1.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <!--Photo Id input section-->
+                <div class="slds-section__content">
+                    <c-kyc-document 
+                        doc={photoIdDocument} 
+                        is-form-locked={isFormLocked}
+                        is-valid-document={isValidPhotoIdDocument}
+                        files={photoIdAttachmentFiles}
+                        section={photoIdSectionId}>
+                    </c-kyc-document>
+                </div>
+            </div>
+            <!--Authorisation Letter for Authorised Signatory:-->
+            <div class="slds-section section-title" data-id="authorisationLetterDocumentSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="authorisationLetterDocument"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>Authorisation Letter for Authorised Signatory:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="2"
+                                    data-id="2"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Authorisation Letter file details section-->
+                        <span if:true={detailsSection.i2.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i2.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i2"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i2.title}>
+                                    {detailsSection.i2.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i2.date} • {detailsSection.i2.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i2.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i2"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i2.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <!--Authorisation Letter for Authorised Signatory input section-->
+                <div class="slds-section__content">
+                    <c-kyc-document 
+                        doc={authorisationLetterDocument}
+                        is-form-locked={isFormLocked}
+                        is-valid-document={isValidAuthorisationLetterDocument}
+                        files={AuthorisationLetterAttachmentFiles}
+                        section={authorisationLetterSectionId}>
+                    </c-kyc-document>
+                </div>
+            </div>
+            <!--Participation Agreement:-->
+            <div class="slds-section section-title" data-id="dateOfSignSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="dateOfSign"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>Signed off Participation Agreement:</span>
+                        </span>
+                        <span class="order-1">
+                                <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                    <lightning-input 
+                                        type="file"
+                                        accept={acceptedFileFormats}
+                                        id="3"
+                                        data-id="3"
+                                        class="file-upload-label-hide"
+                                        onchange={handleFileSelection}
+                                        multiple>
+                                    </lightning-input>
+                                </div>
+                            </span>
+                        <!--Participation Agreement file details section-->
+                        <span if:true={detailsSection.i3.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i3.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i3"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i3.title}>
+                                    {detailsSection.i3.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i3.date} • {detailsSection.i3.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i3.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i3"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i3.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <!--Participation Agreement input section-->
+                <div class="slds-section__content">
+                    <c-kyc-participation-agreement approval={approval}
+                                                  participation-agreement-files={participationAgreementFiles}
+                                                  is-valid-p-s-a-date={isValidPSADate}
+                                                  is-form-locked={isFormLocked}>
+                    </c-kyc-participation-agreement>
+                </div>
+            </div>
+            <!--GST No. & Certificate:-->
+            <div class="slds-section section-title" data-id="gstSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="gst"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>GST No. & Certificate:</span>
+                        </span>
+                        <span class="order-1">
+                                <div if:false={isFormGstLocked} class="slds-file-selector slds-file-selector_files">
+                                    <lightning-input 
+                                        type="file"
+                                        accept={acceptedFileFormats}
+                                        id="4"
+                                        data-id="4"
+                                        class="file-upload-label-hide"
+                                        onchange={handleFileSelection}
+                                        multiple>
+                                    </lightning-input>
+                                </div>
+                            </span>
+                        <!--GST No. & Certificate file details section-->
+                        <span if:true={detailsSection.i4.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i4.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i4"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i4.title}>
+                                    {detailsSection.i4.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i4.date} • {detailsSection.i4.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i4.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i4"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i4.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                </div>
+                <!--GST No. & Certificate input section-->
+                <div class="slds-section__content">
+                    <c-kyc-gst approval={approval}
+                              files={gstFiles}
+                              is-valid-gst-no={isValidGstNo}
+                              is-form-locked={isFormGstLocked}
+                              billing-address={billingAddress}
+                              ongstvalidation={handleGstValidation}
+                    ></c-kyc-gst>
+                </div>
+            </div>
+            <!-- Billing Address -->
+            <div class="slds-section section-title" data-id="billingAddressSection">
+                <div class="slds-section__title border shadow">
+                    <button class="slds-section__title-action slds-button section-button"
+                            onclick={toggle}
+                            data-id="billingAddress"
+                            type="button">
+                        <span class="order-0">
+                            <lightning-icon icon-name="utility:switch"
+                                            size="x-small"
+                                            alternative-text="icon"
+                                            class="slds-button__icon slds-button__icon_left slds-section__title-action-icon">
+                            </lightning-icon>
+                            <span>Billing Address:</span>
+                        </span>
+                    </button>
+                </div>
+                <div class="slds-section__content">
+                    <c-kyc-billing-address
+                        billing-address= {billingAddress}
+                        is-form-locked={isFormLocked}
+                        is-valid-street={isValidBillingStreet}>
+                    </c-kyc-billing-address>
+                </div>
+            </div>
+            <!--Exemption/SEZ Certificate Number & Certificate-->
+            <div class="slds-section section-title" data-id="sezSection">
+                <div class="slds-section__title border shadow">
+                    <div class="slds-section__title-action section-button unexpandable-section"
+                         data-id="sez">
+                        <span class="order-0 not-expandable-section">
+                            <span>SEZ Exemption Certificate & Number:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="5"
+                                    data-id="5"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Exemption/SEZ Certificate Number & Certificate file details section-->
+                        <span if:true={detailsSection.i5.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i5.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i5"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i5.title}>
+                                    {detailsSection.i5.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i5.date} • {detailsSection.i5.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i5.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i5"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i5.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!--PAN/GIR No.:-->
+            <div class="slds-section section-title" data-id="panGirSection">
+                <div class="slds-section__title border shadow">
+                    <div class="slds-section__title-action section-button unexpandable-section"
+                         data-id="panGir">
+                        <span class="order-0 not-expandable-section">
+                            <span>PAN/GIR No.:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="6"
+                                    data-id="6"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--PAN/GIR No. file details section-->
+                        <span if:true={detailsSection.i6.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i6.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i6"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i6.title}>
+                                    {detailsSection.i6.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i6.date} • {detailsSection.i6.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i6.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i6"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i6.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!--Address of the Authorised Signatory-->
+            <div class="slds-section section-title" data-id="signatorySection">
+                <div class="slds-section__title border shadow">
+                    <div class="slds-section__title-action section-button unexpandable-section"
+                         data-id="signatory">
+                        <span class="order-0 not-expandable-section">
+                            <span>Address of the Authorised Signatory:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="7"
+                                    data-id="7"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Address of the Authorised Signatory file details section-->
+                        <span if:true={detailsSection.i7.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i7.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i7"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i7.title}>
+                                    {detailsSection.i7.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i7.date} • {detailsSection.i7.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i7.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i7"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i7.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <!--Cross Signed Passport Size photograph of Authorised Signatory-->
+            <div class="slds-section section-title" data-id="passportSection">
+                <div class="slds-section__title border shadow">
+                    <div class="slds-section__title-action section-button unexpandable-section"
+                         data-id="passport">
+                        <span class="order-0 not-expandable-section">
+                            <span>Passport of the Authorised Signatory:</span>
+                        </span>
+                        <span class="order-1">
+                            <div if:false={isFormLocked} class="slds-file-selector slds-file-selector_files">
+                                <lightning-input 
+                                    type="file"
+                                    accept={acceptedFileFormats}
+                                    id="8"
+                                    data-id="8"
+                                    class="file-upload-label-hide"
+                                    onchange={handleFileSelection}
+                                    multiple>
+                                </lightning-input>
+                            </div>
+                        </span>
+                        <!--Passport of the Authorised Signatory file details section-->
+                        <span if:true={detailsSection.i8.show} class="order-2 slds-text-color_weak file-details">
+                            <span if:true={detailsSection.i8.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i8"
+                                      onclick={onViewAllClicked}
+                                      title={detailsSection.i8.title}>
+                                    {detailsSection.i8.name}&nbsp;
+                                </span>
+                                <span class="slds-text-body_small">• {detailsSection.i8.date} • {detailsSection.i8.size}</span>
+                            </span>
+                            <span if:false={detailsSection.i8.singleAttachment}>
+                                <span class="slds-text-body_regular slds-text-link"
+                                      data-id="i8"
+                                      onclick={onViewAllClicked}>
+                                    View All ({detailsSection.i8.fileAmount})
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-col slds-no-flex slds-grid slds-align-top slds-grid_vertical-align-center slds-grid_align-center">
+            <lightning-button label="Cancel"
+                              class="slds-m-left_small"
+                              disabled={isSaveCancelDisabled}
+                              onclick={onCancel}>
+            </lightning-button>
+            <lightning-button label="Save"
+                              class="slds-m-left_small"
+                              variant="brand"
+                              disabled={isSaveCancelDisabled}
+                              onclick={onSave}>
+            </lightning-button>
+        </div>
+        <div class="empty-space"></div>
+    </form>
+</template>

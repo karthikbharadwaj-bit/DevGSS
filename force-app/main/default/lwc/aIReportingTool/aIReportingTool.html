@@ -1,0 +1,199 @@
+<template>
+    <lightning-card>
+
+        <div slot="title" class="slds-grid slds-grid_vertical-align-center chatbot-title">
+
+            <div class="bot-avatar">
+                <img src={chatbotIconUrl} alt="Chatbot Avatar" class="bot-animation" height="50px" width="50px" />
+            </div>
+            <span class="slds-m-left_small title-text">{greeting_msg}</span>
+        </div>
+
+        <div class="slds-m-top_small slds-m-left_medium slds-m-bottom_medium">
+
+            <lightning-button class="slds-m-left_auto" label="Reset" variant="destructive" icon-name="utility:refresh"
+                onclick={handleReset} title={reset_btn_msg}>
+            </lightning-button>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-messages">
+                <template for:each={messages} for:item="msg">
+                    <div key={msg.id} class={msg.class}>
+                        <template if:true={msg.isTable}>
+                            <template if:false={msg.isAggregateResult}>
+                                <div class="search-container">
+                                    <div class="slds-grid slds-grid_align-spread">
+                                        <div class="slds-col">
+                                            <lightning-input type="search" label="Search in Table"
+                                                value={msg.searchKeyword} onchange={handleSearch}
+                                                placeholder="Type to search..." class="slds-m-bottom_small"
+                                                data-id={msg.id}>
+                                            </lightning-input>
+                                        </div>
+                                        <template if:true={searchKeyword}>
+                                            <div class="slds-col slds-p-left_small slds-p-top_large">
+                                                <lightning-button-icon icon-name="utility:close"
+                                                    alternative-text="Clear" onclick={handleClearSearch} variant="bare"
+                                                    title="Clear search" data-id={msg.id}>
+                                                </lightning-button-icon>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <lightning-datatable key-field="Id" data={msg.pagedData} columns={msg.columns}
+                                hide-checkbox-column onrowaction={handleRowAction}
+                                onsort={handleSort}></lightning-datatable>
+
+
+                            <template if:true={msg.noResultsFound}>
+                                <div class="no-results-message">
+                                    {no_results_msg}
+                                </div>
+                            </template>
+
+                            <template if:false={msg.isAggregateResult}>
+
+                                <div
+                                    class="slds-m-top_x-small slds-text-body_small slds-text-color_weak slds-align_absolute-center">
+                                    {msg.pageRecordInfo}
+                                </div>
+
+
+                                <template if:true={hasMultiplePages}>
+
+                                    <div class="slds-m-top_small slds-align_absolute-center">
+                                        <lightning-button label="First" onclick={handleFirstPage} data-id={msg.id}
+                                            disabled={msg.isFirstPage}></lightning-button>
+                                        <lightning-button label="Previous" onclick={handlePreviousPage} data-id={msg.id}
+                                            disabled={msg.isFirstPage} class="slds-m-left_x-small"></lightning-button>
+
+                                        <span class="slds-p-horizontal_small">
+                                            Page {msg.currentPage} of {msg.totalPages}
+                                        </span>
+
+                                        <lightning-button label="Next" onclick={handleNextPage} data-id={msg.id}
+                                            disabled={msg.isLastPage} class="slds-m-left_x-small"></lightning-button>
+                                        <lightning-button label="Last" onclick={handleLastPage} data-id={msg.id}
+                                            disabled={msg.isLastPage} class="slds-m-left_x-small"></lightning-button>
+
+
+                                    </div>
+                                </template>
+
+
+
+                                <div class="slds-m-top_small">
+
+                                    <!-- Like/Dislike inside table, conditional -->
+                                    <template if:true={msg.showFeedback}>
+                                        <div class="slds-m-top_small slds-align_absolute-center">
+                                            <lightning-button-icon icon-name={msg.likeIconName} alternative-text="Like"
+                                                title="Like this Summary" onclick={toggleLike} data-id={msg.id}
+                                                variant="border-filled" class="slds-m-right_small">
+                                            </lightning-button-icon>
+
+                                            <lightning-button-icon icon-name={msg.dislikeIconName}
+                                                alternative-text="Dislike" title="Dislike this Summary"
+                                                onclick={toggleDislike} data-id={msg.id} variant="border-filled">
+                                            </lightning-button-icon>
+                                        </div>
+                                    </template>
+
+                                    <template if:true={canExport}>
+                                        <lightning-button label="Export to Excel" variant="brand"
+                                            icon-name="utility:download" onclick={downloadExcel} data-id={msg.id}>
+                                        </lightning-button>
+                                    </template>
+
+                                    <template if:true={msg.showSummaryButtons}>
+
+                                        <lightning-button label="Summarize" variant="neutral"
+                                            icon-name="utility:summary" onclick={handleSummarize} data-id={msg.id}
+                                            class="slds-m-left_x-small">
+                                        </lightning-button>
+
+                                        <lightning-button label="Send Email" variant="neutral" icon-name="utility:email"
+                                            onclick={handleSendEmail} data-id={msg.id} class="slds-m-left_x-small">
+                                        </lightning-button>
+                                    </template>
+                                </div>
+                            </template>
+
+                            <template if:true={msg.largeDataNote}>
+                                <div class="slds-text-color_weak slds-m-top_x-small">
+                                    ⚠️ {msg.largeDataNote}
+                                </div>
+                            </template>
+
+                            <template if:true={msg.isAggregateResult}>
+                                <div class="slds-text-color_weak slds-m-top_x-small">
+                                    ⚠️<strong>{aggregate_feature_disable_msg}</strong>
+                                </div>
+                            </template>
+                        </template>
+                        <template if:false={msg.isTable}>
+                            <lightning-formatted-rich-text value={msg.text}></lightning-formatted-rich-text>
+
+                            <!-- Like/Dislike for summaries only when showFeedback is true -->
+                            <template if:true={msg.text}>
+                                <template if:true={msg.showFeedback}>
+                                    <div class="slds-m-top_small slds-align_absolute-center">
+                                        <lightning-button-icon icon-name={msg.likeIconName} alternative-text="Like"
+                                            title="Like this Summary" onclick={toggleLike} data-id={msg.id}
+                                            variant="border-filled" class="slds-m-right_small">
+                                        </lightning-button-icon>
+
+                                        <lightning-button-icon icon-name={msg.dislikeIconName}
+                                            alternative-text="Dislike" title="Dislike this Summary"
+                                            onclick={toggleDislike} data-id={msg.id} variant="border-filled" class="slds-m-right_small">
+                                        </lightning-button-icon>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:true={loading}>
+                    <div class="bot-typing">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span>Thinking...</span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="chat-input">
+
+                <div class="input-container">
+
+                    <lightning-input type="text" label={prompt_label_msg} value={userQuery}
+                        placeholder={prompt_placeholder_msg} onchange={handleInputChange}
+                        onfocus={handleShowSuggestions}>
+                    </lightning-input>
+
+                    <template if:true={showSuggestions}>
+                        <div class="suggestion-dropdown">
+                            <template for:each={promptOptions} for:item="prompt">
+                                <div key={prompt.value} class="suggestion-item" onclick={handleSuggestionClick}
+                                    data-value={prompt.value}>
+                                    {prompt.label}
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <lightning-button-icon icon-name="utility:send" variant="brand" alternative-text="Send"
+                    onclick={handleAsk}>
+                </lightning-button-icon>
+
+            </div>
+        </div>
+    </lightning-card>
+</template>

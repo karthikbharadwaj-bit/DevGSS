@@ -1,0 +1,124 @@
+<template>
+    <header class="im-header slds-grid">
+        <div class="im-errors-wrapper slds-col slds-size_4-of-4" if:true={hasWarnings}>
+            <h2>Errors and Warnings</h2>
+            <ul class="im-errors">
+                <template for:each={errors} for:item="error">
+                    <li key={error.id} class={error.styleCls}>
+                        <lightning-icon
+                            icon-name={error.icon}
+                            alternative-text={error.iconText}
+                            class="slds-m-right_small slds-no-flex slds-align-top"
+                            variant={error.iconVariant}
+                            size="small"
+                        ></lightning-icon>
+                        <h2 class="slds-text-heading_small ">{error.text}</h2>
+                    </li>
+                </template>
+            </ul>
+        </div>
+        <div class="im-steps-wrapper">
+            <ol class="im-steps">
+                <li data-id="1" data-valid={uiValidChoose} class="im-steps__item  slds-size_1-of-3">
+                    <div class="im-step__title">Choose a file</div>
+                    <div class="im-step__action slds-form-element">
+                        <div class="slds-form-element__control">
+                            <div class="slds-file-selector slds-file-selector_files">
+                                <input
+                                    type="file"
+                                    accept=".csv"
+                                    class="im-input-file slds-file-selector__input slds-assistive-text"
+                                    onchange={handleChangeFile}
+                                    id="file-upload-input-01"
+                                />
+                                <label
+                                    class="slds-file-selector__body"
+                                    for="file-upload-input-01"
+                                    id="file-selector-secondary-label"
+                                >
+                                    <span class="slds-file-selector__button slds-button slds-button_neutral">
+                                        <lightning-icon
+                                            icon-name="utility:upload"
+                                            size="xx-small"
+                                            class="slds-button__icon slds-button__icon_left"
+                                        ></lightning-icon>
+                                        Choose</span
+                                    >
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li data-id="2" data-valid={uiValidCheckErrors} class="im-steps__item  slds-size_1-of-3">
+                    <div class="im-step__title">Validate the data</div>
+                    <div class="im-step__action">
+                        <span>The data is validated</span>
+                        <lightning-input
+                            type="checkbox"
+                            label=""
+                            checked={uiValidCheckErrors}
+                            class="im-empty-checkbox"
+                            name="checkErrors"
+                            onchange={handleChangeCheck}
+                            disabled={uiDisabledCheckErrors}
+                        ></lightning-input>
+                    </div>
+
+                </li>
+                <li data-id="3" data-valid={uiValidImport} class="im-steps__item  slds-size_1-of-3">
+                    <div class="im-step__title">Import the Cases</div>
+                    <lightning-button
+                        variant="brand"
+                        label="Import"
+                        onclick={insertCases}
+                        disabled={uiDisabledImport}
+                    ></lightning-button>
+                </li>
+            </ol>
+        </div>
+    </header>
+    <div class="im-cases__table-controls">
+        <c-lwc-pagination
+            page={currentPage}
+            size={pagesLen}
+            onchangepage={handleChangePage}
+            disabled={loading}
+            if:true={hasData}
+        ></c-lwc-pagination>
+        <p if:true={hasData}>
+            Show
+        </p>
+        <lightning-combobox
+            name="limit"
+            label=""
+            value={limit}
+            options={limitOptions}
+            onchange={handleChangeLimit}
+            class="im-cases__show-combo"
+            if:true={hasData}
+        ></lightning-combobox>
+    </div>
+    <lightning-datatable
+        key-field="id"
+        data={page}
+        columns={columns}
+        is-loading={loading}
+        class="im-cases__table"
+        onsort={updateColumnSorting}
+        hide-checkbox-column="true"
+        sorted-by={sortedBy}
+        sorted-direction={sortedDirection}
+    >
+    </lightning-datatable>
+    <div class="im-cases__table-controls">
+        <c-lwc-pagination
+            page={currentPage}
+            size={pagesLen}
+            onchangepage={handleChangePage}
+            disabled={loading}
+            if:true={hasData}
+        ></c-lwc-pagination>
+    </div>
+    <c-im-loader count={chunksCount}></c-im-loader>
+    <c-lwc-toasts></c-lwc-toasts>
+</template>

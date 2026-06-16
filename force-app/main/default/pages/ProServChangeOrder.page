@@ -1,0 +1,58 @@
+<apex:page title="ChangeOrder" standardController="ProServ_Project__c" extensions="ProServChangeOrderController" showQuickActionVfHeader="false">
+
+    <head>
+        <apex:slds />
+        <apex:includeLightning />
+        <c:HerokuScripts />
+    </head>
+    <style>
+        #lightning {
+        	padding-top: 8rem;
+        }
+    </style>
+	<div id="container">
+        <div id="angular" class="slds-scope"></div>
+        <div id="lightning"></div>
+    </div>
+    <script type="text/javascript">
+
+        const herokuEndpoint = '{!JSENCODE(herokuEndpoint)}';
+        const sessionId = '{!sessionId}';
+        const origin = '{!JSENCODE(origin)}';
+        const accountId = '{!accountId}';
+        const currentOrderId = '{!currentOrderId}';
+        const currentOppName = '{!currentOppName}';
+        const contactId = '{!contactId}';
+        const isLegacyFlow = {!isLegacyFlow};
+        const existingOppId = '{!existingOppId}';
+        const isNotCreateNewChangeOrderOpp = {!isNotCreateNewChangeOrderOpp};
+
+        if (isLegacyFlow) {
+            $Lightning.use('c:Order_ChangeOrderApp', function () {
+                $Lightning.createComponent('c:Order_ChangeOrder', {
+                    currentOrderId: currentOrderId,
+                    contactId: contactId
+                }, 'lightning', function (component) { });
+            });
+        } else {
+            const angular = document.createElement('app-root');
+            angular.routeParams = {
+                name: 'pro-serv-change-order',
+                data: {
+                    billingParams: {
+                        herokuEndpoint,
+                        sessionId,
+                        origin
+                    },
+                    accountId,
+                    currentOrderId,
+                    currentOppName,
+                    contactId,
+                    existingOppId,
+                    isNotCreateNewChangeOrderOpp
+                }
+            }
+            document.getElementById('angular').appendChild(angular);
+        }
+    </script>
+</apex:page>

@@ -1,0 +1,67 @@
+<template>
+  <div class="slds-grid slds-gutters">
+    <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+    <div class="slds-col slds-small-size_10-of-12 slds-medium-size_10-of-12 slds-large-size_6-of-12">
+      <!--INPUT Element-->
+      <div class="slds-form-element">
+        <div class="slds-form-element__control">
+          <div class="slds-combobox_container">
+            <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open"
+              aria-expanded="true" aria-haspopup="listbox" role="combobox">
+              <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                <lightning-input placeholder="Provide Partner Name" label="input text" type="search"
+                  onchange={handleSearchInputChange} value={searchValue} variant="label-hidden"></lightning-input>
+              </div>
+              <template if:true={showSearchResults}>
+                <div id="listbox-id-10" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                  <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                    <li role="presentation" class="slds-listbox__item">
+                      <div class="slds-align_absolute-center slds-var-p-top_medium">
+                        <div role="status" class="slds-spinner slds-spinner_x-small slds-spinner_inline">
+                          <span class="slds-assistive-text">Loading</span>
+                          <div class="slds-spinner__dot-a"></div>
+                          <div class="slds-spinner__dot-b"></div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </template>
+              <template if:true={showSearchResults}>
+                <div id="listbox-id-11" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                  <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                    <template for:each={searchResult} for:item="value">
+                      <li key={value.Id} data-name={value.Name} data-item={value.NGBS_Partner_ID__c} role="presentation"
+                        class="slds-listbox__item" onclick={handlePartnerSelection}>
+                        <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small"
+                          role="option">
+                          <span class="slds-media__figure slds-listbox__option-icon"></span>
+                          <span class="slds-media__body">
+                            <span class="slds-truncate" title={value.Name}>
+                              {value.Name}
+                            </span>
+                          </span>
+                        </div>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--INPUT Element-->
+    </div>
+    <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+  </div>
+  <div class="slds-grid slds-gutters">
+    <div class="slds-col slds-size_12-of-12 slds-var-p-top_medium">
+      <template if:true={invoiceFeed}>
+        <lightning-datatable key-field="reportId" data={invoiceFeed} columns={invoiceFeedColumns}
+          resize-column-disabled="true" hide-checkbox-column="true" onrowaction={handleRowAction}>
+        </lightning-datatable>
+      </template>
+    </div>
+  </div>
+</template>

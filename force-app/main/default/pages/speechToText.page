@@ -1,0 +1,692 @@
+<apex:page standardController="Case" extensions="CaseCommentController" lightningStylesheets="true">
+    <!-- UI SECTION -->
+    <apex:form >
+        <div class="main-container">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <img src="{!URLFOR($Resource.ai_insights)}" 
+                         alt="AI Insights" 
+                         style="height:40px; width:40px; vertical-align:middle;" />
+                    Case Comment <span style="font-size: 13px; font-weight: bold; color: #000000;">
+                    (Voice-enabled)
+                    </span>
+                    <img src="https://www.gstatic.com/images/icons/material/system_gm/1x/mic_black_24dp.png" 
+                         alt="Microphone" 
+                         style="height: 24px; width: 24px; vertical-align:middle;"/>
+                </h1>
+            </div>
+            
+            <div class="content-container">
+                <apex:pageMessages id="messages"/>
+                
+                <div class="input-section">
+                    <div class="checkbox-section">
+                        <label class="public-checkbox">
+                            <apex:inputCheckbox value="{!isPublic}" id="publicChk"/>
+                            <span class="checkbox-label">Public</span>
+                        </label>
+                    </div>
+                    
+                    <div class="input-container">
+                        <apex:inputTextarea id="bodyField" 
+                                            value="{!bodyText}"
+                                            styleClass="speech-input" 
+                                            html-placeholder="Click on mic to start speaking. Text will appear here..."
+                                            rows="1"/>
+                        <button type="button" id="micBtn" class="mic-button">
+                            <svg class="mic-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 1C10.34 1 9 2.34 9 4V12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12V4C15 2.34 13.66 1 12 1Z" fill="currentColor"/>
+                                <path d="M19 10V12C19 16.42 15.42 20 11 20H13C17.42 20 21 16.42 21 12V10H19Z" fill="currentColor"/>
+                                <path d="M5 10V12C5 16.42 8.58 20 13 20H11C6.58 20 3 16.42 3 12V10H5Z" fill="currentColor"/>
+                                <path d="M11 22H13V24H11V22Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <apex:commandButton id="saveBtn" value="Save" action="{!saveComment}" styleClass="save-button-inline" onclick="handleSaveClick(event)" oncomplete="handleSaveComplete('{!$Component.messages}')"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+    
+    <div id="smallLoadingSpinner" class="small-loading-spinner">
+        <div class="lightning-spinner"></div>
+    </div>
+    
+    <!-- CSS STYLE SECTION -->
+    <style>
+        /* Reset Styles */
+        body, html {
+        margin: 0 !important;
+        padding: 0 !important;
+        }
+        
+        .sfdcBody, .bPageBlock, .bPageTitle {
+        margin: 0 !important;
+        padding: 0 !important;
+        }
+        
+        .apexDefaultPageBlock {
+        margin: 0 !important;
+        padding: 0 !important;
+        }
+        
+        /* Layout Styles */
+        .main-container {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .page-header {
+        background: transparent;
+        padding: 5px 10px 0px 10px;
+        }
+        
+        .page-title {
+        font-size: 15px;
+        font-weight: bold;
+        color: #000000;
+        margin: 0;
+        text-align: left;
+        }
+        
+        .content-container {
+        background: #fff;
+        padding: 0;
+        }
+        
+        .input-section {
+        padding: 10px 20px 10px 20px;
+        margin-bottom: 0;
+        }
+        
+        .field-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        }
+        
+        .field-label {
+        margin-bottom: 0;
+        }
+        
+        .input-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        display: block;
+        margin-bottom: 5px;
+        }
+        
+        .input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        }
+        
+        /* Input Field Styles */
+        .speech-input {
+        width: calc(100% - 128px);
+        min-height: 50px;
+        max-height: 200px;
+        padding: 15px 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 16px;
+        outline: none;
+        transition: all 0.3s ease;
+        background: #fff;
+        resize: none;
+        overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.4;
+        margin-right: 2px;
+        }
+        
+        .speech-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        .speech-input.recording {
+        border-color: #4fc3f7;
+        box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+        animation: pulse 1.5s infinite;
+        }
+        
+        /* Button Styles */
+        .mic-button {
+        position: static;
+        width: 50px;
+        height: 50px;
+        border: none;
+        border-radius: 50%;
+        background: #f8f9fa;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+        }
+        
+        .mic-button:hover {
+        background: #4fc3f7;
+        transform: scale(1.05);
+        }
+        
+        .mic-button:hover .mic-icon {
+        color: white;
+        }
+        
+        .mic-button.recording {
+        border-color: #4fc3f7;
+        animation: pulse 1s infinite;
+        }
+        
+        .mic-button.recording .mic-icon {
+        animation: bounce 0.5s infinite alternate;
+        }
+        
+        .mic-icon {
+        width: 18px;
+        height: 18px;
+        color: #007bff;
+        transition: all 0.3s ease;
+        }
+        
+        /* Checkbox Styles */
+        .checkbox-section {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 8px;
+        }
+        
+        .public-checkbox {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        }
+        
+        .checkbox-label {
+        font-size: 14px;
+        color: #666;
+        user-select: none;
+        }
+        
+        .save-button-inline {
+        background: #007bff !important;
+        border: none !important;
+        border-radius: 20px !important;
+        padding: 8px 20px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: white !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3) !important;
+        min-width: 70px !important;
+        text-align: center !important;
+        display: inline-block !important;
+        margin-right: 10px !important;
+        }
+        
+        .save-button-inline:hover {
+        background: #0056b3 !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 3px 8px rgba(0, 123, 255, 0.4) !important;
+        }
+        
+        .save-button-inline:active {
+        transform: scale(0.98) !important;
+        box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3) !important;
+        }
+        
+        .save-button-inline:disabled {
+        background: #6c757d !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3) !important;
+        opacity: 0.5 !important;
+        pointer-events: none !important;
+        }
+        
+        .save-button-inline:disabled:hover {
+        background: #6c757d !important;
+        transform: none !important;
+        box-shadow: 0 2px 6px rgba(108, 117, 125, 0.3) !important;
+        }
+        
+        /* Loading Message CSS */
+        .small-loading-spinner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        }
+        
+        .small-loading-spinner.show {
+        display: flex;
+        }
+        
+        .lightning-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e0e5ee;
+        border-top: 4px solid #0176d3;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        }
+        
+        
+        /* Animations */
+        @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        
+        @keyframes bounce {
+        0% { transform: scale(1); }
+        100% { transform: scale(1.1); }
+        }
+        
+        @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+        .main-container {
+        padding: 0;
+        }
+        
+        .page-header {
+        padding: 0px 0px 8px 0px;
+        }
+        
+        .page-title {
+        font-size: 15px;
+        }
+        
+        .input-section {
+        padding: 0px 0px 0px 0px;
+        }
+        
+        .speech-input {
+        font-size: 14px;
+        min-height: 45px;
+        max-height: 150px;
+        padding: 12px 15px;
+        }
+        
+        .mic-button {
+        width: 45px;
+        height: 45px;
+        }
+        
+        .save-button-inline {
+        font-size: 11px !important;
+        padding: 6px 16px !important;
+        min-width: 60px !important;
+        }
+        
+        .speech-input {
+        width: calc(100% - 108px);
+        }
+        }
+    </style>
+    
+    <!-- FUNCTIONALITY SECTION -->
+    <script>
+    var SpeechRecognition = window.webkitSpeechRecognition;
+    var recognition;
+    var isRecording = false;
+    var micButton = null;
+    var inputField = null;
+    var silenceTimer = null;
+    var silenceTimeout = 3000;
+    var speechLanguage = '{!speechLanguage}';
+    console.log('Speech Language Code:- {!speechLanguage}');
+    
+    var punctuationMap = {
+        'period': '.',
+        'dot': '.',
+        'comma': ',',
+        'question mark': '?',
+        'exclamation mark': '!',
+        'exclamation point': '!',
+        'semicolon': ';',
+        'colon': ':',
+        'new line': '\n',
+        'new paragraph': '\n\n'
+    };
+    
+    /*Speech Recognition*/
+    function initializeSpeechRecognition() {
+        micButton = document.getElementById('micBtn');
+        // For actual textarea element
+        inputField = document.querySelector('[id$="bodyField"]') || document.getElementById('bodyField');
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = speechLanguage || 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                updateRecordingUI(true);
+                startSilenceTimer();
+            };
+            
+            recognition.onresult = function(event) {
+                var finalTranscript = '';
+                var interimTranscript = '';
+                
+                for (var i = event.resultIndex; i < event.results.length; i++) {
+                    var transcript = event.results[i][0].transcript;
+                    
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                if (finalTranscript || interimTranscript) {
+                    clearTimeout(silenceTimer);
+                    startSilenceTimer();
+                }
+                
+                if (finalTranscript) {
+                    var processedText = applyAutoPunctuation(finalTranscript);
+                    processedText = capitalizeSentences(processedText);
+                    
+                    if (inputField.value.length > 0) {
+                        inputField.value += ' ' + processedText;
+                    } else {
+                        inputField.value = processedText;
+                    }
+                    
+                    autoResizeTextarea(inputField);
+                    var event = new Event('change', { bubbles: true });
+                    inputField.dispatchEvent(event);
+                    toggleSaveButtonState();
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                updateRecordingUI(false);
+                isRecording = false;
+                clearTimeout(silenceTimer);
+                
+                if (event.error === 'not-allowed') {
+                    showMessage('Microphone access denied. Please allow microphone permissions.');
+                } else if (event.error === 'no-speech') {
+                    showMessage('No speech detected. Please try again.');
+                } else {
+                    showMessage('Speech recognition error: ' + event.error);
+                }
+            };
+            
+            recognition.onend = function() {
+                updateRecordingUI(false);
+                isRecording = false;
+                clearTimeout(silenceTimer);
+            };
+            
+        } else {
+            showMessage('Speech recognition not supported in this browser.');
+        }
+    }
+    
+    /*Text Processing*/
+    function applyAutoPunctuation(text) {
+        var processed = text.toLowerCase();
+        
+        // Replace punctuation with actual punctuation
+        for (var spoken in punctuationMap) {
+            var regex = new RegExp('\\b' + spoken + '\\b', 'gi');
+            processed = processed.replace(regex, punctuationMap[spoken]);
+        }
+        
+        return processed;
+    }
+    
+    function capitalizeSentences(text) {
+        return text.replace(/(^|[.!?]\s+)([a-z])/g, function(match, p1, p2) {
+            return p1 + p2.toUpperCase();
+        });
+    }
+    
+    /* UI Functions */
+    function updateRecordingUI(recording) {
+        if (recording) {
+            micButton.classList.add('recording');
+            inputField.classList.add('recording');
+            inputField.placeholder = 'Listening...';
+        } else {
+            micButton.classList.remove('recording');
+            inputField.classList.remove('recording');
+            inputField.placeholder = 'Click on mic again to start speaking';
+        }
+    }
+    
+    function showMessage(message) {
+        var messageDiv = document.createElement('div');
+        messageDiv.style.cssText = 'position:fixed;top:20px;right:20px;background:#ff4444;color:white;padding:10px 15px;border-radius:5px;z-index:1000;font-size:14px;';
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(function() {
+            document.body.removeChild(messageDiv);
+        }, 3000);
+    }
+    
+    /* Recording Control Functions */
+    function startSilenceTimer() {
+        clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(function() {
+            if (isRecording && recognition) {
+                recognition.stop();
+            }
+        }, silenceTimeout);
+    }
+    
+    function toggleRecording() {
+        if (!recognition) {
+            showMessage('Speech recognition not available.');
+            return;
+        }
+        
+        if (isRecording) {
+            clearTimeout(silenceTimer);
+            recognition.stop();
+        } else {
+            try {
+                recognition.start();
+            } catch (error) {
+                console.error('Error starting recognition:', error);
+                showMessage('Error starting speech recognition.');
+            }
+        }
+    }
+    
+    /* Utility Functions */
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+    
+    function toggleSaveButtonState() {
+        var currentInputField = document.querySelector('[id$="bodyField"]') || document.getElementById('bodyField');
+        var saveButton = document.querySelector('[id$="saveBtn"]') || document.getElementById('saveBtn');
+        
+        if (currentInputField && saveButton) {
+            var isEmpty = currentInputField.value.trim().length === 0;
+            saveButton.disabled = isEmpty;
+            
+            if (isEmpty) {
+                saveButton.style.pointerEvents = 'none';
+                saveButton.style.opacity = '0.5';
+            } else {
+                saveButton.style.pointerEvents = 'auto';
+                saveButton.style.opacity = '1';
+            }
+        }
+    }
+    
+    function validateInput() {
+        var currentInputField = document.querySelector('[id$="bodyField"]') || document.getElementById('bodyField');
+        if (!currentInputField || currentInputField.value.trim().length === 0) {
+            showMessage('Please enter text in field.');
+            currentInputField.focus();
+            return false;
+        }
+        return true;
+    }
+    
+    /* Save Functions */
+    function handleSaveClick(event) {
+        if (!validateInput()) {
+            event.preventDefault();
+            return false;
+        }
+        
+        showSmallLoadingSpinner();
+        
+        var saveButton = document.querySelector('[id$="saveBtn"]') || document.getElementById('saveBtn');
+        if (saveButton) {
+            saveButton.disabled = true;
+            saveButton.style.pointerEvents = 'none';
+        }
+        
+        if (isRecording && recognition) {
+            recognition.stop();
+        }
+        
+        return true;
+    }
+    function handleSaveComplete(messagesComponent) {
+        hideSmallLoadingSpinner();
+        
+        setTimeout(function() {
+            var hasErrors = checkForErrors();
+            
+            if (hasErrors) {
+                resetSaveButton();
+            }
+        }, 100);
+    }
+    
+    function checkForErrors() {
+        var errorMessages = document.querySelectorAll('.messageText, .errorMsg, [id*="error"], .message.errorM3, .message.confirmM3');
+        var errorElements = document.querySelectorAll('[class*="error"], [class*="Error"]');
+        var allElements = Array.from(errorMessages).concat(Array.from(errorElements));
+        
+        for (var i = 0; i < allElements.length; i++) {
+            var element = allElements[i];
+            if (element.textContent && element.textContent.trim() !== '') {
+                var messageText = element.textContent.toLowerCase();
+                var elementClass = element.className.toLowerCase();
+                
+                if (messageText.includes('error') || messageText.includes('required') || 
+                    messageText.includes('invalid') || messageText.includes('failed') ||
+                    messageText.includes('comment body is required') ||
+                    elementClass.includes('error')) {
+                    return true;
+                }
+            }
+        }
+        
+        var pageMessages = document.querySelector('[id$="messages"]');
+        if (pageMessages && pageMessages.innerHTML.trim() !== '') {
+            var messagesContent = pageMessages.textContent.toLowerCase();
+            if (messagesContent.includes('error') || messagesContent.includes('required') || 
+                messagesContent.includes('invalid') || messagesContent.includes('failed') ||
+                messagesContent.includes('comment body is required')) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    function resetSaveButton() {
+        var saveButton = document.querySelector('[id$="saveBtn"]') || document.getElementById('saveBtn');
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.style.pointerEvents = 'auto';
+        }
+    }
+    
+    function showSmallLoadingSpinner() {
+        var spinner = document.getElementById('smallLoadingSpinner');
+        if (spinner) {
+            spinner.classList.add('show');
+        }
+    }
+    
+    function hideSmallLoadingSpinner() {
+        var spinner = document.getElementById('smallLoadingSpinner');
+        if (spinner) {
+            spinner.classList.remove('show');
+        }
+    }
+
+    /* Initialization */
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSpeechRecognition();
+        
+        var micBtn = document.getElementById('micBtn');
+        if (micBtn) {
+            micBtn.addEventListener('click', toggleRecording);
+        }
+        
+        var bodyField = document.querySelector('[id$="bodyField"]') || document.getElementById('bodyField');
+        if (bodyField) {
+            bodyField.addEventListener('input', function() {
+                autoResizeTextarea(this);
+                toggleSaveButtonState();
+            });
+            
+            bodyField.addEventListener('paste', function() {
+                setTimeout(() => {
+                    autoResizeTextarea(this);
+                    toggleSaveButtonState();
+                }, 0);
+                });
+                    
+                    bodyField.addEventListener('keyup', function() {
+                    toggleSaveButtonState();
+                });
+                    
+                    bodyField.addEventListener('blur', function() {
+                    toggleSaveButtonState();
+                });
+                    
+                    autoResizeTextarea(bodyField);
+                    toggleSaveButtonState();
+                    
+                    //Prevent auto focus
+                    bodyField.blur();        
+                }
+                });
+                    </script>
+</apex:page>

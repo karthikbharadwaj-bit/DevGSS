@@ -1,0 +1,76 @@
+<aura:component description="Modal">
+
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"/>
+
+    <!-- Attributes -->
+    <aura:attribute name="Modal" type="Object"/>
+    <aura:attribute name="index" type="Integer"/>
+    <aura:attribute name="isShown" type="Boolean" default="true"/>
+
+    <!-- Methods -->
+    <aura:method name="show" action="{!c.show}"/>
+    <aura:method name="hide" action="{!c.hide}"/>
+    <aura:method name="resize" action="{!c.resize}">
+        <aura:attribute name="params" type="Object" />
+    </aura:method>
+    <aura:method name="setModal">
+        <aura:attribute name="params" type="Object" />
+    </aura:method>
+    <aura:method name="updateButtons">
+        <aura:attribute name="buttons" type="Object" />
+    </aura:method>
+
+
+    <div role="dialog"
+         tabindex="-1"
+         aria-modal="true"
+         class="slds-modal"
+         data-ui-auto="auraModal"
+         aura:id="modal">
+        <div class="slds-modal__container">
+            <header class="{! (v.Modal.header ? '' : 'slds-modal__header_empty') + ' slds-modal__header'}">
+
+                <!-- x button -->
+                <lightning:buttonIcon iconName="utility:close"
+                                      variant="{! equals(v.Modal.layout, 'fullscreen') ? 'bare' : 'bare-inverse' }"
+                                      size="large"
+                                      onclick="{! c.hide }"
+                                      alternativeText="Close window."
+                                      class="slds-modal__close"/>
+
+                <!-- Header -->
+                <h2 class="slds-text-heading_medium slds-hyphenate">
+                    <aura:unescapedHtml value="{! v.Modal.header }"/>
+                </h2>
+
+            </header>
+
+            <!-- Content -->
+            <div class="slds-modal__content slds-p-around_medium" data-ui-auto="auraModalContent">
+                <aura:unescapedHtml value="{! v.Modal.content }"/>
+                    {! v.body }
+            </div>
+
+            <footer class="slds-modal__footer slds-modal__footer_directional" data-ui-auto="auraModalFooter">
+              <aura:if isTrue="{!v.Modal.isCancelShown}">
+                <lightning:button onclick="{! c.hide }"
+                                  label="Cancel"/>
+              </aura:if>
+
+                <!-- Buttons -->
+                <aura:iteration items="{! v.Modal.buttons }" var="button" indexVar="buttonIndex">
+                    <lightning:button label="{! button.label }"
+                                      name="{! buttonIndex }"
+                                      variant="{! button.variant }"
+                                      iconName="{! button.iconName }"
+                                      iconPosition="{! button.iconPosition }"
+                                      onclick="{! c.onButtonClick }"
+                                      aura:id="button"/>
+                </aura:iteration>
+
+            </footer>
+        </div>
+    </div>
+    <div class="slds-backdrop" aura:id="backdrop"></div>
+
+</aura:component>

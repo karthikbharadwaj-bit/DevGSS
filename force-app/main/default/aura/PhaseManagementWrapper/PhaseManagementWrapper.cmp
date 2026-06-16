@@ -1,0 +1,119 @@
+<aura:component description="PhaseManagementWrapper" controller="PhaseManagementController">
+    <ltng:require scripts="{! join(',',
+            $Resource.PhaseManagementDependencies + '/PM.js',
+            $Resource.RCHelper + '/RC.js' )}"
+                  afterScriptsLoaded="{! c.afterScriptsLoaded }"/>
+
+    <!-- Shared attributes -->
+    <aura:attribute name="isStandalone" type="Boolean" default="false" description="Fullscreen view"/>
+    <aura:attribute name="order" type="Order" />
+    <aura:attribute name="orderId" type="String" />
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="userPermissions" type="Map" />
+    <aura:attribute name="rcVariousSettings" type="SObject"/>
+    <aura:attribute name="isNewChangeOrder" type="Boolean" />
+    <aura:attribute name="isNewProservFlow" type="Boolean" default="false"/>
+
+    <c:Spinner />
+    <c:Toasts />
+    <c:Modals />
+    <c:Popover/>
+    <c:PhaseManagementLocationForm />
+
+    <aura:if isTrue="{! v.isNewProservFlow }">
+        <lightning:layout class="slds-grid_vertical phase-management-wrapper">
+            <div class="demo-only" style="height:24rem">
+                <section role="dialog" tabindex="0" aria-modal="true" aria-labelledby="prompt-heading-id" aria-describedby="prompt-message-wrapper" class="slds-modal slds-fade-in-open slds-modal_prompt">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__header slds-theme_info slds-theme_alert-texture">
+                            <h1 class="slds-text-heading_medium" id="prompt-heading-id">Phase Wizard Unavailable</h1>
+                        </div>
+                        <div class="slds-modal__content slds-p-around_medium slds-text-align_center" id="prompt-message-wrapper">
+                            <p>Phase Wizard is currently unavailable. Please use the Suborder tab instead</p>
+                        </div>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
+            </div>
+        </lightning:layout>
+    </aura:if>
+
+
+    <aura:if isTrue="{! notequals(v.isNewProservFlow, true) }">
+        <lightning:layout class="slds-grid_vertical phase-management-wrapper">
+
+                <!-- Order Header -->
+                <div  class="{! join(' ', 'slds-page-header slds-m-bottom--small',
+                        v.isStandalone ? '' : 'slds-hide')}">
+
+                    <div class="slds-media">
+
+                        <!-- Order Icon -->
+                        <div class="slds-media__figure">
+                            <lightning:icon iconName="standard:orders"/>
+                        </div>
+
+                        <div class="slds-media__body">
+
+                            <!-- Name -->
+                            <h1 class="slds-page-header__title slds-truncate slds-align-middle">
+                                Order {! v.order.Name + ' ('+ v.order.OrderNumber +')' }
+                            </h1>
+
+                            <!-- Details -->
+                            <p class="slds-text-body_small slds-line-height_reset">
+                                <a href="{! '/' + v.order.MainPointOfContact__c}" title="Main Point of Contact">
+                                        {! v.order.MainPointOfContact__r.Name }
+                                </a>
+                                <a href="{! '/' + v.order.OpportunityId }" title="Opportunity">
+                                        {! v.order.Opportunity.Name }
+                                </a>
+                                <span title="Status">{! v.order.Status }</span>
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- New Window Button -->
+                <aura:if isTrue="{! not(v.isStandalone) }">
+                    <div class="slds-p-around_xx-small slds-text-align_right">
+                        <lightning:buttonIcon alternativeText=" Open in a separate window"
+                                              onclick="{! c.openStandalone }"
+                                              iconName="utility:expand"
+                                              class="phase-management-wrapper__expand-window-button"/>
+                    </div>
+                </aura:if>
+
+                <!-- PhaseManagement App -->
+                <c:PhaseManagement isPhasesChanged="{! v.isPhasesChanged }"
+                                   order="{! v.order }"
+                                   isCompletePhaseAllowed="{! v.userPermissions.CompletePhases }"
+                                   isMoveProductsAllowed="{! v.userPermissions.MoveProducts }"
+                                   isMoveSitesAllowed="{! v.userPermissions.MoveSites }"
+                                   isLocationsEnabled="{! v.userPermissions.EditLocations }"
+                                   isEditAllowed="true"
+                                   isNewChangeOrder="{! v.isNewChangeOrder }"
+                                   isAddPhasesAllowed="true"
+                                   rcVariousSettings="{! v.rcVariousSettings }"
+                                   aura:id="phaseManagement"
+                                   userPermissions="{! v.userPermissions }" />
+
+                <!-- Buttons -->
+                <div class="slds-text-align_center slds-p-around_small">
+
+                    <!-- Discard -->
+                    <lightning:button label="Discard"
+                                      onclick="{! c.discard }"
+                                      disabled="{! not(v.isPhasesChanged) }"/>
+
+                    <!-- Save -->
+                    <lightning:button label="Save"
+                                      variant="brand"
+                                      onclick="{! c.save }"
+                                      disabled="{! not(v.isPhasesChanged) }"/>
+                </div>
+        </lightning:layout>
+    </aura:if>
+
+</aura:component>

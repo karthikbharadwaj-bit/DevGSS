@@ -1,0 +1,278 @@
+<!--
+* Created By     : Saranya Rajagopal
+* Modified By    : Ratul Saha <ratul.saha@ringcentral.com>
+* Created Date   : 09-12-2021
+* Modified Date  : 05-04-2022
+* Description    : Component for Partners Registration for RC
+/-->
+<aura:component
+  implements="forceCommunity:availableForAllPageTypes,force:appHostable,flexipage:availableForAllPageTypes"
+  access="global" controller="PartnerDetailsController">
+  <aura:handler name="init" value="{!this}" action="{!c.init}" />
+  <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+  <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+
+  <aura:attribute name="translationsMap" type="Map" />
+  <aura:attribute name="hideNewForm" type="boolean" default="true" />
+  <aura:attribute name="showThanks" type="boolean" default="false" />
+
+  <aura:attribute name="countriesAvailable" type="String[]" />
+  <aura:attribute name="selectedCountryValue" type="String" default="{!v.translationsMap.Country}" />
+  <aura:attribute name="allCountries" type="String[]" />
+  <aura:attribute name="countryStateMapData" type="Map" />
+  <aura:attribute name="selectedLanguageValue" type="string" access="public" />
+  <aura:attribute name="Spinner" type="boolean" default="false" />
+
+  <aura:attribute name="firstname" type="String" default='' />
+  <aura:attribute name="lastname" type="String" default='' />
+  <aura:attribute name="jobtitle" type="String" default='' />
+  <aura:attribute name="email" type="String"  default='' />
+  <aura:attribute name="phone" type="String" default=''/>
+  <aura:attribute name="companyname" type="String" default=''  />
+  <aura:attribute name="city" type="String"  default=''/>
+  <aura:attribute name="address" type="String" default='' />
+  <aura:attribute name="zip" type="String" default=''  />
+
+  <aura:attribute name="options" type="List" default="[]" />
+  <aura:attribute name="SelectedYesNoValue" type="String" default="{!v.translationsMap.Yes}"/>
+
+  <aura:attribute name="termsandcondition" type="Boolean" />
+  <aura:attribute name="buttonDisbaled" type="Boolean" default="false" />
+  <aura:attribute name="myBool" type="Boolean" default="true" />
+
+
+  <aura:if isTrue="{!!v.showThanks}">
+    <!--NEW LAYOUT-->
+    <div class="container">
+      <div class="slds-grid slds-wrap">
+        <aura:if isTrue="{!!v.showThanks}">
+          <!--HEADER-->
+          <div class="slds-col slds-size_7-of-12 slds-medium-size_8-of-12 slds-large-size_10-of-12">
+            <img src="{!$Resource.RC_Guest_Site_Logo}" />
+          </div>
+          <div class="slds-col slds-size_5-of-12 slds-medium-size_4-of-12 slds-large-size_2-of-12">
+            <lightning:select class="slds-align_absolute-center slds-var-p-top_xxx-small language-select"
+              name="language" label="" value="{!v.selectedLanguageValue}" aura:id="languagePicklist"
+              onchange="{!c.onChangeLanguage}">
+              <option class="textcenter alignRight" value="en_US">English</option>
+              <option class="textcenter alignRight" value="de">German</option>
+              <option class="textcenter alignRight" value="fr">French</option>
+
+            </lightning:select>
+          </div>
+          <!--HEADER-->
+
+          <!--BANNER-->
+          <div class="slds-col slds-size_1-of-1 slds-var-m-top_large"
+            style="background-color: #001138;border-radius: 20px 20px 0px 0px">
+            <div class="slds-grid slds-wrap">
+              <div
+                class="slds-col slds-size_12-of-12 slds-medium-size_12-of-12 slds-large-size_12-of-12 slds-align_absolute-center slds-var-p-top_large slds-var-p-horizontal_large rctop"
+                style="color:white">
+                <h1>{!v.translationsMap.Partner_Programme_Application_Request}</h1>
+              </div>
+              <br />
+              <div class="slds-col slds-size_12-of-12 slds-medium-size_2-of-12 slds-large-size_3-of-12" />
+              <div
+                class="slds-col slds-size_12-of-12 slds-medium-size_8-of-12 slds-large-size_6-of-12 slds-align_absolute-center slds-var-p-around_large rctop1"
+                style="color:white">
+                <h2>{!v.translationsMap.help_text_for_New_RC}</h2>
+              </div>
+              <div class="slds-col slds-size_12-of-12 slds-medium-size_2-of-12 slds-large-size_3-of-12" />
+            </div>
+          </div>
+          <!--BANNER-->
+
+          <!--FORM-->
+          <div class="slds-col slds-size_1-of-1" style="background-color: #001138; border-radius: 0px 0px 20px 20px">
+            <div class="slds-grid slds-wrap">
+              <div class="slds-col slds-size_12-of-12 slds-medium-size_1-of-12 slds-large-size_2-of-12" />
+              <div class="slds-col slds-size_12-of-12 slds-medium-size_10-of-12 slds-large-size_8-of-12">
+                <lightning:card variant="Narrow">
+                  <lightning:recordEditForm aura:id="partnerRegistrationForm" onsubmit="{!c.handleSubmitPR}"
+                    onsuccess="{!c.handleOnSuccess}" onerror="{!c.handleOnError}" objectApiName="Partner_Request__c">
+
+                    <!--FORM PART 1-->
+                    <div class="slds-grid slds-wrap slds-var-m-bottom_large">
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="rcheader slds-var-p-around_medium">
+                          <span> {!v.translationsMap.Tell_us_about_yourself} </span>
+                        </div>
+                      </div>
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="slds-grid slds-wrap rcfieldform1">
+                          <lightning:inputField aura:id="firstname" variant="" required="true"
+                            fieldName="Partner_First_Name__c" style="display:none;" />
+                          <lightning:input fieldName="Partner_First_Name__c" value="{!v.firstname}"
+                            placeholder="{!v.translationsMap.First_Name}" variant="label-hidden" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="lastname" required="true" fieldName="Partner_Last_Name__c"
+                            style="display:none;" />
+                          <lightning:input fieldName="Partner_Last_Name__c" value="{!v.lastname}"
+                            placeholder="{!v.translationsMap.Last_Name}" variant="label-hidden" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="title" required="true" fieldName="Partner_Title__c"
+                            style="display:none;" />
+                          <lightning:input fieldName="Partner_Title__c" value="{!v.jobtitle}"
+                            placeholder="{!v.translationsMap.Job_title}" variant="label-hidden" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="emailaddress" required="true"
+                            fieldName="Partner_Email_Address__c" style="display:none;" />
+                          <lightning:input  fieldName="Partner_Email_Address__c" value="{!v.email}"
+                            placeholder="{!v.translationsMap.Email_Address1}" aura:id="emailAddress"
+                            variant="label-hidden" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="phone" required="true" fieldName="Partner_Phone__c"
+                            style="display:none;" />
+                          <lightning:input fieldName="Partner_Phone__c" variant="label-hidden" value="{!v.phone}"
+                            placeholder="{!v.translationsMap.Phone_Number1}" aura:id="phoneNumber" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+                        </div>
+                      </div>
+                    </div>
+                    <!--FORM PART 1-->
+
+                    <!--FORM PART 2-->
+                    <div class="slds-grid slds-wrap slds-var-m-bottom_small">
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="rcheader slds-var-p-around_medium">
+                          <span>{!v.translationsMap.Tell_us_about_your_company}</span>
+                        </div>
+                      </div>
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="slds-grid slds-wrap rcfieldform1">
+                          <lightning:inputField aura:id="companyname" fieldName="Partner_Company_Name__c"
+                            style="display:none;" />
+                          <lightning:input style="color: #6F6F6F" fieldName="Partner_Company_Name__c"
+                            variant="label-hidden" value="{!v.companyname}"
+                            placeholder="{!v.translationsMap.Company_Name}" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="address" fieldName="Partner_Address1__c"
+                            style="display:none;" />
+                          <lightning:input fieldName="Partner_Address1__c" variant="label-hidden" value="{!v.address}"
+                            placeholder="{!v.translationsMap.Company_Address}" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:inputField aura:id="city" fieldName="Partner_City__c" style="display:none;" />
+                          <lightning:input fieldName="Partner_City__c" variant="label-hidden" value="{!v.city}"
+                            placeholder="{!v.translationsMap.City}" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+
+                          <lightning:select
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium select-div"
+                            value="{!v.selectedCountryValue}" aura:id="selectedCountry" name="Partner_Country__c"
+                            required="true" variant="label-inline">
+                            <option value="{!v.translationsMap.Country}">{!v.translationsMap.Country}</option>
+                            <aura:iteration items="{!v.allCountries}" var="mapKey">
+                              <option value="{!mapKey}" selected="{!mapKey==v.selectedCountryValue}">{!mapKey}</option>
+                            </aura:iteration>
+                          </lightning:select>
+
+                          <lightning:inputField aura:id="zip" fieldName="Partner_Zip__c" style="display:none;" />
+                          <lightning:input fieldName="Partner_Zip__c" variant="label-hidden" value="{!v.zip}"
+                            placeholder="{!v.translationsMap.Postal_Code}" required="true"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+                        </div>
+                      </div>
+                    </div>
+                    <!--FORM PART 2-->
+
+                    <!--FORM PART 3-->
+                    <div class="slds-grid slds-wrap slds-var-m-bottom_small">
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="rcheader slds-var-p-around_medium">
+                          <span>{!v.translationsMap.Are_already_active_in_a_UCC_and_or_CC_br}</span>
+                        </div>
+                      </div>
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_6-of-12 slds-align_absolute-center">
+                        <div class="slds-grid slds-wrap">
+                          <lightning:radioGroup variant="label-inline" name="radioGroup" options="{!v.options}"
+                            value="{!v.SelectedYesNoValue}" type="radio"
+                            class="slds-size_12-of-12 slds-var-m-bottom_small slds-var-p-horizontal_medium" />
+                        </div>
+                      </div>
+                    </div>
+                    <!--FORM PART 3-->
+
+                    <!--FORM PART 4-->
+                    <div class="slds-grid slds-wrap slds-var-m-bottom_small">
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_12-of-12 slds-large-size_12-of-12 slds-var-p-around_large">
+                        <div class="slds-grid slds-wrap rccheckbox" style="font-size: 17px;">
+                          <div
+                            class="slds-col slds-size_2-of-12 slds-medium-size_1-of-12 slds-large-size_1-of-12 slds-align_absolute-center">
+                            <ui:inputCheckbox value="{!v.termsandcondition}" aura:id="boxSelect"
+                              change="{!c.checkboxSelect}" />
+                          </div>
+                          <div class="slds-col slds-size_10-of-12 slds-medium-size_11-of-12 slds-large-size_11-of-12">
+                            <aura:if isTrue="{!v.selectedLanguageValue=='en_US'}">
+                              <span>{!v.translationsMap.I_accept_the_data_processing_privacy_En}
+                                <lightning:formattedUrl value="https://www.ringcentral.com/legal/privacy-notice.html"
+                                  label=' privacy policy ' />
+                                {!v.translationsMap.I_accept_the_data_processing_privacy_EN1}
+                              </span>
+                            </aura:if>
+                            <aura:if isTrue="{!v.selectedLanguageValue=='de'}">
+                              <span>{!v.translationsMap.I_accept_the_data_processing_privacy_Po}
+                                <lightning:formattedUrl
+                                  value="https://www.ringcentral.com/de/de/legal/privacy-notice.html"
+                                  label=' Datenschutzerklärung ' />
+                                {!v.translationsMap.I_accept_the_data_processing_privacy1}
+                              </span>
+                            </aura:if>
+                            <aura:if isTrue="{!v.selectedLanguageValue=='fr'}">
+                              <span>{!v.translationsMap.I_accept_the_data_processing_privacyFR}
+                                <lightning:formattedUrl value="https://www.ringcentral.com/fr/fr/legal/last-update-August-6-2021/privacy-notice.html"
+                                  label=' politique de confidentialité ' />
+                                {!v.translationsMap.I_accept_the_data_processing_FR2}
+                              </span>
+                            </aura:if>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="slds-col slds-size_12-of-12 slds-medium-size_3-of-12 slds-large-size_4-of-12" />
+                      <div
+                        class="slds-col slds-size_12-of-12 slds-medium-size_6-of-12 slds-large-size_4-of-12 slds-align_absolute-center slds-var-p-around_large">
+                        <lightning:button class="button submit-button" variant="brand"
+                          disabled="{!v.buttonDisbaled}" label="{!v.translationsMap.Submit}" type="submit"
+                          iconName="utility:forward" iconPosition="right" onclick="{!c.handleSubmitPR}" />
+                      </div>
+                      <div class="slds-col slds-size_12-of-12 slds-medium-size_3-of-12 slds-large-size_4-of-12" />
+                    </div>
+                    <!--FORM PART 4-->
+
+                  </lightning:recordEditForm>
+                </lightning:card>
+              </div>
+              <div class="slds-col slds-size_12-of-12 slds-medium-size_1-of-12 slds-large-size_2-of-12" />
+            </div>
+          </div>
+          <!--FORM-->
+        </aura:if>
+      </div>
+    </div>
+    <aura:set attribute="else">
+      <div class="container">
+        <div class="slds-align_absolute-center" style="color:blue;font-size:40px;text-align:center">
+          <h2>Thank you!<br />
+          </h2>
+        </div>
+        <div class="slds-align_absolute-center" style="color:blue;font-size:30px;;text-align:center">
+          <h2>Thanks for applying for the RingCentral Partner Program.</h2>
+        </div>
+      </div>
+    </aura:set>
+    <!--NEW LAYOUT-->
+  </aura:if>
+</aura:component>

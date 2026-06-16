@@ -1,0 +1,1796 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 16-12-2019
+* Description    : Component for Deal Registrations - Partner_DealRegistration
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+*******************************************************************************************************************************************
+*/-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+                access="global" controller="Partner_DealRegistration">
+    <!-- INIT METHOD -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="blockedDomains" type="List"/>
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:attribute name="dealRegList" type="Deal_Registration__c[]"/>
+    <aura:attribute name="partnerAccounts" type="List"/>
+    <aura:attribute name="viewAll" type = "boolean" default="false"/>
+    <aura:attribute name="selectedAccountValue" type="string" access="public"/>
+    <aura:attribute name="selectedStatusValue" type="string" access="public"/>    
+    <aura:attribute name="Message" type="boolean" default="false" />    
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="ShowListView" type="boolean" default="false"/>
+    <aura:attribute name="NewOnBehalf" type="boolean" default="false"/>
+    <aura:attribute name="DealRegRecord" type="Deal_Registration__c"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" />
+    <aura:attribute name="ShowNewSection" type="boolean" default="false" />   
+    <aura:attribute name="ShowOtherExistingSoln" type="boolean" default="false" />
+    <aura:attribute name="ShowOtherCompetitor" type="boolean" default="false" /> 
+    <aura:attribute name="ShowOtherPrompting" type="boolean" default="false" /> 
+    <aura:attribute name="ShowOtherDecision" type="boolean" default="false" />
+    <aura:attribute name="ShowDealRejReasonSection" type="boolean" default="false" />
+    <aura:attribute name="ShowBlockedDomainSection" type="boolean" default="false" />
+    <aura:attribute name="baseURL" type="string"/>
+    <aura:attribute name="RespectiveTabURL" type="string"/>
+    <aura:attribute name="partnerClassification" type="string"/><!-- PBC-9705 P2CSharing-->
+    
+    <aura:attribute name="searchBy" type="String" default="Company_Name__c"/> 
+    <aura:attribute name="searchKeyword" type="String"/>
+    
+    <aura:attribute name="partnerContactId" type="String"/>
+    <aura:attribute name="partnerContactName" type="String"/>
+    <aura:attribute name="partnerAccountName" type="String"/>
+    <aura:attribute name="partnerId" type="String"/>
+    
+    
+    <aura:handler name="populatePartnerEvent" event="c:Partner_SearchContactEvent" action="{!c.handlePartnerComponentEvent}"/>
+    
+    <aura:attribute name="ShowConAccFields" type="boolean" default="false"/>  
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false"/>
+    <aura:attribute name="isMasterAgent" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyATOS" type="boolean" default="false"/>
+    <aura:attribute name="ShowRequiredErrorSection" type="boolean" default="false" />
+    <aura:attribute name="isReadOnly" type="boolean" default="true" />
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    <aura:attribute name="isReseller" type="boolean" default="false" />
+    <aura:attribute name="CountryReq" type="boolean" default="false" />
+    
+    <!-- PAGINATION ATTRIBUTES -->
+    <aura:attribute name="pageNumber" type="integer" default="1"/>
+    <aura:attribute name="totalPages" type="integer" default="0"/>
+    <aura:attribute name="totalRecords" type="integer" default="0"/>
+    <aura:attribute name="recordStart" type="integer" default="0"/>
+    <aura:attribute name="recordEnd" type="integer" default="0"/>
+    
+    <!-- COUNTRY STATE ATTRIBUTES -->
+    <aura:attribute name="countriesAvailable" type="String[]" />
+    <aura:attribute name="mapCountryKeys" type="String[]" />
+    <aura:attribute name="mapCountryValueKeys" type="String[]" />
+    <aura:attribute name="mapData" type="Map"/>
+    
+    <!-- BZS-9016 start -->
+    <aura:attribute name="countriesforBI" type="String[]" />
+    <aura:attribute name="isWholeSalePartner" type="boolean" />
+
+    <aura:attribute name="BrandCountriesForBIMap" type="Map" />
+    <aura:attribute name="BICountriesCSList" type="List" />
+    <aura:attribute name="brandsListforBI" type="List" />
+    <!-- BZS-9016 end -->
+    
+    <!-- Added for multiple countries in ACO 3.0 -->
+    <aura:attribute name="partnerAvailableCountries" type="String[]" />
+    
+    <aura:attribute name="mapDataBrand" type="Map"/>
+    
+    <aura:attribute name="mapCompData" type="Map"/>
+    <aura:attribute name="mapCountryCompKeys" type="object" />
+    <aura:attribute name="mapCountryCompValKeys" type="List" />
+    <aura:attribute name="selectedCompItems" type="List" default="[]"/>
+    
+    <aura:attribute name="mapEmpData" type="Map"/>
+    <aura:attribute name="mapEmpCompKeys" type="object" />
+    <aura:attribute name="mapEmpCompValKeys" type="List" />
+    
+    <aura:attribute name="partnerCommunity" type="List"/>
+    <aura:attribute name="communityUrl" type="String"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    <aura:attribute name="selectedBrandValue" type="String"/>
+    
+    <aura:attribute name="logdPartnrCntry" type="String"/>
+    
+    <aura:attribute name="isCurrentSubPartnerFullAccess" type="boolean" default="false" />
+    <aura:attribute name="isCurrentContactPCM" type="boolean" default="false" />
+    <aura:attribute name="partnerhasAllCntryAcess" type="boolean" default="true"/>
+    <aura:attribute name="editionListDisplayed" type="List" />
+    <aura:attribute name="selectedEditionValue" type="string" access="public"/>
+    
+    <aura:attribute name="brandsPermitted" type="List" default="['RingCentral']"/>
+    <aura:attribute name="brandsPermitted_Guest" type="List" />
+     <aura:attribute name="isNotAvaya" type="boolean" default="false" />
+    <!-- Avaya Cloud Specialist Assignment-->
+    <aura:handler name="cloudSpecialistValueEvent" event="c:Partner_CloudSpecialistSearchEvent" action="{!c.handleCloudSpecialistEvent}"/>
+    <aura:attribute name="cloudSpecialistContactId" type="String"/>
+    
+    <aura:attribute name="isNationalPartnerAccount" type="boolean" default="false" />
+    <aura:attribute name="isNationalPartnerAccountNew" type="boolean" default="false" />
+    <aura:attribute name="portalUserList" type="List" />
+    <aura:attribute name="searchUser" type="String"/>    
+    <aura:attribute name="insideSalesRep" type="String"/>
+    <aura:attribute name="insideSalesRepNew" type="String"/> 
+    <aura:attribute name="territoryAlignmentMap" type="String"/>
+    
+    <aura:attribute name="tierNames" type="List" default="['Office']"/>
+    <aura:attribute name="selectedTierValue" type="String"/>
+    
+    <aura:attribute name="RCMeetings" type="boolean" default="false"/>
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+    <aura:attribute name="DealRegFieldsMap" type="Map" />
+    <aura:attribute name="PRMSpecifictranslation" type="object" />
+    <!-- PS MAP ATTRIBUTES Ignite starts New OnBehalf-->
+    <aura:attribute name="selectedProviderValue" type="string" access="public" default="--Please Select--"/>
+    <aura:attribute name="mapPSValueKeys" type="List" default="['--Please Select--']"/>
+    <aura:attribute name="displayText" type="Boolean" default="false"/>
+    <aura:attribute name="psPartnerId" type="String" />
+    <aura:attribute name="defaultPSValue" type="String" default="--Please Select--"/>
+    <aura:handler name="change" value="{!v.partnerContactId}" action="{!c.getPickListValuesPS}"/>    <!-- Ignite -->
+
+    <!-- PS MAP ATTRIBUTES Ignite New  -->
+    <aura:attribute name="userId" type="String"/>
+    <aura:attribute name="mapInstallPSValuesKeys" type="List" default="[--Please Select--']"/>
+    <aura:attribute name="installProviderValue" type="string" access="public" default="--Please Select--"/>
+    <aura:attribute name="defaultinstallPSValue" type="String" default="--Please Select--"/>
+    <!-- PS MAP ATTRIBUTES ends -->
+    <aura:attribute name="isGuestUser" type="boolean" default="false" />
+    <aura:attribute name="isGuest" type="boolean" default="false" />
+    <aura:attribute name="showGuestLogin" type="boolean" default="false" />
+    <aura:attribute name="partnerContact" type="Map" />
+    <lightning:navigation aura:id="navService"/>
+    <aura:attribute name="GuestEmail" type="String"/>
+    <aura:attribute name="wholesalePckEditions" type="List" default="[]" />
+    <!--BZS-9020-->
+    <aura:attribute name="selectedWholesaleEditionValue" type="string" access="public" />
+    <!--BZS-9020-->
+    <aura:attribute name="ShowMitelCustomerType" type="boolean" default="false"/><!--Added for Mitel PRM-145-->
+    <aura:attribute name="isMitel" type="boolean" default="false"/><!--PRM-145-->
+    <aura:attribute name="selectedCountry" type="String" /> <!-- Added for Switzerland-->
+    <aura:attribute name="ShowMitelDataShare" type="boolean" default="false"/><!--Added for Mitel-->
+    <aura:attribute name="ShowMitelShareDetailPage" type="boolean" default="false"/><!--PBC-9705 P2CSHaring-->
+    
+    <aura:attribute name="ShowOnlyALE" type="boolean" default="false"/><!--pbc-10695-->
+
+    <!-- DISPLAY SPINNER --> 
+    <aura:if isTrue = "{!!v.isGuest}">
+        <aura:if isTrue="{!v.ShowSpinnerOpp}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                </div>
+            </div>
+        </aura:if>  
+    </aura:if>
+    <!-- LIST VIEW START -->
+    <aura:if isTrue="{!v.ShowListView}">
+        <div>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5">
+                    <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                        title="Deals"><lightning:icon iconName="standard:lead"/><b> &nbsp;{!v.translationsMap.Registered_Deals} </b></h1>
+                </div>  
+                
+                <div class="slds-col slds-has-flexi-truncate slds-size_3-of-5"/> 
+                <!-- BUTTONS IN LIST VIEW -->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5">           
+                    
+                </div>
+                <aura:if isTrue="{!v.ShowConAccFields}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5 slds-p-top_small slds-p-left_small">                        
+                        <div class="slds-grid slds-grid_align-left">
+                            <div class="slds-col slds-grow-none durationtoggle">
+                                <div class="slds-grid togglewrap">
+                                    <label for="filterType" class="slds-form-element__label
+                                                                   slds-grid_align-center">{!v.translationsMap.Filter_By}:</label>
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                       &nbsp; {!v.DealRegFieldsMap.Partner_Account__c}
+                                    </span>
+                                    <lightning:input aura:id="filterType" type="toggle"
+                                                     name="filterAccounts" checked="{!v.viewAll}"
+                                                     onchange="{!c.toggleFilterBy}"/>
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                        &nbsp; {!v.translationsMap.All_Accounts} 
+                                    </span>
+                                </div>
+                            </div>                                                            
+                        </div>
+                    </div>
+                    <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5"> 
+                        
+                    </div>
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5">           
+                        
+                    </div>
+                </aura:if>
+                <!-- ACCOUNT DROP DOWN -->
+                <aura:if isTrue="{!!v.viewAll}">
+                    <aura:if isTrue="{!v.ShowConAccFields}"> 
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-top_medium">
+                            
+                            <label for="partnerAccountIdDiv" class="slds-form-element__label">{!v.translationsMap.Filter_By}: </label>
+                            
+                            <lightning:buttonIcon iconName="utility:search" variant="bare"
+                                                  onclick="{!c.createAccountLookup}"
+                                                  alternativeText="{!v.translationsMap.Please_choose_a_Partner_Contact}"/>                             
+                            
+                            <div id="partnerAccountIdDiv" class="slds-p-top_x-small slds-box slds-truncate slds-box_xx-small boxheight">
+                                 {!v.partnerAccountName} 
+                                
+                            </div>
+                        </div>
+                    </aura:if>
+                </aura:if>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-around_medium">
+                    <lightning:input label="{!v.translationsMap.Keyword}" value="{!v.searchKeyword}"                                         
+                                     placeholder="{!v.translationsMap.search_placeholder + '...'}"  
+                                     aura:id="searchField"/>
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-around_medium">
+                    <lightning:select name="searchBy" value= "{!v.searchBy}" label="{!v.translationsMap.Search_by+':'}">
+                        <option value="Company_Name__c">{!v.DealRegFieldsMap.Name}</option>
+                        <option value="Email_Address__c">{!v.translationsMap.Email}</option>
+                        <option value="Forecasted_Users__c">{!v.DealRegFieldsMap.Forecasted_Users__c}</option>
+                        <!--<aura:if isTrue="{!!v.ShowOnlyRC}"><option value="Avaya_CloudOffice_Specialist__c">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</option></aura:if>-->
+                         <aura:if isTrue="{!!or(v.ShowOnlyRC,or(or(v.communityDetailsRecord.Brand_Name__c=='RingCentral with Eastlink',v.communityDetailsRecord.Brand_Name__c=='RingCentral mit ecotel'),v.communityDetailsRecord.Brand_Name__c=='RingCentral for Symphony'))}">
+                            <!--pbc-10695-->
+                            <option value="Portal_Cloud_Specialist__r.Name">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</option>
+                        </aura:if>
+                        <aura:if isTrue="{!v.isSingleLogin}">
+                                <option value="Partner_Account__r.Partner_ID__c">{!v.DealRegFieldsMap.Partner_ID__c}</option>
+                                <option value="Partner_Account__r.name">Partner Name</option>
+                         </aura:if>
+                        <option value="Country__c">{!v.DealRegFieldsMap.Country__c}</option>
+                        <option value="State__c">{!v.DealRegFieldsMap.State__c}</option>
+                        
+                    </lightning:select>
+                </div>
+                <!-- DEAL STATUS DROP DOWN -->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-around_medium">
+                    <lightning:select name="DealStatus" label="{!v.translationsMap.Deal_Status +':'}" aura:id="DealStatus" value="{!v.selectedStatusValue}">                  
+                        <option value="Approved">{!v.translationsMap.Approved}</option>
+                        <option value="Pending Approval" selected="true">{!v.translationsMap.Pending_Approval}</option>
+                        <option value="Rejected">{!v.translationsMap.Rejected}</option>    
+                        <option value="Any">{!v.translationsMap.Any}</option>    
+                    </lightning:select>
+                </div>
+                <!-- BUTTON FOR FILTER -->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6  slds-p-around_medium">
+                    <div style="padding-top:23px;"> 
+                        <lightning:button variant="brand" label="{!v.translationsMap.Go}" iconName="utility:forward" iconPosition="right" onclick="{!c.doFilter}" />
+                    </div> 
+                </div>
+                <aura:if isTrue="{!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6  slds-p-around_medium"/>
+                </aura:if>
+                <aura:if isTrue="{!!v.ShowConAccFields}"> 
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6  slds-p-around_medium"/>
+                </aura:if>
+                <!--<div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium"/>-->
+                <!-- LIST FOR PAGINATION -->
+                <aura:if isTrue="{!!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6  slds-p-vertical_medium slds-float_right">
+                        <lightning:select aura:id="pageSize" label="{!v.translationsMap.Display_Deals_Per_Page}" onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true"/>
+                            <option text="100" value="100"/>
+                            <option text="150" value="150"/>
+                            <option text="200" value="200"/>
+                        </lightning:select>            
+                    </div>  
+                </aura:if>
+                <aura:if isTrue="{!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6  slds-p-vertical_medium slds-float_right">
+                        <lightning:select aura:id="pageSizeForAll" label="{!v.translationsMap.Display_Deals_Per_Page}" onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true"/>
+                            <option text="100" value="100"/>
+                            <option text="150" value="150"/>
+                            <option text="200" value="200"/>
+                        </lightning:select>            
+                    </div>  
+                </aura:if>
+                <lightning:layout>
+                    <aura:if isTrue="{!!v.ShowConAccFields}">
+                        <!--<aura:if isTrue="{! or(and(!v.ShowOnlyAvaya,!v.ShowOnlyRC),and(!v.ShowConAccFields,ShowOnlyRC))}">-->
+                        <lightning:layoutItem class="slds-p-horizontal_small slds-p-around_x-small slds-size_3-of-2">
+                            <!--<aura:if isTrue="{!!v.isReadOnly}">-->
+                            <aura:if isTrue="{!and(!v.isReadOnly,v.isReseller)}">
+                                <lightning:button variant="brand"  label="{!v.translationsMap.New}" iconName="action:new" iconPosition="left" onclick="{!c.showNewSectionArea}" />
+                            </aura:if>
+                        </lightning:layoutItem>
+                    </aura:if>
+                    <!--<aura:if isTrue="{!and(!v.ShowOnlyRC,v.isMasterAgent)}">-->
+                    <aura:if isTrue="{!v.isMasterAgent}">    
+                        <lightning:layoutItem class="slds-p-horizontal_small slds-p-around_x-small slds-size_3-of-2">
+                            <!--<aura:if isTrue="{!!v.isReadOnly}">-->
+                            <aura:if isTrue="{!and(!v.isReadOnly,v.isReseller)}">
+                                <lightning:button variant="brand"  label="{!v.translationsMap.New}" iconName="action:new" iconPosition="left" onclick="{!c.showNewSectionArea}" />
+                            </aura:if>
+                        </lightning:layoutItem>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowConAccFields}">
+                        <lightning:layoutItem class="slds-p-horizontal_small slds-p-around_x-small slds-size_6-of-2">
+                            <aura:if isTrue="{!!v.isReadOnly}">
+                                <lightning:button variant="brand"   label="{!v.translationsMap.New_on_behalf_of}" iconName="action:new" iconPosition="left" onclick="{!c.showNewBehalfSectionArea}" />
+                            </aura:if>
+                        </lightning:layoutItem>
+                    </aura:if>
+                    <!--Show for Sub Partner with full Access-->
+                    <!-- <aura:if isTrue="{!v.ShowOnlyRC}">-->
+                    <aura:if isTrue="{!v.isCurrentSubPartnerFullAccess}">
+                        <lightning:layoutItem class="slds-p-horizontal_small slds-p-around_x-small slds-size_3-of-2">
+                            <aura:if isTrue="{!!v.isReadOnly}">
+                                <lightning:button variant="brand"  label="{!v.translationsMap.New_on_behalf_of}" iconName="action:new" iconPosition="left" onclick="{!c.showNewBehalfSectionArea}" />
+                            </aura:if>
+                        </lightning:layoutItem>
+                    </aura:if>
+                    <!-- </aura:if>-->
+                </lightning:layout>
+                
+            </div>
+        </div>
+        <!-- DISPLAY MESSAGE WHEN NO RECORDS FOUND -->       
+        <aura:if isTrue="{!v.Message}">
+            <div class="errorMessageDiv">
+                <div class="slds-is-relative errorMessageDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                        </div>
+                    </div>
+                </div>  
+            </div>
+        </aura:if>
+        <!-- LIST OF RECORDS -->
+        <aura:if isTrue="{!!v.Message}">
+            <div class="slds-m-around_xx-small slds-p-top_large">        
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                    <thead>
+                        <tr>
+                            
+                            <th scope="col" style="width:14rem;">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Company_Name__c}">{!v.DealRegFieldsMap.Company_Name__c}</div></strong>
+                            </th> 
+                            <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.DealRegFieldsMap.Name}">{!v.DealRegFieldsMap.Name}</div>
+                                    </strong>
+                                </th> 
+                            </aura:if>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Company_Name__c}">{!v.DealRegFieldsMap.Email_Address__c}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Status__c}">{!v.DealRegFieldsMap.Status__c}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Forecasted_Users__c}">{!v.DealRegFieldsMap.Forecasted_Users__c}</div></strong>
+                            </th>                            
+                            
+                            <aura:if isTrue="{!or(v.ShowConAccFields,v.isSingleLogin)}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Partner}">{!v.translationsMap.Partner}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Partner_ID__c}">{!v.DealRegFieldsMap.Partner_ID__c}</div></strong>
+                                </th>
+                                <!-- <th scope="col">
+                                    <strong><div class="slds-truncate" title="Partner Channel Manager">Partner Channel Manager</div></strong>
+                                </th> -->
+                                <aura:if isTrue="{!v.ShowConAccFields}">
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Partner_Contact__c}">{!v.DealRegFieldsMap.Partner_Contact__c}</div></strong>
+                                    </th>
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!!or(v.ShowOnlyRC,or(or(v.communityDetailsRecord.Brand_Name__c=='RingCentral with Eastlink',v.communityDetailsRecord.Brand_Name__c=='RingCentral mit ecotel'),v.communityDetailsRecord.Brand_Name__c=='RingCentral for Symphony'))}">
+                                <!--pbc-10695--> 
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</div></strong>
+                                </th>
+                            </aura:if>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.Country__c}">{!v.DealRegFieldsMap.Country__c}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.DealRegFieldsMap.State__c}">{!v.DealRegFieldsMap.State__c}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Created_Date}">{!v.translationsMap.Created_Date}</div></strong>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.dealRegList}" var="dealRecord"> 
+                            <tr>
+                                
+                                <th scope="row" data-label="Name" style="width:14rem;">
+                                    <div class="slds-truncate" title="{!dealRecord.Company_Name__c}"
+                                         data-value="{!dealRecord.Id}">
+                                        <!--<a href="{!'/partner/s/partnerdealregistration?id='+dealRecord.Id}">
+                                            {!dealRecord.Company_Name__c} 
+                                        </a>  -->
+                                        <a href="{!v.RespectiveTabURL +'?id=' +dealRecord.Id}">
+                                            {!dealRecord.Company_Name__c}
+                                        </a>
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{!v.ShowOnlyRC}">
+                                    <th scope="row" data-label="Name">
+                                        <div class="slds-truncate" title="{!dealRecord.Name}">
+                                            {!dealRecord.Name}
+                                        </div>                            
+                                    </th>  
+                                </aura:if>                                
+                                <th scope="row" data-label="Email">
+                                    <div class="slds-truncate" title="{!dealRecord.Email_Address__c}">
+                                        {!dealRecord.Email_Address__c}
+                                    </div>                            
+                                </th>
+                                <th scope="row" data-label="Status">
+                                    <div class="slds-truncate" title="{!dealRecord.Status__c}">
+                                        {!dealRecord.Status__c}
+                                    </div>
+                                </th>
+                               
+                                        <th scope="row" data-label="Users">
+                                            <div class="slds-truncate" title="{!dealRecord.Forecasted_Users__c}">
+                                                {!dealRecord.Forecasted_Users__c}
+                                            </div>
+                                        </th>
+                                        
+                                <aura:if isTrue="{!or(v.ShowConAccFields,v.isSingleLogin)}">
+                                    <th scope="row" data-label="Partner Account">
+                                        <div class="slds-truncate" title="{!dealRecord.PartnerAccount}">
+                                            {!dealRecord.PartnerAccount}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="PartnerId">
+                                        <div class="slds-truncate" title="{!dealRecord.Partner_Account__r.Partner_ID__c}">
+                                            {!dealRecord.Partner_Account__r.Partner_ID__c}
+                                        </div>                            
+                                    </th>
+                                    <!-- <th scope="row" data-label="Partner Channel Manager">
+                                        <div class="slds-truncate" title="{!dealRecord.Partner_Account__r.Partner_Channel_Manager__c}">
+                                            {!dealRecord.Partner_Account__r.Partner_Channel_Manager__c}
+                                        </div>                            
+                                    </th> -->
+                                    <aura:if isTrue="{!v.ShowConAccFields}">
+                                    <th scope="row" data-label="Partner Contact">
+                                        <div class="slds-truncate" title="{!dealRecord.PartnerContact}">
+                                            {!dealRecord.PartnerContact}
+                                        </div>
+                                    </th>
+                                    </aura:if>
+                                </aura:if>
+                                <aura:if isTrue="{!!or(v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c=='Rainbow Office')}">
+                                    <!--<th scope="row" data-label="{!dealRecord.Avaya_CloudOffice_Specialist__c}">
+                                    <div class="slds-truncate" title="{!dealRecord.Avaya_CloudOffice_Specialist__c}">
+                                        {!dealRecord.Avaya_CloudOffice_Specialist__c}
+                                    </div>
+                                </th>-->
+                                    <th scope="row" data-label="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">
+                                        <div class="slds-truncate" title="{!dealRecord.PortalCloudSpecialist}">
+                                            {!dealRecord.PortalCloudSpecialist}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <th scope="row" data-label="Country">
+                                    <div class="slds-truncate" title="{!dealRecord.Country__c}">
+                                        {!dealRecord.Country__c}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="State">
+                                    <div class="slds-truncate" title="{!dealRecord.State__c}">
+                                        {!dealRecord.State__c}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Created Date">
+                                    <div class="slds-truncate">
+                                        
+                                        <lightning:formattedDateTime value="{!dealRecord.CreatedDate}"
+                                                                     month="numeric"
+                                                                     day="numeric"
+                                                                     year="numeric"
+                                                                     hour="2-digit"
+                                                                     minute="2-digit"
+                                                                     timeZone="{!$Locale.timezone}"/>
+                                    </div>
+                                </th>
+                                
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <!-- PAGINATION SECTION -->
+            <div class="slds-clearfix">                
+                <div class="slds-float_right">            
+                    <lightning:button disabled="{!v.pageNumber == 1}"
+                                      variant="brand" aura:id="prevPage"
+                                      label="{!v.translationsMap.Previous}" onclick="{!c.handlePrev}" iconName="utility:chevronleft" iconPosition="left"/>            
+                    <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                      aura:id="nextPage" variant="brand"
+                                      label="{!v.translationsMap.Next}" onclick="{!c.handleNext}" iconName="utility:chevronright" iconPosition="right"/>
+                </div>
+                <p class="slds-truncate">{!v.translationsMap.Displaying}&nbsp;{!v.recordStart}-{!v.recordEnd}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalRecords} | {!v.translationsMap.Page}&nbsp;{!v.pageNumber}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalPages}</p>
+            </div>
+        </aura:if>        
+    </aura:if>
+    <!-- LIST VIEW END -->
+    <!-- RECORD DETAIL START -->
+    <aura:if isTrue="{!v.ShowRecordDetail}">             
+        <lightning:card variant="Narrow" title="{!v.translationsMap.Deal_Registration_Details}" iconName="standard:lead">
+            <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;padding-left:.5rem;padding-right: 1rem">
+                <!--<aura:if isTrue="{!v.selectedStatusValue == 'Rejected'}" >
+                    <lightning:button variant="brand" label="{!v.translationsMap.Edit}" onclick="{!c.showEditSectionArea}" />   
+                </aura:if>  <--> 
+                <lightning:button variant="brand" label="{!v.translationsMap.Go_Back}" iconName="action:recall" iconPosition="left" onclick="{!c.goBackToViewList}" />
+            </div> 
+            
+            <aura:if isTrue="{!v.ShowDealRejReasonSection}">                
+                <div class="slds-box--x-small slds-m-around_x-small slds-theme--offline">                    
+                    <span>
+                        <lightning:icon iconName="utility:info"/>
+                        Deal Rejection reason : {!v.DealRegRecord.Deal_Rejection_Reason__c}
+                    </span>                    
+                </div>                       
+            </aura:if>
+            <aura:if isTrue="{!v.ShowBlockedDomainSection}">                
+                <div class="slds-box--x-small slds-m-around_x-small slds-theme--offline">
+                    <span>
+                        <lightning:icon iconName="utility:info"/>
+                        {!v.translationsMap.Help_text_Email_Domain_Issue}
+                    </span>
+                </div>                       
+            </aura:if> 
+            <br/>
+            <div class="slds-grid slds-wrap">  
+                    <aura:if isTrue="{!or(v.DealRegRecord.Partner_Type__c == 'Avaya - Bill-on-Behalf',v.DealRegRecord.Partner_Type__c == 'Alcatel-Lucent - Bill-on-Behalf',v.DealRegRecord.Partner_Type__c == 'Atos - Bill-on-Behalf')}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Partner Type of Partner Account:
+                                <lightning:helptext content="Partner Type of the Partner Account Associated with the Partner Contact chosen during the Deal Registration"/> 
+                            </span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>{!v.DealRegRecord.Partner_Type__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_4-of-7">
+                            <span></span>
+                        </div>  
+                    </aura:if> 
+                    <aura:if isTrue="{!or(v.ShowOnlyRC,or(v.ShowConAccFields,v.isSingleLogin))}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                <span>{!v.DealRegFieldsMap.Partner_Contact__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span>{!v.DealRegRecord.Partner_Contact__r.Name}</span>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!and(v.ShowOnlyRC,and(!v.ShowConAccFields,!v.isSingleLogin))}">
+                  <div class="slds-col slds-size_4-of-7">
+                    <span></span>
+                  </div>
+                  <aura:set attribute="else">
+                    <aura:if isTrue="{!or(v.ShowConAccFields,v.isSingleLogin)}">
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                </aura:if>
+            </aura:set>
+          </aura:if>
+  
+          <aura:if isTrue="{!or(v.ShowConAccFields,v.isSingleLogin)}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Partner_Account__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span>{!v.DealRegRecord.Partner_Account__r.Name}</span>
+                    </div> 
+                </aura:if>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.First_Name}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.First_Name__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.Last_Name}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Last_Name__c}</span>
+                </div>                
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Business_Title__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Business_Title__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Company_Name__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Company_Name__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Email_Address__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Email_Address__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Phone_Number__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Phone_Number__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Address__c}:</span>
+                </div>   
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Address__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.City__c}:</span>
+                </div>
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.City__c}</span>
+                </div>                
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.State_Province}:</span>
+                </div> 
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.State__c}</span>
+                </div>                
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Postal_Code__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Postal_Code__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Country__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Country__c}</span>
+                </div>
+                <aura:if isTrue="{!v.DealRegRecord.Tier_Name__c == 'RC Meetings'}">
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Forecasted_Video_Users}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Forecasted_RingCentral_Video_Users__c}</span>
+                    </div>
+                    <aura:set attribute="else">
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.DealRegFieldsMap.Forecasted_Users__c}:</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Forecasted_Users__c}</span>
+                        </div>
+                    </aura:set>
+                </aura:if>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Brand_Name__c}:
+                         <!-- JIRA 5042 change begins -->
+                        <aura:if isTrue="{!v.DealRegRecord.Brand_Name__c == 'Rainbow Office'}">
+                            <lightning:helptext content="{!v.translationsMap.Help_text_Brand_Name}"/>
+                        </aura:if>
+                        <aura:if isTrue="{!v.DealRegRecord.Brand_Name__c == 'Unify Office'}">
+                            <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection. Unify Office is the mandatory selection at this time."/>
+                        </aura:if>
+                        <aura:if isTrue="{!v.DealRegRecord.Brand_Name__c == 'Avaya Cloud Office'}">
+                            <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection. Avaya Cloud Office is the mandatory selection at this time."/>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection."/>
+                        </aura:if>
+                    <!-- JIRA 5042 change ends -->
+                    </span>
+             </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Brand_Name__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Industry__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Industry__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Number_of_Locations__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Number_of_Locations__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Website__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Website__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Number_of_Employees__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Number_of_Employees__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Estimated_Close_Date__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Estimated_Close_Date__c}</span>
+                </div>              
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Tier_Name__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Tier_Name__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Edition__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Edition__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.How_did_you_acquire_this_Lead__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.How_did_you_acquire_this_Lead__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Description__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Description__c}</span>
+                </div>
+                
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Existing_Solution_Provider__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Existing_Solution_Provider__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.Other_Solution_Provider}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Existing_Solution_Provider_Others__c}</span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Competitor_s__c}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Competitor_s__c}</span>
+                </div> 
+                
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.Other_Competitor}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Competitors_Other__c}</span>
+                </div> 
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.DealRegFieldsMap.Whats_prompting_change__c}:</span>
+                </div>                         
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.Whats_prompting_change__c}</span>
+                </div> 
+                
+                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                    <span></span>
+                </div>
+                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                    <span>{!v.translationsMap.Other_Change}:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                    <span>{!v.DealRegRecord.What_s_prompting_change_Other__c}</span>
+                </div> 
+               <aura:if isTrue="{!!or(v.ShowOnlyRC,or(or(v.communityDetailsRecord.Brand_Name__c=='RingCentral with Eastlink',v.communityDetailsRecord.Brand_Name__c=='RingCentral mit ecotel'),v.communityDetailsRecord.Brand_Name__c=='RingCentral for Symphony'))}">
+                <!--pbc-10695-->   
+                    <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE== v.partnerCommunity}">-->
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <!-- Commented since Avaya cloud Specialist need to be chosen<span>{!v.DealRegRecord.Avaya_CloudOffice_Specialist__c}</span>-->
+                        <span>{!v.DealRegRecord.Portal_Cloud_Specialist__r.Name}</span>
+                    </div> 
+                </aura:if>
+                <aura:if isTrue="{!!v.isNotAvaya}">
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_2-of-7 slds-border_top"></div>
+                </aura:if>
+                <aura:if isTrue="{!v.ShowOnlyATOS}">
+                     <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Inside_Sales_Rep__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Inside_Sales_Rep__r.Full_Name__c}</span>
+                    </div>  
+                    </aura:if>
+                <aura:if isTrue="{!v.ShowOnlyALE}">
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                        style="color:gray;">
+                        <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Partners_CRM_Opportunity_ID__c}</span>
+                    </div>
+                </aura:if> 
+                
+                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                    <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.DealRegFieldsMap.Sales_Notes__c}:</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Sales_Notes__c}</span>
+                        </div>  
+                    </aura:if>
+                </aura:if>
+                
+                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                    <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                        <div class="slds-col slds-size_4-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                    <div class="slds-col slds-size_2-of-7 slds-border_top"></div>
+                </aura:if>
+                </aura:if>
+               <!-- <aura:if isTrue="{!v.ShowOnlyRC}">-->
+                <!--<aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyATOS)}">-->
+                    <!--  <div class="slds-col slds-size_1-of-7 slds-border_top">
+                        <span></span>
+                    </div>
+                </aura:if>-->
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Inside_Sales_Rep__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Inside_Sales_Rep__r.Full_Name__c}</span>
+                    </div>                          
+                </aura:if>
+                <!--<aura:if isTrue="{!v.ShowOnlyRC}"><div class="slds-col slds-size_7-of-7 slds-border_top"></div></aura:if>-->
+                <aura:if isTrue="{!v.ShowOnlyRC}">
+                     <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                     <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                        style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Name}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Name}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                        style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Forecasted_Contact_Center_Users__c}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Forecasted_Contact_Center_Users__c}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                </aura:if>
+                <aura:if isTrue="{!v.ShowOnlyRC}"><!--pbc-10695-->
+                    <!--Added for PRM-83 starts-->
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                        style="color:gray;">
+                        <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Partners_CRM_Opportunity_ID__c}</span>
+                    </div>
+                </aura:if>
+                    <!--Added for PRM-83 ends-->
+                <aura:if isTrue="{!v.ShowOnlyRC}">
+                    <!-- Added for QTC-943 starts -->
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>Partner Program:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Partner_Program__c}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                        <span></span>
+                    </div>
+                    <!--Added Install starts -->
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>Installation Service Provider:</span>
+                    </div> 
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Installation_Service_Provider__c}</span>
+                    </div>
+                    <!--Added Install End-->
+                    <!--Added for Mitel starts-->
+                    <aura:if isTrue="{!v.DealRegRecord.Mitel_Customer_or_Prospect__c != null}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                             style="color:gray;">
+                            <span>Is this an existing Mitel Customer or Prospect:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Mitel_Customer_or_Prospect__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                        <aura:if isTrue="{!v.DealRegRecord.Mitel_Customer_or_Prospect__c == 'Yes'}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                 style="color:gray;">
+                                <span>What Type of Mitel Customer or Prospect?</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.DealRegRecord.Type_of_Customer_or_Prospect__c}</span>
+                            </div>
+                            <!--PBC-9705 P2CSHaring-->
+                            <aura:if isTrue="{!v.ShowMitelShareDetailPage}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>Allow sharing this deal data with Mitel?:</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.DealRegRecord.Mitel_Data_Sharing__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_4-of-7 slds-p-around_x-small slds-border_top">
+                                </div>
+                            </aura:if>
+                            <aura:set attribute="else">
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small slds-border_top">
+                                </div>    
+                            </aura:set>
+                        </aura:if>
+                    </aura:if>
+                    <!-- Added for Mitel ends-->
+                    <!--Added for PRM-99 starts-->
+                   <!-- <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                        style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Name}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.DealRegRecord.Name}</span>
+                    </div>-->
+                    <!--<div class="slds-col slds-size_4-of-7 slds-border_top">
+                     <span></span>
+                    </div>-->
+                    <aura:if isTrue="{!v.DealRegRecord.Country__c == 'Switzerland'}">
+                        <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;"></div>-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>Preferred Language:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Preferred_Language__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_4-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;"></div>
+                    </aura:if>
+                    <!--Added for PRM-99 ends-->
+                    </aura:if>
+				    <aura:if isTrue="{!and(v.DealRegRecord.Country__c == 'Switzerland',!v.ShowOnlyRC)}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>Preferred Language:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.DealRegRecord.Preferred_Language__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_4-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;"></div>
+                </aura:if>
+            </div>
+        </lightning:card> 
+    </aura:if>
+    <!-- DETAIL SECTION END -->
+    
+    <!-- NEW SECTION BEGIN -->
+    <aura:if isTrue="{!v.ShowNewSection}">
+        <aura:if isTrue="{!v.ShowOnlyRC}">
+            <div>
+                <div class="dealsconditionswrap">
+                    <label>All qualified deals should have the following criteria -</label>
+                    <ul>
+                        <li>Customer has shown interest in a UCaaS or CCaaS solution</li>
+                        <li>You have spoken to the Customer and have discussed RingCentral</li>
+                        <li>You have informed the Customer that they will be registered with RingCentral</li>
+                        <li>Customer is willing to have a conversation with you about RingCentral within 30 days</li>
+                        <li>Buying decision will occur within the next 12 months</li>
+                    </ul>
+                </div>
+            </div>
+        </aura:if>
+        <lightning:card variant="Narrow" title="{!v.translationsMap.New_Deal_Registration}"  iconName="standard:lead">       
+            <lightning:recordEditForm
+                                      aura:id="newRecordFormSection"
+                                      onsubmit="{!c.handleSubmitNew}"
+                                      onsuccess="{!c.handleSuccessNew}"
+                                      onerror="{!c.handleError}"  
+                                      objectApiName="Deal_Registration__c">
+                
+                <div class="slds-grid slds-wrap">
+                <!--Added for QTC-943 starts -->
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span>Partner Program:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <lightning:inputField aura:id="PartnerProgram" fieldName="Partner_Program__c" variant="label-hidden" />
+                                                           
+                        </div>
+                        <div class="slds-col slds-size_4-of-7 slds-p-around_x-small alignRight" style="color:gray;"></div>
+                    </aura:if>
+                    <!--Added for QTC-943 ends -->				
+                    <!-- ADDITIONAL FIELD FOR NEW ON BEHALF START -->
+                    <!--<aura:if isTrue="{!v.NewOnBehalf}">-->
+                    <!-- Single Login if -->
+                    <aura:if isTrue="{!or(v.isSingleLogin,v.NewOnBehalf)}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span class="heading" style="font-weight: bold;">{!v.DealRegFieldsMap.Partner_Contact__c}: <lightning:helptext content="{!v.translationsMap.Search_Icon_to_Choose_Partner_Contact}"/></span>
+                            <abbr class="slds-required" title="required">* </abbr>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span style="font-weight: bold;"><!--<lightning:inputField fieldName="Partner_Contact__c" variant="label-hidden"/>-->
+                                {!v.partnerContactName}&nbsp;&nbsp;
+                                <lightning:buttonIcon iconName="utility:search" variant="bare"
+                                                      onclick="{!c.createLookup}"
+                                                      alternativeText="{!v.translationsMap.Please_choose_a_Partner_Contact}" />
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Partner_ID}:</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>{!v.partnerId}&nbsp;&nbsp;</span>
+                        </div>                     
+                    </aura:if>
+                    <!-- Ignite change start -->
+                    <aura:if isTrue="{!and(v.ShowOnlyRC,v.partnerContactName)}">
+                    <!--    <div class="slds-col slds-size_4-of-7"> 
+                            <span></span>
+                        </div> -->
+                        <aura:if isTrue="{!v.NewOnBehalf}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Installation Service Provider:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist" onmouseover="{!c.toggledisplayTextON}" onmouseout="{!c.toggledisplayTextOFF}">
+                            <lightning:select name="Installation_Service_Provider__c" aura:id="selectedProvider" variant="label-hidden" class="label-hidden" value="{!v.selectedProviderValue}">
+                                <aura:iteration items="{!v.mapPSValueKeys}" var="psPartner" >   
+                                    <option value="{!psPartner}" selected="{!psPartner.value==v.selectedProviderValue}">{!psPartner}</option>                                            
+                                </aura:iteration>
+                            </lightning:select>                               
+                        </div>
+                        <div class="slds-col slds-size_4-of-7 slds-p-around_x-small alignRight" style="color:gray;"></div> 
+                        <aura:if isTrue="{!v.displayText}">                                   
+                            <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <p>
+                                    <lightning:formattedRichText value="&lt;b&gt;RC Technical Onboarding Install&lt;/b&gt; handles deals under 100 seats with express setup."/>
+                                </p>
+                                <p>
+                                    <lightning:formattedRichText value="&lt;b&gt;Partner Install, Certified Delivery Partner&lt;/b&gt; means partners lead installation solo or with ProServices."/>
+                                </p>
+                                <p>
+                                    <lightning:formattedRichText value="&lt;b&gt;Customer Self-Install&lt;/b&gt; means the customer sets up the RingEx product without assistance (UCaaS only)."/>
+                                </p>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                
+                                <p>
+                                    <lightning:formattedRichText value="&lt;b&gt;RC ProServices Install&lt;/b&gt; for customers requiring white glove service, complex deployment I.e. RCX or RCCC, or customized integrations."/>
+                                </p>
+                                
+                                <p>
+                                    <lightning:formattedRichText value="&lt;b&gt;Enroll in CDP for Partner Install&lt;/b&gt; allows partners to register for certification so they can lead the install."/>
+                                </p>
+                            </div>
+                        </aura:if>
+                    </aura:if>
+                    </aura:if>
+                    <!-- Ignite change end -->
+                    <!-- ADDITIONAL FIELD FOR NEW ON BEHALF END -->
+                    <!-- Install field in New for ignite start-->
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                        <aura:if isTrue="{!!v.NewOnBehalf}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Installation Service Provider:</span>
+                            <abbr class="slds-required">* </abbr>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist" onmouseover="{!c.toggledisplayTextON}" onmouseout="{!c.toggledisplayTextOFF}">
+                                <lightning:select name="Installation_Service_Provider__c" aura:id="selectedInstallProvider" variant="label-hidden" class="label-hidden" value="{!v.installProviderValue}">
+                                    <aura:iteration items="{!v.mapInstallPSValuesKeys}" var="psPartners" >   
+                                        <option value="{!psPartners}" selected="{!psPartners.value==v.installProviderValue}">{!psPartners}</option>                                            
+                                    </aura:iteration>
+                                </lightning:select>                               
+                            </div>
+                            <aura:if isTrue="{!v.displayText}">                                   
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;RC Technical Onboarding Install&lt;/b&gt; handles deals under 100 seats with express setup."/>
+                                    </p>
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;Partner Install, Certified Delivery Partner&lt;/b&gt; means partners lead installation solo or with ProServices."/>
+                                    </p>
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;Customer Self-Install&lt;/b&gt; means the customer sets up the RingEx product without assistance (UCaaS only)."/>
+                                    </p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;RC ProServices Install&lt;/b&gt; for customers requiring white glove service, complex deployment I.e. RCX or RCCC, or customized integrations."/>
+                                    </p>
+                                    
+                                    <p>
+                                         <lightning:formattedRichText value="&lt;b&gt;Enroll in CDP for Partner Install&lt;/b&gt; allows partners to register for certification so they can lead the install."/>
+                                    </p>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                    </aura:if>   
+                    <!-- Install field in New for ignite end-->
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.First_Name}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="First_Name__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Last_Name}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Last_Name__c" variant="label-hidden" required="true"/></span>
+                    </div>                
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Business_Title__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Business_Title__c" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Company_Name__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Company_Name__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Email_Address__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Email_Address__c" variant="label-hidden" aura:id="emailId" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Phone_Number__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Phone_Number__c" variant="label-hidden" aura:id="phoneNumber" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Address__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>   
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Address__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.City__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="City__c" variant="label-hidden" required="true"/></span>
+                    </div>  
+                    <aura:if isTrue="{!v.isNotAvaya}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.State}:</span>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <abbr class="slds-required" >* </abbr>
+                        </aura:if>
+                        <!--<abbr class="slds-required">* </abbr>-->
+                    </div> 
+                    
+                    <!-- <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="State__c" required="true" variant="label-hidden"/></span>
+                    </div> -->
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">
+                        
+                        <lightning:select name="State__c" aura:id="selectedState" variant="label-hidden" class="label-hidden">
+                            <aura:iteration items="{!v.mapCountryValueKeys}"  var="mapKey" >
+                                <option value="{!mapKey}">{!mapKey}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                        
+                    </div>
+                    </aura:if>
+                    <aura:if isTrue="{!!v.isNotAvaya}">
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.State_Province}:</span>
+                        <aura:if isTrue="{!v.CountryReq}">
+                            <abbr class="slds-required">* </abbr>
+                        </aura:if>
+                    </div> 
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">
+                        
+                        <lightning:select name="State__c" aura:id="selectedState" variant="label-hidden" class="label-hidden">
+                            <aura:iteration items="{!v.mapCountryValueKeys}"  var="mapKey" >
+                                <option value="{!mapKey}">{!mapKey}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                        
+                    </div>
+                    </aura:if>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                        <span>{!v.DealRegFieldsMap.Postal_Code__c}:</span>
+                        <aura:if isTrue="{!v.isNotAvaya}">
+                            <abbr class="slds-required" >* </abbr>
+                        </aura:if>
+                        <!-- <abbr class="slds-required">* </abbr> -->
+                    </div>    
+                    <aura:if isTrue="{!!v.isNotAvaya}">                  
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Postal_Code__c" variant="label-hidden" /></span>                             
+                        </div>
+                    </aura:if>  
+                    <aura:if isTrue="{!v.isNotAvaya}">                  
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Postal_Code__c" variant="label-hidden" required="true"/></span> <!--required="{!v.ShowOnlyRC}"-->
+                        </div>
+                    </aura:if>  
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Country__c}:
+                            <lightning:helptext content="Please contact RingCentral Partner Assist Team if Deal needs to be registered for another country"/>
+                        </span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>  
+                    
+                    <!-- <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Country__c" disabled="true" variant="label-hidden"/></span>
+                    </div> -->
+                    
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span>
+                            <lightning:select aura:id="selectedCountry" disabled="{!v.partnerhasAllCntryAcess}" name="Country__c" onchange="{!c.onchangeCountry}" variant="label-hidden" class="label-hidden">
+                                <!--<aura:iteration items="{!v.mapCountryKeys}"  var="mapKey" indexVar="key">  
+                                    <option value="{!mapKey.key}">{!mapKey.key}</option>
+                                </aura:iteration>-->
+                                <!--<aura:iteration items="{!v.mapCountryKeys}"  var="mapKey" >
+                                    <option value="{!mapKey}">{!mapKey}</option>
+                                </aura:iteration>-->
+                                
+                                <!-- added for multiple countries for ACO 3.0 -->
+                                <aura:iteration
+                                    items="{! v.isWholeSalePartner? v.countriesforBI : v.countriesAvailable}"
+                                    var="mapKey">
+                                    <option value="{!mapKey}" selected="{!mapKey==v.selectedCountry}">{!mapKey}</option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                         <span>{!v.DealRegFieldsMap.Forecasted_Users__c}:</span>
+                         <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                          <span><lightning:inputField fieldName="Forecasted_Users__c" aura:id="userId" variant="label-hidden" required="true"/></span>
+                    </div>
+                    
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Brand_Name__c}: 
+                             <!-- JIRA 5042 change begins -->
+                            <aura:if isTrue="{!v.selectedBrandValue == 'Rainbow Office'}">
+                                <lightning:helptext content="{!v.translationsMap.Help_text_Brand_Name}"/>                          
+                                  </aura:if>
+                            <aura:if isTrue="{!v.selectedBrandValue == 'Unify Office'}">
+                                <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection. Unify Office is the mandatory selection at this time."/>
+                            </aura:if>
+                            <aura:if isTrue="{!v.selectedBrandValue== 'Avaya Cloud Office'}">
+                                <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection. Avaya Cloud Office is the mandatory selection at this time."/>
+                            </aura:if>
+                            <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <lightning:helptext content="The name of the overall brand aligned to the products offered within the selection."/>
+                            </aura:if>
+                            <!-- JIRA 5042 change ends -->
+                        </span>        
+                        <abbr class="slds-required">* </abbr>
+                    </div> 
+                    <aura:if isTrue="{!!v.isGuestUser}">
+                    <aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">
+                            <span>
+                                <!--<lightning:inputField value="{!v.partnerCommunity}" disabled="true" fieldName="Brand_Name__c" variant="label-hidden" required="true"/>-->
+                                 <lightning:select name="brandNames" variant="label-hidden" aura:id="brandSelected"
+                                        value="{!v.selectedBrandValue}" class="label-hidden"
+                                        onchange="{!c.onChangeBrand}">
+                                        <aura:iteration
+                                            items="{!v.isWholeSalePartner? v.brandsListforBI : v.partnerCommunity}"
+                                            var="brand"> 
+                                        <option value="{!brand}">{!brand}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </span>
+                        </div>
+                    </aura:if>
+                    <!--<aura:if isTrue="{!v.NewOnBehalf}">-->
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">
+                            <span>
+                                <!--<lightning:inputField value="{!v.partnerCommunity}" disabled="true" fieldName="Brand_Name__c" variant="label-hidden" required="true"/>-->
+                                <lightning:select name="brandNames" variant="label-hidden" aura:id="brandSelected"
+                                        value="{!v.selectedBrandValue}" class="label-hidden"
+                                        onchange="{!c.onChangeBrand}">
+                                        <aura:iteration
+                                            items="{!v.isWholeSalePartner? v.brandsListforBI : v.brandsPermitted}"
+                                            var="brand"> 
+                                        <option value="{!brand}">{!brand}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </span>
+                        </div>
+                    </aura:if>
+                    <!--</aura:if>-->
+                    </aura:if>
+                    <aura:if isTrue="{!v.isGuestUser}">
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">
+                            <lightning:select name="brandNames" variant="label-hidden" aura:id="brandSelected" value="{!v.selectedBrandValue}" class="label-hidden" onchange="{!c.onChangeBrand}">
+                                <aura:iteration items="{!v.brandsPermitted_Guest}"  var="brand">  
+                                    <option value="{!brand}">{!brand}</option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                    </aura:if>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                        <span></span>
+                    </div> 
+      				<div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Industry__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <!-- <span><lightning:inputField fieldName="Industry__c" variant="label-hidden" value="{!v.DealRegRecord.Industry__c}" required="true"/></span>-->
+                        <span><lightning:inputField fieldName="Industry__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Tier_Name__c}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Tier_Name__c" value="{!v.selectedTierValue}" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                     <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Edition__c}:</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Edition__c" value="{!v.selectedEditionValue}" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Number_of_Locations__c}:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Number_of_Locations__c" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                     <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Website__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Website__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;text-align:right;">
+                        <span>{!v.DealRegFieldsMap.Number_of_Employees__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <!--<span><lightning:inputField fieldName="Number_of_Employees__c" variant="label-hidden" required="true"/></span>-->
+                        <lightning:select name="Number_of_Employees__c" aura:id="selectedEmp" variant="label-hidden" class="label-hidden">
+                            <aura:iteration items="{!v.mapEmpCompValKeys}"  var="mapEmpKey" >
+                                <option value="{!mapEmpKey}">{!mapEmpKey}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Estimated_Close_Date__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Estimated_Close_Date__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.How_did_you_acquire_this_Lead__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="How_did_you_acquire_this_Lead__c" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Description__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Description__c" variant="label-hidden" required="true"/></span>
+                    </div>              
+ 
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.DealRegFieldsMap.Existing_Solution_Provider__c}:</span>
+                        <abbr class="slds-required">* </abbr>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Existing_Solution_Provider__c"  aura:id="existing" onchange="{!c.existingChange}" variant="label-hidden" required="true"/></span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <aura:if isTrue="{!!v.ShowOtherExistingSoln}">
+                        <div class="slds-col slds-size_3-of-7">
+                            <span></span>
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowOtherExistingSoln}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                            <span>{!v.translationsMap.Other_Solution_Provider}:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Existing_Solution_Provider_Others__c" required="{!v.ShowOtherExistingSoln}"  variant="label-hidden"/></span>
+                        </div> 
+                    </aura:if>
+                   <!-- <aura:if isTrue="{!!v.ShowOnlyRC}">-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>{!v.DealRegFieldsMap.Competitor_s__c}:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>                        
+                        <!-- <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="Competitor_s__c" aura:id="competitor"  onchange="{!c.competitorChange}" variant="label-hidden" required="true"/></span>
+                    </div> -->
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <lightning:dualListbox required="true" aura:id="competitor" name="Competitors"
+                                                   sourceLabel="{!v.translationsMap.Available}"
+                                                   selectedLabel="{!v.translationsMap.Chosen}"
+                                                   value=""
+                                                   options="{!v.mapCountryCompValKeys}"
+                                                   onchange="{!c.competitorChange }"
+                                                   disableReordering="true"
+                                                   size="4"
+                                                   min ="1"
+                                                   
+                                                   variant="label-hidden"/>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        <aura:if isTrue="{!!v.ShowOtherCompetitor}">
+                            <div class="slds-col slds-size_3-of-7">
+                                <span></span>
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOtherCompetitor}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.translationsMap.Other_Competitor}:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small" aura:id="comp">
+                                <span><lightning:inputField fieldName="Competitors_Other__c" required="{!v.ShowOtherCompetitor}"  variant="label-hidden"/></span>
+                            </div> 
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 alignright alignRight" style="color:gray;">
+                            <span>{!v.DealRegFieldsMap.Whats_prompting_change__c}:</span>
+                            <abbr class="slds-required" >* </abbr>
+                        </div>                         
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small fieldWidth">
+                            <span><lightning:inputField fieldName="Whats_prompting_change__c" aura:id="prompting" onchange="{!c.promptingChange}" variant="label-hidden" required="true"/></span>
+                        </div> 
+                        <!--<div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>-->
+                        <aura:if isTrue="{!!v.ShowOtherPrompting}">
+                            <div class="slds-col slds-size_3-of-7">
+                                <span></span>
+                            </div></aura:if>
+                        <aura:if isTrue="{!v.ShowOtherPrompting}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.translationsMap.Other_Change}:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-left_large">
+                                <span><lightning:inputField fieldName="What_s_prompting_change_Other__c" required="{!v.ShowOtherPrompting}"  variant="label-hidden"/></span>
+                            </div> 
+                        </aura:if>    
+                    <aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                                <span  class="slds-float_right">{!v.DealRegFieldsMap.Sales_Notes__c}</span>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span ><lightning:inputField fieldName="Sales_Notes__c" variant="label-hidden"/></span>
+                            </div> 
+                        </aura:if>
+                    </aura:if>
+                    <!--<aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                            <span  class="slds-float_right">Ignite Deal</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span ><lightning:inputField fieldName="Ignite_Deal__c" variant="label-hidden" aura:id="ignite"/></span>
+                        </div>
+                    </aura:if>-->
+                    <!--Commented based on request 03/11/20120 div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>RC Overlay:</span>
+                        
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span><lightning:inputField fieldName="RC_Overlay__c"  variant="label-hidden" /></span>
+                    </div> -->
+                    <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                        <span  class="slds-float_right">Is RFP Needed</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span ><lightning:inputField fieldName="Is_RFP_Needed__c" variant="label-hidden"/></span>
+                    </div>-->
+                    <!--<aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Is RFP Needed</span>
+                             <abbr class="slds-required" >* </abbr>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span ><lightning:inputField fieldName="Is_RFP_Needed__c" variant="label-hidden"/></span>
+                        </div>
+                        <div class="slds-col slds-size_4-of-7">
+                            <span></span>
+                        </div>
+                        <c:Partner_CloudSpecialistSearch communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                    </aura:if>-->
+                    <aura:if isTrue="{!!v.isGuestUser}">
+                   <aura:if isTrue="{!!or(v.ShowOnlyRC,or(or(v.communityDetailsRecord.Brand_Name__c=='RingCentral with Eastlink',v.communityDetailsRecord.Brand_Name__c=='RingCentral mit ecotel'),v.communityDetailsRecord.Brand_Name__c=='RingCentral for Symphony'))}">
+                    <!--pbc-10695-->
+                        <c:Partner_CloudSpecialistSearch communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                    </aura:if>
+                    </aura:if>
+                    <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyATOS)}">
+                    <!--<aura:if isTrue="{!and(v.ShowOnlyAvaya,v.ShowOnlyRC)}">-->
+                        <!--<aura:if isTrue="{!or(or(and(v.NewOnBehalf, v.isNationalPartnerAccount),and(and(!v.NewOnBehalf, v.isNationalPartnerAccountNew),!v.isSingleLogin)),and(and(v.isSingleLogin,v.isNationalPartnerAccount),!v.NewOnBehalf))}">-->
+                        <aura:if isTrue="{!or(and(v.NewOnBehalf, !(empty(v.territoryAlignmentMap))),
+                                                                and(and(v.isSingleLogin,!v.NewOnBehalf),!(empty(v.territoryAlignmentMap))))}">
+                            <div aura:id="userPane" class="slds-form-element slds-lookup slds-is-close">
+                                <div class='slds-grid align'>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                        <span>RC Strategic Partner Manager:
+                                            <!--<aura:if isTrue="{!or(and(v.NewOnBehalf, !(empty(v.territoryAlignmentMap))),
+                                                                and(and(v.isSingleLogin,!v.NewOnBehalf),!(empty(v.territoryAlignmentMap))))}">-->
+                                                <lightning:helptext class='territorymaphelp' content="Please use Territory Alignment Map to find Strategic Partner Manager for required territory"/>
+                                            <!--</aura:if>-->
+                                        </span>
+                                        <abbr class="slds-required" >* </abbr>                                    
+                                        <!--<aura:if isTrue="{!or(and(v.NewOnBehalf, !(empty(v.territoryAlignmentMap))),
+                                                            and(and(v.isSingleLogin,!v.NewOnBehalf),!(empty(v.territoryAlignmentMap))))}">-->
+                                            <div>
+                                                <a href="" onclick="{!c.previewFile}">
+                                                    Territory Alignment Map
+                                                </a>
+                                            </div>
+                                        <!--</aura:if>-->
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small dropdownwrap">             
+                                        <div class="slds-form-element__control" >
+                                            <ui:inputText aura:id="usersearch"  placeholder="Search Users.."
+                                                          class="slds-lookup__search-input slds-input input-no-border" value="{!v.searchUser}" updateOn="keyup" keyup="{!c.onInputChange}" click="{!c.onSearchInputClick}" required="true" />
+                                        </div>
+                                        <div id="listbox-unique-id"  class="lookup-container cloudspecdropdown slds-p-horizontal_x-small" role="listbox" >
+                                            <ul class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu" aura:id="dropDownList" role="presentation">
+                                                <aura:if isTrue="{!not(empty(v.portalUserList))}">
+                                                    <aura:iteration var="userRecord" items="{!v.portalUserList}" indexVar="index">
+                                                        <li role="presentation" class="slds-listbox__item" onclick="{!c.selectedUser}" data-username="{!userRecord.Strategic_Partner_Manager__r.Full_Name__c}" 
+                                                            data-userid="{!userRecord.Strategic_Partner_Manager__r.Id}" >
+                                                            <div id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+                                                                <span class="slds-media__body">
+                                                                    <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!userRecord.Strategic_Partner_Manager__r.Full_Name__c}</span>
+                                                                    <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">{!userRecord.Strategic_Partner_Manager__r.Email}</span>
+                                                                </span>
+                                                            </div>
+                                                        </li>
+                                                    </aura:iteration>
+                                                </aura:if>
+                                                <aura:if isTrue="{!(empty(v.portalUserList))}">
+                                                    <div class="nousers">No Users Found..</div>
+                                                </aura:if>
+                                            </ul>
+                                        </div>                                    
+                                    </div>
+                                </div>
+                            </div>
+                        </aura:if>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Forecasted Contact Center Users:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>
+                                <lightning:inputField fieldName="Forecasted_Contact_Center_Users__c" value="{!v.ForecastCCU}" variant="label-hidden" />
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7"></div>
+                    </aura:if>
+                    <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyALE)}"><!--pbc-10695--> 
+                        <!--Added for PRM-83 starts-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}:</span>
+                        </div>    
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Partners_CRM_Opportunity_ID__c" variant="label-hidden" /></span>                             
+                        </div>
+                        <!--Added for PRM-83 ends-->
+                    </aura:if>
+                    <!--<aura:if isTrue="{!v.ShowOnlyRC}">
+                        <div class="slds-col slds-size_1-of-7"></div>
+                    </aura:if>-->
+                    <aura:if isTrue="{!v.isMitel}">
+                        <!--Added for Mitel PRM-145 starts-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span>Is this an existing Mitel Customer?:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Mitel_Customer_or_Prospect__c" aura:id="isMitelCustomer" variant="label-hidden" onchange="{!c.changeMitelCustomer}"/></span>                             
+                        </div>
+                        <div class="slds-col slds-size_1-of-7"></div>
+                        <aura:if isTrue="{!v.ShowMitelCustomerType}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span>What Type of Mitel Customer or Prospect?:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                               <span><lightning:inputField fieldName="Type_of_Customer_or_Prospect__c" aura:id="mitelCustomerType" variant="label-hidden" onchange="{!c.changeMitelType}"/></span>                             
+                        </div>
+                            <aura:if isTrue="{!v.ShowMitelDataShare}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                                    <span>Allow sharing this deal data with Mitel?:</span>
+                                    <lightning:helptext class="mitelHelpText" content="By clicking yes, you consent to RingCentral sharing with Mitel Networks, Inc. (in its capacity as a RingCentral partner) account and opportunity data."/>
+                                    <abbr class="slds-required">* </abbr>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Mitel_Data_Sharing__c" aura:id="mitelDataShare" variant="label-hidden" /></span>                             
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;"></div>
+                            </aura:if>
+                            <aura:set attribute="else">
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;"></div>
+                            </aura:set>
+                        </aura:if>
+                        <!-- Added for Mitel PRM-145 ends--> 
+                    </aura:if>
+                    <!--Added for Switzerland starts-->
+                    <aura:if isTrue="{!v.selectedCountry == 'Switzerland'}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Preferred Language:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>
+                                <lightning:inputField fieldName="Preferred_Language__c" variant="label-hidden" />
+                            </span>
+                        </div>
+                    </aura:if>
+                    <!--Added for Switzerland ends-->
+                </div>
+                <aura:if isTrue="{!v.ShowRequiredErrorSection}">
+                    <div class="slds-align_absolute-center">
+                        <!--<div class="slds-is-relative errorMessageRequiredDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                        <div class="slds-notify__content">-->
+                        
+                        <h2 class="slds-text-heading_small" style="background-color:rgb(255, 255, 255);color:rgb(201, 17, 21);">*{!v.translationsMap.Fill_All_the_fields}</h2>
+                        <!-- </div>
+                    </div>
+                </div> --> 
+                        <br/>
+                    </div>
+                </aura:if>
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                    <lightning:button variant="brand" label="{!v.translationsMap.Submit}" type="submit" iconName="action:check" iconPosition="left"/>
+                    <lightning:button variant="brand" type="cancel" name="Cancel" label="{!v.translationsMap.Cancel}" iconName="action:close" iconPosition="left" onclick="{!c.goBackListView}"/>            
+                </div>
+            </lightning:recordEditForm>
+        </lightning:card>
+    </aura:if>    
+    <div aura:id="lookupSearchDiv"></div>
+    <aura:if isTrue="{!v.showGuestLogin}">
+        <c:GSPGuestLogin GuestEmail="{!v.GuestEmail}" />
+    </aura:if>
+</aura:component>

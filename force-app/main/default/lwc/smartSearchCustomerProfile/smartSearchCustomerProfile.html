@@ -1,0 +1,135 @@
+<template>
+    <div class="slds-box slds-m-around_small background">
+        <h2 class="slds-text-heading_small title">Customer Profile</h2>
+        <div class="slds-grid slds-gutters slds-form-element_horizontal">
+            <div class="slds-col slds-size_4-of-12 slds-m-left_x-small">
+                <div class="slds-m-top_small">
+                    <div data-id="employeeRange" class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>No. of Employees (Range)</div>
+                    <template if:true={noOfEmployeesRangeValues}>
+                        <div class={employeeRangeRedBox}>
+                            <lightning-combobox
+                                class={employeeRangeRedBox}
+                                name="noOfEmployeesRange"
+                                data-id="combobox-range"
+                                label="No. of Employees (Range)"
+                                placeholder="--None--"
+                                variant="label-hidden"
+                                value = '--None--'
+                                options={noOfEmployeesRangeValues}
+                                onchange={handleChangePicklistNoOfEmployeesRange}
+                            >
+                            </lightning-combobox>
+                            <div if:true={showEmployeeRangeErrorMsg} class="slds-form-element__help">
+                                {textBoxValues.requiredFieldMessage}
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <div class="slds-m-top_small">
+                    <lightning-input
+                        name="noOfEmployees"
+                        variant="label-inline"
+                        type="number"
+                        min="0"
+                        placeholder={placeholders.NoOfEmployeesPlaceholder}
+                        onfocus={handleFocusOnNoOfEmployees}
+                        onblur={handleBlurOnNoOfEmployees}
+                        label="No. of Employees"
+                        onchange={handleInputChange}
+                        autocomplete="name"
+                    ></lightning-input>
+                </div>
+                <div class="slds-m-top_small">
+                    <lightning-input
+                        name="noOfEmployeesNeedingPhones"
+                        variant="label-inline"
+                        type="number"
+                        min="0"
+                        label="No. of Employees needing Phones"
+                        onchange={handleInputChange}
+                        autocomplete="name"
+                    ></lightning-input>
+                </div>
+                <div class="slds-m-top_small">
+                    <div class="slds-form-element__label">LinkedIn</div>
+                    <div class="slds-form-element__control">
+                        <a
+                            type="url"
+                            onclick={navigateToLinkedInPage}
+                        >LinkedIn Company Search
+                        </a>
+                    </div>
+                </div>
+                <div class="slds-m-top_small">
+                    <div class="slds-form-element__label">Data.com</div>
+                    <div class="slds-form-element__control">
+                        <a  
+                            type="url"
+                            onclick={navigateToDataDotCom}
+                        >{urlDataDotComSearch}
+                        </a>
+                    </div>
+               </div>
+            </div>
+
+            <div class="slds-col slds-size_3-of-12"></div>
+            <div class="slds-col slds-size_4-of-12">
+                <div class="slds-m-top_small">
+                    <div class="slds-form-element__label">No. of Locations</div>
+                    <template if:true={noOfLocationsValues}>
+                        <lightning-combobox
+                            name="noOfLocations"
+                            label="No. of Locations"
+                            variant="label-hidden"
+                            placeholder="--None--"
+                            options={noOfLocationsValues}
+                            onchange={handleChangePicklistNoOfLocations}
+                        >
+                        </lightning-combobox>
+                    </template>
+                </div>
+                <div class="slds-m-top_small">
+                    <div data-id="industry" class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>Industry</div>
+                    <template if:true={industryValues}>
+                        <div class={industryRedBox}>
+                            <lightning-combobox
+                                name="industry"
+                                class={industryRedBox}
+                                label="Industry"
+                                variant="label-hidden"
+                                placeholder="--None--"
+                                options={industryValues}
+                                onchange={handleChangePicklistIndustry}
+                            >
+                            </lightning-combobox>
+                            <div if:true={showIndustryErrorMsg} class="slds-form-element__help">
+                                {textBoxValues.requiredFieldMessage}
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <lightning-input
+                    class="slds-m-top_small"
+                    name="website"
+                    onchange={handleInputChange}
+                    placeholder={placeholders.websitePlaceholder}
+                    onfocus={handleFocusOnWebsite}
+                    onblur={handleBlurOnWebsite}
+                    variant="label-inline"
+                    type="text"
+                    label="Website"
+                    autocomplete="name"
+                ></lightning-input>
+                <div class="slds-m-top_small">
+                    <div class="slds-form-element__label">Partner Request Source</div>
+                    <template if:true={partnerRequestSourceValues}>
+                        <lightning-combobox name="PartnerRequestSource" label="Partner Request Source"
+                            variant="label-hidden" placeholder="--None--" options={partnerRequestSourceValues}
+                            onchange={handleChangePicklistPartnerRequestSource}>
+                        </lightning-combobox>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

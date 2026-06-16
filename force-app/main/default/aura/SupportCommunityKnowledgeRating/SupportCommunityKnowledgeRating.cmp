@@ -1,0 +1,74 @@
+<aura:component description="Support Community Knowledge Rating" implements="forceCommunity:availableForAllPageTypes" controller="SupportCommunityKnowledgeController">
+    <aura:attribute name="label" type="String" default="Was this helpful?" />
+    <aura:attribute name="placeholder" type="String" default="How can we improve?" />
+    <aura:attribute name="like_class" type="String" default="" />
+    <aura:attribute name="dislike_class" type="String" default="" />
+    <aura:attribute name="comment_message" type="String" default="The comment was successfully sent!" />
+    <aura:attribute name="comment_header" type="String" default="Thank you for your comment." />
+    <aura:attribute name="comment_sended" type="Boolean" default="false" />
+    <aura:attribute name="wait" type="Boolean" default="false" />
+    <aura:attribute name="comment_send_message" type="String" default="Thank you for your comment." />
+    <aura:attribute name="module_class" type="String" default="" />
+    <aura:attribute name="comment_show" type="Boolean" default="false" />
+    <aura:attribute name="label_show" type="Boolean" default="false" />
+    <aura:attribute name="likesCount_show" type="Boolean" default="false" />
+    <aura:attribute name="likesCount" type="String" default="" />
+    <aura:attribute name="dislikesCount" type="String" default="" />
+    <aura:attribute name="maxCommentLen" type="Integer" default="32767" />
+    <aura:handler event="c:SupportCommunityUserEvent" action="{!c.handleUpdate}"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <div>
+        <div class="rating__wrapper">
+            <div class="rating__label">
+                <span>{!v.comment_sended?(v.label_show? v.comment_send_message:'' ):v.label}</span>
+                <div class="{!'rating_likes like '+v.like_class}" data-count="{!v.likesCount_show?v.likesCount:''}">
+                    <lightning:buttonIcon
+                        iconName="utility:like"
+                        variant="bare"
+                        onclick="{! c.likeClick }"
+                        size="small"
+                        disabled="{!v.wait?'true':'false'}"
+                        alternativeText="Like" />
+                </div>
+                <div class="{!'rating_likes dislike '+v.dislike_class}" data-count="{!v.likesCount_show?v.dislikesCount:''}">
+                    <lightning:buttonIcon
+                        iconName="utility:dislike"
+                        class="{!v.dislike_class}"
+                        variant="bare" onclick="{! c.dislikeClick }"
+                        size="small"
+                        disabled="{!v.wait?'true':'false'}"
+                        alternativeText="Dislike" />
+                </div>
+                <div class="{!'comment' + (v.comment_show?' showed':'')}">
+                    <lightning:input
+                        name="inputComment"
+                        aura:id="comment"
+                        label=""
+                        placeholder="{!v.placeholder}"
+                        required="true"
+                        maxlength="{!v.maxCommentLen}"
+                        messageWhenTooLong="{!'Comment must be less ' + v.maxCommentLen + ' characters!'}"
+                        messageWhenValueMissing="Please type your comment first"/>
+                    <lightning:button label="Submit" variant="brand" onclick="{!c.sendClick}"/>
+                </div>
+            </div>
+            <div class="{!'rating__modal '+v.module_class}" style="height: 640px;">
+                <section role="dialog" tabindex="-1" aria-label="The comment was successfully sent!" aria-modal="true" aria-describedby="modal-content-id-1" class="{!'slds-modal '+v.module_class}">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close"  variant="bare-inverse" title="Close" alternativeText="Close" class="slds-modal__close" onclick="{! c.closeModal }"/>
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.comment_header}</h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                            <p>{!v.comment_message}</p>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <button class="slds-button slds-button_brand" onclick="{! c.closeModal }">Ok</button>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </div>
+        </div>
+    </div>
+</aura:component>

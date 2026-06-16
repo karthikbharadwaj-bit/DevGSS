@@ -1,0 +1,249 @@
+<aura:component controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+  <aura:attribute name="Quote" type="Partner_Quote__c" />
+  <aura:attribute name="showProductCategoryCMP" type="Boolean" default="true" />
+  <aura:attribute name="ProductEdition" type="Product_Package__c" />
+  <aura:attribute name="ProductCategories" type="QuotePlanAndPricingController.AdditionalProductWrapper[]" />
+  <aura:attribute name="selectedCategory" type="String" />
+  <aura:attribute name="selectedSubCategories" type="String[]" />
+  <aura:attribute name="subCatSel" type="string" />
+  <aura:attribute name="FinalSelectedSubCategories" type="List" />
+  <aura:attribute name="ProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+  <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+  <aura:attribute name="NoOfSeats" type="Integer" />
+  <aura:attribute name="IntervalId" type="Integer" />
+  <aura:attribute name="Spinner" type="Boolean" default="false" />
+  <aura:attribute name="ShowQuoteLines" type="Boolean" />
+  <aura:attribute name="ReloadDataOnLineDelete" type="Boolean" />
+  <aura:attribute name="PricingYearly" type="Boolean" />
+  <aura:attribute name="ProductNameWidth" type="String" default="250px" />
+  <aura:attribute name="currentUser" type="User" />
+  <aura:attribute name="CategoryNames" type="String[]" />
+  <aura:attribute name="isSuperUser" type="Boolean" default="false" />
+  <aura:attribute name="hideDiscount" type="Boolean" default="false" />
+  <aura:attribute name="isPromoCodeAppliedApproved" type="Boolean" default="false" />
+  <aura:attribute name="mapOfPackageToPromoDetail" type="Map" />
+  <aura:attribute name="mapOfPromoToListAssociatedDetail" type="Map" />
+  <aura:attribute name="BrandName" type="string" />
+  <aura:attribute name="isSpeciaPermissionAvail" type="Boolean" />
+  <aura:handler name="init" value="{!this}" action="{!c.loadEditionDetails}" />
+  <aura:handler name="change" value="{!v.ReloadDataOnLineDelete}" action="{!c.reLoadEditionDetails}" />
+  <aura:handler name="change" value="{!v.Quote}" action="{!c.reLoadCategoriesFromPackage}" />
+  <aura:handler name="evtSelectProduct" event="c:Quote_SelectProduct" action="{!c.addSelectedProduct}" />
+  <aura:handler name="evtUpdatePricing" event="c:Quote_UpdatePricing" action="{!c.handleUpdatePricingEvent}" />
+  <aura:attribute name="baseUrlComm" type="String" />
+  <aura:attribute name="showConfirmModal" type="Boolean" default="false" />
+  <aura:attribute name="isAvailProServ" type="String" default="-- None --" />
+  <aura:attribute name="proServNotes" type="String" default="" />
+  <aura:attribute name="isInitialOrder" type="Boolean" default="false" />
+  <aura:attribute name="noProductsAvailable" type="Boolean" default="false" />
+   <aura:attribute name="translationsMap" type="Map" />
+
+  <div class="slds-grid slds-gutters">
+    <div aura:id="divLeft" class="slds-col producteditionleftwrap">
+      <aura:if isTrue="{!not(v.ShowQuoteLines)}">
+        <lightning:tabset selectedTabId="{!v.selectedCategory}" onselect="{!c.resetCategoryAndLoadEditionDetails}">
+          <aura:iteration items="{!v.CategoryNames}" var="eachCategory">
+            <lightning:tab label="{!eachCategory}" id="{!eachCategory}">
+            </lightning:tab>
+          </aura:iteration>
+        </lightning:tabset>
+        <!-- JIRA 5042 change begins -->
+        <aura:if isTrue="{!and(v.selectedCategory == 'Phones',v.BrandName != 'Unify Office')}">
+          <div>
+            <br></br>
+            The quantity of the total number of devices (existing+softphone+physical phones) need to equal the quantity
+            of licences from Service tab. For BYOD (Bring your own device) choose “existing phone”
+          </div>
+        </aura:if>
+        <aura:if isTrue="{!v.selectedCategory == 'Bundles'}">
+          <div>
+            <br></br>
+            Where additional minutes are known to be required beyond those included in your package or to call premium
+            or not included prefixes, you can purchase bundles here at a discounted rate vs. standard calling pricing.
+            Bundles are charged at the standard per minute cost for the relevant country but are discounted for bundle
+            purchase e.g. 12 euros of credit is 10 euros.
+          </div>
+        </aura:if>
+        <!-- JIRA 5042 change ends -->
+      </aura:if>
+      <aura:if isTrue="{!!v.ShowQuoteLines}">
+        <div
+          class="{!if (empty(v.FinalSelectedSubCategories), 'subcategorywrap nosubcategorywrap' , 'subcategorywrap' )}">
+          <aura:iteration items="{!v.FinalSelectedSubCategories}" var="eachSubCategory">
+            <td class="slds-text-align_left">
+              <button data-value="{!eachSubCategory}"
+                class="{! v.subCatSel == eachSubCategory ?  'slds-button slds-button_outline-brand selectedcategory' : 'slds-button slds-button_outline-brand' }"
+                onclick="{!c.getSelectedCategoryDetails}">{!eachSubCategory}</button>
+            </td>
+            <aura:if isTrue="{!and(v.selectedCategory == 'Implementation',v.BrandName == 'Avaya Cloud Office')}">
+              <td class="slds-text-align_right" style="padding-left:600px; color:#111">
+                <!--<button class="slds-button-ps slds-button_brand" onclick="{!c.showHideEngageModel}" disabled="{!!v.isInitialOrder}">Engage ProServ</button>-->
+                <aura:if isTrue="{!!v.isInitialOrder}">
+                  <button class="slds-button-ps slds-button_brand" onclick="{!c.showHideEngageModel}"
+                    title="ProServ has already been engaged for this Opportunity" disabled="true">{!v.translationsMap.Engage_ProServ_PI}</button>
+                </aura:if>
+                <aura:if isTrue="{!v.isInitialOrder}">
+                  <button class="slds-button-ps slds-button_brand" onclick="{!c.showHideEngageModel}"
+                    disabled="false">{!v.translationsMap.Engage_ProServ_PI}</button>
+                </aura:if>
+              </td>
+            </aura:if>
+          </aura:iteration>
+        </div>
+      </aura:if>
+      <div class="slds-size--1-of-1">
+        <div class="slds">
+          <aura:if isTrue="{!v.noProductsAvailable}">
+            <div class="errorMessageDiv">
+              <div class="slds-is-relative errorMessageDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                  <div class="slds-notify__content noProductMsg">
+                    <h3 class="slds-text-heading_small">No Products available</h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <aura:set attribute="else">
+              <table class="slds-table slds-no-row-hover slds-table_fixed-layout">
+
+                <thead>
+                  <!--<tr>-->
+                  <tr style="background-color:#99ccff;">
+                    <aura:if isTrue="{!v.selectedCategory != 'Implementation'}">
+                      <th colspan="4">
+                        <div class="slds-truncate" title="Name">
+                           {!v.translationsMap.Name}
+                        </div>
+                      </th>
+                    </aura:if>
+                    <aura:if isTrue="{!v.selectedCategory == 'Implementation'}">
+                      <th colspan="6">
+                        <div class="slds-truncate" title="Name">
+                           {!v.translationsMap.Name}
+                        </div>
+                      </th>
+                    </aura:if>
+                    <aura:if isTrue="{!v.selectedCategory != 'Implementation'}">
+                      <th class="slds-text-align_left">
+                        <div class="slds-truncate" title="Plan">
+                            {!v.translationsMap.Plan_PI}
+                        </div>
+                      </th>
+                      <th class="slds-text-align_center">
+                        <div class="slds-truncate" title="{!'Unit Price (' + v.Quote.CurrencyIsoCode + ')'}">
+                          {!v.translationsMap.Unit_Price_PI} <br /> {!'(' + v.Quote.CurrencyIsoCode + ')'}
+                        </div>
+                      </th>
+                      <th style="width:15px;">
+                        &nbsp;
+                      </th>
+                      <aura:if isTrue="{!v.Quote.Subscription__c != null}">
+                        <th class="slds-text-align_right">
+                          <div class="slds-truncate" title="Previous Quantity">
+                            Previous Quantity
+                          </div>
+                        </th>
+                      </aura:if>
+                      <th class="slds-text-align_center">
+                        <div class="slds-truncate" title="Quantity">
+                          {!v.translationsMap.Quantity_PI}
+                        </div>
+                      </th>
+                      <aura:if isTrue="{!v.hideDiscount}">
+                        <th class="slds-text-align_center">
+                          <div class="" title="Discount">
+                            {!v.translationsMap.Discount}
+                          </div>
+                        </th>
+                        <th class="slds-text-align_center">
+                          <div class="" title="Discount Type">
+                            Discount <br /> Type
+                          </div>
+                        </th>
+                      </aura:if>
+                      <th class="slds-text-align_center">
+                        <div class="slds-truncate" title="{!'Net Price (' + v.Quote.CurrencyIsoCode + ')'}">
+                          {!v.translationsMap.Net_Price_PI} <br />{!'(' + v.Quote.CurrencyIsoCode + ')'}
+                        </div>
+                      </th>
+                      <aura:set attribute="else">
+                        <th style="width:11%;">
+                          <div class="slds-truncate" title="Forecasted Users">
+                            Forecasted Users
+                          </div>
+                        </th>
+                        <th style="width:10%;">
+						  <aura:if isTrue="{!!v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office'}"><!--Added for pbc-10937-->
+                          <div class="slds-truncate" title="Location">
+                            Location
+                          </div>
+						  </aura:if>
+                        </th>
+                      </aura:set>
+                    </aura:if>
+                    <th></th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <c:Quote_EditionProducts ProductList="{!v.ProductList}" SelectedProductList="{!v.SelectedProductList}"
+                    ReloadDataOnLineDelete="{!v.ReloadDataOnLineDelete}" Quote="{!v.Quote}" Spinner="{!v.Spinner}"
+                    ProductNameWidth="{!v.ProductNameWidth}" currentUser="{!v.currentUser}"
+                    selectedCategory="{!v.selectedCategory}" isSuperUser="{!v.isSuperUser}"
+                    hideDiscount="{!v.hideDiscount}" isSpeciaPermissionAvail="{!v.isSpeciaPermissionAvail}"
+                    mapOfPackageToPromoDetail="{!v.mapOfPackageToPromoDetail}"
+                    isPromoCodeAppliedApproved="{!v.isPromoCodeAppliedApproved}" />
+
+                </tbody>
+              </table>
+            </aura:set>
+          </aura:if>
+        </div>
+        <aura:if isTrue="{!v.Spinner}">
+          <c:SpinnerComponent />
+        </aura:if>
+      </div>
+    </div>
+    <aura:if isTrue="{!v.Quote.Quote_Type__c != 'Amend'}">
+      <div aura:id="divRight" class="slds-col slds-grow-none productsummarywrap">
+        <div><label class="editiontype">{!v.Quote.Product_Edition__r.Name} Edition</label></div>
+        <c:Quote_EditionProductsSummary ProductEdition="{!v.ProductEdition}" Step="{!v.Step}" Quote="{!v.Quote}"
+          NoOfSeats="{!v.NoOfSeats}" callUpdatePricingEvent="true" SelectedProductList="{!v.SelectedProductList}"
+          ReloadDataOnLineDelete="{!v.ReloadDataOnLineDelete}" PricingYearly="{!v.PricingYearly}" Mode="Full"
+          BrandName="{!v.BrandName}" />
+      </div>
+    </aura:if>
+  </div>
+  <aura:if isTrue="{!v.showConfirmModal}">
+    <div class="slds-m-around--xx-large">
+      <div role="dialog" class="slds-modal slds-fade-in-open ">
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">{!v.translationsMap.Engage_ProServ_PI}</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around--medium">
+            <div class="slds-grid slds-wrap">
+              <div class="slds-col slds-size_1-of-7 slds-p-horizontal_x-medium slds-p-top_large" style="color:gray;">
+                <span class="slds-float_right">ProServ Notes : </span>
+              </div>
+              <div class="slds-col slds-size_6-of-7 slds-p-horizontal_x-small">
+                <ui:inputTextArea aura:id="proServNotes" label="" value="{!v.proServNotes}" rows="5" />
+              </div>
+            </div>
+          </div>
+
+          <div class="slds-modal__footer">
+            <lightning:button variant="brand" value="Submit" label="{!v.translationsMap.Submit}" name="Submit" type="button"
+              iconName="action:check" iconPosition="left" onclick="{!c.engageProServ}" />
+            <lightning:button variant="brand" value="No" type="cancel" name="Cancel" label="{!v.translationsMap.Cancel}"
+              iconName="action:close" iconPosition="left" onclick="{!c.showHideEngageModel}" />
+          </div>
+        </div>
+      </div>
+      <div class="slds-backdrop slds-backdrop--open"></div>
+
+    </div>
+
+  </aura:if>
+
+</aura:component>

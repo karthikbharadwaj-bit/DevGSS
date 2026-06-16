@@ -1,0 +1,63 @@
+<aura:component description="SupportCommunityCases"  implements="forceCommunity:availableForAllPageTypes">
+    <aura:attribute name="CSM_Name" type="String" default="null" />
+    <aura:attribute name="CSM_Email" type="String" default="" />
+    <aura:attribute name="CSM_Photo" type="String" default="" />
+    <aura:attribute name="init_width" type="Integer" default="0" />
+    <aura:attribute name="data" type="Object"/>
+    <aura:attribute name="columns" type="List"/>
+    <aura:attribute name="show" type="Boolean" />
+    <aura:attribute name="hasCases" type="Boolean" default="false"/>
+    <aura:attribute name="hasAccount" type="Boolean" default="false"/>
+    <aura:attribute name="viewAllCases" type="String" default="#" />
+    <aura:attribute name="checkSystemStatus" type="String" default="#" />
+    <aura:attribute name="caseLink" type="String" />
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <div>
+        <div class="{!'sc-cases' + (v.show ? '' : ' blured')}">
+            <div class="sc-cases__data">
+                <div class="{!(and(v.hasAccount,v.CSM_Name != null) || !v.show) ? 'sc-cases__csm' : 'sc-cases__csm hide'}">
+                    <div class="csm__title">{!$Label.c.SC_yourCSM}</div>
+                    <aura:if isTrue="{!v.show}">
+                        <div class="sc-cases__avatar" style="{!'background-image:url(' + v.CSM_Photo + ');'}">
+                        </div>
+                        <div class="sc-cases__name">
+                            <aura:if isTrue="{!v.CSM_Email}">
+                                <a href="{!'mailto:'+v.CSM_Email}" target="_top">{!v.CSM_Name}</a>
+                                <aura:set attribute="else">
+                                    {!v.CSM_Name}
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                        <aura:set attribute="else">
+                            <div class="sc-cases__avatar">
+                                <img src="{! $Resource.sc_avatar_ex}"/>
+                            </div>
+                            <div class="sc-cases__name">Derrell James</div>
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <div class="sc-cases__table" id="sc-cases__datatable">
+                    <lightning:datatable
+                        keyField="caseNumber"
+                        data="{! v.data }"
+                        columns="{! v.columns }"
+                        hideCheckboxColumn="true"
+                        class="sc-cases__datatable"
+                        resizeColumnDisabled="true"
+                    />
+                    <aura:if isTrue="{!and(v.show == true ,v.hasCases == false)}">
+                        <div class="sc-notaval">
+                            {!$Label.c.SC_noCases}
+                        </div>
+                    </aura:if>
+                </div>
+            </div>
+            <div class="sc-cases__controls">
+                <div class="sc-cases__vacases"><a href="{!v.viewAllCases}">{!$Label.c.SC_viewAllCases}</a></div>
+                <a href="{!v.checkSystemStatus}">
+                    <div class="{!'sc-cases__status'}">{!$Label.c.SC_checkSystemStatus}</div>
+                </a>
+            </div>
+        </div>
+    </div>
+</aura:component>

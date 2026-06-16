@@ -1,0 +1,183 @@
+<template>
+    <template if:true={isModalOpen}>
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Overlay -->
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                    style="margin-right: -208px;" title="Close" onclick={closeModal}>
+                    <lightning-icon icon-name="utility:close" size="small" alternative-text="close"
+                        class="slds-button__icon slds-button__icon_large"></lightning-icon>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div style="width: 1000px;margin-left: -150px;overflow-y:auto">
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <template lwc:if={showBanner}>
+                            <c-banner-for-outage display-location="Case Create Page"
+                                onmanageview={handleBannerDisplay}
+                                onmanagenavigation={handleNavigation}
+                                hide-navigation></c-banner-for-outage>
+                            <br/>
+                            <div lwc:if={showButton} class="slds-grid slds-docked-form-footer" style="position:sticky; margin: -12px 0 -6px 0; padding: 10px 0;">
+                                <span lwc:if={disableCreateButton}  class="slds-align-middle slds-col_padded" style="font-size: 0.8rem;">
+                                <span style="color: #ff0000;font-size: medium;">*</span> Please view all the banners before proceeding to Case creation</span>
+                                <div class="slds-col_padded slds-text-align_right">
+                                    <lightning-button variant="neutral" label="Previous" class="slds-p-right_xx-small"
+                                        title="Previous" onclick={handlePreviousClick} lwc:if={showPrevButton}>
+                                    </lightning-button>
+                                    <lightning-button variant="brand" label="Create a Case"
+                                        title="Create a Case" onclick={handleClick} disabled={disableCreateButton} lwc:if={showCreateCaseButton}>
+                                    </lightning-button>
+                                    <lightning-button  variant="neutral" label="Next"
+                                        title="Next" onclick={handleNextClick} lwc:if={showNextButton}>
+                                    </lightning-button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <lightning-card>
+                        <template if:true={spinner}>
+                            <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+                            <br />
+                        </template>
+                        <template lwc:if={showForm}>
+                            <div class="slds-modal__header">
+                                <h2 class="slds-modal__title slds-hyphenate slds-text-heading--medium">New Case: Deal
+                                    and Order
+                                    Support
+                                </h2>
+                            </div>
+                            <lightning-record-edit-form record-type-id={dealAndOrderSupportRecordTypeId}
+                                object-api-name="Case" density="Compact" onsubmit={handleSubmit} onload={handleOnLoad}>
+                                <div class="slds-float_right" style="margin-right: 10px;">
+                                    * = Required Information
+                                </div>
+                                <br />
+                                <lightning-layout multiple-rows>
+                                    <template lwc:if={refSectionFieldList}>
+                                        <div class="slds-section slds-is-open">
+                                            <h3 class="slds-section__title slds-theme_shade sectionHeader"
+                                                style="margin-left: 5px;margin-right: 5px;width: 975px;">
+                                                <p style="margin-left: 15px;">Reference Information</p>
+                                            </h3>
+                                            <div class="slds-section__content" style="margin: 10px;">
+                                                <div class="slds-grid slds-wrap">
+                                                    <template for:each={refSectionFieldList} for:item="f">
+                                                        <div key={f.fieldName}
+                                                            class="slds-col slds-col--padded slds-size_1-of-2">
+                                                            <template if:true={f.isMRR}>
+                                                                <lightning-input type="number" name={f.fieldName} disabled
+                                                                    value={f.value} variant="label-inline" formatter="decimal"
+                                                                    step=".01" label={f.fieldLabel}></lightning-input>
+                                                            </template>
+                                                            <template if:false={f.isMRR}>
+                                                                <lightning-input-field field-name={f.fieldName} disabled={f.isReadOnly}
+                                                                    required={f.isRequired} value={f.value}>
+                                                                </lightning-input-field>
+                                                            </template>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={caseInfoSectionFieldList}>
+                                        <div class="slds-section slds-is-open">
+                                            <h3 class="slds-section__title slds-theme_shade sectionHeader"
+                                                style="margin-left: 5px;margin-right: 5px;width: 975px;">
+                                                <p style="margin-left: 15px;">Case Information</p>
+                                            </h3>
+                                            <div class="slds-section__content" style="margin: 10px;">
+                                                <div class="slds-grid slds-wrap">
+                                                    <template for:each={caseInfoSectionFieldList} for:item="f">
+                                                        <div key={f.fieldName}
+                                                            class="slds-col slds-col--padded slds-size_1-of-2">
+                                                            <lightning-input-field field-name={f.fieldName}
+                                                                disabled={f.isReadOnly} required={f.isRequired}
+                                                                value={f.value} onchange={handleChange}>
+                                                            </lightning-input-field>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={descSectionFieldList}>
+                                        <div class="slds-section slds-is-open">
+                                            <h3 class="slds-section__title slds-theme_shade sectionHeader"
+                                                style="margin-left: 5px;margin-right: 5px;width: 975px;">
+                                                <p style="margin-left: 15px;">Description Information</p>
+                                            </h3>
+                                            <div class="slds-section__content" style="margin: 10px;">
+                                                <div class="slds-grid slds-wrap">
+                                                    <template for:each={descSectionFieldList} for:item="f">
+                                                        <div key={f.fieldName}
+                                                            class="slds-col slds-col--padded slds-size_1-of-2">
+                                                            <lightning-input-field field-name={f.fieldName}
+                                                                disabled={f.isReadOnly} required={f.isRequired}
+                                                                value={f.value}>
+                                                            </lightning-input-field>
+                                                        </div>
+                                                    </template>
+                                                    <template lwc:if={showMandatoryDescField}>
+                                                        <template for:each={mandatoryFieldList} for:item="f">
+                                                            <div key={f.fieldName}
+                                                                class="slds-col slds-col--padded slds-size_1-of-2">
+                                                                <lightning-input-field field-name={f.fieldName}
+                                                                    disabled={f.isReadOnly} required={f.isRequired}
+                                                                    value={f.value}>
+                                                                </lightning-input-field>
+                                                            </div>
+                                                        </template>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template lwc:if={showMandatoryDescField}>
+                                        <div class="slds-section slds-is-open">
+                                            <h3 class="slds-section__title slds-theme_shade sectionHeader"
+                                                style="margin-left: 5px;margin-right: 5px;width: 975px;">
+                                                <p style="margin-left: 15px;">Attachments</p>
+                                            </h3>
+                                            <div class="slds-section__content" style="margin-left: 20px;">
+                                                <lightning-input type="file" label="Choose File"
+                                                    onchange={handleFileUploaded} multiple>
+                                                </lightning-input>
+                                                <template if:true={filesData}>
+                                                    <template for:each={filesData} for:item="file" for:index="index">
+                                                        {file.fileName}
+                                                        <span key={file.fileName} data-id={index} onclick={removeFile}
+                                                            class="removeFile">x</span> &nbsp;
+                                                    </template>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </lightning-layout>
+                                <br /><br />
+                                <div class="slds-docked-form-footer"
+                                    style="position:sticky;display:inline-block;margin-bottom: -10px;height: 60px;padding-top: 25px;">
+                                    <div class="slds-float_left">
+                                        <lightning-input type="checkbox" label="Assign using active assignment rule"
+                                            name="check" checked onchange={handleCheckboxChange}
+                                            style="margin-left: 30px;"></lightning-input>
+                                    </div>
+                                    <div class="slds-float_right" style="margin-right: 20px;margin-top: -7px;">
+                                        <lightning-button label="Cancel" onclick={handleCancel}>
+                                        </lightning-button>
+                                        <lightning-button type="submit" variant="brand" label="Save" title="Save"
+                                            class="slds-p-around_x-small">
+                                        </lightning-button>
+                                    </div>
+                                </div>
+                            </lightning-record-edit-form>
+                        </template>
+                    </lightning-card>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modal Backdrop -->
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

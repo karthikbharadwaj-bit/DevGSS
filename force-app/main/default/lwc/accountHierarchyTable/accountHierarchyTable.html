@@ -1,0 +1,42 @@
+<!-- 
+
+*LWC Component Name : accountHierarchyTable
+*Parent LWC Component   : recordSearcher
+*Business Purpose 	: To Retrieve the account hierarchy level
+*Description        : Based on the account Id provided by the parent Lwc component. Retrieves the account
+                      hierarchy records from linked apex class - recordSearchController. 
+                      Displays the account records in tree grid.
+*Developer Name 	: Manovasanth Balasankar
+Modification History:
+*--------------------------------------------------------------------------------------------------------------------
+Date              User Story#                   Developer Name                    Changes done
+*-------------------------------------------------------------------------------------------------------------------
+11/03/2022         CRM 4864                   Manovasanth Balasankar                New LWC
+-->
+<template>
+    <div >
+        <!-- Simple -->
+        <div style="height: 450px;" >
+            <template if:false={isLoading}>
+                <lightning-tree-grid
+                    columns={gridColumns}
+                    hide-checkbox-column="true"
+                    data={gridData}
+                    expanded-rows={gridExpandedRows}
+                    key-field="name"
+                ></lightning-tree-grid>
+            </template>
+            <template if:true={isLoading}>
+                <div class="demo-only" style="height:6rem;position:relative">
+                    <div class="slds-spinner_container">
+                    <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                    <span class="slds-assistive-text">Loading</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                    </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>    
+</template>

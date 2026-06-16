@@ -1,0 +1,58 @@
+<aura:component>
+
+  <aura:attribute name="data" type="List" default="" />
+  <aura:attribute name="isShowOrders" type="Boolean" default="false" />
+
+  <div class="action-wrapper" onclick="{!c.showOrders}">
+    <div class="show-action">
+      <lightning:icon class="arrow-icon" iconName="{!v.isShowOrders ? 'utility:down' : 'utility:right'}" size="xx-small" alternativeText="{!v.isShowOrders ? 'down' : 'right'}" />
+      <p class="slds-text-color--weak slds-p-left--medium">{!v.isShowOrders ? 'Hide all orders' : 'Show all orders'}</p>
+    </div>
+  </div>
+
+  <!-- Orders -->
+  <table class="table-orders slds-table slds-table--cell-buffer">
+    <tbody>
+      <aura:if isTrue="{!v.isShowOrders}">
+        <aura:iteration items="{!v.data}" var="order">
+          <tr>
+            <td class="col-10pct" data-label="">
+              <div class="slds-truncate" title="{!order.RecordType.Name}">
+                <a href="{!'/'+order.Id}" onclick="{!c.preventShow}" target="_blank">{!order.RecordType.Name}</a>
+              </div>
+            </td>
+            <td class="col-10pct" data-label="">
+              <div class="slds-truncate" title="">
+                <ui:outputDate value="{!order.CreatedDate}" />
+              </div>
+            </td>
+            <td class="col-10pct" data-label="">
+              <div class="slds-truncate" title="">
+                <ui:outputDate value="{!order.Submitted_Date__c}" />
+              </div>
+            </td>
+            <td class="col-10pct slds-border--right" data-label="">
+              <div class="slds-truncate" title="">
+                <ui:outputDate value="{!order.Provisioned_Date__c}" />
+              </div>
+            </td>
+
+            <!-- Order Items -->
+            <td class="col-40pct no-padding" colspan="3" data-label="">
+              <aura:if isTrue="{! !empty(order.OrderItems) }">
+                <c:OrderHistoryOrderItemListRow data="{!order.OrderItems}" />
+
+                <aura:set attribute="else">
+                  <div class="slds-p-vertical--x-small">
+                    <p class="no-result slds-text-align--center">No results</p>
+                  </div>
+                </aura:set>
+
+              </aura:if>
+            </td>
+          </tr>
+        </aura:iteration>
+      </aura:if>
+    </tbody>
+  </table>
+</aura:component>

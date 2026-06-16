@@ -1,0 +1,227 @@
+<aura:component controller="DocuSignController">
+
+    <!-- Attributes -->
+    <aura:attribute name="app" type="Object"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute name="isDocumentsLoading" type="Boolean"/>
+    <aura:attribute name="isRecipientsLoading" type="Boolean"/>
+
+    <!-- Event Handlers -->
+    <aura:handler name="toggleSelectDocument" event="c:ComponentEvent" action="{! c.toggleSelectDocument }"/>
+
+    <lightning:layoutItem size="12" class="fade-in-base" aura:id="fadeInContainer">
+        <lightning:layout multipleRows="true">
+
+            <!-- Documents -->
+            <lightning:layoutItem size="12" smallDeviceSize="12" largeDeviceSize="6" class="fade-in-card_1">
+                <div class="section">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                        <h2 class="slds-text-heading_medium slds-col_bump-right">Documents</h2>
+                        <lightning:buttonIcon iconName="utility:refresh"
+                                              alternativeText="Refresh"
+                                              disabled="{! v.isDocumentsLoading }"
+                                              onclick="{! c.refreshDocuments }"/>
+                    </div>
+
+                    <aura:if isTrue="{! and(not(v.isDocumentsLoading), v.app.documents.length > 0) }">
+                        <lightning:layout
+                            class="slds-media__body slds-border_bottom slds-text-title_caps header header_documents">
+                            <lightning:layoutItem size="12">
+                                <p>Document</p>
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                        <ul>
+                            <aura:iteration items="{! v.app.documents }" var="doc" indexVar="index">
+                                <c:DocuSignDocument document="{! doc }" index="{! index }"/>
+                            </aura:iteration>
+                        </ul>
+                    </aura:if>
+
+                    <!-- Info Message -->
+                    <aura:if isTrue="{! and(not(v.isDocumentsLoading), v.app.documents.length == 0) }">
+                        <p class="info-message slds-p-around_small slds-text-align_center">No Documents found</p>
+                    </aura:if>
+
+                    <!-- Loading Placeholder -->
+                    <aura:if isTrue="{! v.isDocumentsLoading }">
+                        <c:LoadingPlaceholder type="list"/>
+                    </aura:if>
+
+                    <!-- Error message -->
+                    <aura:if isTrue="{! v.app.showSelectDocumentsError }">
+                        <div class="slds-has-error slds-p-bottom_small">
+                            <p class="slds-form-element__help">Please select at least one document</p>
+                        </div>
+                    </aura:if>
+                </div>
+            </lightning:layoutItem>
+
+            <!-- Recipients -->
+            <lightning:layoutItem size="12" smallDeviceSize="12" largeDeviceSize="6" class="fade-in-card_2">
+                <div class="section">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small">
+                        <h2 class="slds-text-heading_medium slds-col_bump-right">Recipients</h2>
+                        <lightning:buttonIcon iconName="utility:refresh"
+                                              alternativeText="Refresh"
+                                              disabled="{! v.isRecipientsLoading }"
+                                              onclick="{! c.refreshRecipients }"/>
+                    </div>
+
+                    <aura:if isTrue="{! and(not(v.isRecipientsLoading), v.app.recipients.length > 0) }">
+                        <lightning:layout
+                            class="slds-media__body slds-border_bottom slds-text-title_caps header header_recipients">
+                            <lightning:layoutItem size="8">
+                                <p>Recipient</p>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem size="2">
+                                <p>Action</p>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem size="2">
+                                <p>Role</p>
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                        <ul>
+                            <aura:iteration items="{! v.app.recipients }" var="recipient" indexVar="index">
+                                <li class="slds-m-bottom_xx-small slds-p-vertical_xx-small contact">
+                                    <div class="slds-media slds-media_center">
+                                        <div class="slds-media__figure">
+                                            <lightning:avatar src="{! recipient.photoUrl }"
+                                                              initials="{! recipient.initials }"
+                                                              fallbackIconName="standard:contact"
+                                                              alternativeText="{! recipient.name }"/>
+                                        </div>
+
+                                        <lightning:layout class="slds-media__body">
+                                            <lightning:layoutItem size="8">
+                                                <p>{! recipient.name }</p>
+                                                <p class="slds-text-color_weak">{! recipient.email }</p>
+                                            </lightning:layoutItem>
+                                            <lightning:layoutItem size="2"
+                                                                  class="slds-grid slds-grid_vertical-align-center">
+                                                <p>{! recipient.action }</p>
+                                            </lightning:layoutItem>
+                                            <lightning:layoutItem size="2"
+                                                                  class="slds-grid slds-grid_vertical-align-center">
+                                                <p>{! recipient.role }</p>
+                                            </lightning:layoutItem>
+                                        </lightning:layout>
+                                    </div>
+                                </li>
+                            </aura:iteration>
+                        </ul>
+                    </aura:if>
+
+                    <!-- Info Message -->
+                    <aura:if isTrue="{! and(not(v.isRecipientsLoading), v.app.recipients.length == 0) }">
+                        <p class="info-message slds-p-around_small slds-text-align_center">No Recipients found</p>
+                    </aura:if>
+
+                    <!-- Loading Placeholder -->
+                    <aura:if isTrue="{! v.isRecipientsLoading }">
+                        <c:LoadingPlaceholder type="list"/>
+                    </aura:if>
+
+                    <!-- Error Message -->
+                    <aura:if isTrue="{! v.app.showRecipientsMissedError }">
+                        <div class="slds-has-error slds-p-bottom_small">
+                            <p class="slds-form-element__help">At least one recipient should be specified</p>
+                        </div>
+                    </aura:if>
+                </div>
+            </lightning:layoutItem>
+        </lightning:layout>
+    </lightning:layoutItem>
+
+    <!-- Message -->
+    <lightning:layoutItem size="12" class="fade-in-base" aura:id="fadeInContainer">
+        <div class="section fade-in-card_3">
+            <h2 class="slds-text-heading_medium slds-m-bottom_small">Message to All Recipients</h2>
+
+            <div class="slds-m-bottom_small">
+                <h3 class="slds-text-heading_small slds-m-bottom_xxx-small">Subject</h3>
+                <p>{! v.app.subject }</p>
+            </div>
+
+            <div class="slds-m-bottom_small">
+                <h3 class="slds-text-heading_small slds-m-bottom_xxx-small">Message</h3>
+                <p>{! v.app.message }</p>
+            </div>
+        </div>
+    </lightning:layoutItem>
+
+    <!-- Settings -->
+    <lightning:layoutItem size="12" class="fade-in-base" aura:id="fadeInContainer">
+        <div class="section fade-in-card_2">
+            <h2 class="slds-text-heading_medium slds-m-bottom_small">Settings</h2>
+            <lightning:layout multipleRows="true">
+
+                <!-- Send Automatic reminders -->
+                <lightning:layoutItem size="12" smallDeviceSize="12" largeDeviceSize="6">
+                    <lightning:input label="Send Automatic reminders"
+                                     type="checkbox"
+                                     class="slds-m-bottom_small"
+                                     disabled="true"
+                                     checked="{! v.app.remindViaEmail }"/>
+                    <aura:if isTrue="{! v.app.remindViaEmail }">
+                        <div class="slds-m-bottom_small">
+                            Remind signers by email
+                            <div class="setting-number-input">
+                                <lightning:input label="Remind In N Days"
+                                                 value="{! v.app.remindInNDays }"
+                                                 type="Number"
+                                                 disabled="true"
+                                                 variant="label-hidden"/>
+                            </div>
+                            day(s) after receipt
+                        </div>
+                        <div class="slds-m-bottom_small">
+                            Continue to send reminders every
+                            <div class="setting-number-input">
+                                <lightning:input label="Repeat Remind In N Days"
+                                                 value="{! v.app.repeatRemindInNDays }"
+                                                 type="Number"
+                                                 disabled="true"
+                                                 variant="label-hidden"/>
+                            </div>
+                            day(s) after receipt
+                        </div>
+                    </aura:if>
+                </lightning:layoutItem>
+
+                <!-- Expire Envelope -->
+                <lightning:layoutItem size="12" smallDeviceSize="12" largeDeviceSize="6">
+                    <lightning:input label="Expire Envelope"
+                                     type="checkbox"
+                                     class="slds-m-bottom_small"
+                                     disabled="true"
+                                     checked="{! v.app.expireVoidEnvelope }"/>
+                    <aura:if isTrue="{! v.app.expireVoidEnvelope }">
+                        <div class="slds-m-bottom_small">
+                            Expire envelope
+                            <div class="setting-number-input">
+                                <lightning:input label="Expire-Void Envelope In N Days"
+                                                 value="{! v.app.expireVoidEnvelopeInNDays }"
+                                                 type="Number"
+                                                 disabled="true"
+                                                 variant="label-hidden"/>
+                            </div>
+                            day(s) after receipt
+                        </div>
+                        <div class="slds-m-bottom_small">
+                            Warn signers
+                            <div class="setting-number-input">
+                                <lightning:input label="Warn Expire Void In N Days"
+                                                 value="{! v.app.warnExpireVoidInNDays }"
+                                                 type="Number"
+                                                 disabled="true"
+                                                 variant="label-hidden"/>
+                            </div>
+                            day(s) before request expires
+                        </div>
+                    </aura:if>
+                </lightning:layoutItem>
+            </lightning:layout>
+        </div>
+    </lightning:layoutItem>
+</aura:component>

@@ -1,0 +1,178 @@
+<aura:component controller="DQ_DealQualificationController" extends="c:Quote_BaseComponent" implements="flexipage:availableForAllPageTypes" access="global">
+	<aura:attribute type="Boolean" name="isFromQuoteWizard" Default="false" />
+    <aura:attribute type="Boolean" name="isChangeApprovalUser" Default="false" />
+	<aura:attribute type="String" name="oppId" />
+    <aura:attribute type="Integer" name="highestStepOrderNumber" />
+	<aura:attribute type="DQ_Deal_Qualification__c" name="objDealQualification" />
+	<aura:attribute type="Map" name="prodCatPicklistMap" />
+    <aura:attribute type="Map" name="ProductCategoriesSalesMap" />
+    <aura:attribute type="Map" name="ProductCategoriesContactMap" />
+    <aura:attribute type="Map" name="prodFamilyPicklistMap" />
+	<aura:attribute type="Map" name="regionPicklistMap" />
+	<aura:attribute type="Map" name="segmentPicklistMap" />
+	<aura:attribute type="Map" name="prodSubCatPicklistMap" />
+    <aura:attribute type="Map" name="freeShippingTermsPicklistMap"/>
+	<aura:attribute type="Map" name="brandPicklistMap" />
+	<aura:attribute type="Map" name="dealTypePicklistMap" />
+	<aura:attribute type="Map" name="specialTermsPicklistMap" />
+    <aura:attribute type="Map" name="mapOfPackageNameToId" />
+    <aura:attribute type="List" name="DQDiscountList" />
+    <aura:attribute type="List" name="DQDiscountContactCenterList" />
+    <aura:attribute type="List" name="DQDiscountSalesQuoteList" />
+	<aura:attribute type="List" name="DQQuoteList" />
+    <aura:attribute type="List" name="DQTrueUpDateList" />
+    <aura:attribute type="List" name="DQApproverList" />
+	<aura:attribute type="boolean" name="isReadOnly" default="false" />
+	<aura:attribute type="boolean" name="isValidDetails" default="false" />
+	<aura:attribute type="Map" name="CatagoriesVsSubCatPicklistMap" />
+	<aura:attribute type="Boolean" name="Spinner" Default="false" />
+	<aura:attribute type="DQ_ApprovalEngine1.ApproverWrapper[]" name="approverList" />
+	<aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap" />
+	<aura:attribute type="object" name="submitApprovalCallbackFn" />
+    <aura:attribute type="Boolean" name="HasPrimaryQuote" />
+    <aura:attribute name="data" type="Object"/>
+    <aura:attribute name="columns" type="List"/>
+    <aura:attribute name="tcvval" type="Decimal"/>
+    <aura:attribute name="ISOCode" type="String"/>
+	<aura:method name="refreshApproverList" action="{!c.doInit}" access="public" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:attribute type="Boolean" name="ShowBackButton" Default="true" />
+
+
+	<article class="slds-card">
+		<div class="slds-card__header slds-grid">
+			<header class="slds-media slds-media_center slds-has-flexi-truncate">
+				<div class="slds-media__figure">
+					<span class="slds-icon_container slds-icon-standard-account" title="Deal Qualification">
+						<span class="slds-assistive-text">Deal Qualification</span>
+					</span>
+				</div>
+				<div class="slds-media__body">
+					<h2 class="slds-card__header-title">
+						<!--<a href="javascript:void(0);" class="slds-card__header-link slds-truncate" title="Accounts">-->
+						<aura:if isTrue="{!v.objDealQualificationWrap.isDQExist}">
+							<span>{!v.objDealQualificationWrap.DQRec.Opportunity__r.Name} -
+								{!v.objDealQualificationWrap.DQRec.Status__c}</span>
+							<span class="slds-m-left_x-small">{!v.objDealQualificationWrap.DQRec.Name}</span>
+							<aura:set attribute="else">
+								<span>Deal Qualification</span>
+							</aura:set>
+						</aura:if>
+						<!--</a>-->
+					</h2>
+				</div>
+				<div class="slds-no-flex">
+					<lightning:button variant="brand" label="Save" title="Save"
+						disabled="{!v.isReadOnly}" onclick="{! c.saveDQ }" />
+					<aura:if isTrue="{!v.objDealQualificationWrap.isDQExist}">
+						<aura:if
+							isTrue="{!and(v.objDealQualificationWrap.DQRec.Status__c != 'Pending Approval', v.objDealQualificationWrap.DQRec.Status__c != 'Approved')}">
+							<lightning:button variant="brand" label="Submit for Approval"
+								title="Submit for Approval" onclick="{! c.handleSubmitForApprovalDQ }" />
+							<aura:set attribute="else">
+								<lightning:button variant="brand" label="Revise" title="Revise"
+									onclick="{! c.handleRevisedApproval }" />
+							</aura:set>
+						</aura:if>
+					</aura:if>
+					<aura:if isTrue="{!!v.ShowBackButton}">
+                        <aura:if isTrue="{!v.isFromQuoteWizard}">
+                            <lightning:button variant="brand" label="Back To Quote"
+                                title="Back To Quote" onclick="{! c.handleBackToQuote }" />
+                            <aura:set attribute="else">
+                                <lightning:button variant="brand" label="Back To Opportunity"
+                                    title="Back To Opportunity" onclick="{! c.BackToOpportunity }" />
+                            </aura:set>
+                        </aura:if>
+                    </aura:if>
+				</div>
+			</header>
+		</div>
+	</article>
+	<div class="slds-card__body slds-card__body_inner">
+		<lightning:tabset aura:id="tabs" selectedTabId="one">
+			<lightning:tab label="Deal Qualification Detail" id="one">
+				<div class="slds-grid slds-wrap">
+                    <aura:if isTrue="true">
+					<!--aura:if isTrue="{!not(v.isFromQuoteWizard)}"-->
+						<div class="slds-col slds-size_1-of-1">
+							<c:DQ_DealQualificationDetail aura:Id="dqDetail"
+								dealTypePicklistMap="{!v.dealTypePicklistMap}" brandPicklistMap="{!v.brandPicklistMap}"
+								regionPicklistMap="{!v.regionPicklistMap}" segmentPicklistMap="{!v.segmentPicklistMap}"
+								objDealQualificationWrap="{!v.objDealQualificationWrap}"
+								specialTermsPicklistMap="{!v.specialTermsPicklistMap}"
+								isFromQuoteWizard="{!v.isFromQuoteWizard}" isReadOnly="{!v.isReadOnly}"
+								isValid="{!v.isValidDetails}"
+                                DQTrueUpDateList ="{!v.DQTrueUpDateList}"
+                                freeShippingTermsPicklistMap = "{!v.freeShippingTermsPicklistMap}"
+                                                          />
+						</div>
+					</aura:if>
+
+					<aura:if isTrue="{!v.objDealQualificationWrap.isDQExist}">
+						<div class="slds-col slds-size_1-of-1 slds-m-top_xx-large">
+							<c:DQ_DealQualificationDiscount objDealQualificationWrap="{!v.objDealQualificationWrap}"
+								DQDiscountContactCenterList="{!v.DQDiscountContactCenterList}"
+                                DQDiscountSalesQuoteList="{!v.DQDiscountSalesQuoteList}"
+                                mapOfPackageNameToId = "{!v.mapOfPackageNameToId}"
+                                DQApproverList="{!v.DQApproverList}"
+								CatagoriesVsSubCatPicklistMap="{!v.CatagoriesVsSubCatPicklistMap}" parent="{!this}"
+								DQDiscountList="{!v.DQDiscountList}" prodSubCatPicklistMap="{!v.prodSubCatPicklistMap}"
+								prodCatPicklistMap="{!v.prodCatPicklistMap}"
+								prodFamilyPicklistMap="{!v.prodFamilyPicklistMap}"
+								objDealQualification="{!v.objDealQualification}" approverList="{!v.approverList}"
+								isReadOnly="{!v.isReadOnly}"
+                                ProductCategoriesSalesMap = "{!v.ProductCategoriesSalesMap}"
+                                ProductCategoriesContactMap = "{!v.ProductCategoriesContactMap}"
+                                highestStepOrderNumber = "{!v.highestStepOrderNumber}"
+                                 isChangeApprovalUser="{!v.isChangeApprovalUser}"
+                                                            />
+						</div>
+					</aura:if>
+				</div>
+				<br />
+			</lightning:tab>
+			<aura:if isTrue="false">
+				<aura:if isTrue="{!and(v.objDealQualificationWrap.isDQExist, not(v.isFromQuoteWizard))}">
+					<aura:if isTrue="{!v.objDealQualificationWrap.DQRec.Status__c == 'Pending Approval'}">
+						<lightning:tab label="Approver Detail" id="two">
+							<c:DQ_ApproverDetails approverList="{!v.approverList}" />
+						</lightning:tab>
+					</aura:if>
+				</aura:if>
+			</aura:if>
+			<aura:if isTrue="false">
+				<aura:if isTrue="{!not(v.isFromQuoteWizard)}">
+					<lightning:tab label="Quotes" id="three">
+						<c:DQ_QuoteDetailsOpp DQQuoteList="{!v.DQQuoteList}" />
+					</lightning:tab>
+				</aura:if>
+			</aura:if>
+            <aura:if isTrue="{!!v.ShowBackButton}">
+                <lightning:tab label="Quote Details" id="two">
+                <aura:if isTrue="{!v.HasPrimaryQuote}">
+                    <div aura:id="output" class="slds-box editor slds-text-longform">
+                         <lightning:datatable
+                                      keyField="id"
+                                      data="{! v.data }"
+                                      columns="{! v.columns }"
+                                      hideCheckboxColumn="true"/>
+                     </div>
+                    <h1 class="slds-m-top_large slds-text-heading_medium">Total Contract Value</h1>
+                     <div aura:id="output" class="slds-box editor slds-text-longform">
+                         <lightning:formattedNumber value="{!v.tcvval}" minimumFractionDigits='2'
+                                                    currencyDisplayAs="code" currencyCode="{!v.ISOCode}" style="currency"/>
+
+                     </div>
+                    <aura:set attribute="else">
+                         <h1 class="slds-m-top_large slds-text-heading_medium">No Primary Quote associated to this Opportunity</h1>
+                    </aura:set>
+                </aura:if>
+               </lightning:tab>
+            </aura:if>
+		</lightning:tabset>
+	</div>
+	<aura:if isTrue="{!v.Spinner}">
+		<c:SpinnerComponent />
+	</aura:if>
+</aura:component>

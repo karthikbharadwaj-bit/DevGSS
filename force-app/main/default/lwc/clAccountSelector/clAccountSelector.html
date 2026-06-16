@@ -1,0 +1,281 @@
+<template>
+    <li class={containerClasses}>
+        <!-- Conversion Info Section -->
+        <article class="slds-setup-assistant__step">
+            <div class="slds-setup-assistant__step-summary">
+                <div class="slds-media">
+                    <div class="slds-setup-assistant__step-summary-content slds-media__body slds-m-right_none">
+                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                            <label>{label.AccountSection}</label>
+                        </h3>
+                    </div>
+
+                    <div class="slds-media__figure slds-media__figure_reverse slds-grid" if:true={showExistingAccountSelectorForPrmFlow}>
+                        <!-- Toggle Expand -->
+                        <lightning-button label="Edit"
+                                          class="slds-m-left_small"
+                                          onclick={edit}
+                                          if:true={toggleEdit}></lightning-button>
+                    </div>
+
+                </div>
+                <div>
+                    <c-placeholder-loading type='line'
+                                           width="20rem"
+                                           if:true={isLoading}></c-placeholder-loading>
+
+                    <!-- Collapsed Preview -->
+                    <div class="slds-page-header__row" if:true={isCollapsedView}>
+                        <div class="slds-m-right_large">
+                            <p class="slds-text-title slds-m-bottom--xx-small">
+                                <template if:false={isCreateNewAccount}>{label.SelectedAccount}</template>
+                                <template if:true={isCreateNewAccount}>{label.NewAccountWillBeCreated}</template>
+                            </p>
+
+                            <!-- Target Account -->
+                            <div if:true={targetAccount}>
+                                <h3 class="slds-text-heading_small">
+                                    <a href={targetAccount.url}
+                                       target="_blank"
+                                       if:true={targetAccount.url}>{targetAccount.name}</a>
+                                    <template if:false={targetAccount.url}>{targetAccount.name}</template>
+                                </h3>
+                                <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                                    <li class="slds-item">{label.Type} : {targetAccount.type}</li>
+                                </ul>
+                            </div>
+                            <div if:false={targetAccount} class="slds-text-heading_small">
+                                {label.None}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Block -->
+            <div class="slds-summary-detail__content" if:true={isExpandedView}>
+
+                <!-- Create a New Account Checkbox -->
+                <lightning-layout class="slds-gutters slds-m-bottom_small" if:false={isPrmFlow}>
+                    <lightning-layout-item size="6" padding="horizontal-small">
+                        <lightning-input type="toggle" label="Create a new account" name="createNewAccount"
+                                         class="slds-show_inline-block"
+                                         checked={isUseExistingAccount}
+                                         disabled={disableSwitch}
+                                         onchange={onIsCreateNewAccountChange}></lightning-input>
+                        <h4 class="slds-form-element__label slds-show_inline-block slds-m-left_x-small">
+                            {label.SelectAnExistingAccount}
+                        </h4>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <!-- Collapsed Preview -->
+                <div class="slds-page-header__row" if:true={isCreateNewAccount}>
+                    <div class="slds-m-right_large container-width-max" if:true={targetAccount}>
+                        <p class="slds-text-title slds-m-bottom--xx-small">
+                            {label.NewAccountWillBeCreated}
+                        </p>
+                        <h3 class="slds-text-heading_small slds-truncate">{targetAccount.name}</h3>
+                        <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                            <li class="slds-item">{label.Type}: {targetAccount.type}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <template if:true={isUseExistingAccount}>
+
+                     <!-- No matched Accounts Message -->
+                    <ul class="slds-list_dotted slds-media__body slds-m-top_small">
+                        <li if:true={isExistingWithNoMatchedAccounts}>
+
+                            <b>No Accounts match this Lead</b>
+                            <br></br>
+                        </li>
+                    </ul>
+
+                    <!-- Account Lookup -->
+                    <lightning-layout class="slds-gutters slds-m-bottom_small">
+                        <lightning-layout-item size="3" padding="horizontal-small">
+
+                            <h4 if:true={isExistingWithNoMatchedAccounts} class="slds-form-element__label">
+                             Search for an existing account
+                            </h4>
+
+                            <h4 if:false={isExistingWithNoMatchedAccounts} class="slds-form-element__label">
+                                Select an existing account
+                            </h4>
+
+                            <c-input-lookup method="getAccounts"
+                                            icon="standard:account"
+                                            placeholder="Start typing to search Account"
+                                            value={selectedLookupAccountId}
+                                            params={lookupAccountParams}
+                                            onchange={onSelectedLookupAccountChange}
+                                            disabled={disableSwitch}
+                                            ></c-input-lookup>
+                        </lightning-layout-item>
+                    </lightning-layout>
+
+                    <!-- Matched Accounts List-->
+                    <template if:true={isHasMatchedAccounts}>
+                        <h4 class="slds-form-element__label">
+                            {label.ChooseFromMatchedAccounts}
+                        </h4>
+
+                        <div class="slds-container slds-grid slds-grid_vertical slds-is-relative table-container">
+                            <div class="header-background slds-border_bottom slds-shrink-none"></div>
+                            <div class="slds-scrollable_y">
+
+                                <table class="slds-table slds-table_cell-buffer slds-table_bordered table">
+                                    <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="th-static slds-p-around_none" style="width:3.25rem">
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                  title="Account Name">{label.AccountName}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.AccountName}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                  title="RC User ID">{label.RcUserId}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.RcUserId}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                  title="Enterprise Account ID">{label.RcAccountNumber}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.RcAccountNumber}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                  title="RC Account Status">{label.RcAccountStatus}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.RcAccountStatus}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                  title="RC Account Status">{label.Type}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.Type}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                    title="Current Owner">{label.CurrentOwner}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.CurrentOwner}</span>
+                                        </th>
+                                        <th class="th-static slds-p-around_none">
+                                            <span class="slds-truncate th-inner"
+                                                    title="Last Modified Date">{label.LastModifiedDate}</span>
+                                            <span class="slds-truncate th-inner-hidden">{label.LastModifiedDate}</span>
+                                        </th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <template for:each={matchedAccounts} for:item="account">
+                                        <tr key={account.id} class={account.cssClass}>
+                                            <td class="slds-text-align_right">
+                                                <lightning-input type="radio" name="matchedAccount"
+                                                                 class="column-group-header matched-account-checkbox"
+                                                                 variant="label-hidden"
+                                                                 label={account.name}
+                                                                 value={account.id}
+                                                                 checked={account.isSelected}
+                                                                 disabled={toggleEdit}
+                                                                 onchange={onMatchedAccountSelected}></lightning-input>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.name}>
+                                                    <a href={account.url} tabindex="-1"
+                                                       target="_blank">{account.name}</a>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.rcUserId}>{account.rcUserId}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.rcAccountNumber}>
+                                                    {account.rcAccountNumber}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.rcAccountStatus}>
+                                                    {account.rcAccountStatus}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.type}>
+                                                    {account.type}
+                                                    <template if:true={account.isNgbs}>&nbsp;(NGBS)</template>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.currentOwnerName}>
+                                                    <a href={account.currentOwnerUrl} tabindex="-1"
+                                                       target="_blank">{account.currentOwnerName}</a>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="slds-truncate" title={account.LastModifiedDate}>
+                                                    {account.LastModifiedDate}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    </tbody>
+                                    <tfoot if:true={hasMoreAccounts}>
+                                    <tr>
+                                        <td class="slds-text-align_center slds-border_top" colspan="6">
+                                            <button class="slds-button slds-button_bare"
+                                                    type="button"
+                                                    disabled={hasMoreAccountsDisabled}
+                                                    onclick={loadMoreAccounts}>{label.LoadMore}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <!-- Create ELA Account Checkbox -->
+                <lightning-layout class="slds-gutters slds-m-top_small" if:true={isShowElaCheckbox}>
+                    <lightning-layout-item size="3" padding="horizontal-small">
+                        <lightning-input type="checkbox" label="Enable ELA for this Account" name="isElaAccount"
+                                        checked={isElaAccount}
+                                        disabled={disableEla}
+                                        onchange={onIsCreateElaAccountChange}></lightning-input>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <lightning-layout class="slds-gutters slds-m-top_small" if:true={isShowNumberOfELAServiceAccountsField}>
+                    <lightning-layout-item size="3" padding="horizontal-small">
+                        <lightning-input type="Number" name="numberOfELAServiceAccounts"
+                                     label="Number of ELA Service Accounts"
+                                     value={numberOfELAServiceAccounts}
+                                     disabled={disableNumberOfELAServiceAccountsInput}
+                                     onchange={onChangeNumberOfELAServiceAccounts}
+                                     onblur={onBlurNumberOfELAServiceAccounts}
+                                     step="1"></lightning-input>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <!-- Toggle Expand -->
+                <div class="slds-clearfix slds-m-top_small" if:true={isExpanded}>
+                    <div class="slds-float_right" if:false={toggleEdit}>
+                        <lightning-button variant="brand" onclick={apply} label="Apply"></lightning-button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Error Container -->
+            <ul class="slds-list_dotted slds-media__body slds-text-color_error slds-m-top_small">
+                <li if:true={showIsAccountMissingError}>
+                    <b>{label.AccountIsRequired}</b><br>
+                    {label.PleaseSpecifyAnExistingAccountOrCreateANewOne}
+                </li>
+            </ul>
+        </article>
+    </li>
+</template>

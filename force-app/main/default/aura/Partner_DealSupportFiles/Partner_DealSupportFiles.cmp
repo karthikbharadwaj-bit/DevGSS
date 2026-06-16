@@ -1,0 +1,360 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 03-01-2020
+* Description    : Component for Deal Support Record Detail Page- Partner_DealSupportDetail
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" 
+                access="global"  controller="Partner_DealSupport">
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="CustomerURLLink" type="String"/>
+    <aura:attribute name="PartnerURLLink" type="String"/>
+    <aura:attribute name="OpportunityURLLink" type="String"/>
+    <aura:attribute name="QuoteURLLink" type="String"/>
+    <aura:attribute name="LeadURLLink" type="String"/>
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="ShowListView" type="boolean" default="false"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="true" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    <aura:attribute name="ShowComponentButtons" type="boolean" default="false" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" /> 
+    <aura:attribute name="selectedValue" type="string" access="public"/>
+    <aura:attribute name="selectedStatusValue" type="string" access="public"/>
+    <aura:attribute name="selectedTypeValue" type="string" access="public"/>
+    <aura:attribute name="ShowNewSection" type="boolean" default="false" /> 
+    <aura:attribute name="Attachments" type="List"/>
+    <aura:attribute name="documentId" type="String"/>
+    <aura:attribute name="files" type="List"/>  
+    <aura:attribute name="Message" type="boolean" default="false" />
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false" />
+    <aura:attribute name="FilesMessage" type="boolean" default="false" />
+    <aura:attribute name="AttachmentsMessage" type="boolean" default="false" />
+    <aura:attribute name="ShowFilesMessage" type="string"  />
+    <aura:attribute name="ShowOppFilesMessage" type="string"  />
+    <aura:attribute access="public" name="accept" type="List" default="['.pdf']"/>
+    <aura:attribute name="UploadDisabled" type="Boolean" default="false"/>
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="DealSupportRecord" type="Deal_Support__c"
+                    default="{
+                             'SObjectType': 'Deal_Support__c'
+                             }"/>
+    <aura:attribute name="showAssignToRCButton" type="Boolean" />
+    <aura:registerEvent name="goBackEvent" type="c:Partner_OpportunitiesGoBackEvent"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="ShowSpinnerDeal" type="boolean" default="true" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:attribute name="selTabId" type="String" default="orderTab" />
+    <aura:attribute name="ShowConAcc" type="boolean"/>
+    <aura:attribute name="Discount" type="Integer"/>
+    <aura:attribute name="DisableApproval" type="boolean" default="true" />
+    <aura:attribute name="isPOCQuote" type="boolean" default="false" />
+    <aura:attribute name="SalesOverlayQueue" type="String" />
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false"/> 
+    <aura:attribute name="isReadOnly" type="boolean" default="false" />
+    <aura:attribute name="partnerCommunity" type="String"/>
+    <aura:attribute name="portalCloudSpecialist" type="String"/>
+    
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    
+    <aura:attribute name="recordAccess" type="UserRecordAccess" />
+    
+    <!--Added for getting files uploaded from SF Lightning - starts-->
+    <aura:attribute name="AttachmentsForDeal" type="List"/>
+    <aura:attribute name="AttachmentsForDealMsg" type="boolean" default="false" />
+    <aura:attribute name="Lightningfiles" type="List"/>
+    <aura:attribute name="LightningFilesMessage" type="boolean" default="false" />
+    <!--Added for getting files uploaded from SF Lightning - ends-->
+    <!--Added for getting files uploaded from SF Lightning opportunity AS - starts-->
+    <aura:attribute name="LightningfilesOpp" type="List"/>
+    <aura:attribute name="LightningFilesOppMessage" type="boolean" default="false" />
+     <!--Added for getting files uploaded from SF Lightning opportunity AS - END-->
+    <aura:attribute name="availProServ" type="boolean" default="true"/>
+    
+    <!-- Added attrs and aura:if for JIRA fix as part of ACO 4.0 -->
+    <aura:attribute name="showChangeRequestCMP" type="Boolean" default="false"/>
+    <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false"/>
+    <aura:attribute name="changeOrderId" type="String"  />
+    <aura:attribute name="isChangeOrderSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="oppID" type="String"/>
+    
+    <aura:if isTrue="{!v.showChangeRequestCMP}">
+        <c:Quote_OrderChangeRequest accountId="{!v.accountId}" isChangeOrderSubmitted="true" changeOrderId="{!v.changeOrderId}" ExistingChangeOrder="true" showChangeRequestCMP="{!v.showChangeRequestCMP}"/>
+    </aura:if>
+    <aura:if isTrue="{!!v.showChangeRequestCMP}">
+    <aura:if isTrue="{!v.ShowSpinnerDeal}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+            </div>
+        </div> 
+    </aura:if>
+    <aura:if isTrue="{!v.Message}">
+        <div class="errorMessageDivDetail">
+            <div class="slds-is-relative errorMessageDivDetail">
+                <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">No Records Found...</h2>
+                    </div>
+                </div>
+            </div>  
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{!!v.Message}">
+        <aura:if isTrue="{!v.ShowRecordDetail}">
+            <!--<aura:if isTrue="{!v.DealSupportRecord.Owner.Name == $Label.c.Sales_Overlay_Queue}">
+             <div class="errorMessageDiv">
+                    <div class="slds-is-relative errorMessageDiv">
+                        <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">This record is assigned to RC for approval</h2>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+            </aura:if>-->
+            <!--<aura:if isTrue="{!v.DealSupportRecord.Owner.Name != $Label.c.Sales_Overlay_Queue}">-->
+            <lightning:card variant="Narrow" title="Deal Support Files" iconName="standard:case">
+                
+                <!--<aura:set attribute="actions">
+                    
+                    <lightning:button variant="brand" label="Go Back" iconName="action:recall" iconPosition="left" onclick="{!c.goBackToViewList}" />
+                </aura:set>-->   
+                
+                
+                <lightning:tabset selectedTabId="{!v.selTabId}">
+                    <lightning:tab label="Order Package" id="orderTab">
+                        <div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div> 
+                        <aura:if isTrue="{!and(v.AttachmentsMessage,v.LightningFilesOppMessage)}">
+                            <div class="errorMessageDivDetail">
+                                <div class="slds-is-relative errorMessageDivDetail">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small">{!v.ShowOppFilesMessage}</h2>
+                                        </div>
+                                    </div>
+                                </div>  
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!!and(v.AttachmentsMessage,v.LightningFilesOppMessage)}">  
+                            <aura:if isTrue="{!or(or(v.DealSupportRecord.Status__c == 'Ready for Signature',v.DealSupportRecord.Status__c =='Signature Complete'),v.DealSupportRecord.Status__c == 'Closed-Approved')}">
+                                
+                                <div class="slds-m-around_xx-small">        
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                        <thead>
+                                            <tr class="slds-text-title_caps">
+                                                <th scope="col">
+                                                    <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                                                </th>
+                                                <!-- <th scope="col">
+                                                    <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                                </th> -->
+                                                
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <aura:iteration items="{!v.Attachments}" var="att"> 
+                                                
+                                                <tr>
+                                                    <th scope="row" data-label="Title">
+                                                        <div class="slds-truncate" title="{!att.Name}">
+                                                            <a aria-live="assertive"
+                                                               class="slds-text-link"
+                                                               href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}"
+                                                               download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!att.Name}</a>
+                                                            
+                                                        </div>
+                                                    </th>
+                                                    
+                                                </tr>
+                                                
+                                                
+                                            </aura:iteration>
+                                          <!-- Added for lightning Files FROM Opportunity Start-->
+                                            <aura:iteration items="{!v.LightningfilesOpp}" var="file">
+                                            	<tr>
+                                                    <th scope="row" data-label="Title">
+                                                        <div class="slds-truncate" title="{!file.Title}">
+                                                            <a aria-live="assertive"
+                                                               class="slds-text-link"
+                                                               target="_blank"
+                                                               href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                               download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!file.Title}</a>
+                                                            
+                                                        </div>
+                                                    </th>
+                                                    <!--<th scope="row" data-label="Name">
+                                                        <div class="slds-truncate" title="{!file.Title}">
+                                                            <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                                {!file.Title}
+                                                            </a>                                                        
+                                                        </div>
+                                                    </th>-->
+                                                </tr>
+                                            </aura:iteration>
+                                            <!--END Opportunity Files -->
+										</tbody>
+                                    </table>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                    </lightning:tab>
+                    <lightning:tab label="Upload Signed Documents" id="attachmentTab">
+                        
+                        <div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div> 
+                        <aura:if isTrue="{!v.recordAccess.HasEditAccess}">
+                            <aura:if isTrue="{!!v.isReadOnly}">
+                                <div class="slds-grid slds-wrap slds-align_absolute-center">   
+                                    <lightning:fileUpload label="Attach files"
+                                                          name="fileUploader"
+                                                          multiple="true"
+                                                          accept="{!v.accept}"
+                                                          recordId="{!v.recordID}"
+                                                          disabled="{!v.UploadDisabled}"
+                                                          onuploadfinished="{!c.handleUploadFinished}" />
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                        <!-- Added to get files saved in SF Lightning -->
+                        <!--<aura:if isTrue="{!v.FilesMessage}">-->
+                        <aura:if isTrue="{!and(v.AttachmentsForDealMsg,v.LightningFilesMessage)}">
+                            <div class="errorMessageDivDetail">
+                                <div class="slds-is-relative errorMessageDivDetail">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small">{!v.ShowFilesMessage}</h2>
+                                        </div>
+                                    </div>
+                                </div>  
+                            </div>
+                        </aura:if>
+                        <!--commented for getting files uploaded from SF Lightning -->
+                        <!--<aura:if isTrue="{!!v.FilesMessage}">
+                            <div class="slds-m-around_xx-small">        
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                    <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                            </th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        
+                                        <aura:iteration items="{!v.files}" var="file"> 
+                                            <tr>
+                                                <th scope="row" data-label="Name">
+                                                    <div class="slds-truncate" title="{!file.Title}">
+                                                        <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                            {!file.Title}
+                                                        </a> 
+                                                        
+                                                    </div>
+                                                </th>
+                                                <th scope="row" data-label="Attachment Type">
+                                                    <div class="slds-truncate" title="{!file.FileType}">
+                                                        {!file.FileType}
+                                                    </div>
+                                                </th>
+                                                
+                                            </tr>
+                                        </aura:iteration>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </aura:if>-->
+                        <!--Added for getting files uploaded from SF Lightning - starts-->
+                        <aura:if isTrue="{!!and(v.AttachmentsForDealMsg,v.LightningFilesMessage)}">
+                            <div class="slds-m-around_xx-small">        
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                    <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                            </th>                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                        
+                                        <aura:iteration items="{!v.Lightningfiles}" var="file"> 
+                                            <tr>
+                                                <th scope="row" data-label="Title">
+                                                    <div class="slds-truncate" title="{!file.Title}">
+                                                        <a aria-live="assertive"
+                                                           class="slds-text-link"
+                                                           target="_blank"
+                                                           href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                           download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!file.Title}</a>
+                                                        
+                                                    </div>
+                                                </th>
+                                                <!--<th scope="row" data-label="Name">
+                                                    <div class="slds-truncate" title="{!file.Title}">
+                                                        <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                            {!file.Title}
+                                                        </a>                                                        
+                                                    </div>
+                                                </th>-->
+                                                <th scope="row" data-label="Attachment Type">
+                                                    <div class="slds-truncate" title="{!file.FileType}">
+                                                        {!file.FileType}
+                                                    </div>
+                                                </th>                                                
+                                            </tr>
+                                        </aura:iteration>
+                                        <aura:iteration items="{!v.AttachmentsForDeal}" var="att">                                                 
+                                            <tr>
+                                                <th scope="row" data-label="Title">
+                                                    <div class="slds-truncate" title="{!att.Name}">
+                                                        <a aria-live="assertive"
+                                                           class="slds-text-link"
+                                                           href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}"
+                                                           download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!att.Name}</a>                                                            
+                                                    </div>
+                                                </th>
+                                                <th>
+                                                    <div class="slds-truncate" title="{!att.contentType}">
+                                                        {!att.contentType}
+                                                    </div>
+                                                </th>                                                    
+                                            </tr>
+                                        </aura:iteration>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </aura:if>                        
+                        <!--Added for getting files uploaded from SF Lightning - ends-->
+                    </lightning:tab>
+                </lightning:tabset>   
+            </lightning:card>
+            <!--</aura:if>-->
+        </aura:if>
+    </aura:if>
+    </aura:if>
+</aura:component>

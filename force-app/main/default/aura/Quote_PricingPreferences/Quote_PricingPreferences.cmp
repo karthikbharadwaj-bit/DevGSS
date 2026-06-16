@@ -1,0 +1,53 @@
+<aura:component controller="QuotePlanAndPricingController">
+    <aura:attribute name="NoOfSeats" type="Integer"/>
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="PricingYearly" type="Boolean" />
+    <aura:attribute name="BrandName" type="string" />
+    <aura:attribute name="isContract" type="Boolean" default="true"/>
+    <aura:attribute name="maxLicense" type="Integer" />
+	<aura:attribute name="translationsMap" type="Map" />
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}" />
+    
+    <aura:handler name="change" value="{!v.Quote.Number_of_Licenses__c}" action="{!c.onSeatChange}"/>
+    <div class="slds-grid slds-grid_align-center">
+        <div class="slds-col slds-grow-none durationtoggle">
+            <div class="slds-grid togglewrap">
+                <span>
+                     {!v.translationsMap.Monthly_PI}
+                </span>
+                <lightning:input name="PaymentTerm" label="" type="toggle" checked="{!v.PricingYearly}"
+                                 messageToggleActive="" messageToggleInactive="" onchange="{!c.onPaymentTermChange}"/>
+                <span>
+                    {!v.translationsMap.Yearly_PI}
+                </span>
+            </div>
+        </div>
+        <div class="slds-col slds-grow-none slds-col_bump-right">
+            <div class="slds-grid togglewrap">
+                <span>
+                     {!v.translationsMap.Contract_PI}
+                </span>
+                <lightning:input  name="" label="" type="toggle" checked="{!v.Quote.Contract__c}"
+                                 messageToggleActive="" messageToggleInactive="" onchange="{!c.oncontractChange}" />
+            </div>
+        </div>
+        <!-- <div class="slds-col slds-grow-none slds-col_bump-right">
+            <div class="slds-grid togglewrap">
+                <span>
+                    POC?
+                </span>
+                <lightning:input name="" label="" type="toggle" checked="{!v.Quote.POC__c}"
+                                 messageToggleActive="" messageToggleInactive=""  />
+            </div>
+        </div> -->
+        <div class="slds-col slds-size_1-of-2">
+            <div class="slds-grid slds-grid_vertical-align-center">
+                
+                <lightning:slider label="{!'Select # of Licenses (1-' + v.maxLicense + ')'}" value="{!v.Quote.Number_of_Licenses__c}" min="1" max="{!v.maxLicense}" style="width:100%;" 
+                                  disabled="{!not(empty(v.Quote.Id))}" title="{!if(not(empty(v.Quote.Id)),'Quote is already created. No of seats can\'t be changed from here.', '')}"/>
+                <lightning:input class="sliderinput" value="{!v.Quote.Number_of_Licenses__c}" style="width:80px;" min="10" max="{!v.maxLicense}"
+                                 disabled="{!not(empty(v.Quote.Id))}" title="{!if(not(empty(v.Quote.Id)),'Quote is already created. No of seats can\'t be changed from here.', '')}"/>
+            </div>
+        </div>
+    </div>
+</aura:component>

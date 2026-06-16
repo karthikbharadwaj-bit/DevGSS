@@ -1,0 +1,396 @@
+<!--
+* Created By     : Namitha
+* Created Date   : 21-11-2019
+* Description    : Component for engage legal - Partner_QuoteEngageLegal
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+<aura:component controller="Quote_PartnerQuoteEngageLegalController" implements="force:lightningQuickAction,force:hasRecordId" extends="c:Quote_BaseComponent" access="global">
+    <!-- <aura:handler name="init" value="{!this}" action="{!c.doInit}"/> !-->
+    
+    <aura:attribute name="isActive" type="Boolean" default="false" required="true" />
+    <aura:attribute name="objApprovalRec" type="Approval__c" default="{'sobjectType': 'Approval__c'}"/>
+    <aura:attribute name="standardDisplay" type="Boolean"/>
+    <aura:attribute name="nonStandardDisplay" type="Boolean"/>
+    <aura:attribute name="isPartnerContractExist" type="Boolean" default="false"/>
+    <aura:attribute name="isOpenContractRequest" type="Boolean" default="false"/>
+    <aura:attribute name="currentTabId" type="String" default="one"/>
+    <aura:attribute name="initialDisplay" type="Boolean"/>
+    <aura:attribute name="legalInputsDisplay" type="Boolean"/>     
+    <aura:attribute name="playBookDisplay" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractCreated" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractWrapperList" type="List" /> 
+    <aura:attribute name="partnerContractTypeWrapperList" type="List" /> 
+    <aura:attribute name="partnerQuoteId" type="String" />
+    <aura:attribute name="oppId" type="String" />
+    <aura:attribute name="isAvaya" type="Boolean" default="false" />
+    <aura:attribute name="partnerContractId" type="String" />
+    <aura:attribute name="dealSupportExists" type="Boolean"/>
+    <aura:attribute name="partnerContractApprovalSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalRecalled" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalApproved" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalRejected" type="Boolean" default="false"/>
+    <aura:attribute name="hasPrimaryQuote" type="Boolean" default="false"/>
+    <aura:attribute name="isUpdateDetailClicked" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractServiceList" type="Partner_Contract_Service__c[]"/> 
+    <aura:attribute name="partnerQuoteAttachmentList" type="Attachment[]"/> 
+    <aura:attribute name="displayAttachments" type="Boolean" default="false"/>
+    <aura:attribute name="nonStandardInputValue" type="String"/>
+    <aura:attribute type="Partner_Contract__c" name="partnerContract" default="{'sobjectType': 'Partner_Contract__c'}" />
+    <aura:attribute name="standardMSAOptions" type="List" default="[{'label': 'Yes', 'value': 'Yes'},{'label': 'No', 'value': 'No'}]"/>
+    <aura:attribute name="standardMSAOptionValue" type="String"/>
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="detailComments" type="String"/>
+    <aura:attribute name="approvalComments" type="String"/>
+    <aura:attribute name="isNoStandardPlayBook" type="Boolean" default="false" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:method name="createContract" action="{!c.handleSave}" access="PUBLIC"/> 
+    <aura:attribute access="public" name="sObjectAttachedFiles" type="List" default="[]"/>
+    <aura:attribute name="standardDescList" type="List"/>
+    <aura:attribute name="nonStandardDescList" type="List"/>
+    <aura:attribute name="showSpinner" type="Boolean" default="false"/>
+    <aura:attribute name="showCreateContractCMP" type="Boolean" default="false"/>
+    <aura:attribute name="IsOpenInCommunity" type="Boolean" />
+    <aura:attribute name="isStandard" type="String" default="Standard"/>
+    <aura:attribute name="contractType" type="String" default="Standard"/>
+    <aura:attribute name="partnerContractAttachmentList" type="List" /> 
+    <aura:attribute type="String" name="avayaLegalComments"/>
+    <aura:attribute name="Quote" type="Quote" default="{ 'sobjectType': 'Partner_Quote__c',
+                        'Status__c': 'Draft'}" />
+    <aura:attribute name="inputWrapper" type="Map" default="{'freeCredit' : 0,
+            'digitalLines' : 0,
+            'elasticityPercent' : 30,
+            'elasticityDigitalLines' : 0,
+            'featureAdditionEdition' : '',
+            'featureAdditions' : '',
+            'priceProtectionPercent' : 0}"/>
+    
+     <!--Added by Ishwarya to get respective Community Details-->
+     <aura:attribute name="communityDetailsRecord" type="Object"/>
+    
+    <div>
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+            </div>
+        </div>
+        <!-- <aura:if isTrue = "{!v.initialDisplay}"> -->
+        <div style="font-size:100%">                        
+            <!--<div class="slds-align_absolute-left">
+        <div class="slds-grid slds-wrap">-->
+            <div class="slds-grid slds-wrap">
+            <aura:iteration items="{!v.partnerContractTypeWrapperList}" var="partnerContractTypeWrapper">
+                <aura:if isTrue="{!partnerContractTypeWrapper.contractType == 'Standard Attachments'}"> 
+                    
+                    <!--<div class="slds-col slds-size_0-of-2 slds-p-vertical_xx-small">-->
+                         <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"><b>
+                        <span>
+                            {!partnerContractTypeWrapper.contractType}
+                        </span>
+                             </b></h1>
+                   <!-- </div>-->
+                    <div class="slds-col slds-size_2-of-2 slds-p-vertical_xx-small"></div>
+                    <!--<aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" var="attachmentTypeWrapper">
+                                               <aura:if isTrue="{!attachmentTypeWrapper.Description=='Standard'}">-->
+                    
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="attachmentTypes">
+                            <b>Standard:</b>
+                        </span>
+                                                
+                        <table class="">
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate slds-text-align_center" title="Select">Select</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration indexVar="index" items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Contract' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                <aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == false,attachmentTypeWrapperStd.approvalRequired == false))}">
+                                    <!-- <div class="slds-col slds-size_2-of-2 slds-p-vertical_xx-small">
+                                              <span>
+                                                 {!attachmentTypeWrapper.Description} 
+                                               </span>
+                                              </div>-->
+                                    <tr>
+                                         <td scope="row" data-label="Select" style="text-align:center">
+                                                <lightning:input class="{!index}" type="checkbox-button"  label="{!attachmentTypeWrapperStd.attachmentName}" name="{!attachmentTypeWrapperStd.attachmentName}" checked="{!attachmentTypeWrapperStd.isSelected}" onchange="{!c.attachmentSelected}"/>
+                                        </td>
+                                        <td scope="row">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                {!attachmentTypeWrapperStd.attachmentName}
+                                                <!-- JIRA 5042 changes begin -->                                           
+                                                <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Commercial MSA'}">
+                                                    <lightning:helptext content="Use for 50 users or less where you do not expect the customer to grow beyond this level in future."/>
+                                                </aura:if>
+                                                <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA + PSA',attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA')}">
+                                                    <lightning:helptext content="Use for greater than 50 users or where you expect a customer to grow beyond 50 users in future."/>
+                                                </aura:if>
+                                                <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Mutual NDA'}">
+                                                    <lightning:helptext content="Two way non disclosure agreement - applied as necessary to the deal by RingCentral deals desk."/>
+                                                </aura:if>
+                                                <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'DPA'}">
+                                                    <lightning:helptext content="Data processing addendum - applied as necessary to the deal by RingCentral deals desk."/>
+                                                </aura:if>
+                                                <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Professional Services',attachmentTypeWrapperStd.attachmentName == 'PSA')}">
+                                                    <lightning:helptext content="Terms and conditions which should be provided to the customer when professional services has been selected in the quoting tool for a deal greater than 100 users and for which a customised implementation package will be delivered."/>
+                                                </aura:if>
+                                                <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Security Addendum'}">
+                                                    <lightning:helptext content="Terms and conditions related to information security - applied as necessary to the deal by RingCentral deals desk."/>
+                                                </aura:if>
+                                                    <!-- JIRA 5042 changes end -->
+                                            </div>
+                                        </td>
+                                            
+                                    </tr>
+                                </aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                    <aura:if isTrue="{!v.isAvaya}">
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="attachmentTypes">
+                            <b>Self Approved:</b>
+                        </span>
+                        
+                        <table >
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate slds-text-align_center" title="Select">Select</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Contract' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                <aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == true,attachmentTypeWrapperStd.approvalRequired == false))}">
+                                    <tr>
+                                         <td scope="row" data-label="Select" style="text-align:center">
+                                                <lightning:input type="checkbox-button" label="{!attachmentTypeWrapperStd.attachmentName}" name="{!attachmentTypeWrapperStd.attachmentName}" checked="{!attachmentTypeWrapperStd.isSelected}"/>
+                                        </td>
+                                         <aura:if isTrue="{!!v.isAvaya}">
+                                        <td scope="row" data-label="Name">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                    {!attachmentTypeWrapperStd.attachmentName} 
+                                                    <!-- JIRA 5042 changes begin -->                                                                                           
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Commercial MSA'}">
+                                                        <lightning:helptext content="Use for 50 users or less where you do not expect the customer to grow beyond this level in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA + PSA',attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA')}">
+                                                        <lightning:helptext content="Use for greater than 50 users or where you expect a customer to grow beyond 50 users in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Mutual NDA'}">
+                                                        <lightning:helptext content="Two way non disclosure agreement - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'DPA'}">
+                                                        <lightning:helptext content="Data processing addendum - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Professional Services',attachmentTypeWrapperStd.attachmentName == 'PSA')}">
+                                                        <lightning:helptext content="Terms and conditions which should be provided to the customer when professional services has been selected in the quoting tool for a deal greater than 100 users and for which a customised implementation package will be delivered."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Security Addendum'}">
+                                                        <lightning:helptext content="Terms and conditions related to information security - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>                                                          
+                                            </div>    
+                                            <!-- JIRA 5042 changes end --> 
+                                        </td>
+                                        </aura:if>
+                                       <aura:if isTrue="{!v.isAvaya}">
+                                       
+                                       <td scope="row">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                {!attachmentTypeWrapperStd.attachmentName}
+                                                <!-- JIRA 5042 changes begin -->                                                                                           
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Commercial MSA'}">
+                                                        <lightning:helptext content="Use for 50 users or less where you do not expect the customer to grow beyond this level in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA + PSA',attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA')}">
+                                                        <lightning:helptext content="Use for greater than 50 users or where you expect a customer to grow beyond 50 users in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Mutual NDA'}">
+                                                        <lightning:helptext content="Two way non disclosure agreement - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'DPA'}">
+                                                        <lightning:helptext content="Data processing addendum - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Professional Services',attachmentTypeWrapperStd.attachmentName == 'PSA')}">
+                                                        <lightning:helptext content="Terms and conditions which should be provided to the customer when professional services has been selected in the quoting tool for a deal greater than 100 users and for which a customised implementation package will be delivered."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Security Addendum'}">
+                                                        <lightning:helptext content="Terms and conditions related to information security - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if> 
+                                            </div>
+                                            <!-- JIRA 5042 changes end -->
+                                        </td>
+                                            </aura:if>
+                                    </tr>
+                                </aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                    <!--Added By Ankit Sharma to show this section on the basis of No of Licence -->
+                    <aura:if isTrue="{!v.Quote.Number_of_Licenses__c >= $Label.c.Quote_MinimumLicenceShowApprovalRequiredContract}">
+                        
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="attachmentTypes">
+                            <b>Approval Required:</b>
+                        </span>
+                        
+                        <table >
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate slds-text-align_center" title="Select">Select</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Contract' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                <aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == false,attachmentTypeWrapperStd.approvalRequired == true))}">
+                                    <!-- <div class="slds-col slds-size_2-of-2 slds-p-vertical_xx-small">
+                                              <span>
+                                                 {!attachmentTypeWrapper.Description} 
+                                               </span>
+                                              </div>-->
+                                    <tr>
+                                         <td scope="row" data-label="Select" style="text-align:center">
+                                                <lightning:input type="checkbox-button" label="{!attachmentTypeWrapperStd.attachmentName}" name="{!attachmentTypeWrapperStd.attachmentName}" checked="{!attachmentTypeWrapperStd.isSelected}"/>
+                                        </td>
+                                         <aura:if isTrue="{!!v.isAvaya}">
+                                        <td scope="row" data-label="Name">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                    {!attachmentTypeWrapperStd.attachmentName} 
+                                                    <!-- JIRA 5042 changes begin -->                                                                                           
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Commercial MSA'}">
+                                                        <lightning:helptext content="Use for 50 users or less where you do not expect the customer to grow beyond this level in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA + PSA',attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA')}">
+                                                        <lightning:helptext content="Use for greater than 50 users or where you expect a customer to grow beyond 50 users in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Mutual NDA'}">
+                                                        <lightning:helptext content="Two way non disclosure agreement - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'DPA'}">
+                                                        <lightning:helptext content="Data processing addendum - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Professional Services',attachmentTypeWrapperStd.attachmentName == 'PSA')}">
+                                                        <lightning:helptext content="Terms and conditions which should be provided to the customer when professional services has been selected in the quoting tool for a deal greater than 100 users and for which a customised implementation package will be delivered."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Security Addendum'}">
+                                                        <lightning:helptext content="Terms and conditions related to information security - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if> 
+                                            </div>     
+                                            <!-- JIRA 5042 changes end -->
+                                        </td>
+                                        </aura:if>
+                                       <aura:if isTrue="{!v.isAvaya}">
+                                       		<td scope="row">
+                                           		<div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                            	    {!attachmentTypeWrapperStd.attachmentName}
+                                                    <!-- JIRA 5042 changes begin -->                                                                                           
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Commercial MSA'}">
+                                                        <lightning:helptext content="Use for 50 users or less where you do not expect the customer to grow beyond this level in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA + PSA',attachmentTypeWrapperStd.attachmentName == 'Enterprise MSA')}">
+                                                        <lightning:helptext content="Use for greater than 50 users or where you expect a customer to grow beyond 50 users in future."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Mutual NDA'}">
+                                                        <lightning:helptext content="Two way non disclosure agreement - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'DPA'}">
+                                                        <lightning:helptext content="Data processing addendum - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!or(attachmentTypeWrapperStd.attachmentName == 'Professional Services',attachmentTypeWrapperStd.attachmentName == 'PSA')}">
+                                                        <lightning:helptext content="Terms and conditions which should be provided to the customer when professional services has been selected in the quoting tool for a deal greater than 100 users and for which a customised implementation package will be delivered."/>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!attachmentTypeWrapperStd.attachmentName == 'Security Addendum'}">
+                                                        <lightning:helptext content="Terms and conditions related to information security - applied as necessary to the deal by RingCentral deals desk."/>
+                                                    </aura:if>  
+                                            	</div>
+                                                <!-- JIRA 5042 changes end -->
+                                        	</td>
+                                       </aura:if>
+                                    </tr>
+                                </aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                        </aura:if>
+                    </aura:if>
+                </aura:if>
+            </aura:iteration>
+            </div>
+        </div>
+        <br/>
+        <!--
+        <div class="slds-form-stacked slds-p-around-medium slds-m-bottom-x-small">
+            <div class="slds-size-1-of-1 slds-grid">
+                <div class="slds-size-6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width"  label="Type" value="{!v.contractType}" >
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                       	</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <aura:if isTrue="{!v.contractType == 'Non-Standard'}">
+        -->
+            <br/>
+            <div style="font-size:120%">Provide Inputs for Legal below</div>
+            <lightning:textarea value="{!v.nonStandardInputValue}"/>
+        <!--</aura:if>-->
+        <aura:if isTrue="{!and(v.partnerContractApprovalSubmitted,!v.partnerContractApprovalRecalled)}">
+            <div style="font-size:120%">
+                Partner Contract Details pending Avaya Legal Approval! Please check the status of the record in sometime! Please recall the request if you need to update Partner Contract Details!
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.partnerContractApprovalRecalled}">
+            <div style="font-size:120%">
+                Partner Contract Details recalled from approval!                            
+            </div>
+        </aura:if>                    
+        <aura:if isTrue="{!v.partnerContractApprovalRejected}">
+            <div style="font-size:120%">
+                Partner Contract Details rejected!
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.hasPrimaryQuote}">
+            <div style="font-size:120%">
+                Please create a Primary Quote for the Opportunity before generating the contract!
+            </div>
+        </aura:if>
+        <!--<div class="slds-is-relative">
+                        <div class="spinnerHolder">
+                            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinnerFooter" class="slds-hide" size="small"/>
+                        </div>
+                    </div>-->
+    </div>
+</aura:component>

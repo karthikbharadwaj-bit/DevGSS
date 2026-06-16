@@ -1,0 +1,93 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" 
+                access="global" extends="c:Quote_BaseComponent" controller="AvayaStorefront_UploadTaxfile">
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="files" type="List"/>
+    <aura:attribute name="Attachments" type="List"/>
+    <aura:attribute name="documentId" type="String"/>
+    <aura:attribute name="FilesMessage" type="boolean" default="false" />
+    <aura:attribute name="recordAccess" type="UserRecordAccess" />
+    <aura:handler name="init" value="{!this}" action="{!c.myAction}" />
+	<lightning:card class="attachmentsCard" variant="Narrow" >
+        <aura:set attribute="title">Attachments</aura:set>
+    <!--<h3 style="background-color: #D3D3D3" class="slds-section-title-divider">Attachments</h3>-->
+    
+    <aura:if isTrue="{!if((or(v.recordAccess.HasEditAccess,v.recordAccess.HasReadAccess)), true, false)}">
+    <div class='slds-m-top_xx-small'>This is where you should upload tax exemption, purchase order, etc</div>
+        <div class="slds-grid slds-wrap slds-align_absolute-center slds-m-top_xx-small">
+        <lightning:fileUpload label="Attach files"
+                              name="fileUploader"
+                              accept=".pdf"
+                              recordId="{!v.recordId}"
+                              onuploadfinished="{!c.handleUploadFinished}"
+                              disabled="{!if((and(!v.recordAccess.HasEditAccess,v.recordAccess.HasReadAccess)), true, false)}"
+                              />
+    </div>
+    <div class="slds-m-top_xx-small" style="color:red;">You must provide documents (as per local requirements) from your customer to support the acquisition of local numbers e.g. proof of address. You should not submit your order on behalf of the customer until these have been collected and uploaded here.</div>
+    <div class="slds-size--1-of-1 slds-grid slds-m-top_xx-small">
+        <aura:if isTrue="{!not(empty(v.files))}">
+            <div class="slds-size--12-of-12 slds-grid">
+                
+                <div class="slds-m-around_xx-small">        
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                        <thead>
+                            <tr class="slds-text-title_caps">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="Created Date">Created Date</div></strong>
+                                </th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <aura:iteration items="{!v.files}" var="file"> 
+                                <tr>
+                                    <th scope="row" data-label="Title">
+                                        <div class="slds-truncate" title="{!file.Title}">
+                                                <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                    {!file.Title}
+                                                </a>
+                                        </div>
+                                    </th>
+                                    
+                                    <th scope="row" data-label="Attachment Type">
+                                        <div class="slds-truncate" title="{!file.FileType}">
+                                            {!file.FileType}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="Attachment Type">
+                                        <div class="slds-truncate" title="{!file.CreatedDate}">
+                                            <ui:outputDate value="{!file.CreatedDate}"/>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </aura:iteration>
+                        </tbody>
+                    </table>
+                </div>
+                
+            </div>
+            <div class="slds-size--2-of-12 slds-grid"></div>
+        </aura:if>
+    </div>
+    </aura:if>
+   
+        
+    <aura:if isTrue="{!!v.recordAccess.HasReadAccess}">
+    <div class="errorMessageDivDetail slds-align_absolute-center slds-m-top_medium">
+                                <div class="slds-is-relative errorMessageDivDetail">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small">Insufficient Privilege to View Record..</h2>
+                                        </div>
+                                    </div>
+                                </div>  
+                            </div>
+    </aura:if>
+    </lightning:card>
+        
+</aura:component>

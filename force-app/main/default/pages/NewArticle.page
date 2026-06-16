@@ -1,0 +1,269 @@
+<apex:page standardController="Case" extensions="NewArticle" lightningstylesheets="true" >
+    <apex:slds />	
+    <apex:variable var="uiTheme" value="lightningDesktop" 
+        rendered="{!$User.UIThemeDisplayed == 'Theme4d'}">
+        <style>
+            .maintable table
+            {
+            width:auto!important;
+            }  
+        </style>
+    </apex:variable>
+    <style>
+        .caseBlock {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+        
+        }
+        
+        .select-dropdown {
+            width: 100%;
+        }
+        .category-header {
+            width: 100%;
+            font-size: larger;
+            font-weight: bold;
+            margin-top: 0;
+        }
+        .category {
+            background: #fff;
+            padding: 10px;
+            height: fit-content;
+            border: 1px solid #ebebeb;
+            border-radius: 4px;
+            width: 100%;
+            margin-left: 10px;
+            margin-bottom: 9px;
+            margin-top: 4px;
+        }
+        .category select.select-dropdown {
+            height: 25px;
+        }
+        .fieldError {
+            font-size: smaller;
+            color: red;
+        }
+        .requiredBlock {
+            background-color: #c00;
+            position: absolute;
+            left: -4px;
+            width: 3px;
+            top: 1px;
+            bottom: 1px;
+        }
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding-right: 10px;
+        }
+        .side-panel-item {
+            margin-top: 10px;
+        }
+        .create-article-btn .create-article-draft-btn {
+            display: block;
+        }
+        .button-disabled {
+            background-position: 0 -90px !important;
+            color: #909090 !important;
+            border-color: rgb(216, 216, 216) rgb(209, 209, 209) rgb(186, 186, 186) !important;
+            border-style: solid !important;
+            border-width: 1px !important;
+            border-radius: 3px !important;
+        }
+    </style>
+    <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}" />
+    <script>
+            console.log('UI Theme - ' + UserInfo.getUiThemeDisplayed());
+        function refreshCreateArticleButton() {
+            const createBtn = document.querySelector('.create-article-btn');
+            const createDraftBtn = document.querySelector('.create-article-draft-btn');
+            createBtn.value = "Publish Internally";
+            createDraftBtn.disabled = false;
+            createDraftBtn.classList.remove("button-disabled");
+            [...document.querySelectorAll('.channel-checkbox')].forEach(
+                    function(channelCheckbox) {
+                        if (channelCheckbox.checked) {
+                            createBtn.value = "Publish Externally";
+                            createDraftBtn.disabled = true;
+                            createDraftBtn.classList.add("button-disabled");
+                        }
+                    }
+                );
+        }
+        function autopopulateUrl() {
+            const titleInput = document.querySelector('.title-input');
+            const urlInput = document.querySelector('.url-input');
+            if (urlInput.value === '') {
+                urlInput.value = titleInput.value.replace(/[_\W]+/g, "-").replace(/-+$/g, "").toLowerCase();
+            }
+        }
+    </script>
+    <h2 style="font-size: 1.8em; font-weight: normal; margin-top: 10px; display: block;">New Knowledge Article</h2>
+    <p style="padding-bottom: 10px;">Share your knowledge. Submitting this form will publish a draft article, attach it to your case, and enqueue it for approval.</p>
+    <apex:form id="articleForm">
+        <apex:pageMessage summary="{!errorMessage}" severity="error" strength="1" rendered="{!errorMessage != ''}"/>
+        <apex:pageBlock >
+            <div class="header">
+                <div class="maintable">
+                    <apex:pageBlockSection id="generalInfoPageBlockSection" columns="1">
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Title"/>
+                            <apex:outputPanel styleClass="requiredInput" layout="block">
+                                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                                <apex:inputTextArea styleClass="title-input" id="titleInput" label="Title" value="{!title}" cols="100" rows="1" required="true" style="resize: none;">
+                                    <apex:message for="titleInput" styleClass="fieldError"/>
+                                </apex:inputTextArea>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!kcsAccessLevel >= 3}">
+                            <apex:outputLabel value="UrlName"/>
+                            <apex:outputPanel styleClass="requiredInput" layout="block">
+                                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                                <apex:inputTextArea styleClass="url-input" id="urlNameInput" label="UrlName" value="{!urlName}" cols="100" rows="1" required="true" style="resize: none;" onFocus="autopopulateUrl();">
+                                    <apex:message for="urlNameInput" styleClass="fieldError"/>
+                                </apex:inputTextArea>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Summary"/>
+                            <apex:outputPanel styleClass="requiredInput" layout="block">
+                                <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                                <apex:inputTextArea id="summaryInput" style="resize: none;" label="Summary" value="{!summary}" cols="100" rows="3" required="true">
+                                    <apex:message for="summaryInput" styleClass="fieldError"/>
+                                </apex:inputTextArea>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:selectList id="langInput" label="Language" value="{!language}" multiselect="false" size="1">
+                            <apex:selectOptions value="{!allowedLanguages}"/>
+                        </apex:selectList>
+                        <apex:selectList rendered="{!kcsAccessLevel >= 3}" id="confidenceInput" label="Confidence" value="{!confidence}" multiselect="false" size="1">
+                            <apex:selectOptions value="{!confidenceItems}"/>
+                        </apex:selectList>
+                        <apex:inputTextArea id="detailsInput" label="Details" richText="true" value="{!details}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="issueInput" label="Issue" richText="true" value="{!issue}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="questionInput" label="Question" richText="true" value="{!question}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="symptomInput" label="Symptom" richText="true" value="{!symptom}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="stepsToReproduceInput" label="Steps To Reproduce" richText="true" value="{!stepsToReproduce}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="affectedEnvInput" label="Affected Environment" richText="true" value="{!affectedEnv}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="causeInput" label="Cause" richText="true" value="{!cause}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="resolutionInput" label="Resolution" richText="true" value="{!resolution}" cols="100" rows="15"/>
+                        <apex:inputTextArea id="statusInput" label="Status" richText="true" value="{!status}" cols="100" rows="15"/>
+                        <apex:inputTextArea rendered="{!kcsAccessLevel >= 3}" id="keywordsInput" label="Keywords" value="{!keywords}" cols="100" rows="3"/>
+                        <apex:pageBlockSectionItem rendered="{!kcsAccessLevel >= 3}">
+                            <apex:outputLabel value="Category"/>
+                            <apex:outputPanel layout="block">
+                                <apex:selectList id="categoryFieldInput" multiselect="false" size="1" value="{!categoryField}"> 
+                                    <apex:selectOptions value="{!categoryFieldSelectOptions}" />
+                                </apex:selectList>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Product"/>
+                            <apex:outputPanel layout="block">
+                                <apex:selectList id="productInput" multiselect="false" size="1" value="{!product}"> 
+                                    <apex:selectOptions value="{!productSelectOptions}" />
+                                </apex:selectList>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockButtons id="btnBlock" location="bottom">
+                        <apex:CommandButton styleClass="create-article-draft-btn" id="createDraftBtn" onClick="rcnotify.showSpinner();" action="{!createArticleAsDraft}" value="Publish As Draft"/>
+                        <apex:CommandButton rendered="{!kcsAccessLevel >= 3}" styleClass="create-article-btn" id="createArticleBtn" onClick="rcnotify.showSpinner();" action="{!createArticle}" value="Publish Internally"/>
+                    </apex:pageBlockButtons>
+                </div>
+                <div class="side-panel">
+                    <div class="category">
+                        <p class="category-header">Category selection</p>
+                        <div class="side-panel-item">Service:</div>
+                        <select name="serviceCategory" class="select-dropdown">
+                            <option value="" selected="selected"></option>
+                            <knowledge:categoryList categoryGroup="Service" rootCategory="All" categoryVar="category" level="-1" >
+                                <apex:outputPanel >
+                                    <option value="{!category.name}">
+                                        {!category.label}
+                                    </option>
+                                </apex:outputPanel>
+                            </knowledge:categoryList>
+                        </select>
+                        <apex:outputPanel rendered="{!kcsAccessLevel >= 2}">
+                            <br/>
+                            <div class="side-panel-item">Topic:</div>
+                            <select name="topicCategory" class="select-dropdown">
+                                <option value="" selected="selected"></option>
+                                <knowledge:categoryList categoryGroup="Topic" rootCategory="All" categoryVar="category" level="-1" >
+                                    <apex:outputPanel >
+                                        <option value="{!category.name}">
+                                            {!category.label}
+                                        </option>
+                                    </apex:outputPanel>
+                                </knowledge:categoryList>
+                            </select>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!kcsAccessLevel >= 3}">
+                            <br/>
+                            <div class="side-panel-item">Brand:</div>
+                            <select name="brandCategory" class="select-dropdown">
+                                <option value="" selected="selected"></option>
+                                <knowledge:categoryList categoryGroup="Brand" rootCategory="All" categoryVar="category" level="-1" >
+                                    <apex:outputPanel >
+                                        <option value="{!category.name}">
+                                            {!category.label}
+                                        </option>
+                                    </apex:outputPanel>
+                                </knowledge:categoryList>
+                            </select>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!kcsAccessLevel >= 3}">
+                            <br/>
+                            <div class="side-panel-item">RCProductVersion:</div>
+                            <select name="RCProductVersionCategory" class="select-dropdown">
+                                <option value="" selected="selected"></option>
+                                <knowledge:categoryList categoryGroup="RCProductVersion" rootCategory="All" categoryVar="category" level="-1" >
+                                    <apex:outputPanel >
+                                        <option value="{!category.name}">
+                                            {!category.label}
+                                        </option>
+                                    </apex:outputPanel>
+                                </knowledge:categoryList>
+                            </select>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!kcsAccessLevel >= 3}">
+                            <br/>
+                            <div class="side-panel-item">Security Categories:</div>
+                            <select name="Security_CategoriesCategory" class="select-dropdown">
+                                <option value="" selected="selected"></option>
+                                <knowledge:categoryList categoryGroup="Security_Categories" rootCategory="All" categoryVar="category" level="-1" >
+                                    <apex:outputPanel >
+                                        <option value="{!category.name}">
+                                            {!category.label}
+                                        </option>
+                                    </apex:outputPanel>
+                                </knowledge:categoryList>
+                            </select>
+                        </apex:outputPanel>
+                    </div>
+                    <apex:outputPanel styleClass="category" rendered="{!kcsAccessLevel >= 3}">
+                        <p class="category-header">External channel selection</p>
+
+                        <div class="side-panel-item">
+                            <apex:inputCheckbox styleClass="side-panel-item channel-checkbox" value="{!isVisibleInPrm}" onClick="refreshCreateArticleButton();"></apex:inputCheckbox>
+                            &nbsp;Partner
+                        </div>
+                        <div class="side-panel-item">
+                            <apex:inputCheckbox styleClass="side-panel-item channel-checkbox" value="{!isVisibleInCsp}" onClick="refreshCreateArticleButton();"></apex:inputCheckbox>
+                            &nbsp;Community
+                        </div>
+                        <div class="side-panel-item">
+                            <apex:inputCheckbox styleClass="side-panel-item channel-checkbox" value="{!isVisibleInPkb}" onClick="refreshCreateArticleButton();"></apex:inputCheckbox>
+                            &nbsp;Public Knowledge Base
+                        </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

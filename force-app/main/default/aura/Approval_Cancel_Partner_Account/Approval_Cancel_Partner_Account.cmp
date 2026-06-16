@@ -1,0 +1,24 @@
+<aura:component
+    implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader"
+    access="global" controller="ApprovalHelperCls">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+  
+    <div class="slds-is-relative slds-grid slds-wrap">
+        <div class="slds-border_bottom slds-p-bottom_x-small slds-size--1-of-1 slds-text-align_center slds-text-title_caps">Cancel Partner Account</div> 
+        <div class="slds-p-bottom--xx-large slds-p-top--xx-large slds-size--1-of-1 slds-wrap slds-text-align_center">Are you sure that you want to cancel Partner Account?</div>    
+        
+        <div class="slds-size--1-of-1">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide"
+                    size="medium" />
+            </div>
+        </div>
+
+        <div class="slds-grid slds-grid--vertical-align-end slds-grid_align-end slds-p-top--xx-large slds-size--1-of-1 slds-wrap">
+            <lightning:button label="No" title="No" onclick="{! c.closeModal }"/>
+            <lightning:button variant="brand" label="Yes" title="Yes" onclick="{! c.handleClickYes }"/>
+        </div>
+    </div>  
+</aura:component>

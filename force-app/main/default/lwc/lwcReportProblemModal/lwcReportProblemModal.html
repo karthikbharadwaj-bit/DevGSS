@@ -1,0 +1,98 @@
+<template>
+    <lightning-button data-ui-auto="createcase" variant="neutral"
+       label="Report a Problem"
+       title="Report a Problem"
+       onclick={openModal}
+       class="slds-m-left_x-small">
+    </lightning-button>
+    <template if:true={isModalOpen}>
+        <div class={backdrop}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-modal__container">
+
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" data-ui-auto="close-modal-button" title="Close" onclick={closeModal}>
+                        <lightning-icon icon-name="utility:close"
+                            alternative-text="close"
+                            variant="inverse"
+                            size="small"></lightning-icon>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="modal-heading-01" class="slds-text-heading--medium">New Case: {caseTitle}</h2>
+                </header>
+
+                <div class="slds-theme--default  slds-p-around_small">
+                    <h3 class="slds-section-title slds-theme--shade">
+                        <span class="slds-p-horizontal--small slds-grid ">Case Information</span>
+                    </h3>
+
+                    <div class="slds-grid slds-m-vertical--xx-small section-wrapper">
+
+                        <div class="slds-p-horizontal--small slds-size_6-of-12">
+                          <div class="slds-form-element">
+                            <label class="slds-form-element__label slds-grid slds-grid_align-spread">Subject</label>
+                            <div class="slds-form-element__control">
+                                <input type="text" readonly="" placeholder="" class="slds-input" data-ui-auto="case-subject-input" value={caseSubject} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="slds-p-horizontal--small slds-size_6-of-12" if:false={leadConvert}>
+                            <div class="slds-form-element">
+                              <label class="slds-form-element__label slds-grid slds-grid_align-spread">Account</label>
+                              <div class="slds-form-element__control">
+                                  <input if:true={quickOpptyPage} type="text" readonly class="slds-input" data-ui-auto="account-name-input" value="No account data" />
+                                  <input if:true={signUp} type="text" readonly class="slds-input" data-ui-auto="account-name-input" value={accName} />
+                              </div>
+                            </div>
+                        </div>
+
+                        <div class="slds-p-horizontal--small slds-size_6-of-12" if:true={leadConvert}>
+                          <div class="slds-form-element" if:true={accName}>
+                            <label class="slds-form-element__label slds-grid slds-grid_align-spread">Account</label>
+                            <div class="slds-form-element__control">
+                                <input type="text" readonly class="slds-input" data-ui-auto="account-name-input" value={accName} />
+                            </div>
+                          </div>
+                          <div class="slds-form-element" if:false={accName}>
+                            <label class="slds-form-element__label slds-grid slds-grid_align-spread">Lead</label>
+                            <div class="slds-form-element__control">
+                                <input type="text" readonly class="slds-input" value={leadName} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                </div>
+
+                <section class="slds-theme--default slds-p-horizontal--small">
+                    <h3 class="slds-section-title slds-theme--shade">
+                        <span class="slds-p-horizontal--small  slds-grid">Additional Information</span>
+                    </h3>
+
+                    <div class="slds-form-element ">
+                        <label class="slds-form-element__label slds-grid slds-size_5-of-12 slds-p-horizontal--small" for="form-input">
+                            <abbr class="slds-required slds-grid" title="Required">*</abbr>Description
+                        </label>
+
+                        <div class="slds-for-element__control">
+                            <textarea id="form-input" onchange={errorShown} placeholder="Describe a problem..." required="" aria-describedby="form-error-01" class="slds-textarea"></textarea>
+                        </div>
+                        <div class="slds-has-error" if:true={isError}>
+                            <div class="slds-form-element__help slds-grid slds-grid_align-spread" id="form-error-01">Description is required. Please, fill in the description section.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <footer class="slds-modal__footer slds-grid slds-grid_align-spread">
+                    <button class="slds-button slds-button_neutral" data-ui-auto="cancel-button" type="button" title="Cancel" onclick={closeModal}>
+                        Cancel
+                    </button>
+                    <button class="slds-button slds-button_brand" data-ui-auto="submit-button" type="button" title="Submit" onclick={submitDetails} disabled={isError}>
+                        Submit
+                    </button>
+                </footer>
+            </div>
+        </section>
+        </div>
+    </template>
+</template>

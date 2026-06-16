@@ -1,0 +1,49 @@
+<aura:component >
+	<aura:handler name="init" value="{!this}" action="{!c.initPanel}"/>
+	<aura:attribute name="taskfields" type="Map"/>
+	<aura:attribute name="options" type="Map"/>
+	
+	<aura:registerEvent name="changeValue" type="c:ChangeDowngradeWizardValueChange" />
+	
+	<div class="panel-container">
+		<div class="box-header slds-text-heading--small">
+			New Task
+		</div>
+		<table style="width:100%" class="task-creation-form-table">
+			<!--tr>
+				<td><label class="slds-form-element__label" style="margin-top:10px;">Assigned To</label></td>
+				<td><label class="slds-form-element__label" style="margin-top:10px;"></label></td>
+			</tr-->
+			<tr>
+				<td><label class="slds-form-element__label" for="taskSubject" style="margin-top:10px;">Subject</label></td>
+				<td><ui:inputText aura:id="taskSubject" placeholder="Enter Subject" required="true" class="task-form-field description-input slds-input required-field" value="Delayed Lead" keyup="{!c.onChangeTextValue}"/></td>
+			</tr>
+			<tr>
+				<td><label class="slds-form-element__label" for="taskDueDate" style="margin-top:10px;">Due Date</label></td>
+				<td><ui:inputDate aura:id="taskDueDate" required="true" class="date-input task-form-field description-input slds-input required-field" displayDatePicker="true" value="{!v.options.taskDueDate}" change="{!c.onChangeDateValue}" /></td>
+			</tr>
+			<tr>
+				<td><label class="slds-form-element__label" for="taskStatus" style="margin-top:10px;">Status</label></td>
+				<td>
+					<ui:inputSelect aura:id="taskStatus" multiple="false" class="task-form-field description-input slds-input required-field" change="{!c.onChangeStatusValue}">
+						<ui:inputSelectOption text="Not Started" label="Not Started" value="true"/>
+						<ui:inputSelectOption text="In Progress" label="In Progress"/>
+						<ui:inputSelectOption text="Completed" label="Completed"/>
+						<ui:inputSelectOption text="Waiting on someone else" label="Waiting on someone else"/>
+						<ui:inputSelectOption text="Deferred" label="Deferred"/>
+					</ui:inputSelect>
+				</td>
+			</tr>
+			<tr>
+				<td><label class="slds-form-element__label" for="taskPriority" style="margin-top:10px;">Priority</label></td>
+				<td>
+					<ui:inputSelect aura:id="taskPriority" multiple="false" class="task-form-field description-input slds-input required-field" change="{!c.onChangePriorityValue}">
+						<ui:inputSelectOption text="High" label="High"/>
+						<ui:inputSelectOption text="Normal" label="Normal" value="true"/>
+						<ui:inputSelectOption text="Low" label="Low"/>
+					</ui:inputSelect>
+				</td>
+			</tr>
+		</table>
+	</div>
+</aura:component>

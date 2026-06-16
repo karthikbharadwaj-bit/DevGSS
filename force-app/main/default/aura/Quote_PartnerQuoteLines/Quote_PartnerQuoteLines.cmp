@@ -1,0 +1,177 @@
+<aura:component controller="Quote_PartnerDetailController" extends="c:Quote_BaseComponent">
+    <aura:attribute name="QuoteLines" type="Partner_Quote_Line__c[]" />
+    <aura:attribute name="QuoteLineWrapper" type="object" />
+    <aura:attribute name="oneTimeTotal" type="Decimal" />
+    <aura:attribute name="reccurringTotal" type="Decimal" />
+    <aura:attribute name="TotalPrice" type="Decimal" />
+    <aura:attribute name="isSuperUser" type="Boolean" default="false"/>
+    <aura:attribute name="currentUser" type="User" />
+    <aura:attribute name="hideDiscount" type="Boolean" default="false"/>
+    <aura:attribute name="Quote" type="Partner_Quote__c" default="{'sobjectType':'Partner_Quote__c', 'Payment_Term__c':'Monthly', 'Number_of_Licenses__c' : '50'}"/>
+     <aura:attribute name="translationsMap" type="Map" />
+	<aura:handler name="init" value="{!this}" action="{!c.loadData}"/>
+    <!--<div class="" style="text-align:right;">
+    	<button class="slds-button slds-button_brand" onclick="{!c.saveQuoteLines}">Update Lines</button>
+    </div>-->
+	<fieldset class="slds-form--compound">
+        <legend class="slds-text-title_bold">{!v.translationsMap.Quote_Lines_PI}</legend>
+        <div class="slds">
+            <table class="slds-table slds-no-row-hover">
+                <thead>
+                    <tr>
+                        <!--<th>
+                        </th>-->
+                        <th> 
+                            {!v.translationsMap.Name}
+                        </th>
+                        <aura:if isTrue="{!v.hideDiscount}">
+                            <th class="slds-text-align_center"> 
+                                {!v.translationsMap.Discount}
+                            </th>
+                            <th class="slds-text-align_center"> 
+                                {!v.translationsMap.Discount_Type_PI}
+                            </th>
+                            <aura:set attribute="else">
+                                <th>
+                                </th>
+                                <th>
+                                </th>
+                            </aura:set>
+                        </aura:if>
+                        <th style="text-align:right;"> 
+                            {!v.translationsMap.Unit_Price_PI}
+                        </th>
+                        <th class="slds-text-align_center"> 
+                            {!v.translationsMap.Quantity_PI}
+                        </th>
+                        <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                            <th style="text-align:right;">
+                                Quantity Changed
+                            </th>
+                        </aura:if>
+                        <th style="text-align:right;"> 
+                            New <aura:if isTrue="{!v.Quote.Payment_Term__c == 'Yearly'}">
+                                Yearly
+                                <aura:set attribute="else">
+                                    Monthly
+                                </aura:set>
+                            </aura:if> Recurring Charges
+                        </th>
+                        <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                            <th style="text-align:right;">
+                                 Total Price Changed
+                            </th>
+                            <aura:set attribute="else">
+                                <th></th>
+                            </aura:set>
+                        </aura:if>
+                    </tr>
+                </thead>
+                <tbody>
+                    <aura:iteration items="{!v.QuoteLineWrapper.objQuoteWrap}" var="eachLine" indexVar="index">
+                        <tr>
+                            <!--<td>
+                                <button class="slds-button slds-button_icon" title="Delete" onclick="{!c.deleteQuoteProduct}" id="{!index}">
+                            		<lightning:icon iconName="utility:delete" alternativeText="Product" 
+                                                size="x-small" style="cursor:pointer;" />
+                                </button>
+                            </td>-->
+                            <td>
+                                {!eachLine.productName}
+                            </td>
+                            <aura:if isTrue="{!not(eachLine.isHeaderProduct)}">
+                                <aura:set attribute="else">
+                                    <td colspan="6">
+                                    </td>
+                                </aura:set>
+                                <aura:if isTrue="{!v.hideDiscount}">
+                                    <td class="slds-text-align_center">
+                                        {!eachLine.quoteLine.Discount_Number__c}
+                                    </td>
+                                    <td class="slds-text-align_center">
+                                        <aura:if isTrue="{!eachLine.quoteLine.Discount_Type__c != '%'}">
+                                            {!v.Quote.CurrencyIsoCode}
+                                        </aura:if>
+                                        <aura:if isTrue="{!eachLine.quoteLine.Discount_Type__c == '%'}">
+                                            {!eachLine.quoteLine.Discount_Type__c}
+                                        </aura:if>
+                                    </td>
+                                    <aura:set attribute="else">
+                                        <td></td>
+                                        <td></td>
+                                    </aura:set>
+                                </aura:if>
+                                <td style="text-align:right;">
+                                    <lightning:formattedNumber value="{!eachLine.quoteLine.List_Price__c}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                                </td>
+                                <td class="slds-text-align_center">
+                                    {!eachLine.quoteLine.Quantity__c}
+                                        
+                                </td>
+                                
+                                <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                                    <td style="text-align:right;">
+                                        {!eachLine.quantityChanged}
+                                    </td>
+                                </aura:if> 
+                                <td style="text-align:right;">
+                                    <lightning:formattedNumber value="{!eachLine.quoteLine.Total_Price__c}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                                </td>
+                                <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                                    <td style="text-align:right;">
+                                        {!eachLine.priceChange}
+                                    </td>
+                                    <aura:set attribute="else">
+                                        <td>
+                                        </td>
+                                    </aura:set>
+                                </aura:if>
+                            </aura:if>
+                        </tr>
+                    </aura:iteration>
+                    <tr class="totalrow">
+                        <td colspan="5"> 
+                            <b>{!v.translationsMap.Total_One_Time_Payment}</b>
+                        </td>
+                        <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                        	<td style="text-align:right;">
+                                    {!eachLine.quantityChanged}
+                            </td>
+                        </aura:if>
+                        <td style="text-align:right;"> 
+                            <b>
+                            <lightning:formattedNumber value="{!v.QuoteLineWrapper.oneTimeTotal}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                        	</b>
+                        </td>
+                        <aura:if isTrue="{!v.QuoteLineWrapper.isFromSubscription}">
+                            <td style="text-align:right;"> 
+                                <b>
+                                <lightning:formattedNumber value="{!v.QuoteLineWrapper.changedTotalPrice}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                                </b>
+                            </td>
+                            <aura:set attribute="else">
+                                <td>
+                                </td>
+                            </aura:set>
+                        </aura:if>
+                    </tr>
+                    <tr class="totalrow">
+                        <td colspan="5">
+                            <b>{!v.translationsMap.Total_Recurring_Price_PI}</b>
+                        </td>
+                        <td style="text-align:right;"> 
+                            <b>
+                                <lightning:formattedNumber value="{!v.QuoteLineWrapper.reccuringTotal}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                            </b>
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="text-align:right;color:red;font-weight:bold;">
+            	{!v.translationsMap.Taxes_are_not_included_Additional_fees}
+            </div>
+        </div>
+    </fieldset>
+</aura:component>

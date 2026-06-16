@@ -1,0 +1,51 @@
+<template>
+    <lightning-combobox
+        name="view"
+        label={labels.view}
+        value={valueView}
+        placeholder={labels.selectView}
+        options={viewOptions}
+        onchange={handleChangeView}
+        disabled={loading}
+        class="sc-case-controls__v-fix"
+    ></lightning-combobox>
+    <lightning-combobox
+        name="searchBy"
+        value={valueSearchBy}
+        options={searchByOptions}
+        onchange={handleChangeSearch}
+        label={labels.searchBy}
+        disabled={loading}
+        class="sc-case-controls__v-fix sc-case-controls__search-by"
+    ></lightning-combobox>
+    <div class="sc-case-controls__search sc-case-controls__v-fix">
+        <lightning-input
+            type="text"
+            name="search"
+            onkeyup={searchKeyUp}
+            disabled={loading}
+            value={searchVal}
+            label={labels.searchCriteria}
+            minlength={searchLength.min}
+            maxlength={searchLength.max}
+            onchange={searchValueChange}
+            class="sc-case-controls__search-input"
+        ></lightning-input>
+        <lightning-button-icon
+            icon-name="utility:clear"
+            variant="bare"
+            if:true={isSearch}
+            alternative-text={labels.clearSearchResults}
+            onclick={clearSearch}
+            class="sc-case-controls__search-clear"
+        ></lightning-button-icon>
+    </div>
+    <div lwc:dom="manual" class="slds-hidden"></div>
+    <button class="sc-button" disabled={disabledSearch} onclick={doSearch}>{labels.search}</button>
+    <div class="slds-spinner_container" if:true={loading}>
+        <div role="status" class="slds-spinner slds-spinner_small slds-spinner_brand">
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+    </div>
+</template>

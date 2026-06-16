@@ -1,0 +1,60 @@
+<!--
+* Created By     : Namitha
+* Created Date   : 21-07-2020
+* Description    : Component invoked when 'Complete Phase' button is clicked on Phase in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component controller="Phase_Complete_PhaseController" implements="flexipage:availableForAllPageTypes,force:hasRecordId,force:lightningQuickActionWithoutHeader,force:hasSObjectName" access="global" >
+    <aura:html tag="style">
+        .cuf-content {
+        padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+        padding: 0rem !important;
+        }       
+        .slds-modal__content{
+        overflow-y:hidden !important;
+        height:unset !important;
+        max-height:unset !important;
+        }
+    </aura:html>  
+    <aura:attribute name="displayConfirmMessage" type="Boolean" default="false"/>
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:if isTrue="{!!v.displayConfirmMessage}">
+        <div>Claiming Current Owner</div>
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+            </div>
+        </div>
+    </aura:if>
+   <aura:if isTrue="{!v.displayConfirmMessage}">
+        <header class="slds-modal__header">
+            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Complete Phase</h2>
+        </header>
+        <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+                </div>
+            </div>
+            <div>                        
+                The phase will be locked. Are you sure that you want to complete it?
+            </div>
+        </div>
+        <footer class="slds-modal__footer">
+                <div class="slds-float_left">
+                    <lightning:button variant="neutral" label="Cancel" title="Cancel"  onclick="{!c.closeModal}"/>
+                </div>
+                <lightning:button variant="neutral" label="Complete Phase" title="Complete Phase"  onclick="{!c.handleConfirmation}"/> 
+        </footer>  
+    </aura:if>
+</aura:component>

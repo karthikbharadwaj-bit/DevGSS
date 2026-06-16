@@ -1,0 +1,339 @@
+<aura:component controller="RefundManagementController">
+
+    <!-- Resources -->
+    <ltng:require scripts="{! join(',',
+            $Resource.RCHelper + '/RC.js',
+            $Resource.RefundManagementDependencies + '/RM.js',
+            $Resource.underscoreJs + '/underscore-min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.0/moment.min.js')}"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <!-- Attributes -->
+    <aura:attribute name="app" type="object"/>
+    <aura:attribute name="tabs" type="Aura.Component[]"/>
+    <aura:attribute name="transactions" type="List" description="Copy of app.transactions to handle performance"/>
+
+    <!-- Handlers -->
+    <aura:handler name="RefundManagementEvent" action="{!c.onRefundManagementEvent}"/>
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="RefundManagementEvent" type="c:RefundManagementEvent"/>
+
+    <!-- Overlays -->
+    <c:Toasts/>
+    <c:Popover/>
+    <c:Modals/>
+
+    <!-- Page Header -->
+    <div class="slds-page-header">
+        <div class="slds-grid">
+            <div class="slds-col slds-has-flexi-truncate">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning:icon class="slds-page-header__icon"
+                                        alternativeText="Approval"
+                                        iconName="standard:approval"/>
+                    </div>
+                    <div class="slds-media__body">
+
+                        <nav>
+                            <ol class="slds-breadcrumb slds-line-height_reset">
+                                <li class="slds-breadcrumb__item">
+                                    <span>Refund Management</span>
+                                </li>
+                            </ol>
+                        </nav>
+
+                        <!-- Name Loading Placeholder -->
+                        <c:LoadingPlaceholder type="line" isShown="{! v.app.IsGetDataInProgress }"/>
+
+                        <!-- Account Name -->
+                        <h1 class="{! join(' ', 'slds-page-header__title slds-m-right_small slds-align-middle slds-truncate', v.app.IsGetDataInProgress ? 'slds-hide' : '') }"
+                            title="{! v.app.approval.record.Account__r.Name }">
+                            <a href="{! '/' + v.app.approval.record.Id }"
+                               class="slds-text-link_faux">{! v.app.approval.record.Name }</a>
+                        </h1>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Select Product Type Tabs -->
+            <div class="slds-col slds-no-flex slds-grid slds-align-top">
+                <lightning:tabset aura:id="productSection" onselect="{!c.handleProductTab}">
+                    {!v.tabs}
+                </lightning:tabset>
+            </div>
+        </div>
+    </div>
+
+    <aura:if isTrue="{! !empty(v.app.migratedTechnicalAccounts) }">
+        <div class="slds-grid">
+            <div class="slds-col slds-size_1-of-1 account-migrated-warning">
+                <div>
+                    Current Account was migrated into Multi-Product Unified Billing model. If you are unable to find specific transaction using refund management page please look for that transaction in Billing Admin Portal using following Account ID(s):
+                    <aura:iteration items="{!v.app.migratedTechnicalAccounts}" var="migratedAccount">
+                        <br />{!migratedAccount.Service_Type__c}: <a href="{!'/' + migratedAccount.Id}" target="_blank">{!migratedAccount.Billing_ID__c}</a>
+                    </aura:iteration>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+
+    <!-- Page Header Details  -->
+    <ul class="slds-grid slds-page-header__detail-row slds-m-around_none slds-no-flex header-details">
+
+        <!-- Available Refund Amount -->
+        <li class="slds-page-header__detail-block" onclick="{! c.onRefundAmountClick }">
+            <div class="available-refund">
+
+                <button class="slds-button slds-text-title slds-truncate slds-m-bottom--xx-small dropdown-button"
+                        title="Available Refund Amount"
+                        onclick="{!c.toggleRefundPopup}">
+                    Available Refund Amount
+                    <lightning:icon iconName="utility:down"
+                                    size="xx-small"
+                                    class="slds-button__icon"
+                                    aura:id="refundPopupIcon"/>
+                </button>
+
+                <c:LoadingPlaceholder type="line" isShown="{! v.app.IsGetDataInProgress }"/>
+
+                <p class="{! join(' ', 'slds-text-body_regular slds-truncate', v.app.IsGetDataInProgress ? 'slds-hide' : '') }"
+                   title="Available Refund Amount">
+                    <c:outputCurrency value="{! v.app.availableRefundAmount.value }"
+                                      currencyCode="{! v.app.approval.record.CurrencyIsoCode }"/>
+                </p>
+
+            </div>
+            <lightning:card class="refund-popup slds-hide" aura:id="refundPopup">
+
+                <table class="slds-table slds-no-row-hover">
+                    <thead>
+                    <tr class="slds-text-title_caps">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Number">#</div>
+                        </th>
+                        <aura:if isTrue="{! !empty(v.app.approval.record.Account__r.Billing_ID__c) }">
+                            <th scope="col">
+                                <div class="slds-truncate" title="Refund Amount">Amount</div>
+                            </th>
+                        </aura:if>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Refund Category">Category</div>
+                        </th>
+                        <th scope="col">
+                            <div class="slds-truncate" title="Refund Type">Type</div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <aura:iteration items="{! v.app.approval.refundTable }" var="r">
+                        <tr>
+                            <th scope="row">
+                                <div class="slds-truncate" title="Refund Number">{! r.index }</div>
+                            </th>
+                            <aura:if isTrue="{! !empty(v.app.approval.record.Account__r.Billing_ID__c) }">
+                                <td>
+                                    <div class="slds-truncate" title="Refund Amount">
+                                        <c:outputCurrency value="{! r.amount }"
+                                                          currencyCode="{! v.app.approval.record.CurrencyIsoCode }"/>
+                                    </div>
+                                </td>
+                            </aura:if>
+                            <td>
+                                <div class="slds-truncate" title="Refund Category">{! r.category }</div>
+                            </td>
+                            <td>
+                                <div class="slds-truncate" title="Refund Type">{! r.type }</div>
+                            </td>
+                        </tr>
+                    </aura:iteration>
+                    <aura:if isTrue="{! v.app.historyTotalAmount > 0 }">
+                        <tr class="slds-border_top">
+                            <th scope="row"></th>
+                            <td>
+                                <div class="slds-truncate" title="Total Refund Amount">
+                                    <strong>
+                                        <c:outputCurrency value="{! v.app.TotalRefund }"
+                                                          currencyCode="{! v.app.approval.record.CurrencyIsoCode }"/>
+                                    </strong>
+                                </div>
+                            </td>
+                            <td colspan="2">
+                                <div class="slds-truncate" title="Refunded Amount">
+                                    <i>
+                                        (
+                                        <c:outputCurrency value="{! v.app.historyTotalAmount }"
+                                                          currencyCode="{! v.app.approval.record.CurrencyIsoCode }"/>
+                                        Refunded)
+                                    </i>
+                                </div>
+                            </td>
+                        </tr>
+                    </aura:if>
+                    </tbody>
+                </table>
+
+            </lightning:card>
+        </li>
+
+        <!-- Date Range -->
+        <li class="slds-page-header__detail-block">
+            <p class="slds-text-body_regular slds-truncate">
+                <span class="slds-show_inline-block date-picker">
+                    <ui:inputDate label="Start Date"
+                                  class="slds-input"
+                                  labelClass="slds-form-element__label"
+                                  displayDatePicker="true"
+                                  change="{! c.rerender }"
+                                  value="{! v.app.StartDateString }"/>
+                    <aura:if isTrue="{!v.app.StartDateError}">
+                        <div class="slds-text-color_error date-error-message">{!v.app.StartDateError}</div>
+                    </aura:if>
+                </span>
+                <span class="slds-show_inline-block date-hyphen">
+                    -
+                </span>
+                <span class="slds-show_inline-block date-picker">
+                    <ui:inputDate label="End Date"
+                                  class="slds-input"
+                                  labelClass="slds-form-element__label"
+                                  displayDatePicker="true"
+                                  change="{! c.rerender }"
+                                  value="{! v.app.EndDateString }"/>
+                    <aura:if isTrue="{!v.app.EndDateError}">
+                        <div class="slds-text-color_error date-error-message">{!v.app.EndDateError}</div>
+                    </aura:if>
+
+                </span>
+            </p>
+        </li>
+
+        <!-- NotificationsBar -->
+        <c:NotificationsBar notifications="{! v.app.notifications }" aura:id="NotificationsBar"/>
+        <li class="slds-page-header__detail-block">
+            <div class="slds-col slds-no-flex slds-grid slds-align-top">
+                <!-- Refresh Refunds Button -->
+                <lightning:button label="Get Transactions"
+                                  iconName="utility:refresh"
+                                  onclick="{! c.requestRefunds }"
+                                  disabled="{! v.app.isRequestRefundsDisabled }"/>
+                <!-- Send Refunds Button -->
+                <lightning:button label="{! 'Send Refunds (' + v.app.productsToProcessCount + ')' }"
+                                  variant="brand"
+                                  aura:id="sendRefundsButton"
+                                  onclick="{! c.sendRefunds }"
+                                  disabled="{! v.app.isSendRefundsDisabled }"/>
+            </div>
+        </li>
+    </ul>
+
+    <!-- Transaction list -->
+    <div class="main-container">
+        <div class="fixed-table-container">
+            <div class="header-background slds-border_bottom"></div>
+            <div class="fixed-table-container-inner">
+                <form onsubmit="{! c.onsubmit }" class="slds-grow">
+                    <lightning:button label="submit" class="slds-hide" type="submit" aura:id="formSubmitButton"/>
+
+                    <aura:if isTrue="{! not(v.app.IsTransactionsInProgress) }">
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer table-body">
+
+                            <!-- Transactions Header -->
+                            <thead>
+                            <tr class="slds-text-title_caps header transactions-header">
+                                <th class="fixed-th col-txid">
+                                    <aura:if isTrue="{!v.app.SelectedTab.id == v.app.TAB_ID_RINGCENTRAL}">
+                                        <div class="th-inner">Transaction ID</div>
+                                        <div class="th-inner-hidden">Transaction ID</div>
+                                        <aura:set attribute="else">
+                                            <div class="th-inner">Invoice Number</div>
+                                            <div class="th-inner-hidden">Invoice Number</div>
+                                        </aura:set>
+                                    </aura:if>
+                                </th>
+                                <th class="fixed-th">
+                                    <div class="th-inner">Date</div>
+                                    <div class="th-inner-hidden">Date</div>
+                                </th>
+                                <th class="fixed-th">
+                                    <div class="th-inner">Refunded Date</div>
+                                    <div class="th-inner-hidden">Refunded Date</div>
+                                </th>
+                                <th class="fixed-th">
+                                    <div class="th-inner">Status</div>
+                                    <div class="th-inner-hidden">Status</div>
+                                </th>
+                                <th class="fixed-th">
+                                    <div class="th-inner">Total</div>
+                                    <div class="th-inner-hidden">Total</div>
+                                </th>
+                                <th class="fixed-th">
+                                    <div class="th-inner" title="Available Refund Amount">Available Refund</div>
+                                    <div class="th-inner-hidden" title="Available Refund Amount">Available Refund
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{! !empty(v.app.approval.record.Account__r.Billing_ID__c) }">
+                                    <th class="fixed-th">
+                                        <div class="th-inner">Refunded amount</div>
+                                        <div class="th-inner-hidden">Refunded amount</div>
+                                    </th>
+                                </aura:if>
+                                <th class="fixed-th">
+                                    <div class="th-inner">Refund Amount</div>
+                                    <div class="th-inner-hidden">Refund Amount</div>
+                                </th>
+                                <th class="fixed-th"></th>
+                            </tr>
+                            </thead>
+
+                            <!-- Transactions Rows -->
+                            <tbody>
+                            <aura:iteration items="{! v.transactions }" var="transaction" indexVar="index">
+                                <c:RefundManagementTransaction app="{! v.app }" transaction="{! transaction }"/>
+                            </aura:iteration>
+                            </tbody>
+                        </table>
+                    </aura:if>
+
+                    <c:LoadingPlaceholder type="table" isShown="{! v.app.IsTransactionsInProgress }"/>
+
+                    <aura:if isTrue="{! and(v.app.RequestCounter > 0, not(v.app.IsLastPage), not(v.app.isRequestRefundsDisabled)) }">
+                        <div class="slds-text-align_center slds-p-vertical_small white-background">
+                            <button class="slds-button slds-button_neutral" onclick="{!c.loadMore}">Load More</button>
+                        </div>
+                    </aura:if>
+
+                </form>
+
+                <!-- Message -->
+                <div class="{! join(' ', 'slds-grid slds-grid_vertical-align-center slds-grid_align-center message-block',
+                        v.app.message.isShown ? '' : 'slds-hide')}">
+                    <p>{! v.app.message.text }</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="slds-modal__footer slds-text-align_center">
+
+        <!-- Totals -->
+        <div class="slds-text-align_right">
+
+            <!-- Your Refund Amount -->
+            <span class="{! v.app.yourRefundAmount.isValid ? '' : 'total_has-error' }">
+                    <label class="label_weak">Your Refund Amount:</label>
+                    <b><c:outputCurrency value="{! v.app.yourRefundAmount.value }"/></b>
+                </span>
+
+            <!-- Remaining Refund Amount -->
+            <span class="{! join(' ', 'slds-m-left_small',
+                v.app.remainingRefundAmount.isValid ? '' : 'total_has-error') }">
+                    <label class="label_weak">Remaining Refund Amount:</label>
+                    <b><c:outputCurrency value="{! v.app.remainingRefundAmount.value }"/></b>
+                </span>
+        </div>
+
+    </footer>
+
+</aura:component>

@@ -1,0 +1,1290 @@
+<!--
+  @description       : 
+  @author            : ChangeMeIn@UserSettingsUnder.SFDoc
+  @group             : 
+  @last modified on  : 03-11-2021
+  @last modified by  : ChangeMeIn@UserSettingsUnder.SFDoc
+  Modifications Log 
+  Ver   Date         Author                               Modification
+  1.0   03-11-2021   ChangeMeIn@UserSettingsUnder.SFDoc   Initial Version
+-->
+<template>
+	<div class="container" lwc:dom="manual"></div>
+	<lightning-tabset>
+		<lightning-tab label="Deal Quoting Tool">
+			<lightning-card>
+
+				<div slot="actions">
+					<div class="slds-clearfix">
+						<div class="slds-float_right">
+							<lightning-button variant="brand" label="Apply to Quote" title="Apply to Quote" onclick={handleAcceptRecommendation} class="slds-m-left_x-small"></lightning-button>
+							<lightning-button variant="brand" label="Refresh from Quote" title="Refresh from Quote" onclick={refreshFromQuoteClick} class="slds-m-left_x-small"></lightning-button>
+							<lightning-button variant="brand" label="Save" title="Save" onclick={saveDealQuoteInfo} class="slds-m-left_x-small"></lightning-button>
+						</div>
+					</div>
+				</div>
+				
+				<div class="slds-p-horizontal_small slds-box">
+					<div class="slds-grid slds-gutters slds-m-vertical_small">
+						<div class="slds-col blue_background slds-size_1-of-1 slds-p-vertical_small"> {dealCharactersticTitle} </div>
+					</div>
+					<div class='slds-grid slds-wrap'>
+						<div class="slds-col slds-size_1-of-3 slds-p-around_small">
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<c-lwc-lookup lookup-label="Quote Id" object-api-name="Quote" icon-name="standard:Quote" fields="OpportunityId,Opportunity.Name" onrecordselection={onQuoteSelection} selected-value={selectedQuote} selected-record-id={dealQuoteInfo.Sales_Agreement__c}></c-lwc-lookup>
+								<lightning-input type="hidden" value={dealQuoteInfo.Sales_Agreement__c} label="" data-id="quote__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<c-lwc-lookup lookup-label="Opportunity Link" object-api-name="Opportunity" icon-name="standard:Opportunity" selected-record-id={dealQuoteInfo.Opportunity__c} selected-value={selectedOpportunity} onrecordselection={onOpportuntiySelection}></c-lwc-lookup>
+								<lightning-input type="hidden" value={dealQuoteInfo.Opportunity__c} label="" data-id="opportunity__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 ">
+								<lightning-combobox name="tier" label="Edition" placeholder="Select Edition" options={tierOptions} value={dealQuoteInfo.Tier__c} data-id="Tier__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							
+
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-combobox name="contractYears" label="Contract Length (Years)" placeholder="Select Contract Length" options={yearOptions} value={dealQuoteInfo.Contract_Length_Years__c} data-id="Contract_Length_Years__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-combobox name="paymentPlan" label="Payment Plan" placeholder="Select Plan" options={planOptions} value={dealQuoteInfo.Payment_Plan__c} data-id="Payment_Plan__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-combobox name="sector" label="Sector" placeholder="Select Sector" options={sectorOptions} value={dealQuoteInfo.Sector__c} data-id="Sector__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-input type="number" label="Total Number of Employees" value={dealQuoteInfo.Total_Number_of_Employees__c} data-id="Total_Number_of_Employees__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-combobox name="selectTerm" label="Client has a contact center?" placeholder="Select Option" options={termOptions} value={dealQuoteInfo.Potential_to_sell_contact_center_in_near__c} data-id="Potential_to_sell_contact_center_in_near__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							<template if:true={FALSE_CONST}>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-combobox name="selectFeatures" label="Features" placeholder="Select Features" options={featureOptions} value={dealQuoteInfo.Features__c} data-id="Features__c" onchange={inputChangeEvent}></lightning-combobox>
+							</div>
+							</template>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-input type="number" label="Free Months Given" value={dealQuoteInfo.Free_Months_Given__c} data-id="Free_Months_Given__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							
+						</div>
+						<div class="slds-col slds-size_1-of-3 slds-p-around_small">
+							<div class="slds-grid slds-wrap slds-m-vertical_large">
+								 
+							</div>
+							<div class="slds-grid slds-wrap slds-m-vertical_large">
+								 
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 slds-m-bottom_medium">
+								<lightning-input type="number" label="Number of Unlimited DLs" value={dealQuoteInfo.Number_of_Unlimited_DLs__c} data-id="Number_of_Unlimited_DLs__c" onchange={inputChangeEvent} onblur={updateTotalUnlimitedDL}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 ">
+								<lightning-input type="number" label="Number of Limited Exts" value={dealQuoteInfo.Number_of_Limited_Exts__c} data-id="Number_of_Limited_Exts__c" onchange={inputChangeEvent} onblur={updateTotalLimitedExtension}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1" >
+								<lightning-input type="number" formatter="currency" label="Undiscounted Unit Price for Limited Exts." value={dealQuoteInfo.Undiscounted_Unit_Price_for_Limited_Exts__c} data-id="Undiscounted_Unit_Price_for_Limited_Exts__c" onchange={inputChangeEvent} onblur={updateTotalLimitedExtension} step="0.01"></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 ">
+								<lightning-input type="number" label="Number of Additional local Number (incl. Toll Free)" value={dealQuoteInfo.Number_of_additional_local_number_incl__c} data-id="Number_of_additional_local_number_incl__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 ">
+								<lightning-input type="number" label="Undiscounted Unit Price for additional local numbers" value={dealQuoteInfo.Undiscounted_Unit_Price_for_additional_l__c} data-id="Undiscounted_Unit_Price_for_additional_l__c" onchange={inputChangeEvent}  step="0.01"></lightning-input>
+							</div>
+							
+						</div>
+						<div class="slds-col slds-size_1-of-3 slds-p-around_small">
+							<div class="slds-grid slds-wrap slds-m-vertical_large">
+								 
+							</div>
+							<div class="slds-grid slds-wrap slds-m-vertical_large">
+								 
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1 slds-m-bottom_medium">
+								<lightning-input type="number" formatter="currency" label="Monthly total for Contact Center" value={dealQuoteInfo.Monthly_total_for_Contact_Center__c} data-id="Monthly_total_for_Contact_Center__c" onchange={inputChangeEvent} step="0.01"></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-input type="number" formatter="currency" label="Monthly total for phone rentals" value={dealQuoteInfo.Monthly_total_for_phone_rentals__c} data-id="Monthly_total_for_phone_rentals__c" onchange={inputChangeEvent} step="0.01"></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-input type="number" formatter="currency" label="Monthly total for RCO Enterprise Support" value={dealQuoteInfo.Monthly_total_for_ProServ_Enterprise__c} data-id="Monthly_total_for_ProServ_Enterprise__c" onchange={inputChangeEvent} step="0.01"></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1">
+								<lightning-input type="number" formatter="currency" label="Monthly total for all other recurring charges (no fees)" value={dealQuoteInfo.Monthly_total_for_all_other_recurring_ch__c} data-id="Monthly_total_for_all_other_recurring_ch__c" onchange={inputChangeEvent} step="0.01"></lightning-input>
+							</div>
+						</div>
+					</div>
+				</div>
+			</lightning-card>
+			<lightning-card>
+				<div class="slds-p-horizontal_small slds-box">
+					<div class="slds-grid slds-gutters slds-m-vertical_small">
+						<div class="slds-col blue_background slds-size_1-of-1 slds-p-vertical_small"> {targetPriceForDLTitle} </div>
+					</div>
+					<div class="slds-grid slds-m-vertical_small">
+						<div class="slds-col slds-text-heading_small">
+							All prices exclude fees and taxes
+						</div>
+					</div>
+					<div class="slds-grid">
+
+						<div class="slds-col slds-size_3-of-12 slds-border_right slds-m-right_small"> 
+
+							<div class="slds-grid">
+								<div class="slds-col slds-size_11-of-12 slds-m-horizontal_xx-small"> 
+									<div class='border-blue'>
+										List price for Unlimited DLs
+									</div>
+								</div>
+							</div>
+							<div class="slds-grid">
+								<div class="slds-col slds-size_5-of-12 slds-m-horizontal_xx-small"> 
+									<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Per unit ($)</label>
+									<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Per unit ($)" variant="label-hidden" value={dealQuoteInfo.Per_Unlimited_DL_advertised__c} disabled="true" data-id="Per_Unlimited_DL_advertised__c" onchange={inputChangeEvent}></lightning-input>
+								</div>
+								<div class="slds-col slds-size_5-of-12 slds-m-horizontal_xx-small"> 
+									<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Total ($)</label>
+									<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Total ($)" variant="label-hidden" disabled="true" value={dealQuoteInfo.Total_for_Unlimited_DLs_advertised__c} data-id="Total_for_Unlimited_DLs_advertised__c" onchange={inputChangeEvent}></lightning-input>
+								</div>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+								<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Per Limited Extension (advertised)" disabled="true" value={dealQuoteInfo.Per_Limited_Extension_advertised__c} data-id="Per_Limited_Extension_advertised__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+							<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+								<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Total for Limited Extensions (advertised)" disabled="true" value={dealQuoteInfo.Total_for_Limited_Extensions_advertised__c} data-id="Total_for_Limited_Extensions_advertised__c" onchange={inputChangeEvent}></lightning-input>
+							</div>
+
+						</div>
+
+						<div class="slds-col slds-size_5-of-12 slds-border_right slds-m-horizontal_small"> 
+							 		<div class="slds-grid">
+										<div class="slds-col slds-size_11-of-12 slds-m-horizontal_xx-small"> 
+											<div class='border-blue'>
+												Target Price for Unlimited DLs
+											</div>
+										</div>
+									</div>
+									<div class="slds-grid">
+										<div class="slds-col slds-size_3-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Per unit ($)</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Per unit ($)" variant="label-hidden" value={dealQuoteInfo.Recommended_price_per_Unlimited_DL_after__c} data-id="Recommended_price_per_Unlimited_DL_after__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+										</div>
+										<div class="slds-col slds-size_3-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Total ($)</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Total ($)" variant="label-hidden" value={dealQuoteInfo.Recommended_Unlimited_DLs_price_after_di__c} data-id="Recommended_Unlimited_DLs_price_after_di__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+										</div>
+										<div class="slds-col slds-size_4-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label" for="unique-id-of-input">Recommended Discount %</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Recommended Discount %" variant="label-hidden" value={dealQuoteInfo.Recommended_Discount_vs_list__c} data-id="Recommended_Discount_vs_list__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+										</div>
+									</div>
+									<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+										<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Recommended price per Limited Extension after discounts" value={dealQuoteInfo.Recommended_price_per_Limited_Extension__c} data-id="Recommended_price_per_Limited_Extension__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+									</div>
+									<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+										<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Recommended Limited Extensions price after discounts" value={dealQuoteInfo.Recommended_Limited_Extensions_price_aft__c} data-id="Recommended_Limited_Extensions_price_aft__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+									</div>
+									
+								 
+						</div>
+
+						<div class="slds-col slds-size_4-of-12 slds-m-left_small"> 	
+									<div class="slds-grid">
+										<div class="slds-col slds-size_10-of-12 slds-m-horizontal_xx-small"> 
+											<div class='border-blue'>
+												Your price for Unlimited DLs
+											</div>
+										</div>
+									</div>
+									<div class="slds-grid">
+										<div class="slds-col slds-size_3-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Per unit ($)</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" variant="label-hidden" label="Per unit ($)" value={dealQuoteInfo.Final_quote_price_per_Unlimited_DL__c} data-id="Final_quote_price_per_Unlimited_DL__c" onchange={inputChangeEvent} onblur={blurOnFinalQuotePricePerUnlimited}></lightning-input>
+										</div>
+										<div class="slds-col slds-size_3-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label label-align-center" for="unique-id-of-input">Total ($)</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Total ($)" variant="label-hidden" value={dealQuoteInfo.Final_quote_price_for_Unlimited_DLs__c} data-id="Final_quote_price_for_Unlimited_DLs__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+										</div>
+										<div class="slds-col slds-size_3-of-12 slds-m-horizontal_xx-small"> 
+											<label class="slds-form-element__label" for="unique-id-of-input">Your discount %</label>
+											<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Your discount %" variant="label-hidden" value={dealQuoteInfo.Final_discount_vs_list_percent__c} data-id="Final_discount_vs_list_percent__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+										</div>
+									</div>
+									
+									
+								</div>
+							 
+
+					</div>
+					
+					
+				</div>
+			</lightning-card>
+			<lightning-card>
+				<div class="slds-p-horizontal_small slds-box">
+					<div class="slds-grid slds-gutters slds-m-vertical_small">
+						<div class="slds-col blue_background slds-size_1-of-1 slds-p-vertical_small"> {finalPriceDiscrationTitle} </div>
+					</div>
+					
+					<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+						<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Final quote price per Limited Extension" value={dealQuoteInfo.Final_quote_price_per_Limited_Extension__c} data-id="Final_quote_price_per_Limited_Extension__c" onchange={inputChangeEvent} onblur={blurOnFinalQuotePriceForLimited}></lightning-input>
+					</div>
+					<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+						<lightning-input class="slds-text-align_center custom-center-align" type="number" step="0.01" label="Final quote price for Limited Extensions" value={dealQuoteInfo.Final_quote_price_for_Limited_Extensions__c} data-id="Final_quote_price_for_Limited_Extensions__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+					</div>
+
+					<div class='slds-grid slds-gutters'>
+						<div class="slds-col slds-size_3-of-12 slds-p-around_small"> 
+							<div class="slds-grid">
+								<div class="slds-col border-blue slds-m-top_large">
+									Office DL Discretion
+								</div>
+							</div>
+							<div class="slds-grid" if:true={FALSE_CONST}>
+								<div class="slds-col slds-size_6-of-12 slds-m-horizontal_xx-small"> 
+									
+								</div>
+								<div class="slds-col slds-size_6-of-12 slds-m-horizontal_xx-small"> 
+									<lightning-input type="number"  class="slds-text-align_center custom-center-align"  step="0.01" label="Final discount vs. list ($)" value={dealQuoteInfo.Final_discount_vs_list__c} data-id="Final_discount_vs_list__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="slds-col slds-size_5-of-12 slds-p-around_small"> 
+							<div class="slds-grid">
+								<div class="slds-col slds-size_6-of-12 slds-m-horizontal_xx-small"> 
+									<label class="slds-form-element__label label-align-center" for="unique-id-of-input">in $</label>
+									<lightning-input type="number" step="0.01" variant="label-hidden" class="slds-text-align_center custom-center-align"  label="Deal discretion for Unlimited DLs ($)" value={dealQuoteInfo.Deal_discretion_for_Unlimited_DLs__c} data-id="Deal_discretion_for_Unlimited_DLs__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+								</div>
+								<div class="slds-col slds-size_6-of-12 slds-m-horizontal_xx-small"> 
+									<label class="slds-form-element__label label-align-center" for="unique-id-of-input">in % of Target Price</label>
+									<lightning-input type="number" step="0.01" variant="label-hidden" class="slds-text-align_center custom-center-align" label="Discretion vs. target price" value={dealQuoteInfo.Discretion_vs_target_price__c} data-id="Discretion_vs_target_price__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+								</div>
+							</div>
+							 
+						 
+							<div class="slds-form-element slds-form-element_horizontal-1" if:true={FALSE_CONST}>
+								<lightning-input type="number" step="0.01" label="Deal discretion for Unlimited DLs (%)" value={dealQuoteInfo.Deal_discretion_for_Unlimited_DLs_Per__c} data-id="Deal_discretion_for_Unlimited_DLs_Per__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+							</div>
+							 
+						</div>
+
+						<div class="slds-col slds-size_4-of-12 slds-p-around_small"> 
+
+						</div>
+
+					</div>
+					<hr />
+					<div class='slds-grid slds-gutters'>
+						<div class="slds-col slds-size_3-of-12 slds-p-around_small"> 
+							<div class="slds-grid">
+								<div class="slds-col slds-m-horizontal_xx-small"> 
+									<lightning-input type="text" label="Approval Needed for Unlimited DLs" value={dealQuoteInfo.Approval_Needed_for_Unlimited_DLs__c} data-id="Approval_Needed_for_Unlimited_DLs__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+								</div>
+							</div>
+
+						</div>
+
+						<div class="slds-col slds-size_5-of-12 slds-p-around_small"> 
+							<div class="slds-grid">
+								<div class="slds-col  slds-m-horizontal_xx-small"> 
+									<lightning-input type="text" class={approvalClassCss} label="Approval Different from GoA?" value={dealQuoteInfo.Approval_Different_from_GoA__c} data-id="Approval_Different_from_GoA__c" onchange={inputChangeEvent} disabled="true"></lightning-input>
+								</div>
+							</div>
+					 
+						</div>
+
+						<div class="slds-col slds-size_4-of-12 slds-p-around_small"> 
+
+						</div>
+
+					</div>
+
+					<div class='slds-grid slds-gutters' if:true={FALSE_CONST}>
+						<div class="slds-col slds-size_5-of-11 slds-p-around_small"> 
+							<lightning-card>
+								<div class="slds-p-horizontal_small">
+									<div class="slds-grid slds-gutters slds-m-vertical_small">
+										<div class="slds-col blue_background slds-size_1-of-1 slds-p-vertical_small"> Approvals </div>
+									</div>
+
+									<div class='slds-grid slds-wrap'>
+										<div class="slds-col slds-size_1-of-2 slds-p-around_small">
+
+											<div class="slds-form-element slds-form-element_horizontal-1">
+											</div>
+
+										</div>
+										<div class="slds-col slds-size_1-of-2 slds-p-around_small">
+											<div class="slds-form-element slds-form-element_horizontal-1">
+											</div>
+										</div>
+									</div> 
+								</div>
+							</lightning-card>
+						</div>
+					</div>
+					
+				</div>
+				
+					
+					
+
+			</lightning-card>
+		</lightning-tab>
+		<lightning-tab label="Calculator">
+			<div class='slds-box'>
+
+				<div class="slds-grid slds-wrap">
+					<div class="slds-col slds-size_1-of-2 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Order Size Discount</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Input</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Calculation</div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Edition</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Edition__c}</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={basePriceFullyUndiscounted.perDl} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Number of Unlimited DLs</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Number_of_Unlimited_DLs__c}</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Number_of_Unlimited_DLs__c}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Office MRR ($)</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.officeMRR} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Number of Limited Exts</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Number_of_Limited_Exts__c}</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Number_of_Limited_Exts__c}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Undiscounted Unit Price for Limited Exts.</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={dealQuoteInfo.Undiscounted_Unit_Price_for_Limited_Exts__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{dealQuoteInfo.Undiscounted_Unit_Price_for_Limited_Exts__c}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Limited Ext. MRR</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.limitedExtMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Number of additional local number (incl. Toll free)</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Number_of_additional_local_number_incl__c}  </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.Number_of_additional_local_number_incl__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Undiscounted Unit Price for additional local numbers</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Undiscounted_Unit_Price_for_additional_l__c} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.Undiscounted_Unit_Price_for_additional_l__c} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Basic Lines MRR ($)</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">  </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.basicLineMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Total Lines</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{totalDiscountCalculation.totalLines}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Fees and E911</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.feesAndE911} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Monthly total for RCO Enterprise Support</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.monthlyTotalForProservEnterprises} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Monthly total for Contact Center</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.monthlyTotalForContactCenter} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Monthly total for phone rentals</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.monthlyTotalForPhoneRentals} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Monthly total for all other recurring charges (no fees)</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.monthlyTotalForAllOtherRecurringCharges} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Total deal MRR</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.totalDealMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition">Total deal ACV</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.totalDealACV} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="" colspan="3">
+										<div class="slds-p-vertical_small"></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Edition"><strong>Discount given deal size (ACV)</strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.totalDealACV} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={totalDiscountCalculation.discountGivenDealSize}  maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="slds-col slds-size_1-of-2 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Potential Discount</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Input</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Calculation</div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="" colspan="3">
+										<div class="slds-p-vertical_small"></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Contact Center MRR Potential"><strong>Contact Center MRR Potential</strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="Client has a contact center?"> Client has a contact center? </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">{contactCenterMrrPotential.potentialToSellContactCenterInNearTerm}</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="" colspan="3">
+										<div class="slds-p-vertical_small"></div>
+									</td>
+									 
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""><strong> Potential Contact Center MRR</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={contactCenterMrrPotential.potentialContactCenterMRR} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="blue_background">
+										<div class="slds-truncate" title=""> Office MRR potential </div>
+									</td>
+									<td data-label="blue_background">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="blue_background">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Edition </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.tierName} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.tierPrice} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Total Number of Employees </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.totalNumberOfEmployees} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.totalNumberOfEmployees} </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Potential Office MRR </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.potentialOfficeMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Number of Limited Exts </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.numberOfLimitedExts} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.numberOfLimitedExts} </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Undiscounted Unit Price for Limited Exts. </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.undiscountedUnitPriceForLimitedExts} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.undiscountedUnitPriceForLimitedExts} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Limited Ext. MRR </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.limitedExtsMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Total Lines </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {officeMrrPotential.totalLines} </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Fees and E911 </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.feesAndE911} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""><strong> Monthly total for RCO Enterprise Support</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForProservEnterprises} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForProservEnterprises} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""><strong> Monthly total for Contact Center </strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForContactCenter} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForContactCenter} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Monthly total for phone rentals</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalPhoneRentals} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalPhoneRentals} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""><strong> Monthly total for all other recurring charges (no fees)</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForAllOtherRecurringCharge} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.monthlyTotalForAllOtherRecurringCharge} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Potential Total MRR </strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.potentialTotalMrr} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Potential ACV</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.PotentialAcv} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="" colspan="3">
+										<div class="slds-p-vertical_small"></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Max discount given deal / relationship potential </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.PotentialAcv} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.maxDiscountGivenDealRelationshipPotential}  maximum-fraction-digits="2"></lightning-formatted-number> %
+										</div>
+									</td>
+								</tr>
+								
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title="">  Discount given deal size (ACV)  </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={totalDiscountCalculation.discountGivenDealSize} format-style="currency" currency-code="USD"></lightning-formatted-number>
+										</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title="">
+											<lightning-formatted-number value={officeMrrPotential.discountGivenDealSize}  maximum-fraction-digits="2"></lightning-formatted-number> %
+										</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Max discount given potential, excl. Discount already given for size </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={officeMrrPotential.maxDiscountGivenPotential}  maximum-fraction-digits="2"></lightning-formatted-number> % </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="" colspan="3">
+										<div class="slds-p-vertical_small"></div>
+									</td>
+									 
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""><strong> Discount given deal / relationship potential</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={officeMrrPotential.maxDiscountGivenPotential}  maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={officeMrrPotential.relationshipPotential}  maximum-fraction-digits="2"></lightning-formatted-number> % </div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				 
+				<hr/>
+				<div class="slds-grid slds-wrap">
+					<div class="slds-col slds-size_1-of-2 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Deal Term Discount</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Input</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Calculation</div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Contract Length Discount </strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Contract_Length_Years__c} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={dealTermDiscount.contractLengthDiscount} maximum-fraction-digits="2"></lightning-formatted-number> % </div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Payment Plan Discount</strong> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Payment_Plan__c} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={dealTermDiscount.paymentPlanDiscount} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div class="slds-col slds-size_1-of-2 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Other Discount</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Input</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Stage">Calculation</div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Free Month Adjustment </strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Free_Months_Given__c} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={otherDiscount.freeMonthAdjustment} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> <strong>Sector Adjustment </strong></div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {dealQuoteInfo.Sector__c} </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={otherDiscount.sectorAdjustment} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+								</tr>
+								<template  if:true={FALSE_CONST}>
+									<tr class="slds-hint-parent">
+										<td data-label="">
+											<div class="slds-truncate" title=""> <strong>Features</strong> </div>
+										</td>
+										<td data-label="">
+											<div class="slds-truncate" title=""> {dealQuoteInfo.Features__c} </div>
+										</td>
+										<td data-label="">
+											<div class="slds-truncate" title=""> <lightning-formatted-number value={otherDiscount.Features} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+										</td>
+									</tr>
+								</template>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				
+				<hr/>
+				
+				<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+					<colgroup>
+						<col style="width:40%">
+							<col style="width:30%">
+								<col style="width:30%">
+					</colgroup>
+					<thead>
+						<th class="" scope="col">
+							<div class="slds-truncate" title="Total Discount">Total Discount</div>
+						</th>
+						<th class="" scope="col">
+							<div class="slds-truncate" title=""></div>
+						</th>
+						<th class="" scope="col">
+							<div class="slds-truncate" title={totalDiscount}><lightning-formatted-number value={totalDiscount} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+						</th>
+					</thead>
+					<tbody> </tbody>
+				</table>
+				<hr />
+				<div class="slds-grid grid-wrap">
+					<div class="slds-col slds-size_4-of-12 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Total Discount">List price</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> DL bucket </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {listPrice.dlBucket}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Payment Plan </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {listPrice.paymentPlan}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Per DL - advertised ($) </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {listPrice.perDLAdvertised}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Total - advertised ($) </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> <lightning-formatted-number value={listPrice.totalAdvertised} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="slds-col slds-size_4-of-12 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Total Discount">Base price (fully undiscounted)</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Per DL ($) </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {basePriceFullyUndiscounted.perDl}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Total ($) </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={basePriceFullyUndiscounted.total} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="slds-col slds-size_4-of-12 slds-p-around_small"> 
+						<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+							<colgroup>
+								<col style="width:40%">
+									<col style="width:30%">
+										<col style="width:30%">
+							</colgroup>
+							<thead>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title="Total Discount">Target Price calculation</div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+								<th class="blue_background" scope="col">
+									<div class="slds-truncate" title=""></div>
+								</th>
+							</thead>
+							<tbody>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Suggested Discount vs. base price </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={targetPriceCalculation.suggestedDiscountVsBasePrice} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Discounted price recommendation </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={targetPriceCalculation.discountRecommendation} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Is DL bucket 1 line? </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {targetPriceCalculation.isDlBucket1Line}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Is discounted price reco higher than list price? </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {targetPriceCalculation.isDiscountedPriceRecoHigherThanListPrice}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Target Price </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={targetPriceCalculation.targetPrice} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Recommended % Discount vs. list </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={targetPriceCalculation.recommendedPerDiscountVsList} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Is recommended % discount vs. list above 60%? </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> {targetPriceCalculation.isRecommenedPerDiscountVsListAbove60}</div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Final Target Price reco (capped) </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""><lightning-formatted-number value={targetPriceCalculation.finalTargetPriceReco} maximum-fraction-digits="2"></lightning-formatted-number></div>
+									</td>
+								</tr>
+								<tr class="slds-hint-parent">
+									<td data-label="">
+										<div class="slds-truncate" title=""> Final recommended % Discount vs. list </div>
+									</td>
+									<td data-label="">
+										<div class="slds-truncate" title=""> </div>
+									</td>
+									<td data-label="">
+										<div class="slds-trunc	ate" title=""><lightning-formatted-number value={targetPriceCalculation.finalRecommendedPerDiscountVsList} maximum-fraction-digits="2"></lightning-formatted-number> %</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div> 
+		</lightning-tab>
+	</lightning-tabset>
+</template>

@@ -1,0 +1,93 @@
+<aura:component >
+    <!-- Shared Attributes -->
+    <aura:attribute name="quote" type="Quote" description="Current Quote Object"/>
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="state" type="Map" default="{}" description="Contain common checks for use by components"/>
+    <aura:attribute name="cartItems" type="List" description="Products in Cart"/>
+    <aura:attribute name="numberDLs" type="String" description="Number of Digital Lines on Account"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute name="allNotifications" type="List" />
+    <aura:attribute name="activeNotifications" type="List" />
+    <aura:attribute name="Stage" type="Integer" default="1" />
+    <aura:attribute name="showSpecialTerms" type="Boolean" />
+    <aura:attribute name="isUpgrade" type="Boolean" />
+    <aura:attribute name="preventNotificationsClose" type="Boolean" />
+
+    <!-- Initialization -->
+    <aura:handler name="init" value="{! this }" action="{! c.doInit }" />
+
+    <!-- Event Handlers -->
+    <aura:handler event="c:QuotingToolTermsChangeEvent" action="{!c.specialTerms}" />
+    <aura:handler event="c:QuotingToolTierUpgradeEvent" action="{!c.upgrade}" />
+    <aura:handler event="c:QuotingToolDeleteQuoteEvent" action="{!c.deleteQuote}" />
+    <aura:handler event="c:QuotingToolNewQuoteEvent" action="{!c.newQuote}" />
+
+    <!-- Attribute hange handlers -->
+    <aura:handler name="change" value="{! v.Wizard }" action="{! c.stateChanged }"/>
+    <aura:handler name="change" value="{! v.quote }" action="{! c.quoteChanged }"/>
+    <aura:handler name="change" value="{! v.cartItems }" action="{! c.cartItemsChanged }"/>
+    <aura:handler name="change" value="{! v.state }" action="{! c.stateChanged }"/>
+    <aura:handler name="change" value="{! v.Wizard }" action="{! c.wizardChanged }"/>
+    <aura:handler name="change" value="{! v.Tabs }" action="{! c.tabsChanged }"/>
+
+    <!-- register event -->
+    <aura:registerEvent name="notificationAction" type="c:QuotingToolNotificationActionEvent" />
+    <li class="slds-page-header__detail-block notifications-wrapper">
+        <div aura:id="notificationsContainer"
+             id="notificationsContainer"
+             onclick="{!c.toggleNotifications}"
+             class="notifications-container"
+             title="Click to show/hide all notifications">
+            <div class="notifications slds-scrollable--y" aura:id="notifications">
+                <aura:iteration items="{!v.activeNotifications}" var="notification">
+                    <!-- Notification -->
+                    <div class="slds-media slds-media--center notification">
+                        <div class="slds-media__figure notification__figure">
+                            <lightning:icon iconName="{! 'utility:' + notification.type }"
+                                            size="xx-small"
+                                            alternativeText="{! notification.type }"
+                                            class="{! 'notification__icon-container slds-theme--' + notification.type }"/>
+                        </div>
+                        <div class="slds-media__body">
+                            <p class="notification__text">
+                                <aura:unescapedHtml value="{!notification.text}" />
+                            </p>
+                            <aura:if isTrue="{!notification.helpText}">
+                                <p class="{! join(' ', 'notification__help-text',
+                                        notification.isHelpTextShown ? 'notification__help-text--open' : '') }">
+                                    <aura:unescapedHtml value="{!notification.helpText}" />
+                                </p>
+                            </aura:if>
+                        </div>
+                        <div class="notification__action-container">
+                            <a href="javascript:void(0);"
+                               onclick="{!c.helperAction}"
+                               data-action="{!notification.name}"
+                               class="notification__action">{!notification.actionLink}</a>
+                        </div>
+                    </div>
+                </aura:iteration>
+            </div>
+            <div class="notifications-button-container">
+                <button class="slds-button slds-button--icon-border notifications-button">
+                    <span class="slds-badge">
+                        <lightning:icon iconName="utility:down"
+                                        size="xx-small"
+                                        alternativeText="Collapse notifications"
+                                        class="notification-button-down" />
+                        <lightning:icon iconName="utility:up"
+                                        size="xx-small"
+                                        alternativeText="Collapse notifications"
+                                        class="notification-button-up" />
+                        <span class="sup">
+                            +{!v.activeNotifications.length - 1}
+                        </span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </li>
+</aura:component>

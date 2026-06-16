@@ -1,0 +1,74 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <aura:attribute name="areaCodeItem" type="Object"/>
+    <aura:attribute name="updateTrigger" type="Integer" default="0"/>
+    <aura:attribute name="busy" type="Boolean" />
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="columns" type="Map" default="{}" description="Size of each column"/>
+    <aura:attribute name="qli" type="QuoteLineItem" />
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="group" type="Map" default="{}" />
+    <aura:attribute name="deletingAreaCodeItems" type="Set" description="Area Code Line Items delete in progress"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.areaCodeItem}" action="{!c.areaCodeItemChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.busy}" action="{!c.busyChanged}" />
+    <aura:handler name="change" value="{!v.deletingAreaCodeItems}" action="{!c.deletingAreaCodeItemsChanged}" />
+    <aura:handler name="change" value="{!v.columns}" action="{!c.columnsChanged}" />
+    <aura:handler event="c:QuotingToolCartSaveEvent" action="{!c.validate}" />
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="QuotingToolAreaCodeListEntryEvent" type="c:QuotingToolAreaCodeListEntryEvent" />
+
+    <tr class="{! join(' ', (v.areaCodeItem.Id ? '':'unsaved'), 'qli__details area-code-entry') }">
+
+        <!-- buffer (expand icon) -->
+        <td></td>
+
+        <!-- Area Code Lookup -->
+        <td colspan="3" class="no-label cart__area-code" aura:id="areaCodeCol">
+            <c:Lookup placeholder="Start typing to search Area Code"
+                      method="getAreaCodes"
+                      iconCollection="custom"
+                      icon="custom64"
+                      value="{!v.areaCodeItem.Area_Code__c}"
+                      aura:id="areaCode"/>
+        </td>
+
+        <!-- Quantity -->
+        <td aura:id="qtyColumn">
+            <lightning:input label="Quantity"
+                             type="Number"
+                             step="1"
+                             min="1"
+                             value="{!v.areaCodeItem.Quantity__c}"
+                             onblur="{!c.quantityBlur}"
+                             class="entry-input entry-input--number entry-input--qty"
+                             aura:id="quantity"
+                             required="true"/>
+        </td>
+
+        <!-- buffer -->
+        <td colspan="5"></td>
+
+        <!-- Delete button -->
+        <td class="cart__actions">
+
+            <lightning:spinner size="small"
+                               variant="brand"
+                               alternativeText="Area Code Item delete in Progress"
+                               class="slds-hide no-background"
+                               aura:id="deleteSpinner"/>
+
+            <lightning:buttonIcon iconName="utility:delete"
+                                  variant="bare"
+                                  size="medium"
+                                  alternativeText="Delete Area Code"
+                                  aura:id="deleteButton"
+                                  onclick="{!c.deleteAreaCodeEntry}"/>
+        </td>
+
+    </tr>
+</aura:component>

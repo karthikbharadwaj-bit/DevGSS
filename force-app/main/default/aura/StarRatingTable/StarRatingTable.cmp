@@ -1,0 +1,55 @@
+<aura:component controller="StarsRatingController">
+    <aura:attribute name="data" type="Object"/>
+    <aura:attribute name="columns" type="List"/>
+    <aura:attribute name="tableType" type="String"/>
+    <aura:attribute name="recordId" type="String"/>
+    <aura:attribute name="title" type="String"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <div class="tableContainer">
+        <div class="slds-text-title_caps slds-text-align_center slds-p-bottom_medium">
+            <aura:renderIf isTrue="{!v.tableType == 'Contact center table'}">
+                <b>Contact Center: 12 Month Booking Potential</b>
+            </aura:renderIf>
+            <aura:renderIf isTrue="{!v.tableType == 'Toll free table'}">
+                <b>Toll Free: 12 Month Booking Potential</b>
+            </aura:renderIf>
+            <aura:renderIf isTrue="{!v.tableType == 'Meetings table'}">
+                <b>RC Meetings: 12 month booking potential </b>
+            </aura:renderIf>
+        </div>
+        <div class="slds-text-title_caps slds-text-align_center slds-p-bottom_small">
+            <b>{!v.title}</b>
+        </div>
+        <table class="slds-table slds-table_bordered slds-table_striped" >
+            <thead>
+                <tr class="slds-line-height_reset">
+                    <aura:iteration items="{!v.columns}" var="column">
+                        <th class="slds-text-title_caps">
+                            <div class="slds-truncate">{!column.label}</div>
+                        </th>
+                    </aura:iteration>
+                </tr>
+            </thead>
+            <tbody>
+                <aura:iteration items="{!v.data}" var="item">
+                    <tr class="slds-hint-parent">
+                        <td id="{!item.lineItems}">
+                            <div class="slds-truncate">{!item.lineItems}</div>
+                        </td>
+                        <td id="{!item.lineItems}">
+                            <div class="slds-truncate">{!item.current}</div>
+                        </td>
+                        <td id="{!item.lineItems}">
+                            <div class="slds-truncate">{!item.proposed}</div>
+                        </td>
+                        <td id="{!item.lineItems}">
+                            <div class="slds-truncate">{!item.delta}</div>
+                        </td>
+                    </tr>
+                </aura:iteration>
+            </tbody>
+        </table>
+    </div>
+</aura:component>

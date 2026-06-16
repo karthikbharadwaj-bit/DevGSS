@@ -1,0 +1,95 @@
+<template>
+    <template if:true={isModalOpen}>
+        <div class="slds-backdrop slds-backdrop_open custom_backdrop">
+            <section
+                role="dialog"
+                tabindex="-1"
+                aria-labelledby="modal-heading-01"
+                aria-modal="true"
+                aria-describedby="modal-content-id-1"
+                class={modalWindow}
+                data-ui-auto="common-modal-window">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button
+                            class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close"
+                            onclick={closeModal}
+                            data-ui-auto="close-button">
+                            <lightning-icon
+                                icon-name="utility:close"
+                                alternative-text="close"
+                                variant="inverse"
+                                size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium">Address Verification</h2>
+                    </header>
+
+                    <section if:false={isInvalidModalOpen} data-ui-auto="valid-modal-window" class="slds-theme_default slds-p-vertical_large slds-p-horizontal_medium slds-text-align_left">
+
+                        <h3 class="slds-m-bottom_medium slds-text-heading_small"><strong>Please confirm entered Address or choose one of suggested Addresses below:</strong></h3>
+                        <div class="slds-grid slds-grid_vertical">
+                            <div class="slds-m-bottom_medium slds-col slds-grid">
+                                <lightning-input
+                                    name="enteredAddressCheckbox"
+                                    variant="label-hidden"
+                                    checked={isEnteredAddressChecked}
+                                    onchange={handleEnteredAddressCheck}
+                                    type="radio"></lightning-input>
+                                    
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="entered-address-id">Continue with Entered Address</label>
+                                        <div class="entered-address" id="entered-address-id">{enteredBillingAddress}</div>
+                                    </div>
+                            </div>
+                            <div class="slds-col">
+                                <lightning-input
+                                    name="suggestedAddressCheckbox"
+                                    variant="label-hidden"
+                                    checked={isSuggestedAddressChecked}
+                                    onchange={handleSuggestedAddressCheck}
+                                    type="radio"></lightning-input>
+
+                                    <c-custom-combobox
+                                        class="suggested-address"
+                                        data-id="SuggestedAddressField"
+                                        label="Continue with Suggested Address"
+                                        placeholder="Select address"
+                                        options={suggestedAddressOptions}
+                                        selected-value={suggestedAddress}
+                                        disabled={isEnteredAddressChecked}
+                                        onchange={handleSuggestedAddress}
+                                        initially-open={initiallyOpenDropdown}
+                                        onclosedropdown={closeDropdown}>
+                                    </c-custom-combobox>
+                            </div>
+                          </div>
+                    </section>
+
+                    <section if:true={isInvalidModalOpen} data-ui-auto="invalid-modal-window" class="slds-theme_default slds-p-vertical_large slds-p-horizontal_medium slds-text-align_left">
+
+                        <h3 class="slds-m-bottom_medium slds-text-heading_small">Address is not verified.</h3>
+                        <h3 class="slds-m-bottom_medium slds-text-heading_small">Continue with not verified address?</h3>
+
+                    </section>
+
+                    <footer class="slds-modal__footer slds-grid slds-grid_align-spread">
+                        <button
+                            class="slds-button slds-button_neutral"
+                            data-ui-auto="cancel-button"
+                            type="button"
+                            title="Cancel"
+                            onclick={closeModal}>Cancel</button>
+                        <button
+                            class="slds-button slds-button_brand"
+                            data-ui-auto="continue-button"
+                            type="button"
+                            title="Submit"
+                            onclick={submitAddress}>Continue</button>
+                    </footer>
+                </div>
+            </section>
+        </div>
+    </template>
+</template>

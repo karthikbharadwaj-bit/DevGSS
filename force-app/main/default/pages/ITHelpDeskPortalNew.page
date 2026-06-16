@@ -1,0 +1,379 @@
+<apex:page controller="ITHelpDeskPortalNew"
+		   	sidebar="false"
+		   	showHeader="false"
+		   	standardStylesheets="false"
+		   	docType="html-5.0"
+    	   	cache="false">
+	<script src="{!URLFor($Resource.HelpDeskStyles, '/styles/jquery.js')}"></script>
+	<script src="{!URLFor($Resource.HelpDeskStyles, '/styles/jquery.validate.min.js')}"></script>
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/bootstrap.js')}"></script>
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/readmore.js')}"></script>
+	
+	<head>
+		<title>IT Help Desk</title>
+		<apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/styles/bootstrap.css')}" ></apex:stylesheet>
+		<apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/style.css')}" ></apex:stylesheet>
+		<apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/styles/HDstyles.css')}" ></apex:stylesheet>
+		<meta name="viewport" content="width=device-width, initial-scale=1"></meta>
+	</head>
+	<style type="text/css">
+		#HDstatusicon{
+			color: {!systemStatusColor};
+		}
+		.HDhrmenuitem{
+			display: {!IF(isUserHR, '', 'none')};
+		}
+		.HDsprite{
+			background-image: url( {!URLFor($Resource.HelpDeskStyles, '/styles/topsprite.png')} );
+		}
+	</style>
+	<body id="HDpage">
+		<apex:form >
+			<div class="container">
+				<div class="row" id="HDheader">
+					<div class="col-md-6 col-xs-6"><span class="HDsprite"></span></div>
+					<div class="col-md-2 hidden-xs"></div>
+					<div class="col-md-4 col-xs-6 hidden-lg hidden-md hidden-sm" id="HDbuttonsmall">
+						<div class="btn-group">
+							<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+								<span class="glyphicon glyphicon-list"></span>
+							</button>
+							<ul class="dropdown-menu pull-right" role="menu">
+							    <li class="HDmenuitem">
+							    	<a data-toggle="modal" data-target="#helpdeskticket" rerender="dummy"><i class="icon-pencil"></i> Helpdesk Case</a>
+							    </li>
+							    <li class="HDmenuitem">
+							    	<a data-toggle="modal" data-target="#purchaseticket" rerender="dummy"><i class="icon-book"></i> Purchase Case</a>
+							    </li>
+						    	<li class="HDhrmenuitem">
+						    		<a target="blank" href="http://wiki.ringcentral.com/display/RCN/New+Hire+Request+Form">
+						    			<i class="icon-address-book"></i> New Hire
+						    		</a>
+						    	</li>
+						    	<li class="HDhrmenuitem">
+						    		<a target="blank" href="http://wiki.ringcentral.com/display/RCN/Open+A+Termination+Ticket">
+						    			<i class="icon-price-tag"></i> Termination
+						    		</a>
+						    	</li>
+							    <!-- <li class="HDmenuitem">
+							    	<a target="blank" href="apex/inventionticket?action=edit"><i class="icon-cogs"></i> Invention Disclosure</a>
+							    </li>
+							    <li><a target="blank" href="apex/fossticket?action=edit"><i class="icon-folder-upload"></i> Free/Open-Source</a></li> -->
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="container" id="HDstatus">
+				<div id="HDstatusbar" class="panel panel-default">
+					<div class="row">
+						<div class="col-md-2 hidden-xs hidden-sm" id="HDstatustextbar">
+							<h6><i class="icon-brightness_1" id="HDstatusicon"></i>
+							<span class="HDstatustext">SERVICE STATUS</span></h6>
+						</div>
+						<div class="col-md-10 hidden-xs hidden-sm" id="HDissuebar">
+							<article class="slide">
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'red',true,false)}" escape="false">
+		                            <h6>Current Issues:</h6>
+		                            <apex:repeat var="descStr" value="{!activeOutages}">
+		                                <p style="white-space: pre-wrap; width:100%;" class="test">{!descStr}</p>
+		                            </apex:repeat>
+		                        </apex:outputText>
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'yellow',true,false)}" escape="false">
+		                            <h6>Resolved Issues:</h6>
+		                            <apex:repeat var="descStr" value="{!resolvedOutages}">
+		                                <p style="white-space:pre-wrap; width:100%;" class="test">{!descStr}</p>
+		                            </apex:repeat>
+		                        </apex:outputText> 
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'green',true,false)}"  escape="false">
+		                            <h6>No Known Issues</h6>
+		                        </apex:outputText>
+	                        </article>
+						</div>
+
+						<div class="col-sm-12 hidden-md hidden-lg" id="HDstatussmall">
+							<h6><i class="icon-brightness_1" id="HDstatusicon"></i>
+							<span class="HDstatustext">SERVICE STATUS</span></h6>
+						</div>
+						<div class="col-sm-12 hidden-md hidden-lg" id="HDstatussmall">
+							<article class="slide">
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'red',true,false)}" escape="false">
+		                            <h6>Current Issues:</h6>
+		                            <apex:repeat var="descStr" value="{!activeOutages}">
+		                                <p id="HScaselist" class="test">{!descStr}</p>
+		                            </apex:repeat>
+		                        </apex:outputText>
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'yellow',true,false)}" escape="false">
+		                            <h6>Resolved Issues:</h6>
+		                            <apex:repeat var="descStr" value="{!resolvedOutages}">
+		                                <p id="HScaselist" class="test">{!descStr}</p>
+		                            </apex:repeat>
+		                        </apex:outputText> 
+		                        <apex:outputText rendered="{!if(systemStatusColor == 'green',true,false)}"  escape="false">
+		                            <h6>No Known Issues</h6>
+		                        </apex:outputText>
+	                        </article>
+						</div>
+					</div>
+				</div>
+				<apex:outputPanel rendered="{!!isUserHR}">
+					<div class="row hidden-xs" id="HDbuttongroup">
+						<div class="col-lg-3 col-sm-0" id="HDbuttonblock">
+							
+						</div>
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" data-toggle="modal" data-target="#helpdeskticket" rerender="dummy">
+								<div class="row HDnomargins">
+									<div class="col-sm-3" id="HDiconpadding"><i class="icon-pencil" id="HDbuttons"></i></div>
+									<div class="col-sm-9" id="HDbuttonfont">Helpdesk Case</div>
+								</div>
+							</a>
+						</div>
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" data-toggle="modal" data-target="#purchaseticket" rerender="dummy">
+								<div class="row HDnomargins">
+									<div class="col-sm-3" id="HDiconpadding"><i class="icon-book" id="HDbuttons"></i></div>
+									<div class="col-sm-9" id="HDbuttonfont">Purchase Case</div>
+								</div>
+							</a>
+						</div>
+						<div class="col-lg-3 col-sm-0" id="HDbuttonblock">
+							
+						</div>
+					</div>
+				</apex:outputPanel>
+				<apex:outputPanel rendered="{!isUserHR}">
+					<div class="row hidden-xs" id="HDbuttongroup">
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" data-toggle="modal" data-target="#helpdeskticket" rerender="dummy">
+								<div class="row HDnomargins">
+									<div class="col-lg-3 col-md-3 col-sm-4" id="HDiconpadding"><i class="icon-pencil" id="HDbuttons"></i></div>
+									<div class="col-lg-9 col-md-9 col-sm-8" id="HDbuttonfont">Helpdesk Case</div>
+								</div>
+							</a>
+						</div>
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" data-toggle="modal" data-target="#purchaseticket" rerender="dummy">
+								<div class="row HDnomargins">
+									<div class="col-lg-3 col-md-3 col-sm-4" id="HDiconpadding"><i class="icon-book" id="HDbuttons"></i></div>
+									<div class="col-lg-9 col-md-9 col-sm-8" id="HDbuttonfont">Purchase Case</div>
+								</div>
+							</a>
+						</div>
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" target="blank" href="http://wiki.ringcentral.com/display/RCN/New+Hire+Request+Form">
+								<div class="row HDnomargins">
+									<div class="col-lg-3 col-md-3 col-sm-4" id="HDiconpadding"><i class="icon-address-book" id="HDbuttons"></i></div>
+									<div class="col-lg-9 col-md-9 col-sm-8" id="HDbuttonfont">New Hire</div>
+								</div>
+							</a>
+						</div>
+						<div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+							<a type="button" class="btn btn-default btn-block" id="HDbutton" target="blank" href="http://wiki.ringcentral.com/display/RCN/Open+A+Termination+Ticket">
+								<div class="row HDnomargins">
+									<div class="col-lg-3 col-md-3 col-sm-4" id="HDiconpadding"><i class="icon-price-tag" id="HDbuttons"></i></div>
+									<div class="col-lg-9 col-md-9 col-sm-8" id="HDbuttonfont">Termination</div>
+								</div>
+							</a>
+						</div>
+					</div>
+				</apex:outputPanel>
+			</div>
+
+			<apex:outputPanel id="HDcaselist">
+				<div id="HDsearchrow">
+					<div class="container" id="HDstatus">
+						<div class="input-group" id="HDsearchinput">
+							<apex:inputText styleclass="form-control HDsearchstr" value="{!searchText}" 
+											html-placeholder="Search for cases and articles..." id="HDinputbox" onkeypress="return noenter(event);"/>
+							<span class="input-group-addon">
+								<!-- <button class="btn btn-default" id="HDsrcbutton" type="button"> -->
+									<apex:commandLink action="{!searchAll}" reRender="HDcaselist">
+										<span class="glyphicon glyphicon-search" id="HDsearchbutton"></span>
+									</apex:commandLink>
+								<!-- </button> -->
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="container">
+
+					<!-- Cases -->
+					<apex:outputPanel id="casepanel">
+						<div class="panel panel-default" id="HDcasepanel">
+							<div class="panel-heading">
+					     		<div class="panel-title">
+									<div class="row">
+										<div class="col-xs-6">
+											<a data-toggle="collapse" data-target="#collapseOne" href="#collapseOne"  id="HDpaneltext">Cases</a>
+										</div>
+										<div class="col-xs-6 HDpager">
+											<apex:outputText rendered="{!IF(casePages > 1, true, false)}">
+												<ul class="pagination pagination-sm">
+												    <li class="{!IF(hasPrevCases, '', 'disabled')}"><apex:commandLink action="{! getPrevCases }" value="Prev" reRender="casepanel"/></li>
+												    <!-- <li class="disabled"><a >{!currCasePage}</a></li> -->
+												    <li class="{!IF(hasNextCases, '', 'disabled')}"><apex:commandLink action="{! getNextCases }" value="Next" reRender="casepanel"/></li>
+												</ul>
+											</apex:outputText>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div id="collapseOne" class="panel-collapse collapse in">
+			    				<ul class="list-group">
+			    					<apex:repeat value="{!userCasesList}" var="objcase">
+			                            <li class="list-group-item">
+			                                <div class="row">
+			                                    <div class="col-md-12">
+			                                        <apex:outputLink value="/{!objcase.id}" target="_blank" styleClass="HDoutputlink">
+			                                            <span id="HDcasetitle">{!if(objcase.Subject != NULL,objcase.Subject,objcase.CaseNumber)}</span>
+			                                        </apex:outputLink>
+			                                    </div>
+			                                    <div class="col-md-3" id="HDcaseinfo">Case Number: {!objcase.CaseNumber}</div>
+			                                    <div class="col-md-3" id="HDcaseinfo">Case Owner: {!objcase.caseownernmame}</div>
+			                                    <div class="col-md-3" id="HDcaseinfo">Status: {!objcase.Status}</div>
+			                                </div>
+			                            </li>
+			                        </apex:repeat>
+			                        <apex:outputText rendered="{!IF(userCasesList.size > 0, false, true)}">
+			                        	<li class="HDnotfound list-group-item">No cases found.</li>
+			                        </apex:outputText>
+			    				</ul>
+							</div>
+						</div>
+					</apex:outputPanel>
+
+					<!-- Legal Requests -->
+					<!-- <apex:outputPanel id="requestpanel">
+						<div class="panel panel-default" id="HDcasepanel">
+							<div class="panel-heading">
+					     		<div class="panel-title">
+									<div class="row">
+										<div class="col-xs-6">
+											<a data-toggle="collapse" data-target="#collapseTwo" href="#collapseTwo"  id="HDpaneltext">Legal Requests</a>
+										</div>
+										<div class="col-xs-6 HDpager">
+											<apex:outputText rendered="{!IF(requestPages > 1, true, false)}">
+												<ul class="pagination pagination-sm">
+												    <li class="{!IF(hasPrevRequests, '', 'disabled')}"><apex:commandLink action="{! getPrevRequests }" value="Prev" reRender="requestpanel"/></li>
+												    <li class="{!IF(hasNextRequests, '', 'disabled')}"><apex:commandLink action="{! getNextRequests }" value="Next" reRender="requestpanel"/></li>
+												</ul>
+											</apex:outputText>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div id="collapseTwo" class="panel-collapse collapse in">
+			    				<ul class="list-group">
+			    					<apex:repeat value="{!lstLegalReqDetail}" var="objcase">
+			                            <li class="list-group-item">
+			                                <div class="row">
+			                                    <div class="col-md-12">
+			                                        <apex:outputLink value="/apex/{!IF(objcase.recordTypeName=='Invention', 'InventionTicket', 'FOSSTicket')}?action=view&id={!objcase.id}" target="_blank" styleClass="HDoutputlink">
+			                                            <b>{!objcase.objname}</b>
+			                                        </apex:outputLink>
+			                                    </div>
+			                                    <div class="col-md-3">Draft Date:
+			                                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+			                                            <apex:param value="{!objcase.DraftDate}"/>
+			                                        </apex:outputText>
+			                                    </div>
+			                                    <div class="col-md-3">Status: {!objcase.Status}</div>
+			                                </div>
+			                            </li>
+			                        </apex:repeat>
+			                        <apex:outputText rendered="{!IF(lstLegalReqDetail.size > 0, false, true)}">
+			                        	<li class="HDnotfound list-group-item">No legal requests found.</li>
+			                        </apex:outputText>
+			    				</ul>
+							</div>
+						</div>
+					</apex:outputPanel> -->
+
+					<!-- Articles -->
+					<apex:outputPanel id="articlepanel">
+						<div class="panel panel-default" id="HDarticlepanel">
+							<div class="panel-heading">
+					     		<div class="panel-title">
+									<div class="row">
+										<div class="col-xs-6">
+											<a data-toggle="collapse" data-target="#collapseThree" href="#collapseThree"  id="HDpaneltext">Knowledge Articles</a>
+										</div>
+										<div class="col-xs-6 HDpager">
+											<apex:outputText rendered="{!IF(articlePages > 1, true, false)}">
+												<ul class="pagination pagination-sm">
+												    <li class="{!IF(hasPrevArticles, '', 'disabled')}"><apex:commandLink action="{! getPrevArticles }" value="Prev" reRender="articlepanel"/></li>
+												    <!-- <li class="disabled"><a >{!currArticlePage}</a></li> -->
+												    <li class="{!IF(hasNextArticles, '', 'disabled')}"><apex:commandLink action="{! getNextArticles }" value="Next" reRender="articlepanel"/></li>
+												</ul>
+											</apex:outputText>
+										</div>
+									</div>
+								</div>
+							</div>
+							
+							<div id="collapseThree" class="panel-collapse collapse in">
+			    				<ul class="list-group">
+			    					<apex:repeat value="{!lstITArticle}" var="articleObj">
+	                                    <li class="list-group-item">
+	                                        <div class="row">
+	                                            <div class="col-md-12">
+	                                                <a 	style="HDoutputlink" 
+	                                                    href="https://box2-box2-ringcentral.cs3.force.com/helpdesk/knowledge/TOCArticleRendererPkb.apexp?id={!articleObj.strArticleId}&popup=true"
+	                                                    title='{!articleObj.strArticleTitle}'>{!articleObj.strArticleTitle}</a>
+	                                            </div>
+	                                            <div class="col-md-3">Last Updated On: {!articleObj.strArticleModifiedDate}</div>
+	                                        </div>
+	                                    </li>
+	                                </apex:repeat>
+	                                <apex:outputText rendered="{!IF(lstITArticle.size > 0, false, true)}">
+	                                	<li class="HDnotfound list-group-item">No knowledge articles found.</li>
+	                                </apex:outputText>
+	                            </ul>
+							</div>
+						</div>
+					</apex:outputPanel>
+				</div>
+			</apex:outputPanel>
+    		<apex:actionFunction name="gosearch" action="{!searchAll}" reRender="casepanel" />
+		</apex:form>
+		<div class="modal fade" id="helpdeskticket" tabindex="-1" role="dialog" aria-labelledby="helpdeskTicketLabel">
+		  	<c:HelpdeskTicketNew />
+		</div>
+		<div class="modal fade" id="purchaseticket" tabindex="-1" role="dialog" aria-labelledby="purchaseTicketLabel">
+		  	<c:PurchaseTicketNew />
+		</div>
+	</body>
+    <script type="text/javascript">
+  
+	    $('article').readmore({
+	        speed: 75,
+	        collapsedHeight: 73,
+	        moreLink: '<a href="#" class="morelink">Show More</a>',
+	        lessLink: '<a href="#" class="morelink">Show Less</a>',
+	        embedCSS: true,
+	        blockCSS: 'display: block; width: 100%;',
+	        startOpen: false
+	    });
+
+	    function noenter(ev)  {
+	        if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+	            gosearch();
+	            return false;
+	         } else {
+	            return true;
+	         }
+	     }
+
+
+		// $('[id$="HDinputbox"]').keyup(function(evt){
+		// 	if(evt.keyCode == 13){
+		// 		evt.preventDefault();
+		//         gosearch();
+		//     }
+		// });
+    
+  	</script>
+</apex:page>

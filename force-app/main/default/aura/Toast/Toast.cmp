@@ -1,0 +1,25 @@
+<aura:component >
+    <aura:attribute name="theme" type="String" />
+    <aura:attribute name="header" type="String" />
+    <aura:attribute name="details" type="List" />
+    <aura:attribute name="timeout" type="Integer" />
+    <aura:attribute name="defaultTimeout" type="Boolean" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.theme}" action="{!c.themeChanged}"/>
+    <aura:handler name="change" value="{!v.timeout}" action="{!c.timeoutChanged}"/>
+    <aura:handler name="change" value="{!v.defaultTimeout}" action="{!c.defaultTimeoutChanged}"/>
+
+    <div class="slds-notify slds-notify--toast" role="alert" aura:id="toast">
+        <span class="slds-assistive-text">{!v.theme}</span>
+        <span class="{!'slds-icon_container slds-icon-utility-'+v.theme+' slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top'}" title="{!v.header}">
+            <lightning:icon iconName="{!'utility:'+v.theme}" size="small" variant="inverse" styleclass="slds-icon slds-icon_small"/>
+        </span>
+        <lightning:buttonIcon iconName="utility:close" variant="bare-inverse" onclick="{!c.closeToast}" alternativeText="Close Toast" class="slds-notify__close slds-m-top--xx-small"/>
+        <div class="slds-notify__content slds-p-top--none">
+            <h2 class="slds-text-heading--small">{!v.header}</h2>
+            <aura:iteration items="{!v.details}" var="detail">
+              <p class="toast__details"> <aura:unescapedHtml value="{!detail}"/></p>
+            </aura:iteration>
+        </div>
+    </div>
+</aura:component>

@@ -1,0 +1,141 @@
+<aura:component description="PhaseManagementLocation" controller="PhaseManagementController">
+    <!-- Shared Attributes -->
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="cartItem" type="Object"/>
+    <aura:attribute name="phase" type="Object"/>
+    <aura:attribute name="location" type="Object"/>
+    <aura:attribute name="unitPrice" type="Decimal"/>
+    <aura:attribute name="currencyIsoCode" type="String"/>
+    <aura:attribute name="preventDeselection" type="Boolean"/>
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false"
+                    description="Indicates that there are unsaved chages in phases"/>
+    <!-- Component Attributes -->
+    <aura:attribute access="private" name="isDraggable" type="Boolean" default="true"/>
+
+    <li class="{! join(' ', 'drag-item location',
+            v.location.isMovable ? 'drag-item_is-movable' : '',
+            v.location.selected ? 'location_selected' : '')}"
+        draggable="{! and(v.isDraggable, v.location.isMovable) }"
+        onclick="{! c.onLocationClick }"
+        ondragstart="{! c.onDragItemDragStart }"
+        ondragend="{! c.onDragEnd }"
+        aura:id="location">
+
+        <lightning:layout class="drag-item__header"
+                          verticalAlign="center">
+            <lightning:layoutItem class="location__name slds-has-flexi-truncate">
+                <div class="slds-media slds-media_center">
+
+                    <div class="slds-media__figure">
+                        <!-- Location Icon -->
+                        <lightning:icon iconName="utility:checkin"
+                                        alternativeText="Location"
+                                        size="x-small"/>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div class="slds-media__body">
+                        <div>
+                            <span class="slds-truncate">
+                                <aura:text value="{! v.location.line1String }"/>
+                            </span>
+
+                            <aura:if isTrue="{! and(and(!v.phase.isComplete, !v.phase.isCancelled), 
+                                                and(v.phase.record.Status__c != 'Locked',
+                                                v.phase.record.Status__c != 'Deleted')) }">
+                                <!--  Edit Location Button-->
+                                <span class="slds-m-left_x-small" aura:id="editLocationButton">
+                                    <lightning:buttonIcon iconName="utility:edit"
+                                                          alternativeText="Edit Location"
+                                                          variant="bare"
+                                                          onclick="{! c.openLocationForm }"
+                                    />
+                                </span>
+                            </aura:if>
+
+                        </div>
+                        <div class="{! join(' ', 'slds-text-title slds-truncate',
+                                v.location.line2String ? '' : 'slds-hide') }">
+                            <aura:text value="{! v.location.line2String }"/>
+                        </div>
+                    </div>
+                </div>
+            </lightning:layoutItem>
+
+            <aura:if isTrue="{! and(v.phase.record.Status__c != 'Locked', v.phase.record.Status__c != 'Deleted') }">
+            <span>
+                <span class="{! join(' ', '',
+                        !v.location.validation.isInProgress ? '' : 'slds-hide') }">
+                    <span class="{! join(' ', 'cart-item__hower-label text-weak',
+                            or(v.location.isAddressValid, !v.location.isAnyAddressInfoPopulated) ? 'slds-hide' : '') }">
+                        <a href="javascript:void(0)" onclick="{! c.onValidateLocation }">Validate</a>
+                    </span>
+                    <lightning:dynamicIcon type="score"
+                                           class="slds-m-horizontal--small"
+                                           option="{! v.location.isAddressValid ? 'positive' : 'negative' }"/>
+                </span>
+
+                <span class="{! join(' ', 'slds-is-relative location__spinner',
+                        v.location.validation.isInProgress ? '' : 'slds-hide')}">
+                    <lightning:spinner  alternativeText="Loading"
+                                        size="small" />
+                </span>
+            </span>
+            </aura:if>
+
+            <lightning:layoutItem class="slds-col_bump-left slds-grid slds-grid_vertical-align-center">
+                <!-- Quantity -->
+                <div>
+                    <aura:if isTrue="{! and(v.location.selected, v.location.isQuantityEditAllowed )}">
+                        <div class="location_quantity-input slds-grid slds-grid_vertical-align-center"
+                             onclick="{! c.stopPropagation }">
+                            <lightning:input type="Number"
+                                             label="Quantity"
+                                             name="Quantity"
+                                             variant="label-hidden"
+                                             class="input_small slds-show_inline slds-m-right--xx-small"
+                                             max="{! v.cartItem.unassignedQuantity + v.location.quantity }"
+                                             min="1"
+                                             value="{! v.location.quantityInput.value }"
+                                             onblur="{! c.onDragItemQuantityInputBlur }"
+                                             onfocus="{! c.onDragItemQuantityInputFocus }"
+                                             aura:id="quantityInput"/>
+                            <aura:if isTrue="{!v.app.isOnOrder}">
+                                <span class="slds-p-left--xx-small">
+                                    (<lightning:formattedNumber value="{!mult(v.location.quantityInput.value, v.unitPrice)}" style="currency" currencyCode="{!v.currencyIsoCode}" currencyDisplayAs="code"/>)
+                                </span>
+                            </aura:if>
+                        </div>
+
+                        <aura:set attribute="else">
+                            <div class="location_quantity-display slds-grid slds-grid_vertical-align-center">
+                                <lightning:formattedNumber value="{! v.location.quantity }"/>
+                                <aura:if isTrue="{!v.app.isOnOrder}">
+                                    <span class="slds-p-left--xx-small">
+                                        (<lightning:formattedNumber value="{!mult(v.location.quantity, v.unitPrice)}" style="currency" currencyCode="{!v.currencyIsoCode}" currencyDisplayAs="code"/>)
+                                    </span>
+                                </aura:if>
+                            </div>
+                        </aura:set>
+                    </aura:if>
+                </div>
+
+                <aura:if isTrue="{! and(v.location.isDeleteAllowed, 
+                                    and(v.phase.record.Status__c != 'Locked', v.phase.record.Status__c != 'Deleted'))  }">
+                    <!-- Delete button -->
+                    <span onclick="{! c.deleteItem }"
+                          class="drag-item__delete-button">
+
+                        <lightning:buttonIcon iconName="utility:delete"
+                                              class="slds-m-left--medium"
+                                              variant="bare"
+                                              alternativeText="Delete location"/>
+                    </span>
+                </aura:if>
+
+            </lightning:layoutItem>
+        </lightning:layout>
+
+    </li>
+
+</aura:component>

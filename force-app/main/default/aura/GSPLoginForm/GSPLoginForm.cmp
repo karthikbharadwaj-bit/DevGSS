@@ -1,0 +1,136 @@
+<aura:component
+                implements="forceCommunity:availableForAllPageTypes,force:appHostable,lightning:isUrlAddressable"
+                access="global"
+                controller="GSPLoginFormController"
+                >
+    <!--ATTRIBUTES-->
+    <aura:attribute name="resetErrorMessage" type="String" />
+    <aura:attribute name="loginErrorMessage" type="String" />
+    <aura:attribute name="showResetForm" type="boolean" default="false" />
+    <aura:attribute name="showSpinner" type="boolean" default="false" />
+    <aura:attribute name="isGSP" type="boolean" default="false" />
+    <aura:attribute name="showGSP" type="boolean" default="false" />
+    
+    <aura:attribute name="baseURL" type="String" />
+    
+    <!--<aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />-->
+    
+    <lightning:navigation aura:id="navService" />
+    
+    <!--<aura:if isTrue="{!v.ShowSpinnerOpp}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner
+                                   alternativeText="Loading..."
+                                   aura:id="loadingSpinner"
+                                   class="slds-hide"
+                                   size="medium"
+                                   />
+            </div>
+        </div>
+    </aura:if>-->
+    
+    <!--MARKUP-->
+    <aura:if isTrue="{!!v.showGSP}">
+        <div class="slds-grid slds-wrap slds-gutters">
+            <aura:if isTrue="{!v.showResetForm}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <p style="color:white">{!v.resetErrorMessage}</p>
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <lightning:input
+                                     aura:id="resetUserName"
+                                     name="resetUsernameInput"
+                                     placeholder="Username"
+                                     />
+                </div>
+                <!--Button-->
+                <div
+                     class="slds-col slds-align_absolute-center slds-has-flexi-truncate slds-size_1-of-1"
+                     style="padding-top:30px; text-align:center"
+                     >
+                    <aura:if isTrue="{!v.showSpinner}">
+                        <div class="loader"></div>
+                        <aura:set attribute="else">
+                            <lightning:button
+                                              variant="brand"
+                                              label="Reset Password"
+                                              title="Reset Password"
+                                              onclick="{!c.handleResetClick}"
+                                              />
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <!--Link-->
+                <div
+                     class="slds-col slds-align_absolute-center slds-has-flexi-truncate slds-size_1-of-1"
+                     style="text-align:center"
+                     >
+                    <aura:if isTrue="{!v.showSpinner}">
+                        <aura:set attribute="else">
+                            <a style="margin-top: 15px;" onclick="{!c.handleGoBackClick}"
+                               >Return to login</a
+                                >
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{!!v.showResetForm}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <p style="color:white">{!v.loginErrorMessage}</p>
+                </div>
+                <!--Username-->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <lightning:input
+                                     aura:id="userName"
+                                     name="usernameInput"
+                                     placeholder="Username"
+                                     />
+                </div>
+                <!--Password-->
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <lightning:input
+                                     aura:id="passWord"
+                                     type="password"
+                                     name="passwordInput"
+                                     placeholder="Password"
+                                     />
+                </div>
+                <!--Button-->
+                <div
+                     class="slds-col slds-align_absolute-center slds-has-flexi-truncate slds-size_1-of-1"
+                     style="padding-top:30px; text-align:center"
+                     >
+                    <aura:if isTrue="{!v.showSpinner}">
+                        <div class="loader"></div>
+                        <aura:set attribute="else">
+                            <lightning:button
+                                              variant="brand"
+                                              label="Log in"
+                                              title="Log in"
+                                              onclick="{!c.handleLogInClick}"
+                                              />
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <!--Link-->
+                <aura:if isTrue="{!!v.showSpinner}">
+                    <div class="linkswrap">
+                        <div class="linkwrap">
+                            <a onclick="{!c.handleForgotPasswordClick}">Forgot your password?</a>
+                        </div>                        
+                        <!--<div class="linkwrap">
+                            <a onclick="{!c.loginAsGuest}">Login as Guest</a>
+                        </div>-->
+                        <div class="linkwrap"> <a onclick="{!c.requestPortalAccess}">Request for Portal Access</a> </div>
+
+                    </div>
+                </aura:if>
+            </aura:if>
+        </div>
+        <aura:set attribute="else"> <c:GSPLoginForm /> </aura:set>
+    </aura:if>
+    <lightning:notificationsLibrary aura:id="notifLib" />
+</aura:component>

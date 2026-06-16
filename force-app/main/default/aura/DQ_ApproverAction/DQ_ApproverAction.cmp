@@ -1,0 +1,87 @@
+<aura:component controller="DQ_DealQualificationController">
+	<aura:attribute type="Boolean" name="isFromMobileAction" default="false" />
+	<aura:attribute type="String"  name="dealQualId" />
+	<aura:attribute type="Boolean" name="showApprovalAction" />
+	<aura:attribute type="Boolean" name="enabledApprove" />
+	<aura:attribute type="string" name="approvedReason" />
+	<aura:attribute type="string" name="rejectReason" />
+	<aura:attribute type="Boolean" name="isUserHavePermission" />
+	<aura:attribute type="string" name="approvalRecordId" />
+	<aura:attribute type="Boolean" name="Spinner" Default="false" />
+	<aura:attribute name="parent" type="Aura.Component" required="true" />
+	<aura:attribute type="Boolean" name="refreshScreen" default="true" />
+    <aura:attribute type="string" name="currentStatus" />
+    <aura:attribute type="Boolean" name="isAlreadyApprovedOrReject" default="false" />
+	<aura:attribute type="List" name="DQApproverList" />
+	<aura:attribute type="string" name="opportunityId" />
+
+	<aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap" />
+
+	<div role="dialog" class="slds-modal slds-fade-in-open ">
+		<div class="slds-modal__container">
+			<div class="slds-modal__header">
+				<button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close"
+					onclick="{!c.handleCloseModal}">
+					X
+					<span class="slds-assistive-text">Close</span>
+				</button>
+				<h1 class="slds-text-heading--medium">
+                    <aura:if isTrue="{!!v.isAlreadyApprovedOrReject}">
+                        <aura:if isTrue="{!v.enabledApprove}">
+                            Approve Request
+                            <aura:set attribute="else">
+                                Reject Request
+                            </aura:set>
+                        </aura:if>
+                        <aura:set attribute="else">
+                            Current Status
+                        </aura:set>
+                    </aura:if>
+				</h1>
+			</div>
+
+			<!--Modal Box Header-->
+			<div class="slds-modal__content slds-p-around--medium">
+                <aura:if isTrue="{!v.isAlreadyApprovedOrReject}">
+                    <span>Approval record is already {!v.currentStatus}</span>
+                    <aura:set attribute="else">
+                            <aura:if isTrue="{!v.isUserHavePermission}">
+                            <aura:if isTrue="{!v.enabledApprove}">
+                                <div style="font-size:120%">Approve Reason</div>
+                                <!--Detail -->
+                                <lightning:textarea value="{!v.approvedReason}" />
+                                <aura:set attribute="else">
+                                    <div style="font-size:120%">Reject Reason</div>
+                                    <!--Detail -->
+                                    <lightning:textarea value="{!v.rejectReason}" />
+                                </aura:set>
+                            </aura:if>
+                            <aura:set attribute="else">
+                                <span>You are not the approver for the approval.</span>
+                            </aura:set>
+                        </aura:if>
+                    </aura:set>
+                </aura:if>
+
+			</div>
+			<!--Modal Box Button-->
+			<div class="slds-modal__footer">
+				<aura:if isTrue="{!and(v.isUserHavePermission,!v.isAlreadyApprovedOrReject)}">
+					<button class="slds-button slds-button--brand" onclick="{!c.saveDetails}">
+						<aura:if isTrue="{!v.enabledApprove}">
+							Approve
+							<aura:set attribute="else">
+								Reject
+							</aura:set>
+						</aura:if>
+					</button>
+				</aura:if>
+				<button class="slds-button slds-button--brand" onclick="{!c.handleCloseModal}">Cancel</button>
+			</div>
+		</div>
+	</div>
+	<div class="slds-backdrop slds-backdrop--open"></div>
+	<aura:if isTrue="{!v.Spinner}">
+		<c:SpinnerComponent />
+	</aura:if>
+</aura:component>

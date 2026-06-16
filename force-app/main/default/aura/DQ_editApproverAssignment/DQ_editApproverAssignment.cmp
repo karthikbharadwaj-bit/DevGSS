@@ -1,0 +1,109 @@
+<aura:component controller="DQ_DealQualificationController">
+	<aura:attribute name="approverRec" type="Object" description="Approver Record" />
+	<aura:attribute name="isOpen" type="boolean" description="Use to hold open state" default="false" />
+	<aura:attribute name="userOrQueue" type="String" default="User" access="private" />
+	<aura:attribute name="parent" type="Aura.Component" required="true"/>
+
+	<lightning:buttonIcon iconName="utility:user_role" variant="container" onclick="{!c.openModel}"
+		alternativeText="Update Assignment" title="Update User Assignment" />
+
+	<aura:if isTrue="{!v.isOpen}">
+
+		<!--###### MODAL BOX Start######-->
+		<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+			<div class="slds-modal__container">
+				<!-- ###### MODAL BOX HEADER Start ######-->
+				<header class="slds-modal__header">
+					<lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModel }" alternativeText="close"
+						variant="bare-inverse" class="slds-modal__close" />
+					<h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Approval Assignment</h2>
+				</header>
+				<!--###### MODAL BOX BODY Part Start######-->
+				<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1"  style="height:200px;">
+					<div class="slds-box slds-form">
+						<!--<div class="slds-form-element slds-form-element_stacked">
+							<label class="" for="stacked-input-id-01">Approver Name</label>
+							<div class="slds-form-element__control">
+								<lightning:input name="name" disabled="true" value="{!v.approverRec.Name}"
+									label="Approver Name" />
+							</div>
+						</div>
+						<div class="slds-form-element slds-form-element_stacked">
+							<label class="" for="stacked-input-id-01">Status</label>
+							<div class="slds-form-element__control">
+								<lightning:input name="status" disabled="true" value="{!v.approverRec.Status__c}"
+									label="Status" />
+							</div>
+						</div>
+						<div class="slds-form-element slds-form-element_stacked">
+							<label class="" for="stacked-input-id-01">Submitted Order</label>
+							<div class="slds-form-element__control">
+								<lightning:input name="submittedOrder" disabled="true"
+									value="{!v.approverRec.Submitted_Order__c}" label="Submitted Order" />
+							</div>
+						</div>
+						<div class="slds-form-element slds-form-element_stacked">
+							<label class="" for="stacked-input-id-01">Step Order</label>
+							<div class="slds-form-element__control">
+								<lightning:input name="stepOrder" disabled="true" value="{!v.approverRec.Step_Order__c}"
+									label="Step Order" />
+							</div>
+						</div>
+						<div class="slds-form-element slds-form-element_stacked">
+							<label class="" for="stacked-input-id-01">Approval Reason</label>
+							<div class="slds-form-element__control">
+								<lightning:textarea name="approverReason" disabled="true"
+									value="{!v.approverRec.Approval_Reason__c}" label="Approval Reason" />
+							</div>
+						</div> -->
+
+						<div class="slds-form-element slds-form-element_compound">
+							<div class="">Approver Assignment</div>
+							<div class="slds-form-element__row">
+								<div class="slds-size_1-of-4">
+
+
+									<div class="slds-form-element">
+										<div class="slds-form-element__control">
+											<lightning:select value="{!v.userOrQueue}" name="userOrQueue"
+												label="Select an item" variant="label-hidden"
+												onchange="{!c.handleUserOrQueue}">
+												<option value="User">User</option>
+												<option value="Queue">Queue</option>
+											</lightning:select>
+										</div>
+
+									</div>
+								</div>
+								<div class="slds-size_3-of-4">
+									<div class="slds-form-element">
+										<aura:if isTrue="{!v.userOrQueue == 'User'}">
+											<c:DQ_AutoComplete aura:id="user-record" label="" objectApiName="PermissionSetAssignment"
+												idFieldApiName="AssigneeId" valueFieldApiName="Assignee.Name" extendedWhereClause="AND  PermissionSet.Name = 'Deal_Qualification_Feature'" />
+										</aura:if>
+										<aura:if isTrue="{!v.userOrQueue == 'Queue'}">
+											<c:DQ_AutoComplete aura:id="user-record" label=""
+												objectApiName="QueueSobject" idFieldApiName="QueueId"
+												valueFieldApiName="Queue.Name"
+												extendedWhereClause="AND SobjectType = 'DQ_Deal_Qualification_Approver__c'" />
+										</aura:if>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--###### MODAL BOX FOOTER Part Start ######-->
+				<footer class="slds-modal__footer">
+					<lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{! c.closeModel }" />
+					<lightning:button variant="brand" label="Update Assignment" title="Update Assignment"
+						onclick="{! c.updateAssignment }" />
+				</footer>
+			</div>
+		</section>
+		<div class="slds-backdrop slds-backdrop_open"></div>
+
+	</aura:if>
+
+</aura:component>

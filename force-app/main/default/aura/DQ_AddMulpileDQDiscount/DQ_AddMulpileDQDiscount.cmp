@@ -1,0 +1,218 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" access="global" controller="DQ_AddMultipleDQDiscountController">
+    <aura:attribute name="objPartnerQuote" type="Partner_Quote__c" default="{'sobjectType':'Partner_Quote__c', 'Payment_Term__c':'Monthly'}"/>
+    <aura:attribute name="CategoryWrapperList" type="List"/>
+    <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false"/>
+    <aura:attribute name="isChangeOrderSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="changeOrderId" type="String"  />
+    <aura:attribute name="PricingYearly" type="Boolean" default="false"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="selectedproductList" type="List"/>
+    <aura:attribute name="Step" type="String" default="1" />
+    <aura:attribute name="changeEdition" type="String"/>
+    <aura:attribute type="String" name="dqDiscountRecordTypeName" />
+    <aura:attribute name="editions" type="List" default="[
+            {'label': 'Essential', 'value': 'Essential'},
+            {'label': 'Standard', 'value': 'Standard'},
+            {'label': 'Premium', 'value': 'Premium'},
+            {'label': 'Ultimate', 'value': 'Ultimate'}
+            ]"/> 
+    <aura:attribute name="showChangeRequestCMP" type="Boolean"/>
+    <aura:attribute name="paymentMethod" type="Boolean"/>
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="dqId" type="String"/>
+    <aura:attribute name="listofEditionWrapper" type="List" />
+    <aura:attribute type="boolean" name="showAddProducts" default="false"/>
+    <aura:attribute name="parent" type="Aura.Component" required="true" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <div>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ###### MODAL BOX HEADER Start ######-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Add Products</h2>
+                    </header>
+                    <!--###### MODAL BOX BODY Part Start######-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <!--<lightning:progressIndicator currentStep="{!v.Step}" type="path" hasError="false" variant="base">
+           <lightning:progressStep class="changeorder" label="Change Order" value="1" onclick="{!c.goToStep1}">
+           </lightning:progressStep>
+           <lightning:progressStep class="view" label="View" value="2" onclick="{!c.goToStep2}">
+           </lightning:progressStep>
+        </lightning:progressIndicator> -->
+        <aura:if isTrue="{!v.Step == '1'}">
+            <!--<div class="slds-size- -1-of-1 slds-grid slds-box slds-theme_shade slds-m-top_medium">
+                <div class="slds-size- -1-of-3 slds-grid" >
+                    <div class="slds-size- -1-of-5">
+                        <span class="slds-icon_container slds-icon-standard-quote" title="{!v.Quote.Name__c}">
+                            <lightning:icon iconName="action:quote" alternativeText="Quote" />
+                        </span>
+                    </div>
+                    <div class="slds-size- -4-of-4">
+                        <div style="font-weight:bold" class="slds-page-header__col-title">
+                            Change Order Request                
+                        </div>
+                        <div class="slds-text-heading_medium">
+                            
+                        </div>
+                    </div> 
+                </div>
+                <div class="slds-size- -2-of-3" style="text-align:right;">
+                </div>
+            </div> -->
+            <pre>
+                <!-- <h3 style="background-color: skyblue" class="slds-section-title- -divider">Change Order Request</h3> -->
+                <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element__control">  
+                                <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "Change Package" value="{!v.changeEdition}" onchange="{!c.packageChange}" name="inputNameSample1">
+                                    <option value="">--None--</option>
+                                    <aura:iteration items="{! v.listofEditionWrapper }" var="objWrap" indexVar="mainindex">
+                                    <option selected="{!objWrap.pickKey == v.changeEdition}" value="{!objWrap.pickKey}">{!objWrap.pickVal}</option>
+                                    </aura:iteration>
+                                    <!--<option value="Standard">Standard</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Ultimate">Ultimate</option>-->
+                                </lightning:select>
+                            </div>  
+                        </div>
+                        
+                    </div>
+                    <br/>
+                      <br/>
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <div class="slds-size--6-of-12 slds-grid">
+                            
+                        </div>
+                        
+                    </div>
+                    <br/>
+                    <div class="slds-size--1-of-1 slds-grid font">Change Service (Add/Remove Quantity):</div>
+                    <br/>
+                    <aura:if isTrue="{!v.CategoryWrapperList.length > 0}">
+                        <lightning:tabset  onselect="{! c.handleSelect }" variant="scoped">
+                            <aura:iteration items="{! v.CategoryWrapperList }" var="tab" indexVar="mainindex">
+                                <lightning:tab  label="{! tab.CategoryName }" id="{! tab.CategoryName }" >
+                                    <br/>
+                                    <lightning:tabset>
+                                        <aura:iteration items="{!tab.subCategoryList }" indexVar="index" var="subTab">
+                                            <lightning:tab label="{!subTab.subCategoryName}">
+                                                <div class="slds-size--1-of-1 slds-grid">
+                                                    <div class="slds-size--7-of-12 slds-grid">
+                                                    <table style="border:1px solid #d4d4d4;" class="slds-table slds-table--bordered slds-table_cell-buffer font">
+                                                        <thead>
+                                                            <th >Product Name</th>
+                                                            <!--<th >Add/Remove</th> -->
+                                                            <th style="width:20%;">Quantity</th>
+                                                            <th style="width:20%;">Discount</th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <aura:iteration items="{!subTab.productList }" indexVar="indexprod" var="eachproduct">
+                                                                <tr>
+                                                                    <!-- <td>
+                                                                        <lightning:input 
+                                                                                         aura:id="myCheckboxes" 
+                                                                                         type="checkbox"
+                                                                                         variant="label-hidden"
+                                                                                         label="" 
+                                                                                         checked="{!eachproduct.isSelected}"/>
+                                                                    </td> -->
+                                                                    <td>{!eachproduct.productName}</td>
+                                                                    <!--<td>
+                                                                        <lightning:select
+                                                                            disabled="{!v.isChangeOrderSubmitted}"              
+                                                                            label="action type" 
+                                                                            variant="label-hidden" 
+                                                                            class="label-hidden"              
+                                                                            value="{!eachproduct.actionType}">
+                                                                            <option value="Add">Add</option>
+                                                                            <option value="Remove">Remove</option>
+                                                                        </lightning:select> 
+                                                                    </td>-->
+                                                                    <td><lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" value="{!eachproduct.quantity}" type="number"></lightning:input></td>
+                                                                    <td><lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" step="0.01" value="{!eachproduct.discount}" type="number"></lightning:input></td>
+                                                                    
+                                                                    <td style="width:17%"> <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" class="{!index}" name="{!mainindex}" value="{!indexprod}" onclick="{!c.addproduct}" label="{!eachproduct.buttonLabel}"/></td>
+                                                                </tr>
+                                                            </aura:iteration>
+                                                        </tbody>
+                                                    </table>
+                                                    </div>
+                                                </div>
+                                             </lightning:tab>
+                                           </aura:iteration>
+                                    </lightning:tabset>
+                                </lightning:tab>
+                            </aura:iteration>
+                        </lightning:tabset>
+                        <aura:set attribute="else">
+                            <div>Please selected package.</div>
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </pre>
+        </aura:if>
+        <aura:if isTrue="{!v.Step == '2'}">
+            <div class="slds-size--1-of-1 slds-grid slds-box slds-theme_shade slds-m-top_medium">
+                <div class="slds-size--1-of-3 slds-grid" >
+                    <div class="slds-size--1-of-5">
+                        <span class="slds-icon_container slds-icon-standard-quote" title="{!v.Quote.Name__c}">
+                            <lightning:icon iconName="action:approval" alternativeText="Quote" />
+                        </span>
+                    </div>
+                    <div class="slds-size--4-of-4">
+                        <div style="font-weight:bold" class="slds-page-header__col-title">
+                               Selected Records             
+                        </div>
+                        <div class="slds-text-heading_medium">
+                            
+                        </div>
+                    </div> 
+                </div>
+                <div class="slds-size--2-of-3" style="text-align:right;">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Save" label="Save" title="Save" onclick="{! c.submitDetails }"/>
+                    <!--<lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Submit" label="Submit" title="Submit" onclick="{! c.submitDetails }"/>
+                    --><lightning:button variant="brand" aura:id="cancel" label="Go Back" title="Go Back" onclick="{! c.closeModel }"/>
+                </div>
+            </div>
+            <br/>
+            <table style="border:1px solid #d4d4d4;" class="slds-table slds-table--bordered slds-table_cell-buffer">
+                <thead>
+                    <tr>
+                        <th >Product Name</th>
+                        <th >Add/Remove</th>
+                        <th style="width:20%;">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <aura:iteration items="{!v.selectedproductList }" var="eachproduct">
+                        <tr>
+                            <td>{!eachproduct.productName}</td>
+                            <td>{!eachproduct.actionType}</td>
+                            <td>{!eachproduct.quantity}</td>
+                        </tr>
+                    </aura:iteration>
+                </tbody>
+            </table>
+        </aura:if>
+                    </div>
+                    <!--###### MODAL BOX FOOTER Part Start ######-->
+                    <footer class="slds-modal__footer">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Save" label="Save" title="Save" onclick="{! c.submitDetails }"/>
+                    <lightning:button variant="neutral" 
+                                          label="Close"
+                                          title="Close"
+                                          onclick="{! c.closeModel }"/>
+                        
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+           </div>
+</aura:component>

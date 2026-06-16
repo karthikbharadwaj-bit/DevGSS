@@ -1,0 +1,85 @@
+<template>
+    <lightning-spinner if:true={notDisplayChart} alternative-text="Loading" size="large"></lightning-spinner>
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:dashboard" alternative-text="Dashboard" title="Dashboard"></lightning-icon>
+                </div>
+                <div class="slds-media__body" style="display: flex;align-items: center;">
+                    <h2 class="slds-card__header-title">
+                        CPU Monitor
+                    </h2>
+                    <div style="display:flex;align-items:center;justify-content:center;margin:auto">
+                        <lightning-combobox
+                            name="Select object"
+                            label="Object"
+                            value={selectedObject}
+                            placeholder="Select Object"
+                            options={objectOptions}
+                            onchange={handleOnChangeCombobox} ></lightning-combobox>
+            
+                            <c-button-group
+                                title="Last"
+                                items={dayOptions}
+                                onchangevalue={handleChangeSelectedDay}>
+                            </c-button-group>
+                    </div>
+                </div>
+            </header>
+        </div>
+    </article>
+
+    <div class="slds-grid slds-wrap slds-gutters">
+        <div class="slds-col slds-size_1-of-1 leadConversionMonitor cards">
+            <c-lead-conversion-monitoring
+                if:true={displayLeadConversion}>
+            </c-lead-conversion-monitoring>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2  cards">
+            <c-cpu-monitor-gauge 
+                if:true={displayChart}
+                chart-info={gaugeChartCreationInfo}>
+            </c-cpu-monitor-gauge>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-2 cards">
+            <c-cpu-monitor-gauge
+                if:true={displayCPUupdate}
+                chart-info={gaugeChartUpdateInfo}>
+            </c-cpu-monitor-gauge>
+            <c-cpu-monitor-gauge
+                if:true={displayLeadConversion}
+                chart-info={gaugeChartLeadConversionInfo}>
+            </c-cpu-monitor-gauge>
+        </div>
+        <div class="slds-col slds-size_1-of-1">
+            <c-cpu-monitor-bar 
+                if:true={displayChart}
+                chart-info={barChartCreationInfo}>
+            </c-cpu-monitor-bar>
+        </div>
+        <div class="slds-col slds-size_1-of-1 cards">
+            <c-cpu-monitor-bar
+                if:true={displayCPUupdate}
+                chart-info={barChartUpdateInfo}
+                >
+            </c-cpu-monitor-bar>
+            <c-cpu-monitor-bar
+                if:true={displayLeadConversion}
+                chart-info={barChartUpdateInfo}
+                >
+            </c-cpu-monitor-bar>
+        </div>
+    </div>
+
+    <c-cpu-monitor-list-view 
+        if:true={displayChart}
+        monitors={cpuMonitorsForListView}
+        title={labelLastDays}
+        onchangesort={handleChangeSort}
+        sorted-direction={sortedDirection}
+        sorted-by={sortedBy}
+        is-lead-conversion={isLeadConversion}>
+    </c-cpu-monitor-list-view>
+    
+</template>

@@ -1,0 +1,192 @@
+</div>
+
+<div id="footer2" class="copy"><p><a class="ftr2" href="/fax/features/how-it-works.html">Internet Fax Service</a> |
+<a class="ftr2" href="/features/how-it-works.html">Internet Phone Service</a> |
+<a class="ftr2" href="/email-fax.html">Email Fax</a> |
+<a class="ftr2" href="/business-toll-free.html">Business Toll Free</a> |
+
+<a class="ftr2" href="/small-business-phone.html">Small Business Phone</a> |
+<a class="ftr2" href="/features/toll-free-numbers/800-numbers.html">800 Numbers</a> |
+<a class="ftr2" href="/features/voicemail/overview.html">Voicemail</a> |
+<a class="ftr2" href="/features/toll-free-numbers/overview.html">Toll Free Numbers</a> |
+<a class="ftr2" href="/smb/smallbusiness/index.html">Small Business Resources</a></p></div>
+
+<div class="copy">
+<p>&copy; 1999-2011 RingCentral, Inc. All rights reserved.</p>
+
+<p class="menu">
+<a href="/whyringcentral/contactus.html" rel="nofollow">Contact Us</a>
+<span>|</span>
+<a href="/whyringcentral/company.html">About RingCentral</a>
+<span>|</span>
+<a href="/partner/overview.html" rel="nofollow">Affiliates and Partners</a>
+<span>|</span>
+<a href="/legal.html" rel="nofollow">Legal</a>
+<span>|</span>
+
+<a href="/security-statement.html" rel="nofollow">Security Policy</a>
+<span>|</span>
+<a href="/sitemap.html">Site Map</a>
+</p>
+</div>
+</div>
+<!-- START Body End js-zone 743 -->
+<script type="text/javascript">
+var uservoiceOptions = {
+    /* required */
+    key: 'ringcentral',
+    host: 'ringcentral.uservoice.com',
+    forum: '46123',
+    showTab: true,
+    /* optional */
+    alignment: 'left',
+    background_color:'#f00',
+    text_color: 'white',
+    hover_color: '#06C',
+    lang: 'en'
+};
+
+var gw_support = CookiesManager.getCookie("gw_support_login");
+if (gw_support != null) {
+    uservoiceOptions['params'] = {sso:gw_support};
+}
+
+var s = document.createElement('script');
+s.setAttribute('type', 'text/javascript');
+s.setAttribute('src', ("https:" == document.location.protocol ? "https://" : "http://") + "cdn.uservoice.com/javascripts/widgets/tab.js");
+document.getElementsByTagName('head')[0].appendChild(s);
+
+function showPopup() {
+    document.getElementById("com_main").style.display = "none";
+    document.getElementById("uservoice-dialog-content").style.display = "block";
+    var lefts = document.body.clientWidth/2 - document.getElementById("uservoice-dialog").clientWidth/2;
+    document.getElementById("uservoice-dialog").style.left = lefts + "px";
+    document.getElementById("uservoice-dialog").style.display = "block";
+    document.getElementById("uservoice-dialog").style.top = "100px";
+    window.open("http://ringcentral.uservoice.com/forums/46123?sso="+uservoiceOptions['params']['sso']+"&referer=http://devorigin.ringcentral.com/support.html","_blank");
+
+}
+
+function showLogin() {
+    document.getElementById("com_main").style.display = "block";
+    var lefts = document.body.clientWidth/2 - document.getElementById("com_main").clientWidth/2;
+    document.getElementById("com_main").style.left = lefts + "px";
+
+    document.getElementById("uservoice-dialog").style.zIndex = "100010";
+    document.getElementById("uservoice-dialog").style.left = lefts+document.getElementById("com_main").clientWidth+"px";
+    document.getElementById("uservoice-dialog").style.top = "201px";
+
+    document.getElementById("forma").elements[0].focus();
+}
+
+function SupportAction() {
+    var _name = document.getElementById("name_id").value;
+    var _pin = document.getElementById("pin_id").value;
+    var _password = document.getElementById("password_id").value;
+
+    var s = document.createElement('script');
+    s.setAttribute('type', 'text/javascript');
+    s.setAttribute('src', ("https:" == document.location.protocol ? "https://" : "http://") + window.location.host + "/inc/php/check_login.php?login="+_name+"&password="+_password+"&pin="+_pin);
+    document.getElementsByTagName('head')[0].appendChild(s);
+
+    var ifrm = document.getElementsByTagName("iframe");
+    ifrm[0].src = "";
+}
+
+
+function parseSupportInfo(info) {
+    if(info && !info['error']) {
+        CookiesManager.setCookie("gw_support_login",info['token']);
+        uservoiceOptions['params']['sso'] = info['token'];
+        document.getElementById("com_main").style.display = "none";
+        var ifrm = document.getElementsByTagName("iframe");
+        ifrm[0].src = "";
+        ifrm[0].style.height = "430px";
+        ifrm[0].style.width = "350px";
+        ifrm[0].src = "http://ringcentral.uservoice.com/forums/46123/widgets/popin.html?sso="+uservoiceOptions['params']['sso']+"&referer=http://devorigin.ringcentral.com/support.html";
+        //ifrm[0].style.display = "block";
+        showPopup();
+    } else {
+        alert("Username, extension or password are incorrect");
+    }
+}
+
+function checkUrl(test) {
+    document.getElementById("com_main").style.display = "none";
+    var ifrm = document.getElementsByTagName("iframe");
+    ifrm[0].src = "http://ringcentral.uservoice.com/forums/46123/widgets/popin.html?sso="+CookiesManager.getCookie("gw_support_login")+"&referer=http://devorigin.ringcentral.com/support.html";
+
+    showPopup();
+}
+
+function _loadUserVoice() {
+    //Close all popup
+    document.getElementById("com_main").style.display = "none";
+    //spike for old document.getElementById("uservoice-feedback-tab").onmouseover();
+    var ifame = function() {
+        if(document.getElementById("uservoice-feedback-tab")) {
+            addEvent( document.getElementById("uservoice-feedback-tab"), 'onclick', function(){
+                addEvent( document.getElementById("uservoice-dialog-close"), 'onclick', function(){
+                    document.getElementById("uservoice-dialog").style.display = "none";
+                    document.getElementById("com_main").style.display = "none";
+                });
+                var ifrm = document.getElementsByTagName("iframe");
+                ifrm[0].src = "";
+
+                if (CookiesManager.getCookie("gw_support_login") != null) {
+                    //check if loding is good
+                    var s = document.createElement('script');
+                    s.setAttribute('type', 'text/javascript');
+                    s.setAttribute('src', ("https:" == document.location.protocol ? "https://" : "http://") + window.location.host + "/inc/php/check_login.php?check="+uservoiceOptions['params']['sso']);
+                    document.getElementsByTagName('head')[0].appendChild(s);
+                } else if (CookiesManager.getCookie("gw_support_login") == null && document.getElementsByTagName("iframe")[0].src.search(/oss\=/) == -1) {
+                    showLogin();
+                }
+                addEvent( document.getElementById("uservoice-overlay"), 'onclick', function(){
+                    document.getElementById("uservoice-dialog").style.display = "none";
+                    document.getElementById("com_main").style.display = "none";
+                });
+            });
+        } else {
+            setTimeout(ifame, 1000);
+        }
+    };
+    setTimeout(ifame, 1000);
+    setTimeout('document.getElementById("uservoice-feedback").style.display = "block"' , 1000);
+}
+
+addEvent(window, 'ondomready', _loadUserVoice);
+
+</script>
+
+<div class="com_main" id="com_main" style="display:none;">
+    <p class="title">Login</p>
+    <div class="text" style="padding:13px 12px 30px 25px;color:#666666;font-weight:bold;">
+        To participate in our feedback forum please log in using your<br> RingCentral username and password.</div>
+    <div class="table_div">
+        <form action="#" method="get" id="forma" onsubmit="javascript:return false;">
+            <table width=100% border=0 align="center" cellpadding=0 cellspacing=7>
+                <tr>
+                    <td width="30%" nowrap style="padding-left: 16px;">Phone Number or User ID:</td>
+
+                    <td class="input"><input id="name_id" name="LoginName" size=15 value=""></td>
+                </tr>
+                <tr>
+                    <td nowrap style="padding-left: 16px;">Extension<i style="font-size:11px"> (optional)</i>:</td>
+                    <td class="input"><input id="pin_id" name="PIN" size=10 maxlength=10></td>
+                </tr>
+                <tr>
+                    <td nowrap style="padding-left: 16px;">Password:</td>
+
+                    <td class="input"><input id="password_id" type="password" name="Password" size="15" maxlength="10"></td>
+                </tr>
+                <tr style="height: 30px;">
+                    <td></td>
+                    <td align="center" style="text-align:center;"><a href="javascript:SupportAction();" style="left:-9px;position:relative;top:10px;"><img src="http://www.ringcentral.com/images/support_login/login.gif" alt="Login" border=0></a></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+</body>
+</html>

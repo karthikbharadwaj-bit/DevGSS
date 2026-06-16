@@ -1,0 +1,36 @@
+<apex:page standardController="Lead">
+    <apex:includeScript value="{!$Resource.LeadButtons + '/buttons.js'}"/>
+    <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}"/>
+    <script src="/soap/ajax/45.0/connection.js" type="text/javascript"/>
+    <script src="/soap/ajax/45.0/apex.js" type="text/javascript"/>
+    <script>
+        let result;
+        let convertParams = {
+            leadOwnerId: "{!Lead.OwnerId}",
+            leadId: "{!Lead.Id}",
+            isUseNewConvertLeadPage: {!$Setup.Feature_Toggle__c.NewConvertLeadPage__c}
+        }
+
+        try {
+            result = sforce.apex.execute("LeadHelperCls", "convert", {recordId: convertParams.leadId});
+        } catch (err) {
+            showError(err.faultstring);
+        }
+
+        if (result[0]) {
+            showError(result[0]);
+        } else {
+            convertParams.validatedResult = result;
+            convertParams.retUrl = `%2Flead%2Fleadmergewizard.jsp?id=${convertParams.leadId}`;
+            buttons.convert(convertParams);
+        }
+
+        function showError(msg) {
+            rcnotify.addToast({
+                theme: 'error',
+                header: 'Unable to convert record',
+                details: `${msg}. <a href="/{!Lead.Id}">Link to Lead.</a>`
+            });
+        }
+    </script>
+</apex:page>

@@ -1,0 +1,28 @@
+<apex:page sidebar="false" showHeader="false" standardStylesheets="false" docType="html-5.0" controller="RCSupportControllerHandler" applyHtmlTag="false" applyBodyTag="false">
+    <html>
+        <head>
+            <apex:includeScript value="{!URLFOR($Resource.jquery, 'js/jquery-1.4.2.min.js')}"/>
+            <apex:outputtext escape="false" rendered="{!!CAPortal}">
+                <!--US Portal-->
+                <meta name="google-site-verification" content="XyqYx-5cLbL4xn09xWprxPSOFEg_k9pectdqNLJT2sI"/>
+            </apex:outputtext>
+            <apex:outputtext escape="false" rendered="{!CAPortal}">
+                <!--CA Portal-->
+                <meta name="google-site-verification" content="3d7EeAMRjbLac6pu4RsakOG6L2W-t99JQEnJ8TrJees"/>
+            </apex:outputtext>
+        </head> 
+        <body>
+            <apex:composition template="RCSupportPortalHomeTemplate">
+                <apex:define name="systemstatus">
+                    <section class="main-content">
+                        <c:RCSystemStatus Text="Customer Care Center" rendered="{!!UKPortal}"/>
+                        <c:RCSystemStatusUK Text="Customer Care Center" rendered="{!UKPortal}"/>
+                    </section>
+                </apex:define>
+                <apex:define name="content"><apex:pagemessages />
+                    <apex:include pageName="RCSupportPortalBodyContentUS"/>
+                </apex:define>
+            </apex:composition>
+        </body>
+    </html>
+</apex:page>

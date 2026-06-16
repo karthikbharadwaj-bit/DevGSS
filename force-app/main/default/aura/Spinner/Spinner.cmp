@@ -1,0 +1,33 @@
+<aura:component>
+    <!-- Attributes -->
+    <aura:attribute access="private" name="isShown" type="Boolean" default="false"/>
+    <aura:attribute access="private" name="text" type="String"/>
+    <aura:attribute name="isGlobalSpinner" type="Boolean" default="true"
+                    description="Is spinner should catch SpinnerEvent"/>
+    <aura:attribute name="isFixed" type="Boolean" default="true"/>
+
+    <!-- Event Handlers -->
+    <aura:handler event="c:SpinnerEvent" action="{! c.spinnerEventHandler }"/>
+
+    <!-- Methods -->
+    <aura:method name="show">
+        <aura:attribute name="text" type="String"/>
+    </aura:method>
+    <aura:method name="hide"/>
+
+    <aura:if isTrue="{! v.isShown }">
+
+        <!-- spinner -->
+        <div class="{! join(' ', 'slds-spinner_container', v.isFixed ? 'slds-is-fixed' : '') }">
+            <div class="slds-spinner slds-spinner--medium" role="alert">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+
+            <p class="spinner-message slds-text-title--caps">{! v.text }</p>
+        </div>
+        <!-- end spinner -->
+
+    </aura:if>
+</aura:component>

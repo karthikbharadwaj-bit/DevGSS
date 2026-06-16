@@ -1,0 +1,98 @@
+<template>
+    <div class={customClass}>
+        <label class="slds-form-element__label" for="lookup-search">
+            <abbr class="slds-required" title="required" if:true={required}>* </abbr>
+            {label}
+        </label>
+        <div class="slds-form-element__control">
+            <div class={containerCss}>
+                <div class={comboboxCss}
+                     aria-expanded="true" aria-haspopup="listbox" role="combobox">
+
+                    <!-- EMPTY -->
+                    <div class={formElementCss}
+                         role="none">
+
+                        <lightning-icon icon-name="utility:search" size="x-small"
+                                        class="slds-input__icon slds-input__icon_right"
+                                        alternative-text="icon" if:false={isValueSelected}></lightning-icon>
+
+                        <lightning-icon icon-name={icon} size="small"
+                                        class="slds-combobox__input-entity-icon"
+                                        alternative-text="icon" if:true={isValueSelected}></lightning-icon>
+
+                        <input type="text" class={inputCss} name="lookup-search"
+                               aria-autocomplete="list" autocomplete="off" id="lookup-search"
+                               if:false={isValueSelected} disabled={isInputDisabled}
+                               onfocus={onFocus} onblur={onBlur} onkeyup={onUserInput}
+                               role="textbox" placeholder={placeholder}/>
+
+                        <div class={inputCss} if:true={isValueSelected}/>
+                            <a href={lookupLink} target="_blank" class="slds-truncate" if:false={isDisableLink}>{valueObj.text}</a>
+                            <div class="slds-truncate" if:true={isDisableLink}>{valueObj.text}</div>
+                        </div>
+
+                        <lightning-button-icon alternative-text="Remove selected option" variant="bare"
+                                               icon-name="utility:close"
+                                               class="slds-input__icon slds-input__icon_right remove-icon"
+                                               if:true={isShowRemoveButton}
+                                               onclick={onRemoveClicked}></lightning-button-icon>
+                    </div>
+
+                    <!-- List -->
+                    <div class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid"
+                         role="listbox" style={dropdownStyle} if:true={isOpen}>
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <!-- No results to display -->
+                            <li role="presentation" if:true={isNoResultsToDisplay}
+                                class="slds-listbox__item slds-align_absolute-center">
+                                <p class="slds-text-align_center slds-text-body_regular slds-text-color_weak slds-p-vertical_medium">
+                                    No results to display
+                                </p>
+                            </li>
+                            <!-- Loading Indicator -->
+                            <li role="presentation" if:true={isOneLetter}
+                                class="slds-listbox__item slds-align_absolute-center">
+                                <p class="slds-text-align_center slds-text-body_regular slds-text-color_weak slds-p-vertical_medium">
+                                    One more letter to start searching...
+                                </p>
+                            </li>
+                            <template for:each={searchResults} for:item="sr">
+                                <li role="presentation" class="slds-listbox__item" key={sr.id} onmousedown={onSelect}
+                                    data-id={sr.id}>
+                                    <div class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta"
+                                         role="option">
+                                        <span class="slds-media__figure slds-listbox__option-icon">
+                                            <lightning-icon icon-name={dropdownIcon} if:true={dropdownIcon} size="small"
+                                                            alternative-text="icon"></lightning-icon>
+                                        </span>
+                                        <span class="slds-media__body">
+                                            <span class="slds-listbox__option-text slds-listbox__option-text_entity">
+                                                {sr.text}
+                                            </span>
+                                            <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">
+                                                {sr.meta}
+                                            </span>
+                                        </span>
+                                    </div>
+                                </li>
+                            </template>
+                            <!-- Loading Indicator -->
+                            <li role="presentation" if:true={isLoading}
+                                class="slds-listbox__item slds-align_absolute-center">
+                                <p class="slds-text-align_center slds-text-body_regular slds-text-color_weak slds-p-vertical_medium">
+                                    Searching...
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div if:false={isValidValue}>
+        <p class="slds-m-left_x-small slds-m-right_x-small slds-form-element__help">
+            {errorMessageUnderField}
+        </p>
+    </div>
+</template>

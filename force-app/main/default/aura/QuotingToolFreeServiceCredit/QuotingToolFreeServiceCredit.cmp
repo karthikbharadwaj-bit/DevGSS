@@ -1,0 +1,199 @@
+<aura:component controller="QuotingToolQuoteApexController">
+
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="quote" type="Quote"/>
+    <aura:attribute name="creditAmount" type="Decimal" default="0"/>
+    <aura:attribute name="initialCreditAmount" type="Decimal"/>
+    <aura:attribute name="headerText" type="String" default="This change will require new Approval or will update Approval List"/>
+    <aura:attribute name="isCartChanged" type="Boolean"/>
+    <aura:attribute name="passCreditChange" type="Boolean" default="false"/>
+    <aura:attribute name="selectedTerm" type="String" default=""/>
+    <aura:attribute name="initialTerm" type="String" default=""/>
+    <aura:attribute name="jsonResponse" type="String" default=""/>
+    <aura:attribute name="selectedContractTerm" type="String" default=""/>
+    <aura:attribute name="initialContractTerm" type="String" default=""/>
+    <aura:attribute name="isModalOpen" type="Boolean" default="false"/>
+    <aura:attribute name="isFirstChange" type="Boolean" default="true"/>
+    <aura:attribute name="validationError" type="Boolean" default="false"/>
+    <aura:attribute name="validationMessage" type="String" default=""/>
+    <aura:attribute name="specialTerms" type="List" default="[
+                                                            {'label': '1 Free Month of Service', 'value': '1 Free Month of Service'},
+                                                            {'label': '2 Free Months of Service', 'value': '2 Free Months of Service'},
+                                                            {'label': '3 Free Months of Service', 'value': '3 Free Months of Service'},
+                                                            {'label': '4 Free Months of Service', 'value': '4 Free Months of Service'},
+                                                            {'label': '5 Free Months of Service', 'value': '5 Free Months of Service'},
+                                                            {'label': '6 Free Months of Service', 'value': '6 Free Months of Service'}
+                                                            ]"/>
+    <aura:attribute name="contractTerms" type="List" default="[
+                                                            {'label': '-- None --', 'value': ''},
+                                                            {'label': '1 Year', 'value': '12'},
+                                                            {'label': '2 Years', 'value': '24'},
+                                                            {'label': '3 Years', 'value': '36'},
+                                                            {'label': '4 Years', 'value': '48'},
+                                                            {'label': '5 Years', 'value': '60'},
+                                                            ]"/>
+
+    <aura:attribute name="serviceTaxes" type="Decimal" default="0"/>
+    <aura:attribute name="annualFixedTaxes" type="Decimal" default="0"/>
+    <aura:attribute name="annualVariableTaxes" type="Decimal" default="0"/>
+    <aura:attribute name="responseTaxesPerMonth" type="Decimal" default="0"/>
+
+    <aura:attribute name="additionalSpecialTerms" type="List" default="[]"/>
+    <aura:attribute name="defaultSpecialTermMonths" type="List" default="[1,2,3,4,5,6]"/>
+    <aura:attribute name="specialTermMonthsUpTo12" type="List" default="[7,8,9,10,11,12]"/>
+    <aura:attribute name="specialTermMonthsUpTo24" type="List" default="[13,14,15,16,17,18,19,20,21,22,23,24]"/>
+
+    <aura:handler name="change" value="{! v.Wizard.currentQuote.record.Credit_Amount__c }" action="{! c.handleCreditAmountChanged }"/>
+
+    <div>
+        <span onmouseover="{!c.showPopover}"
+            onmouseout="{!c.hidePopover}"
+            data-name="fsc"
+            class="slds-show_inline-block">
+            <lightning:button label="Free Service Credit"
+                            onclick="{!c.openModal}"
+                            disabled="{!or(empty(v.Wizard.currentQuote.cartItems), v.isCartChanged)}"
+                            aura:id="freeServiceCredit"/>
+        </span>
+
+        <aura:if isTrue="{!v.isModalOpen}">
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- ModalHeader-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModal }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.headerText}</h2>
+                    </header>
+                    <!--Modal Body-->
+                    <div class="slds-modal__content slds-grid slds-wrap slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-size_1-of-1 slds-grid">
+                            <lightning:select aura:id="specialTermSelect"
+                                                class="slds-size_1-of-3 slds-align-bottom slds-p-right_x-small"
+                                                value="{!v.selectedTerm}"
+                                                name="specialTermSelect"
+                                                label="Special Terms"
+                                                disabled="{!or(or(v.Wizard.opportunity.isClosed, v.Wizard.opportunity.isClosedWon), v.Wizard.currentQuote.isActiveAgreement)}"
+                                                onchange="{! c.onChange }">
+                                <option value="">-- None --</option>
+                                <aura:iteration items="{!v.specialTerms}" var="term">
+                                    <option value="{!term.value}" text="{!term.label}"></option>
+                                </aura:iteration>
+                                <aura:iteration items="{!v.additionalSpecialTerms}" var="term">
+                                    <option value="{!term.value}" text="{!term.label}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+
+                            <lightning:input type="number"
+                                            name="contractAmount"
+                                            class="slds-size_1-of-3 slds-align-bottom slds-p-right_x-small"
+                                            label="Contract Amount"
+                                            value="{!mult(v.Wizard.currentQuote.record.Monthly_Recurring_Revenue__c, 12)}"
+                                            disabled="true"
+                                            step="0.01"/>
+
+                            <lightning:input type="number"
+                                            name="creditAmount"
+                                            class="slds-size_1-of-3 slds-align-bottom"
+                                            label="FSC Credit Amount"
+                                            value="{!v.creditAmount}"
+                                            disabled="true"
+                                            step="0.01"/>
+                        </div>
+                        <div class="slds-grid slds-size_1-of-1 slds-p-top--x-small">
+                            <lightning:select aura:id="contractTermSelect"
+                                                class="{!'slds-size_1-of-3 slds-align-bottom slds-p-right_x-small ' + if(v.validationError, 'validation-error')}"
+                                                value="{!v.selectedContractTerm}"
+                                                name="contractTermSelect"
+                                                label="Contract Terms"
+                                                disabled="{!or(or(v.Wizard.opportunity.isClosed, v.Wizard.opportunity.isClosedWon), v.Wizard.currentQuote.isActiveAgreement)}"
+                                                onchange="{! c.onChangeContractTerm }">
+                                <aura:iteration items="{!v.contractTerms}" var="contractTerm">
+                                    <option value="{!contractTerm.value}" text="{!contractTerm.label}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                            <lightning:input type="number"
+                                            name="taxAmount"
+                                            class="slds-size_1-of-3 slds-align-bottom slds-p-right_x-small"
+                                            label="Tax Amount"
+                                            value="{!add(v.annualFixedTaxes, v.annualVariableTaxes)}"
+                                            disabled="true"
+                                            step="0.01"/>
+                            <lightning:input type="number"
+                                            name="serviceTaxes"
+                                            label="FSC Taxes Amount"
+                                            class="slds-size_1-of-3 slds-align-bottom"
+                                            value="{!v.serviceTaxes}"
+                                            disabled="true"
+                                            step="0.01"/>
+                        </div>
+                        <div class="slds-grid_align-end slds-size_1-of-1 slds-p-top--x-small">
+                            <div class="slds-col_bump-left slds-grid slds-size_2-of-3">
+                                <div class="slds-align-bottom slds-size_1-of-2 slds-p-right_x-small">
+                                    <lightning:input type="number"
+                                                    name="totalAmount"
+                                                    label="Total Amount"
+                                                    value="{!mult(v.Wizard.currentQuote.record.Monthly_Recurring_Revenue__c, 12) + v.annualFixedTaxes + v.annualVariableTaxes}"
+                                                    disabled="true"
+                                                    step="0.01"/>
+                                </div>
+                                <div class="slds-align-bottom slds-size_1-of-2">
+                                    <lightning:input type="number"
+                                                    name="serviceCreditTotal"
+                                                    label="FSC Total Amount"
+                                                    value="{!v.serviceTaxes + v.creditAmount}"
+                                                    disabled="true"
+                                                    step="0.01"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-size_1-of-1 slds-align_absolute-center slds-p-top_large slds-text-heading_small">
+                            <aura:if isTrue="{!v.validationError}">
+                                    <p style="color: red;">{!v.validationMessage}</p>
+                                <aura:set attribute="else">
+                                    <p>Do you want to save this change?</p>
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                    <!--Modal Footer-->
+                    <footer class="slds-modal__footer">
+                        <div class="slds-grid">
+                            <div>
+                                <lightning:button variant="neutral"
+                                                  label="Cancel"
+                                                  class=""
+                                                  title="Cancel"
+                                                  onclick="{! c.closeModal }"/>
+                            </div>
+                            <div class="slds-col_bump-left"
+                                onmouseover="{!c.showPopover}"
+                                onmouseout="{!c.hidePopover}"
+                                data-name="save">
+                                <lightning:button variant="brand"
+                                                  label="Save changes anyway"
+                                                  title="Save"
+                                                  disabled="{!or(
+                                                                or(
+                                                                    and(v.initialTerm == v.selectedTerm, v.initialContractTerm == v.selectedContractTerm),
+                                                                    v.validationError
+                                                                    ),
+                                                                or(
+                                                                    or(v.Wizard.opportunity.isClosed, v.Wizard.opportunity.isClosedWon),
+                                                                    v.Wizard.currentQuote.isActiveAgreement
+                                                                    )
+                                                                )
+                                                            }"
+                                                  onclick="{!c.submitChanges}"/>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    </div>
+</aura:component>

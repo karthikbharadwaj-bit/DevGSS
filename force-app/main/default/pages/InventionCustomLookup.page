@@ -1,0 +1,38 @@
+<apex:page controller="InventionCustomLookupCtrl">
+	<apex:pageMessage escape="false" summary="{!$Label.Prepare_Unused_Pages_For_Deletion_Part_1}" severity="error" strength="3" />
+	<style>
+		.btn {
+			margin-left: 5px;
+		}
+	</style>
+	<script>
+		function addInventor(inventorId) {
+			window.opener.inventorNameFun(inventorId);
+			window.close();
+		}
+	</script>
+	<apex:sectionHeader title="Lookup" />
+	<apex:form >
+		<apex:outputPanel >
+			<apex:inputText value="{!strSearch}" />
+			<apex:commandButton action="{!searchUser}" value="Go" reRender="resultPanel" />
+		</apex:outputPanel>
+		<apex:outputPanel id="resultPanel">
+			<apex:outputPanel rendered="{!isUserFound}">
+				<apex:pageBlock title="Users">
+					<apex:pageBlockTable value="{!lstUsers}" var="objUser">
+						<apex:column headerValue="Name">
+							<apex:commandLink value="{!objUser.Name}" onclick="addInventor('{!objUser.Id}');return false;" />
+						</apex:column>
+						<apex:column headerValue="Role">
+							<apex:outputText value="{!objUser.UserRole.Name}"/>
+						</apex:column>
+						<apex:column headerValue="Profile">
+							<apex:outputText value="{!objUser.Profile.Name}"/>
+						</apex:column>
+					</apex:pageBlockTable>
+				</apex:pageBlock>
+			</apex:outputPanel>
+		</apex:outputPanel>
+	</apex:form>
+</apex:page>

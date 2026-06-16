@@ -1,0 +1,78 @@
+<template>
+    <div class="slds-page-header">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning-icon icon-name="custom:custom67" alternative-text={smallTitle} ></lightning-icon>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span>{mainTitle}</span>
+                                    <span class="slds-page-header__title slds-truncate" title={bigTitle}>
+                                        {smallTitle}
+                                    </span>
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-page-header__col-actions">
+                <div class="slds-page-header__controls">
+                    <div class="slds-page-header__control">
+                        <ul class="slds-button-group-list">
+                            <li>
+                                <lightning-combobox
+                                    name="progress"
+                                    label="Country"
+                                    value={lang}
+                                    options={langs}
+                                    onchange={langHandleChange} >
+                                </lightning-combobox>
+                            </li>
+                            <li>
+                                <lightning-input type="number"
+                                                 name="rows"
+                                                 label="Rows"
+                                                 value={rows}
+                                                 onchange={handleRowChange}
+                                                 min={defaultMinRows}
+                                                 max={defaultMaxRows}>
+                                </lightning-input>
+                            </li>
+                        </ul>
+                        <ul class="slds-button-group-list slds-button-group-list__wo-labels">
+                            <li>
+                                <button
+                                    title="Reset all out items to default (from Coveo)"
+                                    class="slds-button slds-button_neutral"
+                                    onclick={onReset}>
+                                    Reset
+                                </button>
+                            </li>
+                            <li>
+                                <button
+                                    title="Undo all unsaved changes"
+                                    class="slds-button slds-button_neutral"
+                                    disabled={isDisabled}
+                                    onclick={onCancel}>
+                                    Cancel</button>
+                            </li>
+                            <li>
+                                <button title="Publish changes"
+                                        class="slds-button slds-button_brand"
+                                        disabled={isDisabled}
+                                        onclick={onSave}>
+                                    Save
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,52 @@
+<aura:component implements="flexipage:availableForRecordHome,force:lightningQuickActionWithoutHeader,force:hasRecordId"
+                controller="ApprovalHelperCls">
+    <lightning:navigation aura:id="navService"/>
+
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="isVFpage" type="Boolean" default="false"/>
+    <aura:attribute name="vfCloseWindow" type="Object" description="this attribute is for visualforce page javascript method"/>
+    <aura:attribute name="vfShowToast" type="Object" description="this attribute is for visualforce page javascript method"/>
+    <aura:attribute name="partnerMRR" type="Decimal" default=""/>
+    <aura:attribute name="currencyIsoCode" type="String" default=""/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:attribute name="selectedApprovalRecType" type="String" default=""/>
+    <aura:attribute name="resultWrapper" type="Map" default="{}"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <div class="{!'slds-is-relative' + if(v.isVFpage, ' slds-p-around_medium')}">
+        <div class="slds-text-align_center slds-text-title_caps slds-border_bottom slds-p-bottom_x-small">
+            <aura:if isTrue="{!v.selectedApprovalRecType}">
+                <span>
+                    {!v.selectedApprovalRecType}
+                </span>
+                <aura:set attribute="else">
+                    <span>
+                        Partner Approval
+                    </span>
+                </aura:set>
+            </aura:if>
+        </div>
+        <ui:inputCurrency aura:id="mrr"
+                            format="{!v.currencyIsoCode + ' #,###.00'}" 
+                            label="Provide Partner MRR" 
+                            value="{!v.partnerMRR}"
+                            placeholder="{!v.currencyIsoCode + '...'}" 
+                            updateOn="keyup"/>
+        <div class="slds-grid_align-end slds-grid slds-p-top_large">
+            <lightning:button label="Close" title="Close" onclick="{! c.closeModal }"/>
+            <lightning:button variant="brand" disabled="{!not(v.selectedApprovalRecType)}" label="Create" title="Create" onclick="{! c.createApproval }"/>
+        </div>
+
+        <aura:if isTrue="{!v.spinner}">
+            <div aura:id="spinnerId" class="slds-spinner_container">
+                <div class="slds-spinner_brand  slds-spinner slds-spinner_medium slds-is-relative" role="alert">
+                    <span class="slds-assistive-text">Loading...</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </aura:if>
+    </div>
+
+</aura:component>

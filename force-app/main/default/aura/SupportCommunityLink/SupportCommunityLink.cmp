@@ -1,0 +1,14 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="Support Community Link" controller="SupportCommunityImageController">
+    <aura:attribute name="icon" type="Integer" default="1" />
+    <aura:attribute name="item" type="SObject" default="{link:'',image:'',title:''}" />
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdate}"/>
+    <a href="{!v.item.Link__c}" target="_blank">
+        <div class="sc-link" >
+            <!--<lightning:icon iconName="{!$Resource.sc_icons + '#arrow_right'}" alternativeText="{!v.label}" size="large"/>-->
+            <img src="{!v.item.Image__c}" alt="{!v.item.title}"/>
+            <div class="sc-link__label">{!v.item.Name}</div>
+        </div>
+    </a>
+</aura:component>

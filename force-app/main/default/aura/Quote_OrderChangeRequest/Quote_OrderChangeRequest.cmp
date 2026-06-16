@@ -1,0 +1,413 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" access="global" extends="c:Quote_BaseComponent" controller="Quote_OrderChangeRequestController">
+	<aura:attribute name="objPartnerQuote" type="Partner_Quote__c" default="{'sobjectType':'Partner_Quote__c', 'Payment_Term__c':'Monthly'}"/>
+  	<aura:attribute name="CategoryWrapperList" type="List"/>
+    <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false"/>
+    <aura:attribute name="isChangeOrderSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="changeOrderId" type="String"  />
+    <aura:attribute name="PricingYearly" type="Boolean" default="false"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="selectedproductList" type="List"/>
+    <aura:attribute name="Step" type="String" default="1" />
+    <aura:attribute name="changeEdition" type="String"/>
+    <aura:attribute name="brandName" type="String"/>
+    <aura:attribute name="isWholesale" type="Boolean" default="false"/><!--added for wholesale-->
+    <aura:attribute name="subPackages" type="List"/><!--added for wholesale-->
+    <aura:attribute name="subPackageId" type="String"/><!--added for wholesale-->
+    <aura:attribute name="objCategoryWrap" type="object"/>
+    <aura:attribute name="editions" type="List" default="[
+            {'label': 'Essential', 'value': 'Essential'},
+            {'label': 'Standard', 'value': 'Standard'}.
+			{'label': 'Premium', 'value': 'Premium'}.
+			{'label': 'Ultimate', 'value': 'Ultimate'}.
+			]"/>
+    <aura:attribute name="showChangeRequestCMP" type="Boolean"/>
+    <aura:attribute name="paymentMethod" type="Boolean"/>
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="listofEditionWrapper" type="List" />
+	<aura:attribute name="OpportunityRecord" type="Opportunity" default="{
+                                                                         'SObjectType': 'Opportunity'
+                                                                         }" />
+    <!--Added for GO Pricing - start-->
+    <aura:attribute name="selPackageName" type="String"/>
+    <aura:attribute name="No_Of_DL_Acct" type="Double"/>
+    <aura:attribute name="initialOrderPkgEdition" type="String"/>
+    <!--Added for GO Pricing - end-->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <div>
+       <lightning:progressIndicator currentStep="{!v.Step}" type="path" hasError="false" variant="base">
+           <lightning:progressStep class="changeorder" label="Change Order" value="1" onclick="{!c.goToStep1}">
+           </lightning:progressStep>
+           <lightning:progressStep class="view" label="View" value="2" onclick="{!c.goToStep2}">
+           </lightning:progressStep>
+        </lightning:progressIndicator>
+        <aura:if isTrue="{!v.Step == '1'}">
+            <div class="slds-size--1-of-1 slds-grid slds-theme_shade slds-p-horizontal_medium">
+                <div class="slds-size--1-of-3 slds-grid" >
+                    <div class="slds-size--4-of-4">
+                        <div style="font-weight:bold" class="slds-page-header__col-title tabheading">
+                            Change Order Request               	
+                        </div>
+                        <div class="slds-text-heading_medium">
+                            
+                        </div>
+                    </div> 
+                </div>
+                <div class="slds-size--2-of-3 actionbtnswrap" style="text-align:right;">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Save" label="Save" title="Save" onclick="{! c.submitDetails }"/>
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Submit" label="Submit" title="Submit" onclick="{! c.submitDetails }"/>
+                	<lightning:button variant="brand" aura:id="cancel" label="Go Back" iconName="action:recall" iconPosition="left" title="Go Back" onclick="{! c.closeModel }"/>
+                
+                </div>
+            </div>
+            <pre>
+                <!-- <h3 style="background-color: skyblue" class="slds-section-title- -divider">Change Order Request</h3> -->
+                <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <aura:if isTrue="{!v.brandName == 'Rainbow Office'}">
+                            <div class="slds-size--4-of-12 slds-grid">
+                           		<div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Current Package</label>
+                                <div class="slds-form-element__control">
+                                    <lightning:input disabled="true" variant="label-hidden" id="inputNameSample1" value="{!v.objCategoryWrap.currentPackage}"  type="text"  />
+                                </div>
+                            </div> 	
+                        </div>
+                        </aura:if>
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element__control">
+                                <aura:if isTrue="{!v.isWholesale}">
+                                    <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "{!v.brandName == 'Rainbow Office' ? 'Change Package to' : 'Change Package'}" value="{!v.changeEdition}" onchange="{!c.parentPackageChange}" name="inputNameSample1">
+                                        <option value="">{!v.brandName == 'Rainbow Office' ? 'N/A' : '--None--'}</option>
+                                        <aura:iteration items="{! v.listofEditionWrapper }" var="objWrap" indexVar="mainindex">
+                                            <option selected="{!objWrap.pickKey == v.changeEdition}" value="{!objWrap.pickKey}">{!objWrap.pickVal}</option>
+                                        </aura:iteration>
+                                    </lightning:select>
+                                    <aura:set attribute="else">  
+                                        <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "{!v.brandName == 'Rainbow Office' ? 'Change Package to' : 'Change Package'}" value="{!v.changeEdition}" onchange="{!c.packageChange}" name="inputNameSample1">
+                                            <option value="">{!v.brandName == 'Rainbow Office' ? 'N/A' : '--None--'}</option>
+                                            <aura:iteration items="{! v.listofEditionWrapper }" var="objWrap" indexVar="mainindex">
+                                                <option selected="{!objWrap.pickKey == v.changeEdition}" value="{!objWrap.pickKey}">{!objWrap.pickVal}</option>
+                                            </aura:iteration>
+                                            <!--<option value="Standard">Standard</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Ultimate">Ultimate</option>-->
+                                        </lightning:select>
+                                    </aura:set>
+                                </aura:if>
+                            </div> 	
+                        </div>
+                         <aura:if isTrue="{!v.isWholesale}">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element__control">
+                                <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "{!v.brandName == 'Rainbow Office' ? 'Change Sub Package to' : 'Change Sub Package'}" value="{!v.subPackageId}" name="subPackageinput">
+                                   <option value="">{!v.brandName == 'Rainbow Office' ? 'N/A' : '--None--'}</option>
+                                    <aura:iteration items="{!v.subPackages}" var="objWrap" indexVar="mainindex">
+                                    <option selected="{!objWrap.pickKey == v.subPackageId}" value="{!objWrap.pickKey}">{!objWrap.pickVal}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            </div>
+                        </aura:if>
+                        <div class="slds-size--4-of-12 slds-grid"> 
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Move to Contract</label>
+                                <div style="width:100%" class="togglewrap">  
+                                    <div style="float:left">No</div> 
+                                    <div style="float:left"><lightning:input disabled="{!v.isChangeOrderSubmitted}" name="Paymentmethod" label="" type="toggle" checked="{!v.objPartnerQuote.Move_to_Contract__c}"
+                                                                             messageToggleActive="" messageToggleInactive=""/>
+                                    </div>
+                                    <div style="float:left">&nbsp;Yes</div>
+                                </div> 
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!!v.isWholesale}">
+                            <div class="slds-size--4-of-12 slds-grid">
+                            </div>
+                        </aura:if>
+                    </div>
+                    <br/>
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <aura:if isTrue="{!v.brandName == 'Rainbow Office'}">
+                            <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Current Charge Term</label>
+                                <div style="width:100%" class="durationtoggle togglewrap">  
+                                    <div style="float:left">Monthly</div> 
+                                    <div style="float:left">
+                                        <lightning:input disabled="true" name="PaymentTerm" label="" type="toggle" checked="{!v.objCategoryWrap.currentChargeTerm}"
+                               			messageToggleActive="" messageToggleInactive=""/>
+                					</div>
+                                    <div style="float:left">&nbsp;Yearly</div>
+                                </div> 
+                            </div>
+                        </div>
+                        </aura:if>
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">
+                                    <aura:if isTrue="{!v.brandName == 'Rainbow Office'}">
+                                        <span>Change Charge Term to</span>
+                                         <aura:set attribute="else">
+                                             <span>Charge Term</span>
+                                         </aura:set>
+                                    </aura:if>
+                                </label>
+                                <div style="width:100%" class="durationtoggle togglewrap">  
+                                    <div style="float:left">Monthly</div> 
+                                    <div style="float:left">
+                                        <lightning:input disabled="{!v.isChangeOrderSubmitted}" name="PaymentTerm" label="" type="toggle" checked="{!v.PricingYearly}"
+                               			messageToggleActive="" messageToggleInactive=""/>
+                					</div>
+                                    <div style="float:left">&nbsp;Yearly</div>
+                                </div> 
+                            </div>
+                        </div>
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Discount Changes</label>
+                                <div class="slds-form-element__control">
+                                    <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.Discount_Changes__c}"  type="text"  />
+                                </div>
+                            </div>
+                        </div>
+                        <aura:if isTrue="{!v.brandName != 'Rainbow Office'}">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="inputNameSample1">Main Area Code</label>
+                                    <div class="slds-form-element__control">
+                                        <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.Main_Area_Code__c}"  type="text"  />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </aura:if>
+                    </div>
+                    <br/>
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Product Detail</label>
+                                <div class="slds-form-element__control">
+                                    <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.Product_Detail__c}"  type="text" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Change Contract term</label>
+                                <div class="slds-form-element__control">
+                                    <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" value="{!v.objPartnerQuote.Contract_term__c}" id="inputNameSample1"  type="text"  />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-size--4-of-12 slds-grid">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label" for="inputNameSample1">Fax Area Code</label>
+                                <div class="slds-form-element__control">
+                                    <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.Fax_Area_Code__c}"  type="text"  />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <br/>
+                    <aura:if isTrue="{!v.brandName == 'Rainbow Office'}">	
+                    	<div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="inputNameSample1">Main Area Code</label>
+                                        <div class="slds-form-element__control">
+                                            <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.Main_Area_Code__c}"  type="text"  />
+                                        </div>
+                                    </div>
+                                </div>
+                             <div class="slds-size--4-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="inputNameSample1">VAT Number</label>
+                                        <div class="slds-form-element__control">
+                                            <lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" id="inputNameSample1" value="{!v.objPartnerQuote.VAT_Number__c}"  type="text"  />
+                                        </div>
+                                    </div>
+                                </div>
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "Apply for tax exemption?" value="{!v.objPartnerQuote.Tax_Exemption__c}"  name="inputNameSample1">
+                                        <option value="">None</option>
+                                        <option value="Yes">Yes</option>
+                                        <option value="No">No</option>
+                                    </lightning:select>
+                                </div>
+                            </div>
+                    	</div>
+                    	<br/>
+                    </aura:if>
+                    <aura:if isTrue="{!v.brandName == 'Rainbow Office'}">
+                        <div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "Contract Status" value="{!v.objPartnerQuote.Contract_Status__c}"  name="inputNameSample1">
+                                        <option value="">None</option>
+                                        <option value="Active">Active</option>
+                                    </lightning:select>
+                                </div>
+                            </div>
+                            <aura:if isTrue="{!v.objPartnerQuote.Contract_Status__c == 'Active'}">
+                                <div class="slds-size--4-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="inputNameSample1">Auto Renewal</label>
+                                        <div style="width:100%" class="durationtoggle togglewrap">  
+                                            <div style="float:left">No</div> 
+                                            <div style="float:left">
+                                                <lightning:input disabled="{!v.isChangeOrderSubmitted}" name="PaymentTerm" label="" type="toggle" checked="{!v.objPartnerQuote.Auto_Renewal__c}"
+                                                                 messageToggleActive="" messageToggleInactive=""/>
+                                            </div>
+                                            <div style="float:left">&nbsp;Yes</div>
+                                        </div> 
+                                    </div>
+                                </div>
+                                <div class="slds-size--4-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <lightning:select disabled="{!v.isChangeOrderSubmitted}" label = "Renewal Term" value="{!v.objPartnerQuote.Renewal_Term__c}"  name="inputNameSample1">
+                                            <option value="">N/A</option>
+                                            <option value="12">12</option>
+                                            <option value="24">24</option>
+                                            <option value="36">36</option>
+                                            <option value="48">48</option>
+                                            <option value="60">60</option>
+                                        </lightning:select>
+                                    </div>
+                                </div>
+                            </aura:if>
+                    	</div>
+                        <br/>
+                        <aura:if isTrue="{!not(empty(v.objPartnerQuote.Discount_Changes__c))}">
+                        <div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-size--12-of-12 slds-grid">
+                                <div class="slds-form-element__control">  
+                                    <label class="slds-form-element__label" for="inputNameSample1">Justifications</label>
+                                    <lightning:textarea disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" style="width:250px" value="{!v.objPartnerQuote.Justification_Description__c}"/>
+                                    
+                                </div> 	
+                            </div>
+                        </div>
+                        </aura:if>
+                        <br/>
+                    </aura:if>
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <div class="slds-size--12-of-12 slds-grid">
+                            <div class="slds-form-element__control">  
+                                <label class="slds-form-element__label" for="inputNameSample1">Comments</label>
+                                <lightning:textarea disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" style="width:250px" value="{!v.objPartnerQuote.Comments__c}"/>
+       
+                            </div> 	
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="slds-size--1-of-1 slds-grid">
+                        <div class="slds-size--6-of-12 slds-grid">
+                            
+                        </div>
+                        
+                    </div>
+                    <br/>
+                    <div class="slds-size--1-of-1 slds-grid font headingbold font14">Change Service (Add/Remove Quantity):</div>
+                    <br/>
+                    <aura:if isTrue="{!v.CategoryWrapperList.length > 0}">
+                        <lightning:tabset  onselect="{! c.handleSelect }" variant="scoped">
+                            <aura:iteration items="{! v.CategoryWrapperList }" var="tab" indexVar="mainindex">
+                                <lightning:tab  label="{! tab.CategoryName }" id="{! tab.CategoryName }" >
+                                    <br/>
+                                    <lightning:tabset class='callscategoriesheading'>
+                                        <aura:iteration items="{!tab.subCategoryList }" indexVar="index" var="subTab">
+                                            <lightning:tab label="{!subTab.subCategoryName}">
+                                            	<div class="slds-size--1-of-1 slds-grid">
+                               						<div class="slds-size--7-of-12 slds-grid">
+                                                    <table style="border:1px solid #d4d4d4;" class="slds-table slds-table--bordered slds-table_cell-buffer font productswrap">
+                                                        <thead>
+                                                            <th >Product Name</th>
+                                                            <th >Add/Remove</th>
+                                                            <th style="width:20%;">Quantity</th>
+                                                        </thead>
+                                                        <tbody>
+                                                            <aura:iteration items="{!subTab.productList }" indexVar="indexprod" var="eachproduct">
+                                                                <tr>
+                                                                    <!-- <td>
+                                                                        <lightning:input 
+                                                                                         aura:id="myCheckboxes" 
+                                                                                         type="checkbox"
+                                                                                         variant="label-hidden"
+                                                                                         label="" 
+                                                                                         checked="{!eachproduct.isSelected}"/>
+                                                                    </td> -->
+                                                                    <td>{!eachproduct.productName}</td>
+                                                                    <td>
+                                                                        <lightning:select
+                                                                            disabled="{!v.isChangeOrderSubmitted}"              
+                                                                         	label="action type" 
+                                                                            variant="label-hidden" 
+                                                                            class="label-hidden"              
+                                                                            value="{!eachproduct.actionType}">
+                                                                            <option value="Add">Add</option>
+                                                                            <option value="Remove">Remove</option>
+                                                                        </lightning:select>
+                                                                    </td>
+                                                                    <td><lightning:input disabled="{!v.isChangeOrderSubmitted}" variant="label-hidden" value="{!eachproduct.quantity}" type="number"></lightning:input></td>
+                                                                    <td style="width:17%" class='add-btn'> <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" class="{!index}" name="{!mainindex}" value="{!indexprod}" onclick="{!c.addproduct}" label="{!eachproduct.buttonLabel}"/></td>
+                                                                </tr>
+                                                            </aura:iteration>
+                                                        </tbody>
+                                                    </table>
+                                                    </div>
+                                                </div>
+                                             </lightning:tab>
+                                           </aura:iteration>
+                                    </lightning:tabset>
+                                </lightning:tab>
+                            </aura:iteration>
+                        </lightning:tabset>
+                        <aura:set attribute="else">
+                            <div class='font font14'>Please select package.</div>
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </pre>
+        </aura:if>
+        <aura:if isTrue="{!v.Step == '2'}">
+            <div class="slds-size--1-of-1 slds-grid slds-theme_shade">
+                <div class="slds-size--1-of-3 slds-grid" >
+                    <div class="slds-size--4-of-4">
+                        <div style="font-weight:bold" class="slds-page-header__col-title tabheading">
+                               Selected Records          	
+                        </div>
+                        <div class="slds-text-heading_medium">
+                            
+                        </div>
+                    </div> 
+                </div>
+                <div class="slds-size--2-of-3 actionbtnswrap" style="text-align:right;">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Save" label="Save" title="Save" onclick="{! c.submitDetails }"/>
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="brand" aura:id="Submit" label="Submit" title="Submit" onclick="{! c.submitDetails }"/>
+                	<lightning:button variant="brand" aura:id="cancel" label="Go Back" iconName="action:recall" iconPosition="left" title="Go Back" onclick="{! c.closeModel }"/>
+             	</div>
+            </div>
+            <br/>
+            <table style="border:1px solid #d4d4d4;" class="slds-table slds-table--bordered slds-table_cell-buffer viewrecordstable">
+                <thead>
+                    <tr>
+                        <th >Product Name</th>
+                        <th >Add/Remove</th>
+                        <th style="width:20%;">Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <aura:iteration items="{!v.selectedproductList }" var="eachproduct">
+                        <tr>
+                            <td class='padding15'>{!eachproduct.productName}</td>
+                            <td class='padding15'>{!eachproduct.actionType}</td>
+                            <td class='padding15'>{!eachproduct.quantity}</td>
+                        </tr>
+                    </aura:iteration>
+                </tbody>
+            </table>
+        </aura:if>
+    </div>
+</aura:component>

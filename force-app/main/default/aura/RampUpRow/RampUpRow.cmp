@@ -1,0 +1,45 @@
+<aura:component>
+
+    <!-- shared attributes -->
+    <aura:attribute name="data" type="Map"/>
+    <aura:attribute name="index" type="Integer"/>
+    <aura:attribute name="last" type="Boolean" description="is last item"/>
+    <aura:attribute name="even" type="Boolean" description="is an even item"/>
+
+    <!-- component attributes -->
+
+
+    <tr class="{!join(' ',
+            'order-row item',
+            (v.last ? 'last' : ''),
+            (v.even ? 'even' : 'odd')
+            )}">
+        <!-- Name -->
+        <th scope="row">
+            <div class="slds-truncate" title="{!v.data.RampUp__c}">
+                <a href="{!'/'+v.data.Id}" target="_blank">{!v.data.RampUp__c}</a>
+            </div>
+        </th>
+
+        <!-- Start Date -->
+        <th scope="row">
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.RampUpStartDate__c}"/>
+            </div>
+        </th>
+
+        <!-- End Date -->
+        <th colspan="2" scope="row">
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.RampUpEndDate__c}"/>
+            </div>
+        </th>
+
+        <!-- Quantity -->
+        <td colspan="5">
+            <div class="slds-truncate">
+                {!v.data.QuantityOrThreshold__c}
+            </div>
+        </td>
+    </tr>
+</aura:component>

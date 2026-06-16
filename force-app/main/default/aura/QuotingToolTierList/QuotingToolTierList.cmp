@@ -1,0 +1,185 @@
+<aura:component controller="QuotingToolQuoteApexController" extends="c:QuotingToolHelper">
+
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"/>
+    <!-- Shared Attributes -->
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="accountId" type="String" />
+    <aura:attribute name="rcUserId" type="String" />
+    <aura:attribute name="isCC" type="Boolean" />
+    <aura:attribute name="rcTier" type="String"/>
+    <aura:attribute name="tiers" type="List"/>
+    <aura:attribute name="recordTypeName" type="String"/>
+    <aura:attribute name="accountLines" type="Integer" description="Lines on Account"/>
+    <aura:attribute name="accountPlan" type="String" description="Plan on Account"/>
+    <aura:attribute name="opportunityPlan" type="String" description="Tier Name on Opportunity"/>
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="selectedPriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) selected by user)"/>
+    <aura:attribute name="upsellStatus" type="String" />
+    <aura:attribute name="opportunityId" type="String" />
+    <aura:attribute name="entitlements" type="List" />
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="accountServicePlanPbe" type="Object" description="Active Service Plan on Account PriceBookEntry record"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute name="filteredTiers" type="List" />
+    <aura:attribute name="scrollTiers" type="List" description="Service Plans that currently visible on screen"/>
+    <aura:attribute name="listBuffer" type="Map" default="{}" description="Helper buffer data to fix scroll and sizing of the list"/>
+    <aura:attribute name="stage" type="Integer" />
+    <aura:attribute name="byPassFilterTiers" type="Boolean" default="false"/>
+
+    <!-- filters -->
+    <aura:attribute name="isFilterInit" type="Boolean" default="true"/>
+    <aura:attribute name="serviceOpts" type="List" />
+    <aura:attribute name="editionOpts" type="List" />
+    <aura:attribute name="planOpts" type="List" />
+    <aura:attribute name="serviceFilter" type="String" default=""/>
+    <aura:attribute name="editionFilter" type="String" default=""/>
+    <aura:attribute name="planFilter" type="String" default=""/>
+    <aura:attribute name="linesFilter" type="String" default=""/>
+    <aura:attribute name="filterLevel" type="Integer" default="0" description="Filter level used for dependant filters"/>
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:QuotingToolSwitchServicePlanEvent" action="{!c.findSimilarTier}" />
+    <aura:handler event="c:QuotingToolNewQuoteEvent" action="{!c.newQuote}" />
+    <aura:handler event="c:QuotingToolButtonEvent" action="{!c.onButtonEvent}"/>
+    <!-- Attribute changes -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.activePriceBookEntry}" action="{!c.activePriceBookEntryChanged}" />
+    <aura:handler name="change" value="{!v.serviceFilter}" action="{!c.serviceFilterChanged}" />
+    <aura:handler name="change" value="{!v.editionFilter}" action="{!c.editionFilterChanged}" />
+    <aura:handler name="change" value="{!v.planFilter}" action="{!c.planFilterChanged}" />
+    <aura:handler name="change" value="{!v.linesFilter}" action="{!c.linesFilterChanged}" />
+    <aura:handler name="change" value="{!v.filterLevel}" action="{!c.filterLevelChanged}" />
+    <aura:handler name="change" value="{!v.upsellStatus}" action="{!c.upsellStatusChanged}" />
+    <aura:handler name="change" value="{!v.accountServicePlanPbe}" action="{!c.accountServicePlanPbeChanged}" />
+    <aura:handler name="change" value="{!v.filteredTiers}" action="{! c.filteredTiersChanged }" />
+    <!-- registered events -->
+    <aura:registerEvent name="updateMonthlyContract" type="c:QuotingToolMonthlyContractDiscountEvent" />
+    <aura:registerEvent name="cartSaveComplete" type="c:QuotingToolCartSaveCompleteEvent" />
+
+    <!-- Methods -->
+    <aura:method name="switchServicePlan" description="Switch Service Plan on Quote">
+        <aura:attribute name="pricebook2Id" type="Id" />
+    </aura:method>
+
+    <aura:method name="saveServicePlanOnQuote" action="{!c.saveServicePlanOnQuote}" description="Save Service Plan on Quote">
+        <aura:attribute name="priceBookEntry" type="PriceBookEntry" />
+        <aura:attribute name="lines" type="Integer" />
+    </aura:method>
+
+    <aura:method name="tabIsActive"/>
+
+    <section  class="{! join(' ',
+        'slds-grid slds-grid_vertical service-plan-tab',
+        v.Tabs.servicePlans.isOpen ? '' : 'hidden')}">
+        <div class="slds-grid slds-wrap slds-m-bottom_small slds-shrink-none" aura:id="filters">
+            <div class="slds-p-horizontal--small slds-col slds-size--1-of-4">
+                <lightning:select label="Service"
+                    value="{!v.serviceFilter}"
+                    aura:id="serviceFilter"
+                    onchange="{!c.uiServiceFilterChanged}">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.serviceOpts}" var="opt">
+                        <option value="{!opt.value}" selected="{!opt.value == v.serviceFilter}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="slds-p-horizontal--small slds-col slds-size--1-of-4">
+                <lightning:select label="Edition"
+                    value="{!v.editionFilter}"
+                    aura:id="editionFilter"
+                    onchange="{!c.uiEditionFilterChanged}">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.editionOpts}" var="opt">
+                        <option value="{!opt.value}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="slds-p-horizontal--small slds-col slds-size--1-of-4">
+                <lightning:select label="Plan"
+                    value="{!v.planFilter}"
+                    aura:id="planFilter">
+                    <option value="">--None--</option>
+                    <aura:iteration items="{!v.planOpts}" var="opt">
+                        <option value="{!opt.value}">{!opt.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="slds-p-horizontal--small slds-col slds-size--1-of-4">
+                <lightning:input label="Number of Lines"
+                                 type="Number"
+                                 min="1"
+                                 step="1"
+                                 value="{!v.linesFilter}"/>
+            </div>
+        </div>
+        <div class="slds-container slds-grid slds-grid_vertical tier-list-container">
+            <div class="header-background slds-border_bottom slds-border_top slds-shrink-none"
+                 style="{! v.listBuffer.tableWidth ? 'min-width: ' + v.listBuffer.tableWidth + 'px' : '' }"></div>
+            <div class="fixed-table-container-inner"
+                 onscroll="{! c.onTableScroll }"
+                 onwheel="{! c.onTableWheel }"
+                 aura:id="tierList"
+                 style="{! v.listBuffer.tableWidth ? 'min-width: ' + v.listBuffer.tableWidth + 'px' : '' }">
+                <table class="slds-table slds-table--bordered noflickering service-table" aura:id="serviceTable">
+                    <thead aura:id="table-header">
+                        <tr class="slds-text-heading--label">
+                            <th class="fixed-th th_info" scope="col">
+                            </th>
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Name</div>
+                                <div class="th-inner-hidden slds-truncate">Name</div>
+                            </th>
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Service</div>
+                                <div class="th-inner-hidden slds-truncate">Service</div>
+                            </th>
+
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Edition</div>
+                                <div class="th-inner-hidden slds-truncate">Edition</div>
+                            </th>
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Line range</div>
+                                <div class="th-inner-hidden slds-truncate">Line range</div>
+                            </th>
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Plan</div>
+                                <div class="th-inner-hidden slds-truncate">Plan</div>
+                            </th>
+                            <th class="fixed-th" scope="col">
+                                <div class="th-inner slds-truncate">Price</div>
+                                <div class="th-inner-hidden slds-truncate">Price</div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="tier-table__tbody" aura:id="tierListTBody">
+                        <tr style="{! 'height:' + v.listBuffer.scrollBufferTop + 'px' }">
+                            <td class="service-table_hidden-row"></td>
+                            <td class="service-table_hidden-row">{! v.listBuffer.name }</td>
+                        </tr>
+                        <aura:iteration items="{! v.scrollTiers }" var="tier">
+                            <c:QuotingToolTierListEntry servicePlanEntry="{!tier}"
+                                                        activePriceBookEntry="{!v.activePriceBookEntry}"
+                                                        selectedPriceBookEntry="{!v.selectedPriceBookEntry}"
+                                                        Wizard="{!v.Wizard}"
+                                                        accountServicePlanPbe="{! v.accountServicePlanPbe }"/>
+                        </aura:iteration>
+                        <tr style="{! 'height:' + v.listBuffer.scrollBufferBottom + 'px' }"></tr>
+                    </tbody>
+                </table>
+                <aura:if isTrue="{! empty(v.filteredTiers) }">
+                    <div class="message-container message-container--center">
+                        <h1 class="rc-message">No Service Plans Found</h1>
+                    </div>
+                </aura:if>
+            </div>
+        </div>
+    </section>
+</aura:component>

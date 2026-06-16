@@ -1,0 +1,20 @@
+<aura:component controller="OpportunityWarningMessageController" implements="flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:isUrlAddressable,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable" access="global">
+    <aura:attribute name="recordId" type="Id" />
+    <aura:attribute name="message" type="String" />
+    <aura:attribute name="nextStage" type="String" />
+    <aura:attribute name="showComponent" type="Boolean" />
+    
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="force:refreshView" action="{!c.doInit}" />
+
+    <aura:if isTrue="{!v.showComponent}">
+        <div class="slds-notify slds-notify_alert slds-alert_error message-text" style="display:block" role="alert">
+            <div style="display: inline-flex;">
+                <lightning:icon iconName="utility:error" alternativeText="error!" class="icon" size = "xx-small" title="error" />
+                 <h3><b>Please fill the following fields under 'Background Information' tab to move this opportunity to {!v.nextStage}. </b></h3>
+            </div>            
+            <p>{!v.message}</p>
+        </div>
+    </aura:if>
+    
+</aura:component>

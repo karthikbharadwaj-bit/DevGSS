@@ -1,0 +1,72 @@
+<template>
+    <template if:true={contactRoleSectionShouldShow}>
+        <li class="slds-card slds-p-horizontal_medium slds-p-vertical_x-small slds-m-top_medium">
+        <article class="slds-setup-assistant__step">
+            <div class="slds-setup-assistant__step-summary">
+                <div class="slds-media">
+                    <div class="slds-setup-assistant__step-summary-content slds-media__body slds-m-right_none">
+                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                            <label>{label.AdditionalBuyerinSalesCycle}</label>
+                        </h3>
+                    </div>
+                    <div class="slds-media__figure slds-media__figure_reverse slds-grid">
+                        <!-- Toggle Expand -->
+                        <div if:true={showApplyEditButton} class="slds-float_right">
+                            <lightning-button label="Edit"
+                                            class="slds-m-left_small"
+                                            onclick={toggleIsExpanded}
+                                            if:false={isExpanded}></lightning-button>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <c-placeholder-loading type='line'
+                                        width="20rem"
+                                        if:true={isLoading}></c-placeholder-loading>
+                    <!-- Collapsed Preview -->
+                    <div if:true={dropDownShouldShow}>
+                        <div class="slds-m-right_large" if:true={isCollapsedView}>
+                            <p class="slds-text-title slds-m-bottom--xx-small">
+                                <label>{label.SelectedAdditionalBuyer}</label>
+                            </p>
+                            <div if:true={selectedMatchedContactRole}>
+                                <h3 class="slds-text-heading_small">
+                                    <a>{selectedRole}</a>
+                                </h3>
+                            </div>
+                            <div if:false={selectedMatchedContactRole} class="slds-text-heading_small">
+                                {label.None}
+                            </div>
+                        </div>
+                    </div>
+                    <div if:true={alreadyIsContactRole} class="slds-text-heading_small">
+                        {alreadyContactRoleTitle}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Block -->
+            <div class="slds-summary-detail__content" if:true={isExpandedView}>
+                <lightning-layout class="slds-gutters slds-m-bottom_small">
+                    <lightning-layout-item size="3" padding="horizontal-small">
+                        <lightning-combobox 
+                                if:true={dropDownShouldShow}
+                                label={label.SelectAdditionalBuyer}
+                                value={selectedRole}
+                                placeholder={label.NonePlaceHolder}
+                                options={contactRoles}
+                                onchange={handleChange} ></lightning-combobox>
+                    </lightning-layout-item>
+                </lightning-layout>
+            </div>
+    
+            <!-- Toggle Expand -->
+            <div class="slds-clearfix slds-m-top_small" if:true={isExpanded}>
+                <div if:true={showApplyEditButton} class="slds-float_right">
+                    <lightning-button variant="brand" onclick={apply} label="Apply"></lightning-button>
+                </div>
+            </div>
+        </article>
+        </li>
+    </template>
+</template>

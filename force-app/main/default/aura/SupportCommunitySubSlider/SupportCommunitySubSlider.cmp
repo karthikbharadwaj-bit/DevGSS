@@ -1,0 +1,39 @@
+<!--
+ - Created on 18.10.2018
+ -->
+
+<aura:component description="SupportCommunitySubSlider">
+    <aura:attribute name="scrollDuration" type="Integer" default="5" />
+    <aura:attribute name="whoIAm" type="String" default="full" />
+    <aura:attribute name="autoscroll" type="Boolean" default="true" />
+    <aura:attribute name="active" type="Integer" default="0" />
+    <aura:attribute name="sliderItems" type="SupportCommunityImagelnk__c[]"/>
+    <aura:attribute name="count" type="Integer" default="0" />
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <div class="slds-carousel ">
+        <div class="slds-carousel__stage">
+            <div class="slds-carousel__panels" style="{!'transform: translateX(-' + v.active + '00%);'}" ontouchstart="{!c.touchstart}" ontouchmove="{!c.touchmove}" ontouchend="{!c.touchend}">
+                <aura:iteration items="{!v.sliderItems}" var="sliderItem" indexVar="inx">
+                    <div class="slds-carousel__panel">
+                        <div role="tabpanel" aria-labelledby="{!'indicator-id-' + inx}" id="{!'content-id-' + inx}" aria-hidden="true">
+                            <a href="{!sliderItem.Link__c}" tabindex="-1" class="slds-carousel__panel-action slds-text-link_reset">
+                                <div class="slds-carousel__image">
+                                    <img src="{!sliderItem.Image__c}" alt="{!sliderItem.Name}"/>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </aura:iteration>
+            </div>
+            <ul class="slds-carousel__indicators" role="tablist" data-aura-rendered-by="16:75;a">
+                <aura:iteration items="{!v.sliderItems}" var="sliderItem" indexVar="inx">
+                    <li class="slds-carousel__indicator" data-index="{!inx}" >
+                        <a class="{!'slds-carousel__indicator-action'+((inx == v.active)?' slds-is-active':'')}" href="javascript:void(0);" role="tab" tabindex="{!inx}" onclick="{!c.dotClick}" id="{!'indicator-id-' + inx}" aria-controls="{!'content-id-' + inx}">
+                            <span class="slds-assistive-text"></span>
+                        </a>
+                    </li>
+                </aura:iteration>
+            </ul>
+        </div>
+    </div>
+</aura:component>

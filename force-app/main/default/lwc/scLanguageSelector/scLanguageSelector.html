@@ -1,0 +1,22 @@
+<template>
+    <div if:true={isLoaded}>
+        <div class="slds-context-bar__item slds-context-bar__dropdown-trigger slds-dropdown-trigger slds-dropdown-trigger_click">
+            <span class="slds-truncate title" title={currentLanguage.label}>{currentLanguage.shortTitle}</span>
+            <div class="slds-context-bar__icon-action slds-p-left_none">
+                <button class="slds-button slds-button_icon slds-button_icon slds-context-bar__button" aria-haspopup="true">
+                    <lightning-icon icon-name="utility:chevrondown" size="xx-small" alternative-text=""></lightning-icon>
+                </button>
+            </div>
+            <div class="slds-dropdown slds-dropdown_left">
+                <ul class="slds-dropdown__list" role="menu">
+                    <template for:each={languages} for:item="lang">
+                        <li class={lang.cssClass} role="presentation" onclick={select} key={lang.inx} data-value={lang.language}>
+                            <span class="country-switcher__link-text" title={lang.label}>{lang.label}</span>
+                            <span class="country-switcher__link-code" title={lang.code}>{lang.code}</span>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+    </div>
+</template>

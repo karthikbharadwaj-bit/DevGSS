@@ -1,0 +1,974 @@
+<apex:page standardController="Legal_Requests__c" extensions="InventionTicket" id="pg">
+	<style>
+		.mainHeadingTd {
+			font-weight: bold;
+			font-size: 14px;
+			text-align: center;
+		}
+		
+		.sectionTable {
+			width: 100%;
+		}
+		
+		.sectionContainer {
+			border: 1px solid gray;
+			margin-top: 15px;
+			width: 1000px;
+		}
+		
+		.sectionTable td { 
+			padding: 5px;
+			width: 100%;
+		}
+		
+		/*.sectionTable hr {
+			width: 96%;
+		}*/
+		
+		div.line {
+			width: 96%;
+			height: 1px;
+			background: grey;
+		}
+		
+		.sectionTable div {
+			float: left;
+		}
+		
+		.sectionTable input[type=text] {
+			padding: 2px;
+		}
+		
+		.sectionTable textarea {
+			padding: 2px;
+			width: 96%;
+		}
+		
+		.sectionHeading {
+			font-weight: bold;
+			float: none;
+		}
+		
+		.innerDiv {
+			width: 100%;
+		}
+		
+		.actionBtn {
+			width: auto;
+			height: 30px;
+			padding: 8px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: black;
+		}
+		
+		.submitBtn {
+			width: auto;
+			height: 30px;
+			padding: 8px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: white;
+			background-color: black;
+			margin: 10px;
+		}
+		
+		.commentBtn {
+			width: auto;
+			height: 30px;
+			padding: 5px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: black;
+		}
+		
+		input::-moz-focus-inner /*Remove button padding in FF*/
+		{ 
+		    border: 0;
+		    padding: 0;
+		}
+		
+		#watcherOverlay,#attachOverlay {
+			background: no-repeat scroll top center rgb(10, 9, 9);
+			border: 0px solid #000000;
+			bottom: 0;
+			left: 0;
+			opacity: 0.90;
+			position: absolute;
+			top: 0;
+			visibility: hidden;
+			width: 100%;
+			z-index: 9999;
+			zIndex: 9999;
+			height: 100%;
+		}
+		
+		#watcherOverlay div:nth-child(1),#attachOverlay div:nth-child(1){
+			width: 500px;
+			margin: 100px auto;
+			background-color: #fff;
+			border: 1px solid #000;
+			padding: 15px;
+			border-radius: 10px;
+		}
+		
+		.commentDiv {
+			width: 100%;
+			text-align: center;
+			padding: 10px;
+		}
+		
+		.dateFormat {
+			visibility: hidden;
+		}
+		
+		.commentClass {
+			width: 85%;
+			height: 100px;
+		}
+		
+		.errorCls {
+			display: none;
+			margin: 10px;
+			width: 224px;
+			text-align: center;
+			margin-left: 60px;
+			border: none;
+			font-weight: bold;
+			font-size: initial;
+			color: red;
+		}
+		
+		.commercialReleaseCls {
+			width: 100%;
+			padding-bottom: 15px;
+			display: none;
+		}
+		
+		.errorM3{
+			border-color: #c00;
+		}
+		
+		.message {
+			background-color: #ffc;
+			border-style: solid;
+			border-width: 1px;
+			color: #000;
+			padding: 6px 8px 6px 6px;
+			margin: 4px 20px;
+			/*display: none;*/
+		}
+		
+		.message .messageText {
+			margin-left: 8px;
+		}
+		
+		.msgIcon, .errorMedium {
+			background-image: url(/img/msg_icons/error24.png);
+			background-position: 0 0;
+			width: 24px;
+			height: 24px;
+		}
+	</style>
+	<!-- Begin Default Content REMOVE THIS -->
+	<apex:composition template="ITPortalTemplate1">
+		<apex:define name="content">
+			<apex:form >
+				<div id="attachOverlay">
+					<div id="attachDiv">
+						<apex:actionRegion >
+							<div id="attachErrorDiv" class="errorCls" style="margin: 10px; width: 315px; margin-left: 60px; border: none;">
+								<font color="red">Error: </font> Please select file.
+							</div>
+							<table width="100%">
+								<tr>
+									<td style="vertical-align: top;">
+										<b><font size="3">1.</font></b>
+									</td>
+									<td>
+										<b><font size="3">Select the File</font> </b><br />
+										<font size="2">Type the path of the file or click the Browse button to find the file.</font><br /> <br /> 
+										<apex:inputFile value="{!attachObj.body}" filename="{!attachObj.Name}" id="attachId"/><br/><br/>
+									</td>
+								</tr>
+								<tr>
+									<td style="vertical-align: top;">
+										<b><font size="3">2.</font></b>
+									</td>
+									<td>
+										<b><font size="3">Click the "Attach File" button to upload.</font> </b><br />
+										<apex:commandbutton value="Attach File" styleClass="actionBtn" action="{!uploadFile}"/>
+										<button Class="actionBtn" style="margin-left: 10px;" type="button" onclick="Invention.hideAttachDiv();">Cancel</button>
+									</td>
+								</tr>							
+							</table>
+						</apex:actionRegion>
+					</div>
+				</div>
+			</apex:form>
+			<apex:form id="mainForm" styleclass="CaseForm1Cls" enctype="multipart/form-data">
+				<c:AutoCompleteSearch autocomplete_textbox="{!$Component.lookup}" selectedvalue_textbox="{!$Component.hiddenId}" />
+				<c:AutoCompleteSearch autocomplete_textbox="{!$Component.advisorText}" selectedvalue_textbox="{!$Component.advisorId}" />
+				<apex:actionFunction action="{!inventorNameFun}" name="inventorNameFun" reRender="pg:LC_Form:mainForm:namePanel" onComplete="Invention.fnHideContents();">
+					<apex:param value="" name="inventorId" assignTo="{!inventorId}" />
+				</apex:actionFunction>
+				<apex:actionStatus id="OverlayStatus" onStart="Invention.showOverlay();" onStop="Invention.hideOverlay();"/>
+
+				<div id="watcherOverlay">
+					<!-- <c:AutoCompleteSearch autocomplete_textbox="{!$Component.advisorText}" selectedvalue_textbox="{!$Component.advisorId}" /> -->
+					<div id="watcherDiv">
+						<div id="watcherErrorDiv" class="errorCls" style="margin: 10px; width: 315px; margin-left: 60px; border: none;">
+							<font color="red">Error: </font> Please select Inventor.
+						</div>
+						<apex:outputLabel value="Inventor: " style="padding:15px;" />
+						<apex:inputField value="{!watcherObj.Advisor_Name_Text__c}" style="padding:2px;" styleClass="advisorClass" id="advisorText"/>
+						<apex:inputHidden value="{!watcherObj.Advisor_Name__c}" id="advisorId"/><br /> <br />
+						<apex:outputLabel value="Role: " style="padding:41px;" />
+						<apex:outputLabel value="Inventor" style="padding:2px; margin-left: -28px;" styleClass="roleClass" /><br />
+						<apex:outputLabel value="Department: " style="padding:0px;" />
+						<apex:inputField id="departmentId" value="{!watcherObj.Department__c}" style="padding:2px; margin-left: 12px; margin-top: 8px; margin-bottom: 8px;"/><br />
+						<apex:outputLabel value="Location: " style="padding:15px;" />
+						<apex:inputField id="locationId" value="{!watcherObj.Location__c}" style="padding:2px; margin-left: 3px; margin-top: 12px; margin-bottom: 6px;"/><br />
+
+						<apex:actionFunction action="{!saveWatcher}" name="actionSaveWatcher" reRender="childList,mainForm" status="OverlayStatus" />
+						<apex:actionStatus startText=" (Saving...)" id="st1" style="text-color:red;" />
+
+						<div class="commentDiv">
+							<button Class="commentBtn" onClick="Invention.saveWatcher();" type="button">Save</button>
+							<button Class="commentBtn" style="margin-left: 10px;" type="button" onclick="Invention.hideWatcherDiv();">Cancel</button>
+						</div>
+					</div>
+				</div>
+    
+				<div>
+					<p class="mainHeadingTd">
+						<apex:outputText value="{!titleText}"/> 
+					</p><br style="clear: both;" />   
+					<p>
+						<strong>{!inventionObjectMap['IDF_Creation_Date__c']} : </strong>
+						<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+							<apex:param value="{!inventionObj.IDF_Creation_Date__c}" />
+						</apex:outputText>
+					</p><br style="clear: both;" />
+
+					<apex:pageMessages />
+					
+					<div class="message errorM3" style="display:none">
+					    <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+					        <tbody>
+					            <tr valign="top">
+					                <td>
+										<img alt="ERROR" class="msgIcon" src="/s.gif" title="ERROR"/>
+									</td>
+									<td class="messageCell">
+										<div class="messageText">											
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td></td>
+									<td></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+					<div style="text-align: center; margin-top: 10px;">
+						<!-- <apex:outputPanel rendered="{!IF(isDraft && inventionId==null,true,false)}"> -->
+						<apex:outputPanel rendered="{!isEdit}">
+							<!-- <apex:commandButton action="{!saveData}" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/> -->
+							<apex:actionFunction action="{!saveData}" name="saveAction" reRender="childList,mainForm" status="OverlayStatus" /> 
+							<apex:commandButton onClick="Invention.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!cancelButton}" value="Cancel" rendered="{!IsInventionId}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!editData}" value="Edit" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton onClick="Invention.watcherOverlay(event); return false;" value="Add Inventor" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton onClick="Invention.attachOverlay(event); return false;" value="Add Attachment" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+						</apex:outputPanel>
+					</div>
+
+					<div class="sectionContainer">
+						<table class="sectionTable">
+							<tr>
+								<td>
+									<div class="sectionHeading">Invention Information</div><div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<apex:outputLabel value="{!inventionObjectMap['Title_of_Invention__c']} : " style="width:82%" />
+										<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Title_of_Invention__c}" style="width:85%" />
+										<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Title_of_Invention__c}" style="width:85%" />
+									</div>      
+								</td>
+							</tr>    
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 48%">
+											<apex:outputLabel value="{!inventionObjectMap['Technical_Field_of_the_Invention__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Technical_Field_of_the_Invention__c}" id="inputTechnicalField" onclick="Invention.otherTechnicalFieldFun();"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Technical_Field_of_the_Invention__c}" id="outputTechnicalField"/>
+										</div>
+										
+										<div style="width: 34%" id="otherTechnicalDiv">
+											<apex:outputLabel value="{!inventionObjectMap['Other_Field_of_Invention__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Other_Field_of_Invention__c}" id="otherTechnicalField"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Other_Field_of_Invention__c}" />
+										</div>
+										
+										<div>
+											<apex:outputPanel rendered="{!!isEdit}">
+												<apex:outputLabel value="{!inventionObjectMap['Status__c']} : " />
+												<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Status__c}" />
+											</apex:outputPanel>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<!-- <tr>
+								<td>
+									<div class="innerDiv">						
+										<div>
+											<apex:outputLabel value="{!inventionObjectMap['Keyword__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Keyword__c}" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Keyword__c}" />
+										</div>
+									</div>
+								</td>
+							</tr> -->
+							
+							<tr>
+								<td>
+									<div class="sectionHeading">Inventor Information</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 35%" id="inventorNameFieldDiv">
+											<apex:outputPanel id="namePanel">
+												<apex:outputLabel value="{!inventionObjectMap['Inventor_Name__c']} : " />
+												<!-- <apex:inputField rendered="{!isEdit}" value="{!inventionObj.Inventor_Name__c}" id="inventorNameField" />
+												<apex:outputField rendered="{!!isEdit}" value="{!inventionObj.Inventor_Name__c}" /> -->
+												<apex:inputText rendered="{!isEdit}" id="lookup" value="{!inventionObj.Inventor_Name_Text__c}"/>
+												<!-- <apex:inputField rendered="false" id="hiddenId" value="{!inventionObj.Inventor_Name__c}"/> -->
+												<apex:inputHidden value="{!inventionObj.Inventor_Name__c}" id="hiddenId"/>												
+												<!-- <apex:outputpanel rendered="{!isEdit}">
+													<input type="text" id="lookup" value="{!inventorName}"/>
+  													<input type="hidden" id="hiddenId"/>
+												</apex:outputpanel> -->
+  												<apex:outPutText rendered="{!!isEdit}" value="{!inventionObj.Inventor_Name_Text__c}"/>
+											</apex:outputPanel>
+										</div>
+										<div style="width: 24%">
+											<apex:outputLabel value="{!inventionObjectMap['Location__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Location__c}" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Location__c}" />
+										</div>
+										<div style="width: 41%">
+											<apex:outputLabel value="{!inventionObjectMap['Department__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Department__c}" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Department__c}" />
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<apex:outputLabel value="Additional inventors can be added after saving this invention disclosure form." escape="true" />
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="sectionHeading">{!inventionObjectMap['What_problem_needs_to_be_solved__c']}</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<apex:outputLabel value="&#8226; Identify the problem in the existing product or service that the invention seeks to solve. : " escape="false" /><br/><br/>
+										<apex:inputField rendered="{!isEdit}" value="{!inventionObj.What_problem_needs_to_be_solved__c}" />
+										<!-- <apex:outputText rendered="{!!isEdit}" value="{!inventionObj.What_problem_needs_to_be_solved__c}" /> -->
+										<apex:inputtextarea rendered="{!!isEdit}" value="{!inventionObj.What_problem_needs_to_be_solved__c}" disabled="true" readonly="true" rows="3"/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="sectionHeading">Describe Ideas of Invention: {!inventionObjectMap['How_is_the_problem_solved__c']}</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<apex:outputLabel value="&#8226; Identify the basic concept that solves the problem. Explain how this basic concept solves the problem. :" escape="false" /><br /><br/>
+										<apex:inputField rendered="{!isEdit}" value="{!inventionObj.How_is_the_problem_solved__c}" />
+										<!-- <apex:outputText rendered="{!!isEdit}" value="{!inventionObj.How_is_the_problem_solved__c}" /> -->
+										<apex:inputtextarea rendered="{!!isEdit}" value="{!inventionObj.How_is_the_problem_solved__c}" disabled="true" readonly="true" rows="3"/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="sectionHeading">Implementation: {!inventionObjectMap['Provide_Practical_Example__c']}</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<ul>
+											<li>&#8226; Describe how the basic concept is used in a practical example and in a precise, concrete manner (just like you would write a short technical report).</li>
+											<li>&#8226; Indicate advantages.</li>
+											<li>&#8226; Indicate possible alternatives with respect to the practical example.</li>
+											<!-- <li>&#8226; Include drawings/flowcharts that illustrate the practical example.</li> -->
+											<li>&#8226; You may attach any other relevant information, notes, screenshots, drawings, or flowcharts that illustrate the practical example upon saving.</li><br/>
+										</ul>
+									</div>
+									<div class="innerDiv">
+										<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Provide_Practical_Example__c}" />
+										<!-- <apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Provide_Practical_Example__c}" /> -->
+										<apex:inputtextarea rendered="{!!isEdit}" value="{!inventionObj.Provide_Practical_Example__c}" disabled="true" readonly="true" rows="3"/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="sectionHeading">
+										Related Work Information and Prior Art: {!inventionObjectMap['What_was_already_known__c']}
+									</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div>
+										<ul>
+											<li>&#8226; Describe any existing product or service that you are aware of and, in particular, the parts on which your invention will have an impact.</li>
+											<li>&#8226; You may attach any other relevant information, notes, screenshots, drawings, or flowcharts that illustrate the existing solution upon saving.</li>
+											<li>&#8226; Indicate how your invention is different than the existing solution, list the differentiators.</li><br/>
+										</ul>
+									</div><br/><br/>
+									<div class="innerDiv">
+										<apex:inputField rendered="{!isEdit}" value="{!inventionObj.What_was_already_known__c}" />
+										<!-- <apex:outputText rendered="{!!isEdit}" value="{!inventionObj.What_was_already_known__c}" /> -->
+										<apex:inputtextarea rendered="{!!isEdit}" value="{!inventionObj.What_was_already_known__c}" disabled="true" readonly="true" rows="3"/>
+									</div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="sectionHeading">
+										Publications and/or Disclosures of the Invention
+									</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 50%">
+											<apex:outputLabel value="{!inventionObjectMap['Existing_Publication_or_Disclosure__c']} : " />
+											<apex:inputCheckbox onclick="Invention.fnYesPublication();" value="{!inventionObj.Existing_Publication_or_Disclosure__c}" disabled="{!!isEdit}" id="inputDisclosure" />
+										</div>
+									</div>
+								</td>
+							</tr>
+							<tr class="yesPublication">
+								<td style="font-weight: bold;">
+									If Yes to 'Existing Publication or Disclosure', please fill out the rest of this section.
+								</td>
+							</tr>
+							<tr class="yesPublication">
+								<td>
+									<div class="innerDiv">
+										<div style="width: 35%">
+											<apex:outputLabel value="{!inventionObjectMap['Document_Title__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Document_Title__c}" id="documentTitleId" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Document_Title__c}" />
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel value="{!inventionObjectMap['Publication__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Publication__c}" id="publicationId" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Publication__c}" />
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel value="{!inventionObjectMap['Publication_Date__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Publication_Date__c}" id="publicationDateId" />
+											<apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+												<apex:param value="{!inventionObj.Publication_Date__c}" />
+											</apex:outputText>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div>
+											<apex:outputLabel value="{!inventionObjectMap['Plans_for_Publication__c']} : " />
+											<apex:inputCheckbox onclick="Invention.fnYesPublicationPlan();" value="{!inventionObj.Plans_for_Publication__c}" disabled="{!!isEdit}" id="inputPublication" />
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr class="publicationPlan">
+								<td style="font-weight: bold;">
+									If Yes to 'Plan for Publication', please fill out the rest of this section.
+								</td>
+							</tr>							
+							<tr class="publicationPlan">
+								<td>
+									<div class="innerDiv">
+										<div style="width: 35%">
+											<apex:outputLabel value="{!inventionObjectMap['Document_Title_Plan__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Document_Title_Plan__c}" id="documentTitlePlanId" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Document_Title_Plan__c}" />
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel value="{!inventionObjectMap['Publication_Plan__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Publication_Plan__c}" id="publicationPlanId" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Publication_Plan__c}" />
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel value="{!inventionObjectMap['Publication_Date_Plan__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Publication_Date_Plan__c}" id="publicationDatePlanId" />
+											<apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+												<apex:param value="{!inventionObj.Publication_Date_Plan__c}" />
+											</apex:outputText>
+										</div>
+									</div>
+								</td>
+							</tr>	
+													
+							<!-- <tr>
+								<td>
+									<div class="innerDiv">
+										<div>
+											<apex:outputLabel value="{!inventionObjectMap['Disclosed_to_outside_parties__c']} : " />
+											<apex:inputCheckbox onclick="Invention.fnYesDiscOutside();" value="{!inventionObj.Disclosed_to_outside_parties__c}" disabled="{!!isEdit}" id="inputDiscOutside" />
+										</div><br />
+										<div id="outsidePartyDiv" style="display: none; width: 100%">
+											<div style="width: 35%; padding-top: 15px;">
+												<apex:outputLabel value="{!inventionObjectMap['If_Yes_to_who__c']} : " />
+												<apex:inputField rendered="{!isEdit}" value="{!inventionObj.If_Yes_to_who__c}" id="ifYesToWhoId" />
+												<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.If_Yes_to_who__c}" />
+											</div>
+											<div style="width: 30%; padding-top: 15px;">
+												<apex:outputLabel value="{!inventionObjectMap['Disclosure_Date__c']} : " />
+												<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Disclosure_Date__c}" id="discloseDateId" />
+												<apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+													<apex:param value="{!inventionObj.Disclosure_Date__c}" />
+												</apex:outputText>
+											</div>
+											<div style="width: 30%; padding-top: 15px;">
+												<apex:outputLabel value="{!inventionObjectMap['Under_NDA__c']} : " />
+												<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Under_NDA__c}" id="underNDAId" />
+												<apex:inputCheckbox value="{!inventionObj.Under_NDA__c}" disabled="{!!isEdit}" id="underNDAId" />
+												<apex:outputField rendered="{!!isEdit}" value="{!inventionObj.Under_NDA__c}" />
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr> -->
+							
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div>
+											<apex:outputLabel value="{!inventionObjectMap['Disclosed_to_outside_parties__c']} : " />
+											<apex:inputCheckbox onclick="Invention.fnYesDiscOutside();" value="{!inventionObj.Disclosed_to_outside_parties__c}" disabled="{!!isEdit}" id="inputDiscOutside" />
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr class="outsidePartyDiv">
+								<td style="font-weight: bold;">
+									If Yes to 'Disclosed to outside parties', please fill out the rest of this section.
+								</td>
+							</tr>							
+							<tr class="outsidePartyDiv">
+								<td>
+									<div class="innerDiv">
+										<div style="width: 35%;">
+											<apex:outputLabel value="{!inventionObjectMap['If_Yes_to_who__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.If_Yes_to_who__c}" id="ifYesToWhoId" />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.If_Yes_to_who__c}" />
+										</div>
+										<div style="width: 30%;">
+											<apex:outputLabel value="{!inventionObjectMap['Disclosure_Date__c']} : " />
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Disclosure_Date__c}" id="discloseDateId" />
+											<apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+												<apex:param value="{!inventionObj.Disclosure_Date__c}" />
+											</apex:outputText>
+										</div>
+										<div style="width: 30%;">
+											<apex:outputLabel value="{!inventionObjectMap['Under_NDA__c']} : " />
+											<!-- <apex:inputField rendered="{!isEdit}" value="{!inventionObj.Under_NDA__c}" id="underNDAId" /> -->
+											<apex:inputCheckbox value="{!inventionObj.Under_NDA__c}" disabled="{!!isEdit}" id="underNDAId" />
+											<!-- <apex:outputField rendered="{!!isEdit}" value="{!inventionObj.Under_NDA__c}" /> -->
+										</div>
+									</div>
+								</td>
+							</tr>	
+														
+							<tr>
+								<td>
+									<div class="sectionHeading">
+										Publications and/or Disclosures of the Invention
+									</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 21%">
+											<apex:outputLabel value="{!inventionObjectMap['Plans_for_Commercial_Release__c']} : " />
+										</div>
+										<div style="float: none;">
+											<apex:inputCheckbox onClick="Invention.planForCommercialReleaseFun();" value="{!inventionObj.Plans_for_Commercial_Release__c}" disabled="{!!isEdit}" id="planForCommercialRelease" />
+										</div> <br />
+										<div id="commercialReleaseDiv" class="commercialReleaseCls">
+											<div style="width: 21%">
+												<apex:outputLabel value="{!inventionObjectMap['When_will_Product_be_released__c']} : " />
+											</div>
+											<div style="float: none;">
+												<apex:inputField rendered="{!isEdit}" value="{!inventionObj.When_will_Product_be_released__c}" id="releasedDate" />
+												<apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+													<apex:param value="{!inventionObj.When_will_Product_be_released__c}" />
+												</apex:outputText>
+											</div>
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel value="What Ring Central Product is this related to : " />
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.What_RC_Product_is_this_related_to__c}" id="outputRCProduct" />											
+										</div>
+										<div style="width: 30%">
+											<apex:outputLabel rendered="{!isEdit}" value="Product Major Release Version : "/>
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Major_RingCentral_Product_Version__c}"/>
+										</div>
+										<div>
+											<apex:outputLabel rendered="{!isEdit}" value="Product Minor Release Version : "/>
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Minor_RingCentral_Product_Version__c}"/>
+										</div>									
+										<div>
+											<apex:outputLabel value="{!inventionObjectMap['Other_RingCentral_Project__c']} : " />
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!inventionObj.Other_RingCentral_Project__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!inventionObj.Other_RingCentral_Project__c}" />
+										</div>									
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div>
+					
+					<apex:pageMessages />
+					
+					<div style="text-align: center; margin-top: 10px; margin-bottom: 10px;">
+						<apex:outputPanel rendered="{!isDraft}">
+							<apex:actionFunction action="{!saveData}" name="saveAction" reRender="mainForm" status="OverlayStatus" /> 
+							<!-- <apex:commandButton action="{!saveData}" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/> -->
+							<apex:commandButton onClick="Invention.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!cancelButton}" value="Cancel" rendered="{!IsInventionId}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!editData}" value="Edit" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton onClick="Invention.watcherOverlay(event); return false;" value="Add Inventor" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton onClick="Invention.attachOverlay(event); return false;" value="Add Attachment" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/><br/>
+							<apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="submitBtn" status="OverlayStatus" oncomplete="Invention.hideActionLinks();"/>							
+						</apex:outputPanel>
+					</div>
+				</div>
+			</apex:form>
+			<apex:outputPanel layout="block" id="childList">
+				<apex:relatedList list="Legal_Requests_Watchers__r">
+					<apex:facet name="header">Invention Inventors</apex:facet>
+				</apex:relatedList>
+				<apex:relatedList list="NotesAndAttachments">
+					<apex:facet name="header">Attachments</apex:facet>
+				</apex:relatedList>
+			</apex:outputPanel>
+		</apex:define>
+	</apex:composition>
+	
+	<apex:includeScript value="{!URLFOR($Resource.HelperResource, '/js/jquery.blockUI.js')}"/>
+	<script>
+		var Invention = {
+			fnYesPublication : function() {
+				var valDisInp = $("[id$=inputDisclosure]:checked").length;
+				if (valDisInp == 0) {
+					$(".yesPublication").hide();
+					$("[id$=documentTitleId]").val('');
+					$("[id$=publicationId]").val('');
+					$("[id$=publicationDateId]").val('');
+				} else {
+					$(".yesPublication").show();
+				}
+			},
+			fnYesPublicationPlan : function() {
+				var valPubInp = $("[id$=inputPublication]:checked").length;
+				if (valPubInp == 0) {
+					$(".publicationPlan").hide();
+					$("[id$=documentTitlePlanId]").val('');
+					$("[id$=publicationPlanId]").val('');
+					$("[id$=publicationDatePlanId]").val('');
+				} else {
+					$(".publicationPlan").show();
+				}
+			},
+			fnYesDiscOutside : function() {
+				var valDisInp = $("[id$=inputDiscOutside]:checked").length;
+				if (valDisInp == 0) {
+					$(".outsidePartyDiv").hide();
+					$("[id$=ifYesToWhoId]").val('');
+					$("[id$=discloseDateId]").val('');
+					$("[id$=underNDAId]").attr('checked', false);
+				} else {
+					$(".outsidePartyDiv").show();
+				}
+			},
+			watcherOverlay : function(event) {
+				$('#watcherOverlay').css('visibility', 'visible');
+				$('#watcherDiv').css('marginTop', event.pageX);
+			},
+			attachOverlay : function(event) {
+				$('#attachOverlay').css('visibility', 'visible');
+				$('#attachDiv').css('marginTop', event.pageX);
+			},
+			saveComment : function() {
+				var inpBox = $('.commentClass');
+				if (inpBox.val().length > 0) {
+					actionSaveComment();
+				} else {
+					$('#commentErrorDiv').css("display", "block");
+					return false;
+				}
+			},
+			saveWatcher : function() {
+				var advisorBox = $("[id$=advisorText]");
+				if (advisorBox.val().length > 0) {
+					if($("[id$=departmentId]").val() != '' && $("[id$=locationId]").val() != ''){
+						/*Visualforce.remoting.Manager.invokeAction(
+                		'{!$RemoteAction.InventionTicket.searchUser}',advisorBox.val(),
+               			function(result, event){  
+               				 console.log(result);
+               				 console.log(result.length);             				
+             				if(result.length == 1){
+							 	actionSaveWatcher();
+					 		} else if(result.length == 0){
+					 			$('#watcherErrorDiv').css("display", "block"); 
+								$('#watcherErrorDiv').html('<font color="red">Error: </font> No matching inventor found.'); 
+								return false;
+					 		} else if(result.length > 1) {
+					 			$('#watcherErrorDiv').css("display", "block"); 
+								$('#watcherErrorDiv').html('<font color="red">Error: </font> Multiple Inventor found. Select from drop-down or click icon to refine search.'); 
+								return false;
+					 		}						
+						});*/		
+						actionSaveWatcher();				
+					} else {
+						$('#watcherErrorDiv').css("display", "block"); 
+						$('#watcherErrorDiv').html('<font color="red">Error: </font> Either department or location is not selected.'); 
+						return false;
+					}
+				} else {
+					$('#watcherErrorDiv').css("display", "block");
+					$('#watcherErrorDiv').html('<font color="red">Error: </font> Please select Inventor.'); 
+					return false;
+				}
+			},
+			hideWatcherDiv : function() {
+				$('#watcherOverlay').css('visibility', 'hidden');
+				$('.advisorClass').val('');
+				$('.roleClass').val('');
+			},
+			hideAttachDiv : function() {
+				$('#attachOverlay').css('visibility', 'hidden');
+				$("[id$=attachId]").val('');
+			},
+			planForCommercialReleaseFun : function() {
+				var checkBoxLenInp = $("[id$=planForCommercialRelease]:checked").length;
+				if (checkBoxLenInp == 0) {
+					$("[id$=releasedDate]").val('');
+					$('#commercialReleaseDiv').hide();
+				} else {
+					$('#commercialReleaseDiv').show();
+				}
+			},
+			otherTechnicalFieldFun : function() {
+				var picklistValueInp = $("[id$=inputTechnicalField]").val();
+				var picklistValueOut = $("[id$=outputTechnicalField]").text();
+				if (picklistValueInp == 'Other' || picklistValueOut == 'Other') {
+					$('#otherTechnicalDiv').show();
+				} else {
+					$('#otherTechnicalDiv').hide();
+					$("[id$=otherTechnicalField]").val('');
+				}
+			},
+			attachFileFun : function() {
+				if ($("[id$=attachId]").val() != '') {
+					actionAttachFile();
+				} else {
+					$('#attachErrorDiv').css("display", "block");
+					return false;
+				}
+			},
+			hideInputFile : function() {
+				$("[id$=attachId]").hide();
+			},
+			fnHideContents : function () {
+				$('[id$=inventorNameField_lkwgt]').css('display', 'none');
+				$('[id$=inventorNameFieldDiv]').find('.lookupInput').append('<a id="inventionFieldLookup" href="javascript:void(0);" onclick="javascript:Invention.fnOpenLookup();" title="Inventor Name Lookup (New Window)"><img src="/s.gif" alt="Inventor Name Lookup (New Window)" class="lookupIcon" title="Inventor Name Lookup (New Window)"/></a>');
+			},
+			fnOpenLookup : function() {
+				var strSearch = $('[id$=inventorNameField]').val();
+				if({!isPortal}){
+					var url = '/helpdesk/apex/inventionCustomLookup?strSearch='+ strSearch;
+				} else {
+					var url = '/apex/inventionCustomLookup?strSearch='+ strSearch;	
+				}				
+				//$('[id$=inventorNameField]').val('');
+				window.open(url,'Popup','height=500,width=600,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+			},
+			showOverlay : function(){
+                $.blockUI({ css: { 
+                    border: 'none', 
+                    padding: '15px', 
+                    backgroundColor: '#000', 
+                    '-webkit-border-radius': '10px', 
+                    '-moz-border-radius': '10px', 
+                    opacity: .5, 
+                    color: '#fff' 
+                    }});
+            },
+            hideOverlay : function(){
+                $.unblockUI();
+            },
+            validate : function(){
+            	var errorArray = [false,false,false,false,false];
+            	
+            	var picklistValueInp = $("[id$=inputRCProduct]").val();              	
+				if (picklistValueInp == 'Other' && $("[id$=otherRCProduct]").val().trim().length == 0){
+					errorArray[0] = true;
+					$('.message').css('display','block');
+					$('.messageText').html('<span style="color:#cc0000"><h4>Error:</h4></span>Please provide correct data.<br/>');
+					if($("[id$=otherRCProduct]").next().text() == ''){
+						$("[id$=otherRCProduct]").after('<span style="color:red;">*Field is Required</span>');
+					}
+				} else {
+					$("[id$=otherRCProduct]").next().remove();
+					errorArray[0] = false;
+				}
+				
+				var picklistValueInp = $("[id$=inputTechnicalField]").val();   
+				if (picklistValueInp == 'Other' && $("[id$=otherTechnicalField]").val().trim().length == 0){
+					errorArray[1] = true;
+					$('.message').css('display','block');
+					$('.messageText').html('<span style="color:#cc0000"><h4>Error:</h4></span>Please provide correct data.<br/>');
+					if($("[id$=otherTechnicalField]").next().text() == ''){
+						$("[id$=otherTechnicalField]").after('<span style="color:red;">*Field is Required</span>');
+					}
+				} else {
+					$("[id$=otherTechnicalField]").next().remove();
+					errorArray[1] = false;
+				}
+				
+				if($("[id$=publicationDateId]").val().trim().length != 0){
+					error = Invention.validateDate($("[id$=publicationDateId]"));
+					errorArray[2] = error;
+				}	
+				
+				if($("[id$=discloseDateId]").val().trim().length != 0){
+					error = Invention.validateDate($("[id$=discloseDateId]"));
+					errorArray[3] = error;
+				}	
+				
+				if($("[id$=releasedDate]").val().trim().length != 0){
+					error = Invention.validateDate($("[id$=releasedDate]"));
+					errorArray[4] = error;
+				}
+				
+				var errorExists = false;
+				
+				for (i = 0; i < errorArray.length; i++) { 
+				    if(errorArray[i] == true){
+				    	errorExists =  true;
+				    	break;
+				    }
+				}
+				
+				if(errorExists == false){
+					saveAction();
+				}
+            },
+            validateDate : function (fieldId){
+            	if(fieldId.val().trim().length != 0){
+					var dateData = fieldId.val();
+					var error = !Invention.checkDateFormat(dateData);
+					if(error == true){				
+						$('.message').css('display','block');
+						$('.messageText').html('<span style="color:#cc0000"><h4>Error:</h4></span>Please provide correct data.<br/>');
+						if(fieldId.next().text() != '*Invalid Date'){
+							fieldId.after('<span style="color:red;">*Invalid Date</span>');
+						}						
+						return true;
+					} else {
+						fieldId.next().remove();
+						return false;	
+					}									
+				}		
+            },
+            checkDateFormat : function(txtDate) {
+				var currVal = txtDate;
+				if (currVal == '') return false;
+			
+				//Declare Regex  
+				var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/;
+				var dtArray = currVal.match(rxDatePattern); // is format OK?
+			
+				if (dtArray == null) return false;
+			
+				//Checks for mm/dd/yyyy format.
+				dtMonth = dtArray[1];
+				dtDay = dtArray[3];
+				dtYear = dtArray[5];
+			
+				if (dtMonth < 1 || dtMonth > 12) return false;
+				else if (dtDay < 1 || dtDay > 31) return false;
+				else if ((dtMonth == 4 || dtMonth == 6 || dtMonth == 9 || dtMonth == 11) && dtDay == 31) return false;
+				else if (dtMonth == 2) {
+					var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+					if (dtDay > 29 || (dtDay == 29 && !isleap)) return false;
+				}
+				return true;
+			},
+			hideActionLinks : function(){
+				$('.actionColumn').remove();
+			}
+		};
+		
+		$(document).ready(function() {
+			Invention.fnYesPublication();
+			Invention.fnYesPublicationPlan();
+			Invention.fnYesDiscOutside();
+			Invention.planForCommercialReleaseFun();
+			Invention.otherTechnicalFieldFun();
+			Invention.fnHideContents();
+			if('{!inventionObj.Status__c}' == 'Submitted'){
+				Invention.hideActionLinks();
+			}
+		});
+	</script>
+</apex:page>

@@ -1,0 +1,27 @@
+<template>
+    <template if:true={canEdit}>
+      <lightning-card>
+          <div class="slds-m-around_medium">
+               <template if:true={successPlan.data}>
+                  <lightning-textarea class="textAreaBody" value={successPlan.data.RBE_Notes__c} data-field="RBE_Notes__c" onchange={handleChange} maxlength="36500" ></lightning-textarea > 
+                  <lightning-button label="Update" variant="brand" onclick={updateNotes} disabled={disabled}></lightning-button> 
+              </template>
+              <template if:true={successPlan.error}>
+                <!-- handle Apex error -->
+              </template>
+          </div>
+      </lightning-card>
+    </template>
+    <template if:false={canEdit}> <!--Added by Thejasvi -->
+      <lightning-card>
+          <div class="slds-m-around_medium">
+               <template if:true={successPlan.data}>
+                  <lightning-textarea class="textAreaBody" value={successPlan.data.RBE_Notes__c} data-field="RBE_Notes__c" onchange={handleChange} maxlength="36500" disabled=true></lightning-textarea >             
+              </template>
+              <template if:true={successPlan.error}>
+                  <!-- handle Apex error -->
+              </template>
+          </div>
+      </lightning-card>
+    </template>
+    </template>

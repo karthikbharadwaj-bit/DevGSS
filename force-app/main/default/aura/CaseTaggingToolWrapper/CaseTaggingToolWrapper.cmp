@@ -1,0 +1,88 @@
+<aura:component controller="CaseTaggingToolInlinePageController">
+
+    <!-- scripts -->
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <!-- attributes -->
+    <aura:attribute name="caseObj" type="Case" default="{}"/>
+    <aura:attribute name="record" type="Map" default="{}"/>
+    <aura:attribute name="openCustomerSupportData" type="Map"/>
+    <aura:attribute name="closeCustomerSupportLevel3Data" type="List"/>
+    <aura:attribute name="openInternalWorkflowData" type="Map"/>
+    <aura:attribute name="closeInternalWorkflowData" type="Map"/>
+    <aura:attribute name="productData" type="Map"/>
+    <aura:attribute name="caseType" type="String"/>
+    <aura:attribute name="csatPredictionData" type="List"/>
+    <aura:attribute name="csatPredictionAfterManagerCallbackData" type="List"/>
+    <aura:attribute name="productValuesData" type="List"/>
+    
+    <aura:attribute name="ptToOpenCSL1Map" type="Map"/>
+    <aura:attribute name="openCSL3ToCloseCSL3Map" type="Map"/>
+
+
+
+    <aura:attribute name="isEmbeddedToLayoutBuilder" type="Boolean" default="false"/>
+
+    <!-- Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="SaveCase" event="c:CaseTaggingToolSaveCaseEvent" action="{!c.saveCase}"/>
+
+    <!-- change handlers -->
+    <aura:handler name="change" value="{!v.caseType}" action="{!c.caseTypeChange}"/>
+    <aura:handler name="change" value="{!v.record}" action="{!c.recordChanged}"/>
+
+    <lightning:spinner variant="brand" size="large" class="slds-hide" aura:id="spinner"/>
+
+    <div class="{!v.isEmbeddedToLayoutBuilder ? '' : 'slds-scrollable--y'}" style="height:100%;padding:1rem;display:flex;flex-direction:column;">
+
+        <ul class="slds-tabs--default__nav" role="tablist" style="margin-bottom:1rem;">
+            <li class="{!v.caseType == 'Customer Support'
+                    ? 'slds-tabs--default__item slds-size--1-of-2 slds-active'
+                    : 'slds-tabs--default__item slds-size--1-of-2' }"
+                title="Customer Support"
+                role="presentation">
+                <a data-value="Customer Support"
+                   class="slds-tabs--default__link"
+                   href="javascript:void(0);"
+                   onclick="{!c.setCaseType}"
+                   style="width:100%;text-align:center;">Customer Support</a>
+            </li>
+            <li class="{!v.caseType == 'Internal Workflow'
+                    ? 'slds-tabs--default__item slds-size--1-of-2 slds-active'
+                    : 'slds-tabs--default__item slds-size--1-of-2' }"
+                title="Internal Workflow"
+                role="presentation">
+                <a data-value="Internal Workflow"
+                   class="slds-tabs--default__link"
+                   href="javascript:void(0);"
+                   onclick="{!c.setCaseType}"
+                   style="width:100%;text-align:center;">Internal Workflow</a>
+            </li>
+        </ul>
+
+        <c:CaseTaggingToolCustomerSupport caseObj="{!v.caseObj}"
+                                          record="{!v.record}"
+                                          openCustomerSupportData="{!v.openCustomerSupportData}"
+                                          closeCustomerSupportLevel3Data="{!v.closeCustomerSupportLevel3Data}"
+                                          productValuesData="{!v.productValuesData}" 
+                                          csatPredictionData="{!v.csatPredictionData}"
+                                          csatPredictionAfterManagerCallbackData="{!v.csatPredictionAfterManagerCallbackData}"
+                                          ptToOpenCSL1Map="{!v.ptToOpenCSL1Map}"
+                                          openCSL3ToCloseCSL3Map="{!v.openCSL3ToCloseCSL3Map}"
+                                          caseType="{!v.caseType}"
+                                          isEmbeddedToLayoutBuilder="{!v.isEmbeddedToLayoutBuilder}"                                     
+                                          aura:id="CaseTaggingToolCustomerSupport"/>
+
+        <c:CaseTaggingToolInternalWorkflow caseObj="{!v.caseObj}"
+                                           record="{!v.record}"
+                                           openInternalWorkflowData="{!v.openInternalWorkflowData}"
+                                           closeInternalWorkflowData="{!v.closeInternalWorkflowData}"
+                                           productData="{!v.productData}"
+                                           csatPredictionData="{!v.csatPredictionData}"
+                                           csatPredictionAfterManagerCallbackData="{!v.csatPredictionAfterManagerCallbackData}"
+                                           caseType="{!v.caseType}"
+                                           isEmbeddedToLayoutBuilder="{!v.isEmbeddedToLayoutBuilder}"
+                                           aura:id="CaseTaggingToolInternalWorkflow"/>
+    </div>
+</aura:component>

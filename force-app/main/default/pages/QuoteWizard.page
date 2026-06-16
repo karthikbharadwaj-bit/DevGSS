@@ -1,0 +1,646 @@
+<apex:page standardController="opportunity" applyBodyTag="false" title="Quote Wizard" extensions="QuoteWizardPageController" showHeader="false" sidebar="false">
+    <title>Quote Wizard</title>
+    <apex:outputPanel rendered="{! (!isQuotingAvailable && !currentOpportunity.isTermination__c && isShowUqt) || isQuotingNotSupportedForGSPPartner}">
+        <c:QuoteWizardQuotingUnavailable />
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{! currentOpportunity.isTermination__c && isEngage && isShowUqt}">
+        <c:QuoteWizardTermination />
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!isOpportunityInvalid}">
+        <c:QuoteWizardOpportunityInvalid recordTypeId="{!currentOpportunity.RecordType.Id}" accId="{!currentOpportunity.Account.Id}" />
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!( (!currentOpportunity.isTermination__c || !isEngage) && isQuotingAvailable && !isOpportunityInvalid ) && isShowUqt && !isQuotingNotSupportedForGSPPartner}">
+    <head>
+        <apex:includeLightning />
+        <apex:includeScript value="{!$Resource.QuotingToolDependencies + '/QWPage.js'}" />
+        <apex:includeScript value="{!$Resource.Notifications + '/Tooltip.js'}" />
+        <apex:includeScript value="{!$Resource.helperService + '/helperService.js'}" />
+        <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}" />
+
+        <c:HerokuScripts />
+    </head>
+    <style>
+        html,
+        body,
+        iframe {
+            height: 100%;
+            width: 100%;
+            /* Fix old wizard product list background glitch */
+            background: #FFF;
+        }
+
+        /* staet spinner (it needs till SLDS styles will be loaded) */
+        .slds-hide {
+            display: none;
+        }
+        .slds-assistive-text {
+            opacity: 0;
+        }
+        .slds-align_absolute-center {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+            align-items: center;
+            margin: auto;
+        }
+        .slds-text-heading_small {
+            font-size: var(--lwc-fontSize5,1rem);
+            line-height: var(--lwc-lineHeightHeading,1.25);
+        }
+        .uqt-container {
+            position: relative;
+            z-index: 1;
+        }
+        .uqt-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            width: 100%;
+        }
+        .uqt-loading .slds-spinner {
+            margin-top: var(--lwc-spinnerSizeSmall,1.25rem);
+        }
+        /* end spinner */
+
+        html body.sfdcBody {
+            padding: 0; /* Fix default padding */
+        }
+        .h100 {
+            height: 100%;
+        }
+        .slds-tabs_default__content {
+            padding: 0 !important;
+            height: calc(100% - 40px);
+        }
+        iframe#billing-wizard {
+            height: calc(100% - 32px);
+        }
+        .wizard-toogle .slds-form-element__label {
+            margin-right: 0;
+            margin-bottom: 0;
+        }
+        .popover-container {
+            position: absolute;
+            display: inline-block;
+            opacity: 1;
+            transition: opacity .3s ease .3s;
+            z-index: 9100;
+        }
+        .popover--hidden {
+            top: -9999px !important;
+            left: -9999px !important;
+            opacity: 0;
+            transition: opacity .3s ease, top 0s .3s, left 0s .3s;
+        }
+        #auraErrorMessage {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: rgba(255, 255, 0, .4);
+            /* padding: .5rem; */
+            border: 1px solid #e9eaec;
+            z-index: 9999;
+        }
+        .italic {
+            font-style: italic;
+        }
+        .isCCHidden {
+            display: none;
+        }
+        .slds-is-active > a {
+            font-weight: 700 !important;
+        }
+
+        <!-- GOA changes start -->
+        .slds-popover__body,
+        .slds-popover__footer,
+        .slds-popover__header {
+            position: relative;
+            padding: .5rem .75rem;
+            word-wrap: break-word;
+        }
+
+        .slds-popover {
+            position: relative;
+            border-radius: .25rem;
+            width: 20rem;
+            min-height: 2rem;
+            z-index: 6000;
+            background-color: #fff;
+            display: inline-block;
+            box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .16);
+            border: 1px solid #d9dbdd;
+        }
+
+        .slds-popover--tooltip,
+        .slds-popover_tooltip {
+            width: auto;
+            max-width: 20rem;
+            background: #16325c;
+            border: 0;
+        }
+        .slds-popover--tooltip .slds-popover__body,
+        .slds-popover_tooltip .slds-popover__body {
+            font-size: .75rem;
+            color: #fff;
+        }
+
+        .slds-fall-into-ground {
+            visibility: hidden;
+            opacity: 0;
+            transform: translate(0, 0);
+            transition: opacity .1s linear, visibility .1s linear, transform .1s linear;
+            will-change: transform
+        }
+
+        .slds-nubbin--bottom-left:before,
+        .slds-nubbin_bottom-left-corner:before,
+        .slds-nubbin_bottom-left:before {
+            width: 1rem;
+            height: 1rem;
+            position: absolute;
+            transform: rotate(45deg);
+            content: '';
+            background-color: inherit;
+            bottom: -.5rem;
+            margin-left: -.5rem
+        }
+
+        .slds-nubbin--bottom-left:after,
+        .slds-nubbin--bottom-left:before,
+        .slds-nubbin_bottom-left-corner:after,
+        .slds-nubbin_bottom-left-corner:before,
+        .slds-nubbin_bottom-left:after,
+        .slds-nubbin_bottom-left:before {
+            left: 1.5rem;
+            top: 100%;
+            margin-top: -.5rem
+        }
+
+        .slds-nubbin--bottom-left:after,
+        .slds-nubbin_bottom-left-corner:after,
+        .slds-nubbin_bottom-left:after {
+            box-shadow: 2px 2px 4px 0 rgba(0, 0, 0, .16);
+            z-index: -1
+        }
+
+        .slds-popover :last-child {
+            margin-bottom: 0
+        }
+        .New-bttn {
+            position: relative;
+            right: 0;
+        }
+
+        #cc-help {
+            visibility: hidden;
+            position: absolute;
+            background-color: #16325C;
+            width: max-content;
+            opacity: 0;
+            transition: opacity 0.3s;
+            display: none
+        }
+
+        #cc-tab:hover #cc-help {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        <!-- GOA changes ends -->
+    </style>
+
+    <!-- Tabs & Contents -->
+    <div class="slds-scope h100">
+
+        <!-- content -->
+        <div class="uqt-container h100 slds-hide" id="container">
+            <div class="slds-tabs_default h100">
+                <ul class="slds-tabs_default__nav" role="tablist">
+                    <li id="main-tab"  class="slds-tabs_default__item slds-is-active" data-name="main">
+                        <a class="slds-tabs_default__link" href="javascript:void(0);" onclick="switchTab('main')">Main Quote</a>
+                    </li>
+                    <li id="cc-tab" class="slds-tabs_default__item" data-name="cc">
+                        <a id="cc-link" class="slds-tabs_default__link" aria-describedby="cc-help" href="javascript:void(0);" onclick="switchTab('cc')">Contact Center</a>
+                        <div id="cc-help" class="slds-popover slds-popover_tooltip slds-nubbin_top-left" role="tooltip">
+                            <div class="slds-popover__body">This account is in Process of CC to NGBS migration, contact Deal Desk to perform disabled actions</div>
+                        </div>
+                    </li>
+                    <li id="proserv-tab" class="slds-tabs_default__item" data-name="proserv">
+                        <a class="slds-tabs_default__link" href="javascript:void(0);" onclick="switchTab('proserv')">ProServ Quote</a>
+                    </li>
+                    <!-- GOA changes start -->
+                    <apex:outputPanel rendered="{!isNewGOAEnabled}">
+                        <li id="dq-tab" class="slds-tabs_default__item" data-name="dq">
+                            <a class="slds-tabs_default__link" href="javascript:void(0);" onclick="switchTab('dq')">Deal Qualification</a>
+                        </li>
+                    </apex:outputPanel>
+                    <!-- GOA changes ends -->
+                    <!-- Open in a new tab -->
+                    <li id="newtab-tab" style="margin-left: auto" class="slds-tabs_default__item" data-name="newtab">
+                        <a class="slds-tabs_default__link" href="javascript:void(0);" onclick="openNewTab()">Open in New Tab</a>
+                    </li>
+                </ul>
+                <div data-name="main" class="slds-tabs_default__content h100 slds-show">
+                    <div class="tab-content h100">
+                        <div class="h100" id="main"></div>
+                    </div>
+                </div>
+                <div data-name="cc" class="slds-tabs_default__content h100 slds-hide">
+                    <div class="tab-content h100">
+                        <div class="h100" id="cc"></div>
+                    </div>
+                </div>
+                <div data-name="proserv" class="slds-tabs_default__content h100 slds-hide">
+                    <div class="tab-content h100">
+                        <div class="h100" id="proserv"></div>
+                    </div>
+                </div>
+                <!-- GOA changes start -->
+                <div data-name="dq" class="slds-tabs_default__content h100 slds-hide">
+                    <div class="tab-content h100">
+                        <div class="h100" id="dq"></div>
+                    </div>
+                </div>
+                <!-- GOA changes ends -->
+            </div>
+        </div>
+
+        <!-- spinner -->
+        <div class="uqt-loading h100 slds-align_absolute-center slds-grid slds-grid_vertical-align-center">
+            <div role="status" class="slds-spinner slds-spinner_small slds-spinner_inline">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+            <div class="slds-m-left_medium slds-text-heading_small">Loading ...</div>
+        </div>
+    </div>
+
+    <!-- temporary -->
+    <div style="display: none;">
+        <!-- Fake form with input to get picklist values from SF -->
+        <apex:form id="fakeForm">
+            <apex:inputField value="{!engageLegalApprovalMock.Type__c}" id="legalEngagementTypeField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Add_ons__c}" id="addOnsField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Accomodations__c}" id="accomodationField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Feature_Add_ons__c}" id="featureAddOnsField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Change_Order_Types__c}" id="changeOrderTypeField"/>
+        </apex:form>
+    </div>
+
+    <!-- scripts -->
+    <script>
+
+
+        try {
+            var currentCmp;
+            var config = {
+                heroku: {
+                    endpoint: '{!herokuEndpoint}',
+                },
+                salesforce: {
+                    origin: '{!originUrl}',
+                    visualforceOrigin: window.location.origin,
+                    sessionId: '{!sid}',
+                    userId: '{userId}',
+                    opportunityId: '{!opportunityId}',
+                    billingId: '{!billingId}',
+                    accountSFDCId: '{!accountSFDCId}',
+                    isFedRamp: {!isFedRamp},
+                    isInContactLegacyExistingBusiness: {!isInContactLegacyExistingBusiness},
+                    hasCCLegacyPermission: {!hasCCLegacyPermission},
+                    isAccountMPHasCCEntitlements: {!isAccountMPHasCCEntitlements},
+                    isUpsellOppAfterCCMigration: {!isUpsellOppAfterCCMigration},
+                    isContactCenterPackagesExistInBilling: {!isContactCenterPackagesExistInBilling},
+                    isShowLinkNewTab: {!isShowLinkNewTab},
+                    isContactCenterTabBlocked: {!isContactCenterTabBlocked},
+                    isPOCQuoteType: {!isPOCQuoteType},
+                },
+                wizard: {
+                    isBilling: '{!isBilling}' == 'true',
+                },
+                old: {
+                    opportunityId                 : '{!currentOpportunity.Id}',
+                    legalApprovalId               : '{!currentOpportunity.Special_TOS_Approval__c}',
+                    currencyIsoCode               : '{!currentOpportunity.CurrencyIsoCode}',
+                    accountId                     : '{!currentOpportunity.Account.Id}',
+                    servicePlan                   : '{!servicePlan}',
+                    rcTier                        : '{!rcTier}',
+                    rcUserId                      : '{!currentOpportunity.Account.RC_User_ID__c}',
+                    paymentPlan                   : '{!paymentPlan}',
+                    numberDLs                     : '{!numberDLs}',
+                    contractDays                  : '{!contractDays}',
+                    recordTypeName                : '{!currentOpportunity.RecordType.Name}',
+                    stageName                     : '{!currentOpportunity.StageName}',
+                    effectiveNoOfEmployeesRange   : '{!currentOpportunity.Effective_No_of_Employees_Range__c}',
+                    defaultUpsellStatus           : '{!defaultUpsellStatus}',
+                    businessIdentity              : {!BLANKVALUE(currentOpportunity.BusinessIdentity__c, 'null')},
+                    currentOpportunity            : {!BLANKVALUE(flatCurrentOpportunity, 'null')},
+                    tiers                         : {!BLANKVALUE(flatTiers,'null')},
+                    user                          : {!BLANKVALUE(user,'null')},
+                    quoteTypeValues               : {!BLANKVALUE(quoteTypeValues,'null')},
+                    initialTermMonthsValues       : {!BLANKVALUE(initialTermMonthsValues,'null')},
+                    specialTermsValues            : {!BLANKVALUE(specialTermsValues,'null')},
+                    termMonthsValues              : {!BLANKVALUE(termMonthsValues,'null')},
+                    statusValues                  : {!BLANKVALUE(statusValues,'null')},
+                    proServStatusValues           : {!BLANKVALUE(proServStatusValues,'null')},
+                    proServForecastCategoryValues : {!BLANKVALUE(proServForecastCategoryValues,'null')},
+                    proServOfferTypeValues        : {!BLANKVALUE(proServOfferTypeValues,'null')},
+                    proServProjectComplexityValues: {!BLANKVALUE(proServProjectComplexityValues,'null')},
+                    proServSOWTypeValues          : {!BLANKVALUE(proServSOWTypeValues,'null')},
+                    ASAOwnerValues                : {!BLANKVALUE(ASAOwnerValues,'null')},
+                    PSSegmentValues                : {!BLANKVALUE(PSSegmentValues,'null')},
+                    TEValues                      : {!BLANKVALUE(TEValues,'null')},
+                    settings                      : {!BLANKVALUE(settings,'null')},
+                    isDQGoaEnabled                : {!isDQGoaEnabled},
+                    addOnsValues                  : QWPage.getPicklistOptions('{!$Component.fakeForm.addOnsField}').values,
+                    accomodationValues            : QWPage.getPicklistOptions('{!$Component.fakeForm.accomodationField}').values,
+                    featureAddOnsValues           : QWPage.getPicklistOptions('{!$Component.fakeForm.featureAddOnsField}').values,
+                    legalEngagementTypeValues     : QWPage.getPicklistOptions('{!$Component.fakeForm.legalEngagementTypeField}').values,
+                    changeOrderTypeValues         : QWPage.getPicklistOptions('{!$Component.fakeForm.changeOrderTypeField}').values
+                }
+            };
+
+            //<!-- GOA changes start -->
+            var submitApprovalCallback = function (tabName) {
+                switchTab(tabName);
+            }
+
+            var params = {
+                config: config,
+                isProserv: false,
+                isCC: false,
+                isDq: false,
+                submitApprovalCallbackFn: submitApprovalCallback
+            };
+            //<!-- GOA changes ends -->
+
+            const userPermissions = config.old.settings.userPermissions;
+            const isChangeOrder = config.old.settings.isChangeOrder;
+            const isBTBusiness = config.old.settings.isBTBusiness;
+            const isTelus = config.old.settings.isTelus;
+            const isAtos = config.old.settings.isAtos;
+            const isRainbow = config.old.settings.isRainbow;
+            const isPhoenix = config.old.settings.isPhoenix;
+            const isPartnerBrand = config.old.settings.isPartnerBrand;
+            const gspPartnerSetup = config.old.settings.gspPartnerSetup;
+            const tierName = config.old.currentOpportunity.Tier_Name__c;
+            const businessIdentityId = config.old.businessIdentity ? config.old.businessIdentity.biId : '';
+            const isInContactLegacyExistingBusiness = config.salesforce.isInContactLegacyExistingBusiness;
+            const hasCCLegacyPermission = config.salesforce.hasCCLegacyPermission;
+            const isAccountMPHasCCEntitlements = config.salesforce.isAccountMPHasCCEntitlements;
+            const isContactCenterPackagesExistInBilling = config.salesforce.isContactCenterPackagesExistInBilling;
+            const isShowLinkNewTab = config.salesforce.isShowLinkNewTab;
+            const isUpsellOppAfterCCMigration = config.salesforce.isUpsellOppAfterCCMigration;
+            const isContactCenterTabBlocked = config.salesforce.isContactCenterTabBlocked;
+            const isPOCQuoteType = config.salesforce.isPOCQuoteType;
+            const isRiseBrand = config.old.settings.isRiseBrand;
+            const isPartnerOpportunity = gspPartnerSetup
+                    && gspPartnerSetup.gspPartnerSetupId
+                    && gspPartnerSetup.isDisableCommercialQuoting
+                    && !gspPartnerSetup.isDisableProServ;
+
+            var HIDE_CC_FOR_IDENTITIES = [
+                33, // RingCentral Germany
+                58, // RingCentral CH GmbH
+                59, // Unify Office CH
+                60,  // Avaya Cloud Office CH
+                62005 // Amazon US
+            ];
+            const HIDE_CC_FOR_IDENTITIES_EB = [58, 59, 60, 62005];
+            const HIDE_CC_FOR_IDENTITIES_NB = [33, 58, 59, 60, 62005];
+
+            if (config.old.rcUserId.trim() == ""){
+                HIDE_CC_FOR_IDENTITIES = HIDE_CC_FOR_IDENTITIES_NB;
+            } else {
+                HIDE_CC_FOR_IDENTITIES = HIDE_CC_FOR_IDENTITIES_EB;
+            }
+            var isShowProservTab = function() {
+                return  (userPermissions.SeeProServQuote ||
+                        userPermissions.SeeCCProServQuote ||
+                        userPermissions.EditProServQuote ||
+                        userPermissions.EditCCProServQuote) &&
+                        !(QWPage.OpportunityHelper.isIndiaOffice(config.old.currentOpportunity)) &&
+                        !(QWPage.OpportunityHelper.isTaiwanOffice(config.old.currentOpportunity) &&
+                        isPartnerBrand);
+            };
+
+            var isProServLegacyFlow = function() {
+                return ('{!isProServLegacyFlow}' === 'true' || '{!$Setup.Feature_Toggle__c.ProServInNGBS__c}' === 'false');
+            }
+
+            var isAmazon = function() {
+                return businessIdentityId.toString() === '62005';
+            }
+
+            var isContactCenterLegacyFlow = function() {
+                return ('{!isContactCenterLegacyFlow}' === 'true');
+            }
+
+            var isShowMainQuoteTab = function() {
+                if (gspPartnerSetup?.isDisableCommercialQuoting) {
+                    return !isShowProservTab() || userPermissions.AlwaysViewMainTabInQWForGSP;
+                } else if (isChangeOrder) {
+                    return !isShowProservTab();
+                }
+                return true;
+            }
+
+            let isCcLegacyFlow = (isInContactLegacyExistingBusiness
+                || (!isContactCenterPackagesExistInBilling
+                    && (hasCCLegacyPermission || (isPartnerOpportunity && (isBTBusiness || isTelus)))
+                    )
+                || isAccountMPHasCCEntitlements)
+                && !isUpsellOppAfterCCMigration;
+
+            var isShowCcQuoteTab = function() {
+                return (
+                        '{!isBilling && IsCCTabVisible}' === 'true'
+                        || isBTBusiness
+                        || isTelus && tierName === 'Contact Center'
+                    )
+                    && !(QWPage.OpportunityHelper.isAvaya(config.old.currentOpportunity))
+                    && !(QWPage.OpportunityHelper.isTierNameEngage(config.old.currentOpportunity))
+                    && !HIDE_CC_FOR_IDENTITIES.find((id) => id.toString(10) === businessIdentityId.toString())
+                    && !(QWPage.OpportunityHelper.isIndiaOffice(config.old.currentOpportunity))
+                    && !(QWPage.OpportunityHelper.isTaiwanOffice(config.old.currentOpportunity))
+                    && !isPhoenix
+                    && !isAtos
+                    && !isRainbow
+                    && !isRiseBrand
+                    && !isPOCQuoteType
+                    && isCcLegacyFlow;
+            }
+
+            var isShowDQTab = function() {
+                return !isRiseBrand;
+            }
+
+            var switchTab = function(tabName) {
+
+                if (isContactCenterTabBlocked && tabName === 'cc') {
+                    return;
+                }
+
+                currentCmp && currentCmp.destroy();
+
+                document.querySelectorAll('.slds-tabs_default__item').forEach(item => {
+                    item.classList.remove('slds-is-active');
+                    if(item.getAttribute('data-name') === tabName) {
+                        item.classList.add('slds-is-active');
+                    }
+                    if(window.location.href.includes('isPortalFlow=true')) {
+                        item.classList.add('slds-hide');
+                    }
+                });
+
+                document.querySelectorAll('.slds-tabs_default__content').forEach(item => {
+                    if(item.getAttribute('data-name') === tabName) {
+                        item.classList.remove('slds-hide');
+                        item.classList.add('slds-show');
+                    } else {
+                        item.classList.remove('slds-show');
+                        item.classList.add('slds-hide');
+                    }
+                    if(window.location.href.includes('isPortalFlow=true')) {
+                        item.style.height = '100%';
+                    }
+                });
+
+                //<!-- GOA changes start -->
+                if(tabName === 'main') {
+                    params.isProserv = false;
+                    params.isCC = false;
+                    params.isDq = false;
+                }
+                if(tabName === 'proserv') {
+                    params.isProserv = true;
+                    params.isCC = false;
+                    params.isDq = false;
+                }
+                if(tabName === 'cc') {
+                    params.isCC = true;
+                    params.isProserv = false;
+                    params.isDq = false;
+                }
+                if(tabName === 'dq') {
+                    params.isCC = false;
+                    params.isProserv = false;
+                    params.isDq = true;
+                }
+                //<!-- GOA changes ends -->
+                initApp(tabName, params, 200);
+            }
+
+            const showContent = () => {
+                document.getElementById('container').classList.remove('slds-hide');
+            }
+
+            var initApp = function(container, params, timeout) {
+                //<!-- GOA changes start -->
+                var isDealQualificationEnable = '{!isNewGOAEnabled}';
+
+                setTimeout(function(){
+                        $Lightning.use("c:QuotingWizard", function() {
+                            if (container !== "dq") {
+                                let componentToCreate = container === "main"
+                                    ? '{!componentToCreate}'
+                                    : 'c:QuoteWizardWrapper';
+                                let paramsToPass = container === "main" && componentToCreate == 'c:UQTQuoteList'
+                                    ?  {!paramsToPass}
+                                    : params;
+                                params.config.isDealQualificationEnable = isDealQualificationEnable;
+                                $Lightning.createComponent(componentToCreate, paramsToPass, container, function(cmp) {
+                                    currentCmp = cmp;
+                                    setTimeout(function(){
+                                        showContent();
+                                    },200);
+                                });
+                            }
+                            if (isDealQualificationEnable === 'true' && container === "dq") {
+                                $Lightning.createComponent(
+                                    "c:DQ_DealQualification",
+                                    {
+                                        "isFromQuoteWizard": true,
+                                        "oppId": config.old.opportunityId,
+                                        "submitApprovalCallbackFn": submitApprovalCallback
+                                    },
+                                    container, function(cmp) {
+                                    currentCmp = cmp;
+                                    setTimeout(function(){
+                                        showContent();
+                                    },200);
+                                });
+                            }
+                        });
+                    }, timeout || 0);
+
+                    //<!-- GOA changes ends -->
+            };
+            var openNewTab = function() {
+                    window.open('/apex/QuoteWizard?id={!opportunityId}', '_blank');
+            }
+
+            const updateTabName = () => {
+                const oppName = config?.old?.currentOpportunity?.Name;
+                if (config.old.isDQGoaEnabled && oppName) {
+                    document.title = `Quote - ${oppName}`;
+                }
+            }
+
+            var init = function() {
+                if ({!isPortalFlow}) {
+                    document.querySelector('.slds-tabs_default__nav').classList.add('slds-hide');
+                };
+                updateTabName();
+
+                const isMainTabVisible = isShowMainQuoteTab();
+                const isProservTabVisible = isShowProservTab();
+                const isCCTabVisible = isShowCcQuoteTab();
+
+                isProservTabVisible && (isProServLegacyFlow() || isContactCenterLegacyFlow() || isPartnerBrand || isAmazon()) ? document.getElementById('proserv-tab').style.display="block" : document.getElementById('proserv-tab').style.display="none";
+                isMainTabVisible ? document.getElementById('main-tab').style.display="block" : document.getElementById('main-tab').style.display="none";
+                isCCTabVisible ? document.getElementById('cc-tab').style.display="block" : document.getElementById('cc-tab').style.display="none";
+                if (Boolean(document.getElementById('dq-tab'))) {
+                    isShowDQTab() ? document.getElementById('dq-tab').style.display="block" : document.getElementById('dq-tab').style.display="none";
+                }
+                isShowLinkNewTab ? document.getElementById('newtab-tab').style.display="block" : document.getElementById('newtab-tab').style.display="none";
+
+                if (isContactCenterTabBlocked) {
+                    document.getElementById('cc-help').style.display="block";
+                }
+
+                const isNeedToSwithToProServTab = isProservTabVisible
+                    && ((isChangeOrder || !tierName || tierName === 'BT Office') || !isCCTabVisible);
+
+                const isNeedToSwithToCCProServTab = isCCTabVisible
+                    && !isContactCenterTabBlocked
+                    && tierName === 'Contact Center';
+
+                let tabName = 'main';
+
+                if (isMainTabVisible) {
+                    tabName = 'main';
+                } else if (isPartnerOpportunity) {
+                    if (isNeedToSwithToProServTab) {
+                        tabName = 'proserv';
+                        params.isProserv = true;
+                    } else if (isNeedToSwithToCCProServTab) {
+                        tabName = 'cc';
+                        params.isCC = true;
+                    }
+                }
+
+                switchTab(tabName);
+            }
+            console.log(params);
+            init(params);
+        } catch (e) {
+            console.log(e);
+        }
+
+    </script>
+    </apex:outputPanel>
+</apex:page>

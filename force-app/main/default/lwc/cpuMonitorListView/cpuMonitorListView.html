@@ -1,0 +1,36 @@
+<template>
+    <template if:true={dataAvailable}>
+        <lightning-card title={title} icon-name="standard:contact_list">
+                <lightning-spinner if:true={loadingData} alternative-text="Loading" size="large"></lightning-spinner>
+                <div class="slds-var-m-around_medium">
+                    
+                    <!-- <lightning-input placeholder="Amount of records to display per page" min="0" type="number" onchange={setPageSize} class="slds-var-m-bottom_small" label="Amount of records to display per page"></lightning-input> -->
+                    <c-salesforce-codex-data-table
+                        hide-checkbox-column="true"
+                        key-field="Id"
+                        data={obtainData}
+                        columns={columns}
+                        sorted-by={sortedBy} 
+                        sorted-direction={sortedDirection} 
+                        onsort={sortColumns}>
+                    </c-salesforce-codex-data-table>
+                    
+                    <br>
+
+                    <lightning-layout horizontal-align="space">
+                        <lightning-layout-item flexibility="auto">
+                            <lightning-button disabled={disabledPreviousButton} label="Previous" icon-name="utility:chevronleft" onclick={previousHandler}>
+                            </lightning-button>
+                        </lightning-layout-item>
+                        <lightning-layout-item flexibility="auto">
+                            Page {page} of {totalPage}
+                        </lightning-layout-item>
+                        <lightning-layout-item  flexibility="auto">
+                            <lightning-button disabled={disabledNextButton} label="Next" icon-name="utility:chevronright" icon-position="right" onclick={nextHandler}></lightning-button>
+                        </lightning-layout-item>
+                    </lightning-layout>
+
+                </div>
+        </lightning-card>
+    </template>
+</template>

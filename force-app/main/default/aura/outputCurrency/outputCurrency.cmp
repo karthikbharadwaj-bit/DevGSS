@@ -1,0 +1,30 @@
+<aura:component>
+
+  <aura:attribute name="value" type="Decimal" default="0" />
+  <aura:attribute name="currencyCode" type="String" />
+  <aura:attribute name="precision" type="Integer" default="2" />
+  <aura:attribute name="currencyFormat" type="Map" default="{
+      currency: {
+        twoDigit: '#,##0.00',
+        threeDigit: '#,##0.000',
+      },
+      percent: {
+        twoDigit: '0.00',
+        threeDigit: '0.000',
+      }
+    }" />
+
+  <aura:if isTrue="{!v.currencyCode == '%'}">
+
+    <ui:outputCurrency value="{!v.value || 0}" format="{! v.precision == 3 ? v.currencyFormat.percent.threeDigit : v.currencyFormat.percent.twoDigit}" />
+    &nbsp;
+    %
+
+    <aura:set attribute="else">
+      {!v.currencyCode}
+      &nbsp;
+      <ui:outputCurrency value="{!v.value || 0}" format="{! v.precision == 3 ? v.currencyFormat.currency.threeDigit : v.currencyFormat.currency.twoDigit}" />
+    </aura:set>
+  </aura:if>
+
+</aura:component>

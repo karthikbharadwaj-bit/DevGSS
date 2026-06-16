@@ -1,0 +1,468 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,force:appHostable" access="global"
+    controller="Partner_NumberPortingBoomiProcess">
+    <!--ATTRIBUTES-->
+    <aura:attribute name="portingResult" type="Map" default="{}" />
+    <aura:attribute name="isMaster" type="Boolean" default="false" />
+    <aura:attribute name="showRequestingUser" type="Boolean" default="false" />
+    <aura:attribute name="currentPortingResultPage" type="List" default="[]" />
+    <aura:attribute name="currentPortingHistoryPage" type="List" default="[]" />
+    <aura:attribute name="filetype" type="List" default="['.csv']" />
+    <aura:attribute name="textAreaValue" type="String" />
+    <aura:attribute name="countries" type="List" access="PRIVATE" />
+    <aura:attribute name="selectedCountry" type="String" access="PRIVATE" />
+    <aura:attribute name="disclaimer" type="String" access="PRIVATE" />
+    <aura:attribute name="textAreaPlaceholderText" type="String" access="PRIVATE" />
+    <aura:attribute name="rejectedNumbers" type="List" default="[]" />
+    <aura:attribute name="copyButtonText" type="String" default="Copy to clipboard" />
+    <aura:attribute name="showResults" type="boolean" default="false" />
+    <aura:attribute name="isModalOpen" type="boolean" default="false" />
+    <aura:attribute name="showHistoryLoading" type="boolean" default="false" />
+
+    <aura:attribute name="recordsPerPage" type="integer" default="50" />
+    <aura:attribute name="pageNumber" type="integer" default="1" />
+    <aura:attribute name="totalPages" type="integer" default="0" />
+    <aura:attribute name="totalRecords" type="integer" default="0" />
+    <aura:attribute name="recordStart" type="integer" default="0" />
+    <aura:attribute name="recordEnd" type="integer" default="0" />
+
+    <aura:attribute name="historyRecordsPerPage" type="integer" default="50" />
+    <aura:attribute name="historyPageNumber" type="integer" default="0" />
+    <aura:attribute name="historyNextButtonDisabled" type="boolean" default="false" />
+    
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="portFieldsMap" type="Map" />
+
+    <!--HANDLERS-->
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler name="change" value="{!v.selectedCountry}" action="{!c.countryChangeHandler}" />
+
+    <!--LAYOUT-->
+    <h1 class="slds-page-header__title slds-var-m-right_small slds-align-middle slds-truncate heading"
+        title="{!v.translationsMap.Number_Portability_Check}">
+        <lightning:icon iconName="standard:product_transfer" />&nbsp;
+        <b style="cursor: pointer;">{!v.translationsMap.Number_Portability_Check}</b>
+    </h1>
+    <!--SEARCH TAB-->
+    <lightning:tabset selectedTabId="search">
+        <lightning:tab  id="search">
+            <aura:set attribute="label">
+                {!v.translationsMap.Search}
+            </aura:set>
+            <div class="slds-grid slds-wrap slds-gutters">
+                <!--INPUT SECTION-->
+                <div
+                    class="slds-col slds-has-flexi-truncate slds-size_1-of-1 slds-medium-size_5-of-12 slds-large-size_4-of-12">
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12" style="height:10vh">
+                            <lightning:select name="country" label="{!v.translationsMap.Select_a_Country_Region +':'}" aura:id="country"
+                                value="{!v.selectedCountry}">
+                                <aura:iteration items="{!v.countries}" var="country">
+                                    <option selected="{!country.selected}"
+                                        text="{!country.countryName + ' (' + country.countryCode + ')'}"
+                                        value="{!country.countryISOCode}" />
+                                </aura:iteration>
+                            </lightning:select>
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12" style="height:40vh">
+                            <lightning:textarea aura:id="phoneInputTextArea" name="phoneInput" label="{!v.translationsMap.Telephone_Numbers}"
+                                value="{!v.textAreaValue}" required="true"
+                                messageWhenValueMissing="{!v.translationsMap.Please_enter_telephone_numbers}"
+                                placeholder="{!v.textAreaPlaceholderText}" />
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-size_7-of-12 slds-medium-size_8-of-12 slds-large-size_8-of-12">
+                            <lightning:input variant="label-hidden" name="csvUpload" type="file" multiple="false"
+                                disabled="{!v.portingResult.responseCode == -1}" accept="{!v.filetype}"
+                                onchange="{!c.fileChangeHandler}" />
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-size_5-of-12 slds-medium-size_4-of-12 slds-large-size_4-of-12 slds-align_absolute-center">
+                            <a onclick="{!c.exampleLinkClickHandler}">{!v.translationsMap.Example_CSV_file}</a>
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12 slds-align_absolute-center"
+                            style="height:10vh">
+                            <lightning:button variant="brand" label="{!v.translationsMap.Check_Portability}"
+                                title="Check Portability of number(s) entered" iconName="utility:check"
+                                disabled="{!v.portingResult.responseCode == -1}"
+                                onclick="{!c.checkPortabilityClickHandler}" />
+                        </div>
+                    </div>
+                </div>
+                <!--INPUT SECTION END-->
+
+                <!--RESULT SECTION-->
+                <aura:if isTrue="{!v.showResults}">
+                    <div
+                        class="slds-col slds-has-flexi-truncate slds-size_1-of-1 slds-medium-size_7-of-12 slds-large-size_8-of-12">
+                        <div class="slds-grid slds-wrap slds-gutters">
+                            <aura:if isTrue="{!v.portingResult.responseCode == -1}">
+                                <div style="height:60vh"
+                                    class="slds-col slds-has-flexi-truncate slds-is-relative slds-size_12-of-12 slds-medium-size_12-of-12 slds-large-size_12-of-12 slds-align_absolute-center">
+                                    <aura:if isTrue="{!v.isModalOpen eq false}">
+                                        <lightning:spinner alternativeText="{!v.portingResult.responseMessage}"
+                                            size="large" />
+                                    </aura:if>
+                                    <p style="margin-top: 90px;">{!v.portingResult.responseMessage}</p>
+                                </div>
+                                <aura:set attribute="else">
+                                    <aura:if isTrue="{!v.portingResult.responseCode > 299}">
+                                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12 slds-medium-size_12-of-12 slds-large-size_12-of-12"
+                                            style="color:red">
+                                            <h5 class="slds-var-m-right_small slds-align-middle slds-truncate">
+                                                 {!v.translationsMap.Portability_check_failed_since_an_error}</h5>
+                                            <h5 class="slds-var-m-right_small slds-align-middle slds-truncate">
+                                                {!v.translationsMap.Details}: {!v.portingResult.responseMessage}</h5>
+                                        </div>
+
+                                        <aura:set attribute="else">
+                                            <div style="height:6.5vh">
+                                                <h1 style="font-weight:bolder;font-size:large;padding-left:30px;">
+                                                    {!v.translationsMap.Search_Results}:
+                                                </h1>
+                                                <p style="padding-left:30px;color:red;font-style:italic;">
+                                                    {!v.disclaimer}</p>
+                                            </div>
+
+                                            <div class="" style="height:48.5vh">
+                                                <div
+                                                    class="slds-col slds-has-flexi-truncate slds-size_12-of-12 slds-scrollable_y">
+                                                    <table
+                                                        class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                                        <tbody>
+                                                            <aura:iteration items="{!v.currentPortingResultPage}"
+                                                                var="portResult">
+                                                                <tr class="slds-hint-parent" scope="row">
+                                                                    <td data-label="Number">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.phoneNumber}">
+                                                                            {!portResult.phoneNumber}</div>
+                                                                    </td>
+                                                                    <td data-label="Region">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.country}">
+                                                                            {!portResult.country}</div>
+                                                                    </td>
+                                                                    <td data-label="Status">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.status}">
+                                                                            {!portResult.status}</div>
+                                                                    </td>
+                                                                    <td data-label="Type">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.numberType}">
+                                                                            {!portResult.numberType}</div>
+                                                                    </td>
+                                                                    <td data-label="Is Portable">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.isPortable}">
+                                                                            {!portResult.isPortable}</div>
+                                                                    </td>
+                                                                    <td data-label="Error Message">
+                                                                        <div class="slds-truncate"
+                                                                            title="{!portResult.failureReason}">
+                                                                            {!portResult.failureReason}</div>
+                                                                    </td>
+                                                                </tr>
+                                                            </aura:iteration>
+                                                        </tbody>
+                                                        <thead>
+                                                            <tr class="slds-line-height_reset">
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Number}">
+                                                                        {!v.translationsMap.Number}
+                                                                    </div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Country}">
+                                                                        {!v.translationsMap.Country}
+                                                                    </div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Status}">
+                                                                        {!v.translationsMap.Status}
+                                                                    </div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Type}"> {!v.translationsMap.Type}
+                                                                    </div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Is_Portable}">
+                                                                        {!v.translationsMap.Is_Portable}</div>
+                                                                </th>
+                                                                <th class="" scope="col">
+                                                                    <div class="slds-truncate" title="{!v.translationsMap.Failure_Reason}">
+                                                                        {!v.translationsMap.Failure_Reason}
+                                                                    </div>
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <!--EXPORT-->
+                                            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1 slds-medium-size_5-of-12 slds-large-size_5-of-12"
+                                                style="padding:3vh 0vh 5px 0vh;height:10vh">
+                                                <lightning:button variant="brand" label="Export to CSV"
+                                                    title="Export Results to CSV" iconName="utility:save"
+                                                    onclick="{!c.exportResultsToCsvHandler}" />
+                                            </div>
+                                            <!--PREVIOUS/NEXT-->
+                                            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1 slds-medium-size_7-of-12 slds-large-size_7-of-12"
+                                                style="padding:3vh 0vh;height:10vh">
+                                                <p class="slds-truncate" style="display:inline-block;padding-top:7px;">
+                                                    {!v.translationsMap.Displaying}&nbsp; {!v.recordStart}-{!v.recordEnd} {!v.translationsMap.of}&nbsp; {!v.totalRecords}
+                                                    | {!v.translationsMap.page}  {!v.pageNumber} {!v.translationsMap.of}&nbsp; {!v.totalPages}
+                                                </p>
+                                                <div class="slds-float_right">
+                                                    <lightning:button disabled="{!v.pageNumber == 1}" variant="brand"
+                                                        aura:id="prevPage" label="{!v.translationsMap.Previous}"
+                                                        onclick="{!c.resultsPreviousClickHandler}"
+                                                        iconName="utility:chevronleft" iconPosition="left" />
+                                                    <lightning:button
+                                                        disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                                        aura:id="nextPage" variant="brand" label="{!v.translationsMap.Next}"
+                                                        onclick="{!c.resultsNextClickHandler}"
+                                                        iconName="utility:chevronright" iconPosition="right" />
+                                                </div>
+                                            </div>
+                                        </aura:set>
+                                    </aura:if>
+                                </aura:set>
+                            </aura:if>
+                        </div>
+                    </div>
+                </aura:if>
+                <!--RESULT SECTION END-->
+            </div>
+        </lightning:tab>
+
+        <!--HISTORY TAB-->
+        <lightning:tab class="slds-p-top_none" id="history" onactive="{!c.getPortabilityHistoryHandler}">            
+            <aura:set attribute="label">
+                        {!v.translationsMap.History}
+                    </aura:set>
+            <div class="slds-grid slds-wrap slds-gutters">
+                <!--HISTORY-->
+                <aura:if isTrue="{!v.showHistoryLoading}">
+                    <div class="slds-col slds-has-flexi-truncate slds-is-relative slds-size_12-of-12 slds-medium-size_12-of-12 slds-large-size_12-of-12 slds-align_absolute-center"
+                        style="height:60vh;">
+                        <lightning:spinner alternativeText="Loading History...." size="large" />
+                        <p style="margin-top: 90px;">Loading History....</p>
+                    </div>
+                    <aura:set attribute="else">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12 slds-scrollable_y"
+                            style="height:60vh;">
+                            <table
+                                class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                <tbody>
+                                    <aura:iteration items="{!v.currentPortingHistoryPage}" var="portingHistoryItem" indexVar="i">
+                                        <tr class="slds-hint-parent">
+                                            <aura:if isTrue="{!v.showRequestingUser}">
+                                                <td data-label="Requesting User">
+                                                    <div class="slds-truncate"
+                                                        title="{!portingHistoryItem.requestingUser}">
+                                                        {!portingHistoryItem.requestingUser}
+                                                    </div>
+                                                </td>
+                                            </aura:if>
+                                            <aura:if isTrue="{!v.isMaster}">
+                                                <td data-label="Partner Account">
+                                                    <div class="slds-truncate"
+                                                        title="{!portingHistoryItem.partnerAccount}">
+                                                        {!portingHistoryItem.partnerAccount}
+                                                    </div>
+                                                </td>
+                                            </aura:if>
+                                            <td data-label="Country Name">
+                                                <div class="slds-truncate" title="{!portingHistoryItem.countryName}">
+                                                    {!portingHistoryItem.countryName}</div>
+                                            </td>
+                                            <td data-label="Request Date/Time">
+                                                <div class="slds-truncate"
+                                                    title="{!portingHistoryItem.requestDateTime}">
+                                                    {!portingHistoryItem.requestDateTime}</div>
+                                            </td>
+                                            <td data-label="Request Type">
+                                                <div class="slds-truncate" title="{!portingHistoryItem.requestType}">
+                                                    {!portingHistoryItem.requestType}</div>
+                                            </td>
+                                            <td data-label="Request Size">
+                                                <div class="slds-truncate" title="{!portingHistoryItem.requestSize}">
+                                                    {!portingHistoryItem.requestSize}</div>
+                                            </td>
+                                            <td data-label="Uploaded CSV">
+                                                <div class="slds-truncate slds-align_absolute-center">
+                                                    <aura:if isTrue="{!not(empty(portingHistoryItem.requestFileName))}">
+                                                        <lightning:buttonIcon
+                                                            name="{!(i + '_' + portingHistoryItem.requestFileName + '_requestFileContent_requestFileContentType')}"
+                                                            iconName="utility:download" alternativeText="Download"
+                                                            onclick="{!c.downloadHistoryFilesHandler}" />
+                                                    </aura:if>
+                                                </div>
+                                            </td>
+                                            <td data-label="Response Code">
+                                                <div class="slds-truncate" title="{!portingHistoryItem.responseCode}">
+                                                    {!portingHistoryItem.responseCode}</div>
+                                            </td>
+                                            <td data-label="Results CSV">
+                                                <div class="slds-truncate slds-align_absolute-center">
+                                                    <aura:if isTrue="{!not(empty(portingHistoryItem.resultsFileName))}">
+                                                        <lightning:buttonIcon
+                                                            name="{!(i + '_' + portingHistoryItem.resultsFileName + '_resultsFileContent_resultsFileContentType')}"
+                                                            iconName="utility:download" alternativeText="Download"
+                                                            onclick="{!c.downloadHistoryFilesHandler}" />
+                                                    </aura:if>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <aura:if isTrue="{!v.showRequestingUser}">
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate" title="{!v.translationsMap.Requesting_User}">
+                                                    {!v.translationsMap.Requesting_User}
+                                                </div>
+                                            </th>
+                                        </aura:if>
+                                        <aura:if isTrue="{!v.isMaster}">
+                                            <th class="" scope="col">
+                                                <div class="slds-truncate" title="{!v.portFieldsMap.Partner_Account__c}">
+                                                    {!v.portFieldsMap.Partner_Account__c}
+                                                </div>
+                                            </th>
+                                        </aura:if>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.portFieldsMap.Country_Name__c}">{!v.portFieldsMap.Country_Name__c}
+                                            </div>
+                                        </th>
+                                        <th class="" scope="col" style="width:10rem">
+                                            <div class="slds-truncate" title="{!v.portFieldsMap.Request_Date_Time__c}">{!v.portFieldsMap.Request_Date_Time__c}
+                                                </div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.portFieldsMap.Request_Type__c}">{!v.portFieldsMap.Request_Type__c}
+                                            </div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.portFieldsMap.Request_Size__c}">{!v.portFieldsMap.Request_Size__c}
+                                            </div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate slds-align_absolute-center"
+                                                title="{!v.translationsMap.Uploaded_CSV}">
+                                               {!v.translationsMap.Uploaded_CSV}
+                                            </div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Results_CSV}">{!v.translationsMap.Results_CSV}
+                                            </div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="" title="{!v.portFieldsMap.Response_Code__c}">
+                                                {!v.portFieldsMap.Response_Code__c}
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1 slds-medium-size_12-of-12 slds-large-size_12-of-12"
+                            style="padding:1.5vh 0vh;height:3vh">
+                            <p class="slds-truncate" style="display:inline-block;padding-top:7px;padding-left:10px">
+                                {!v.translationsMap.Page}&nbsp; {!(v.historyPageNumber * 1) + 1} | {!v.translationsMap.Displaying} &nbsp;{!v.currentPortingHistoryPage.length} record(s)
+                            </p>
+                            <div class="slds-float_right">
+                                <lightning:button disabled="{!v.historyPageNumber == 0}" variant="brand" aura:id="historyPrevPage"
+                                    label="{!v.translationsMap.Previous}" onclick="{!c.historyPreviousClickHandler}"
+                                    iconName="utility:chevronleft" iconPosition="left" />
+                                <lightning:button disabled="{!v.historyNextButtonDisabled}"
+                                    aura:id="historyNextPage" variant="brand" label="{!v.translationsMap.Next}"
+                                    onclick="{!c.historyNextClickHandler}" iconName="utility:chevronright"
+                                    iconPosition="right" />
+                            </div>
+                        </div>
+                    </aura:set>
+                </aura:if>
+                <!--HISTORY ENDS-->
+            </div>
+        </lightning:tab>
+    </lightning:tabset>
+    <!--LAYOUT-->
+
+    <!--MODAL SECTION-->
+    <aura:if isTrue="{!v.isModalOpen}">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close" onclick="{!c.closeModalClickHandler}"
+                        alternativeText="Click me to close this popup and view porting results" variant="bare-inverse"
+                        class="slds-modal__close" />
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.Rejected_Telephone_Numbers}
+                    </h2>
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                    <!--lightning:textarea name="rejectedPhoneInput" disabled="true"
+                        label="The below numbers were rejected since they don't follow E.164 format/have an incorrect country code"
+                        value="{!v.rejectedTextAreaValue}"/-->
+                    <div class="" style="height:20rem">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_12-of-12 slds-scrollable_y">
+                            <table
+                                class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                <tbody>
+                                    <aura:iteration items="{!v.rejectedNumbers}" var="rejectedNumber">
+                                        <tr class="slds-hint-parent">
+                                            <td data-label="Number">
+                                                <div class="slds-truncate" title="{!rejectedNumber.number}">
+                                                    {!rejectedNumber.number}</div>
+                                            </td>
+                                            <td data-label="Rejection Reason">
+                                                <div class="slds-truncate" title="{!rejectedNumber.rejectionReason}">
+                                                    {!rejectedNumber.rejectionReason}</div>
+                                            </td>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                                <thead>
+                                    <tr class="slds-line-height_reset">
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Telephone_Number}">
+                                                {!v.translationsMap.Telephone_Number}</div>
+                                        </th>
+                                        <th class="" scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Rejection_Reason}">
+                                                {!v.translationsMap.Rejection_Reason}
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!--Modal/Popup Box Footer Starts here-->
+                <footer class="slds-modal__footer slds-modal__footer_directional">
+                    <lightning:button variant="brand" label="Close" title="Close" iconName="utility:close"
+                        onclick="{!c.closeModalClickHandler}" />
+                    <lightning:button variant="brand" label="{!v.copyButtonText}" title="{!v.copyButtonText}"
+                        iconName="utility:copy_to_clipboard" onclick="{!c.copyToClipBoardHandler}" />
+                    <lightning:button variant="brand" label="Export to CSV" title="Export to CSV"
+                        iconName="utility:save" onclick="{!c.exportRejectedToCsvHandler}" />
+                    <p style="text-align:left;margin-top:10px;">{!v.translationsMap.Note_Click_the_close_button_x_to_view}
+                    </p>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    <!--MODAL SECTION-->
+
+    <!--NOTIFICATION-->
+    <lightning:notificationsLibrary aura:id="errorNotification" />
+    <!--NOTIFICATION ENDS-->
+</aura:component>

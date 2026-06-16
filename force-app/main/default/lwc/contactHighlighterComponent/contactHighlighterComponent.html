@@ -1,0 +1,75 @@
+<template>
+    <div class="slds-grid slds-wrap contact-grid-style">
+        <div class={columnSizeFirst}>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Lead Source:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">{componentData.contact.LeadSource}</div>
+            </div>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Lead Source Description:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">{componentData.leadSourceDescription}</div>
+            </div>
+        </div>
+
+        <div class={columnSizeSecond}>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Campaign:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">
+                    {componentData.contact.MostRecentCampaign__c}
+                </div>
+            </div>
+            <div class="slds-col slds-size_1-of-1">
+                <div class="slds-form-element_horizontal">
+                    <div class="slds-form-element__label bond-label">Campaign Description:</div>
+                    <div
+                        class="slds-form-element__control slds-p-top_xx-small"
+                        if:true={componentData.contact.MostRecentCampaign__c}
+                    >
+                        {componentData.contact.Most_Recent_Campaign__r.Description}
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Campaign Product:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">
+                    {componentData.contact.Campaign_Product__c}
+                </div>
+            </div>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Campaign Member Status:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">
+                    {componentData.contact.Most_Recent_Campaign_Member_Status__c}
+                </div>
+            </div>
+        </div>
+        <div
+            if:true={isSia}
+            class="slds-col slds-size_1-of-3 slds-grid slds-wrap slds-m-bottom_medium slds-m-top_medium"
+        >
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">SIA Information:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">
+                    {componentData.contact.SIA_Information__c}
+                </div>
+            </div>
+            <div class="slds-form-element_horizontal">
+                <div class="slds-form-element__label bond-label">Partner Account:</div>
+                <div class="slds-form-element__control slds-p-top_xx-small">{contactParentAccount}</div>
+            </div>
+        </div>
+
+        <div if:true={showAlerts}>
+            <c-yellow-banner-component-alerts
+                is-do-not-direct-mail={componentData.isDoNotDirectMail}
+                is-b-t-approved={componentData.isBTApproved}
+                domain-type={componentData.domainType}
+                email-title={componentData.emailTitle}
+                email-message={componentData.emailMessage}
+                is-do-not-call={componentData.isDoNotCall}
+                is-has-opted-out-of-email={componentData.isHasOptedOutOfEmail}
+                is-do-not-sms={componentData.isDoNotSMS}
+                show-do-not-email-germany={componentData.showDoNotEmailGermany}
+            ></c-yellow-banner-component-alerts>
+        </div>
+    </div>
+</template>

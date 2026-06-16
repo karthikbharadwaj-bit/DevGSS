@@ -1,0 +1,80 @@
+<template>
+    <lightning-quick-action-panel header="Download Case Files" class="container">
+        
+        <!-- Loading State -->
+        <template if:true={isLoading}>
+            <div class="spinner-container">
+                <lightning-spinner alternative-text="Loading files..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Content when not loading -->
+        <template if:false={isLoading}>
+            <template if:true={files.length}>
+                <!-- Instructions Section -->
+                <div class="instructions-container">
+                    <p class="instructions">
+                        <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                        Use <strong>Download All Files</strong> to get everything, or select specific files below and click <strong>Download Selected</strong>.
+                    </p>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="header-section">
+                    <div class="button-group">
+                        <lightning-button 
+                            label="Download All Files" 
+                            variant="brand" 
+                            icon-name="utility:download" 
+                            icon-position="left"
+                            onclick={handleDownloadAll}>
+                        </lightning-button>
+                        
+                        <lightning-button 
+                            label="Download Selected" 
+                            variant="brand-outline" 
+                            icon-name="utility:download" 
+                            icon-position="left"
+                            onclick={handleDownloadSelected}
+                            disabled={isDownloadDisabled}>
+                        </lightning-button>
+                    </div>
+                </div>
+
+                <!-- File List Section -->
+                <div class="file-list-container">
+                    <div class="file-list-header">
+                        <div>
+                            <lightning-input 
+                                type="checkbox" 
+                                label="Select All" 
+                                checked={allFilesSelected}
+                                onchange={handleSelectAll}>
+                            </lightning-input>
+                        </div>
+                        <div class="file-count">{files.length} files available</div>
+                    </div>
+                    
+                    <div class="file-list">
+                        <template for:each={files} for:item="file">
+                            <div key={file.id} class="file-item">
+                                <lightning-icon icon-name="utility:file" alternative-text="File" size="small" class="file-icon"></lightning-icon>
+                                <span class="file-name" title={file.title}>{file.title}</span>
+                                <lightning-input type="checkbox" data-id={file.id} checked={file.selected} onchange={handleFileSelection}></lightning-input>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ❌ No Files Found Message -->
+            <template if:false={files.length}>
+                <div class="no-files-container">
+                    <lightning-icon icon-name="utility:warning" alternative-text="No files" size="large" class="no-files-icon"></lightning-icon>
+                    <p class="no-files-message">No files are available for this case.</p>
+                </div>
+            </template>
+            
+        </template>
+    </lightning-quick-action-panel>
+</template>

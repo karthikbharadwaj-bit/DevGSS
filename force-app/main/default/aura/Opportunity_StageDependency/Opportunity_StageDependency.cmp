@@ -1,0 +1,182 @@
+<!--
+* Created By     : Rajalakshmi
+* Created Date   : 09-12-2020
+* Description    : Component to display all Dependant fields related to Opportunity Stage
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component implements="flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:isUrlAddressable,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable" access="global"
+                controller="Opportunity_StageDependancyController" >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="OppId" type="Id" />
+    <aura:attribute name="IsClosed" type="Boolean" />
+    <aura:attribute name="Options" type="List"/>
+    <aura:attribute name="SubOptions" type="List"  />
+    <aura:attribute name="Dwngradereasons" type="List"  />
+    <aura:attribute name="LosttoCompetition" type="List"  />
+    <aura:attribute name="ReasonforLoss" type="List"  />
+    <aura:attribute name="CustomerLimitations" type="List"  />
+    <aura:attribute name="RCProductGaps" type="List"  />
+    <aura:attribute name="ServiceLost" type="List"  />
+    <aura:attribute name="SubDowngradeReason" type="List"  />
+    <aura:attribute name="Incentive" type="List"  />
+    <aura:attribute name="Stagevalue" type="String"/>
+    <aura:attribute name="Substagevalue" type="String"/>
+    <aura:attribute name="recTypeId" type="String"/>
+    <aura:attribute name="loaded" type="Boolean" default="false" />
+    <aura:attribute name="Closedwon" type="Boolean" default="true" />
+    <aura:attribute name="Downgrade" type="Boolean" default="true" />
+    <!--Attributes to set defaultvalues during initalization-->
+    <aura:attribute name="Opt" type="String" />
+    <aura:attribute name="SubOpt" type="String"  />
+    <aura:attribute name="Dwnreasons" type="String"  />
+    <aura:attribute name="LsttoCompetition" type="String"  />
+    <aura:attribute name="RsonforLoss" type="String"  />
+    <aura:attribute name="CustomerLimit" type="String"  />
+    <aura:attribute name="RCProdGaps" type="String"  />
+    <aura:attribute name="ServiceLst" type="String"  />
+    <aura:attribute name="SubDwngradeRsn" type="String"  />
+    <aura:attribute name="Incntive" type="String"  />
+    <aura:attribute name="selected" type="String"  />
+ <!---Code for picklist starts here-->
+    <div class="slds-grid slds-grid_pull-padded-medium">
+     <div class="slds-col slds-p-horizontal_medium">
+       <div class="slds-form_horizontal slds-form slds-grid slds-wrap">
+         <!--Stage-->
+         <lightning:select label = "Stage" aura:id="StageField" onchange="{!c.pickChange}">
+          <aura:iteration items="{!v.Options}" var="opt" >
+           <aura:if isTrue="{!opt.Name == v.Opt}">
+            <option  text="{!opt.Name}" value="{!opt.Name}" selected = "true" />
+             <aura:Set attribute ="else">
+              <option  text="{!opt.Name}" value="{!opt.Name}" />
+             </aura:Set>
+            </aura:if>
+           </aura:iteration>
+          </lightning:select>
+
+           <!--Downgrade Reason-->
+         <lightning:select name="Downgrade Reason"  label = "Downgrade Reason" aura:id="DowngradeReason"  onchange = "{!c.pickDowngradeChanges}" disabled ="{!v.Downgrade}" >
+          <aura:iteration items="{!v.Dwngradereasons}" var="dwnrsn">
+           <aura:if isTrue="{!dwnrsn.Name == v.Dwnreasons}">
+            <option value="{!dwnrsn.Name}" text="{!dwnrsn.Name}" selected = "true"></option>
+             <aura:Set attribute ="else">
+              <option value="{!dwnrsn.Name}" text="{!dwnrsn.Name}"></option>
+             </aura:Set>
+            </aura:if>
+           </aura:iteration>
+          </lightning:select>
+
+         <!--ServiceLost-->
+       <!--<lightning:select name="Service Lost" label = "Service Lost" aura:id="ServiceLost" >
+            <aura:iteration items="{!v.ServiceLost}" var="SL">
+             <aura:if isTrue="{!SL.Name == v.ServiceLst}">
+              <option value="{!SL.Name}" text="{!SL.Name}" selected = "true"></option>
+                <aura:Set attribute ="else">
+                  <option value="{!SL.Name}" text="{!SL.Name}"></option>
+                </aura:Set>
+              </aura:if>
+            </aura:iteration>
+           </lightning:select>-->
+        <!--Incentive-->
+        <!--<lightning:select name="Incentive" label = "Incentive" aura:id="Incentive" >
+             <aura:iteration items="{!v.Incentive}" var="IN">
+               <aura:if isTrue="{!IN.Name == v.Incntive}">
+         	   <option value="{!IN.Name}" text="{!IN.Name}" selected = "true"></option>
+                 <aura:Set attribute ="else">
+                   <option value="{!IN.Name}" text="{!IN.Name}"></option>
+                 </aura:Set>
+                </aura:if>
+              </aura:iteration>
+            </lightning:select>-->
+      </div>
+      </div>
+
+      <div class="slds-col slds-p-horizontal_medium">
+       <div class="slds-form_horizontal slds-form slds-grid slds-wrap">
+           <!--Sub Stage-->
+         <lightning:select  label = "Sub-Stage" name="Sub-Stage"  aura:id="Sub-StageField" value ="{!v.Substagevalue}" disabled ="{!v.Closedwon}" >
+          <aura:iteration items="{!v.SubOptions}" var="Subopt">
+           <aura:if isTrue="{!Subopt == v.SubOpt}">
+            <option value="{!Subopt}" text="{!Subopt}" selected = "true"></option>
+             <aura:Set attribute ="else">
+              <option value="{!Subopt}" text="{!Subopt}"></option>
+             </aura:Set>
+            </aura:if>
+           </aura:iteration>
+          </lightning:select>
+
+           <!--SubDowngradeReason-->
+         <lightning:select name="Sub Downgrade Reason"  label = "Sub Downgrade Reason" aura:id="SubDowngradeReason"  disabled ="{!v.Downgrade}">
+          <aura:iteration items="{!v.SubDowngradeReason}" var="sdr">
+           <aura:if isTrue="{!sdr == v.SubDwngradeRsn}">
+             <option value="{!sdr}" text="{!sdr}" selected = "true"></option>
+              <aura:Set attribute ="else">
+               <option value="{!sdr}" text="{!sdr}"></option>
+              </aura:Set>
+            </aura:if>
+           </aura:iteration>
+          </lightning:select>
+       <!--RCProductGaps-->
+      <!--<lightning:select name="RC Product Gaps / Features" label = "RC Product Gaps / Features" aura:id="RCProductGaps" >
+          <aura:iteration items="{!v.RCProductGaps}" var="rpg">
+           <aura:if isTrue="{!rpg.Name == v.RCProdGaps}">
+            <option value="{!rpg.Name}" text="{!rpg.Name}" selected = "true"></option>
+             <aura:Set attribute ="else">
+              <option value="{!rpg.Name}" text="{!rpg.Name}"></option>
+              </aura:Set>
+             </aura:if>
+            </aura:iteration>
+           </lightning:select>-->
+       <!--LosttoCompetition-->
+       <!--<lightning:select name="Lost to Competition" label = "Lost to Competition" aura:id="LosttoCompetition" >
+           <aura:iteration items="{!v.LosttoCompetition}" var="LOC">
+            <aura:if isTrue="{!LOC.Name == v.LsttoCompetition}">
+             <option value="{!LOC.Name}" text="{!LOC.Name}" selected = "true"></option>
+              <aura:Set attribute ="else">
+               <option value="{!LOC.Name}" text="{!LOC.Name}"></option>
+                </aura:Set>
+             </aura:if>
+            </aura:iteration>
+           </lightning:select>-->
+        <!--ReasonforLoss-->
+       <!--<lightning:select name="Reason for Loss" label = "Reason for Loss" aura:id="ReasonforLoss" onchange = "{!c.pickReasonforLoss}" >
+            <aura:iteration items="{!v.ReasonforLoss}" var="RFL">
+             <aura:if isTrue="{!RFL.Name == v.RsonforLoss}">
+         	  <option value="{!RFL.Name}" text="{!RFL.Name}" selected = "true"></option>
+               <aura:Set attribute ="else">
+                <option value="{!RFL.Name}" text="{!RFL.Name}"></option>
+               </aura:Set>
+             </aura:if>
+           </aura:iteration>
+          </lightning:select>-->
+          <!--CustomerLimitations-->
+      <!--<lightning:select name="Customer Limitations" label = "Customer Limitations" aura:id="CustomerLimitations" >
+          <aura:iteration items="{!v.CustomerLimitations}" var="CL">
+           <aura:if isTrue="{!CL.Name == v.CustomerLimit}">
+            <option value="{!CL.Name}" text="{!CL.Name}" selected = "true"></option>
+             <aura:Set attribute ="else">
+              <option value="{!CL.Name}" text="{!CL.Name}"></option>
+               </aura:Set>
+            </aura:if>
+           </aura:iteration>
+          </lightning:select>-->
+            </div>
+        <aura:if isTrue="{! v.loaded }">
+        <div class="loader">
+        <lightning:spinner alternativeText="Loading" />
+        </div>
+        </aura:if>
+        </div>
+      </div>
+      <div class="slds-clearfix">
+        <div class="slds-align_absolute-center">
+           <lightning:button class="slds-m-top_small" variant="brand" type="submit" name="update" label="Update" onclick="{!c.doUpdate}" />
+        <lightning:button class="slds-m-top_small" variant="brand" type="submit" name="cancel" label="Cancel" onclick="{!c.docancel}" />
+        </div>
+    </div>
+</aura:component>

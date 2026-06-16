@@ -1,0 +1,147 @@
+<aura:component controller="TemplatePanelController">
+    <ltng:require scripts="{!$Resource.TemplatePanelDependencies + '/TP.js'}" afterScriptsLoaded="{!c.templatePanelHelperLoaded}"/>
+    <!-- Shared Attributes -->
+    <aura:attribute name="templates" type="RC_Quote_Template__c[]"/>
+    <aura:attribute name="sections" type="TemplateSections__c[]"/>
+    <aura:attribute name="selectedSection" type="TemplateSections__c"/>
+    <aura:attribute name="selectedTemplate" type="RC_Quote_Template__c"/>
+    <!-- Component Attributes -->
+    <aura:attribute name="autoSave" type="Boolean" default="false"/>
+    <aura:attribute name="saveTimeout" type="Integer"/>
+
+    <aura:attribute name="previewBody" type="String"/>
+    <aura:attribute name="previewStyles" type="String"/>
+    <aura:attribute name="previewParameters" type="String"/>
+    <aura:attribute name="previewTimeout" type="Integer"/>
+    <aura:attribute name="previewObjId" type="String"/>
+
+    <aura:attribute name="templateBodyEditor" type="Object"/>
+    <aura:attribute name="stylesEditor" type="Object"/>
+
+    <!-- Handlers -->
+    <aura:handler event="c:TemplatePanelEvent"
+                  action="{!c.onTemplatePanelEvent}"/>
+    <!-- Registered Events -->
+    <aura:registerEvent type="c:TemplatePanelEvent" name="TemplatePanelEvent"/>
+    <aura:registerEvent type="c:ToastEvent" name="ToastEvent"/>
+    <!-- Markup -->
+
+    <section aura:id="helpModal" class="slds-modal slds-p-top--large">
+        <div class="slds-modal__container help-modal-container">
+            <header class="slds-modal__header">
+                <lightning:buttonIcon alternativeText="Close"
+                                      iconName="utility:close"
+                                      size="large"
+                                      variant="bare-inverse"
+                                      class="slds-modal__close"
+                                      onclick="{!c.closeHelp}"/>
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Template Engine 2.0 Documentation</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium slds-col slds-is-relative">
+                <iframe class="docs-iframe slds-is-absolute" src="https://docs.google.com/document/d/1QXrNvdLxrU6Xl6-m84NT_tIuQe28k3TtgxjhigXOwNE/pub?embedded=true"></iframe>
+            </div>
+        </div>
+    </section>
+    <div class="slds-backdrop" aura:id="helpModalBackdrop"></div>
+
+    <div class="slds-page-header">
+        <div class="slds-grid">
+            <div class="slds-col slds-no-flex slds-p-right--medium slds-border--right">
+                <lightning:button label="Template List"
+                                  iconName="action:back"
+                                  onclick="{!c.openTemplateList}"/>
+            </div>
+            <div class="slds-col slds-has-flexi-truncate slds-p-left--medium">
+                <div class="slds-media slds-no-space slds-grow">
+                    <div class="slds-media__figure">
+                        <lightning:icon iconName="utility:insert_template" alternativeText="Template Section"/>
+                    </div>
+                    <div class="slds-media__body">
+                        <p class="slds-text-title_caps slds-line-height_reset">Template Section</p>
+                        <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate">
+                                {! v.selectedSection.Name }
+                        </h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slds-col slds-no-flex slds-grid slds-align-top slds-p-right--large slds-border--right">
+                <lightning:button iconName="utility:help"
+                                  label="Help"
+                                  class="slds-m-left--small"
+                                  onclick="{!c.help}"/>
+            </div>
+            <div class="slds-col slds-no-flex slds-grid slds-align-top slds-p-left--large">
+                <lightning:input type="toggle" label="Auto Save" name="togglevalue" checked="{!v.autoSave}"
+                                 variant="label-hidden"
+                                 aura:id="autoSaveToggle" messageToggleActive="Auto Save"
+                                 messageToggleInactive="Auto Save"/>
+            </div>
+            <div class="slds-col slds-no-flex slds-grid slds-align-top">
+                <lightning:button label="Save"
+                                  variant="brand"
+                                  class="slds-m-left--small"
+                                  onclick="{!c.save}"
+                                  aura:id="saveButton"/>
+                <lightning:buttonMenu iconName="utility:down"
+                                      alternativeText="Settings"
+                                      class="slds-m-left--small"
+                                      menuAlignment="right">
+                    <lightning:menuItem label="Delete" value="delete"/>
+                </lightning:buttonMenu>
+            </div>
+        </div>
+        <ul class="slds-grid slds-page-header__detail-row">
+            <li class="slds-page-header__detail-block">
+                <lightning:input type="text" label="Object Id" name="objectid" value="{!v.previewObjId}"/>
+            </li>
+        </ul>
+    </div>
+    <lightning:layout class="slds-col">
+        <lightning:layoutItem class="slds-p-horizontal--x-small" size="12" mediumDeviceSize="6">
+            <div class="editor-section editor-section--styles slds-grid flex-column slds-section slds-is-open slds-m-around--none">
+                <h3 class="slds-section__title slds-theme_shade slds-p-horizontal--small section-header">
+                    <span title="Styles">Styles</span>
+                </h3>
+                <div aria-hidden="false" class="slds-col editor-container slds-section__content">
+                    <div id="styles-editor" class="styles-editor editor"/>
+                </div>
+            </div>
+            <div class="editor-section editor-section--body slds-grid flex-column slds-section slds-is-open slds-m-around--none">
+                <h3 class="slds-section__title slds-theme_shade slds-p-horizontal_small section-header">
+                    <span class="slds-truncate" title="Template Body">Template Body</span>
+                    <lightning:button onclick="{!c.fixEditorResize}"
+                                      class="slds-col_bump-left preview-button"
+                                      label="Fix Editor Resize"/>
+                </h3>
+                <div aria-hidden="false" class="slds-col editor-container slds-section__content">
+                    <div id="body-editor" class="body-editor editor"/>
+                </div>
+            </div>
+        </lightning:layoutItem>
+        <lightning:layoutItem class="slds-grid flex-column slds-p-horizontal--x-small" size="12" mediumDeviceSize="6">
+            <div class="slds-section slds-col slds-grid flex-column slds-is-open slds-m-around--none">
+                <h3 class="slds-section__title slds-theme_shade slds-p-horizontal_small section-header">
+                    <span class="slds-truncate" title="PDF Preview">PDF Preview</span>
+                    <lightning:button onclick="{!c.previewPDF}"
+                                      class="slds-col_bump-left preview-button"
+                                      label="Preview"/>
+                </h3>
+                <div aria-hidden="false" class="slds-col slds-is-relative slds-section__content">
+                    <form target="pdf-preview-iframe"
+                          action="/apex/previewPDF"
+                          method="post"
+                          aura:id="previewPDFForm">
+                        <input type="hidden" name="objectid" value="{!v.previewObjId}"/>
+                        <input type="hidden" name="templateBody" value="{!v.previewBody}"/>
+                        <input type="hidden" name="templateStyles" value="{!v.previewStyles}"/>
+                        <input type="hidden" name="templateParameters" value="{!v.previewParameters}"/>
+                    </form>
+                    <iframe frameborder="0" height="100%" width="100%" class="pdf-preview slds-is-absolute"
+                            name="pdf-preview-iframe"/>
+                </div>
+            </div>
+        </lightning:layoutItem>
+    </lightning:layout>
+    it is:  {!v.previewParameters}
+</aura:component>

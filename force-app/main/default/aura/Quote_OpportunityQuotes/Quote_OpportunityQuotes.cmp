@@ -1,0 +1,199 @@
+<aura:component
+  implements="forceCommunity:availableForAllPageTypes,force:hasRecordId"
+  access="global"
+  controller="PartnerQuoteController"
+  extends="c:Quote_BaseComponent"
+>
+  <aura:attribute name="recordId" type="String" />
+  <aura:attribute name="QuoteList" type="Partner_Quote__c[]" />
+  <aura:attribute name="showChangeRequestCMP" type="Boolean" default="false" />
+  <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false" />
+  <aura:attribute
+    name="isChangeOrderSubmitted"
+    type="Boolean"
+    default="false"
+  />
+  <aura:attribute name="changeOrderId" type="String" />
+  <aura:attribute name="oppType" type="String" />
+  <aura:attribute name="accountId" type="String" />
+  <aura:attribute name="Spinner" type="Boolean" />
+  <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+  <aura:attribute name="isLightning" type="Boolean" />
+  <aura:attribute name="Message" type="String" />
+  <aura:attribute name="isSuccess" type="Boolean" default="true" />
+  <aura:attribute name="oppStage" type="String" />
+  <aura:attribute name="showToastMessage" type="Boolean" default="false" />
+  <aura:attribute name="showPOCRequest" type="Boolean" default="false" />
+  <aura:attribute name="isPOCRequestExists" type="Boolean" default="false" />
+  <aura:attribute name="isSuperUser" type="Boolean" default="false" />
+  <aura:attribute
+    name="ObjNewDealSupport"
+    type="Deal_Support__c"
+    default="{ 'sobjectType': 'Deal_Support__c'}"
+  />
+  <aura:attribute name="isReadOnlyProfile" type="boolean" default="false" />
+  <aura:attribute name="baseURL" type="String" />
+  <aura:attribute name="ShowOnlyRC" type="Boolean" default="false" />
+  <aura:attribute name="isInternalRC" type="Boolean" default="false" />
+  <aura:attribute
+    name="isOppOwnerExistInQueue"
+    type="Boolean"
+    default="false"
+  />
+  <aura:attribute name="isMitelContact" type="Boolean" default="false"/><!-- Added for pbc-10625 mitel-->
+  <aura:attribute name="communityDetailsRecord" type="Object" />
+
+  <aura:attribute name="quoteFieldsMap" type="Map" />
+  <aura:attribute name="translationsMap" type="Map" />
+  <!--BZS-9309-->
+  <aura:attribute
+    name="wholesalePartnerPckEditions"
+    type="String[]"
+    default="[]"
+  />
+  <aura:attribute name="isWholesalePartner" type="Boolean" default="false" />
+  <!-- BZS-9616 -->
+  <aura:handler name="init" value="{!this}" action="{!c.loadQuotes}" />
+  <aura:attribute
+    name="oppCountry"
+    type="String"
+  /><!--Added for Switzerland -->
+  <div>{!v.Message}</div>
+  <aura:if isTrue="{!v.showPOCRequest}">
+    <c:Quote_POCRequestCMP
+      recordId="{!v.recordId}"
+      ObjNewDealSupport="{!v.ObjNewDealSupport}"
+      isPOCRequestExists="{!v.isPOCRequestExists}"
+      Spinner="{!v.Spinner}"
+      wholesalePartnerPckEditions="{!v.wholesalePartnerPckEditions}"
+      isWholesalePartner="{!v.isWholesalePartner}"
+      showPOCRequest="{!v.showPOCRequest}"
+      oppCountry="{!v.oppCountry}"
+      accountId="{!v.accountId}"
+    />
+  </aura:if>
+
+  <div class="slds-grid slds-wrap">
+    <div
+      class="slds-col slds-size_1-of-1 slds-align-middle slds-text-align--center slds-p-bottom_small"
+    >
+      <aura:if isTrue="{!!v.isReadOnlyProfile}">
+        <aura:if isTrue="{!and(v.isInternalRC,or(v.isOppOwnerExistInQueue,v.isMitelContact))}">
+          <lightning:button
+            variant="brand"
+            label="{!v.translationsMap.Create_Quote}"
+            iconName="utility:quote"
+            iconPosition="left"
+            onclick="{!c.redirectToQuote}"
+          />
+        </aura:if>
+        <aura:if isTrue="{!!v.isInternalRC}">
+          <lightning:button
+            variant="brand"
+            label="{!v.translationsMap.Create_Quote}"
+            iconName="utility:quote"
+            iconPosition="left"
+            onclick="{!c.redirectToQuote}"
+          />
+        </aura:if>
+        <aura:if isTrue="{!!v.isInternalRC}">
+          <button
+            class="slds-button slds-button_brand"
+            disabled="{!or(and(v.isPOCRequestExists,not(v.isSuperUser)),or(v.oppStage == '1. Qualify',v.oppStage == '2. Problem'))}"
+            onclick="{!c.showPOCRequest}"
+          >
+            {!v.translationsMap.Request_for_POC}
+          </button>
+        </aura:if>
+      </aura:if>
+    </div>
+  </div>
+  <br />
+  <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+    <thead>
+      <tr class="slds-line-height_reset">
+        <th class="" scope="col">
+          <div class="slds-truncate" title="{!v.translationsMap.Quote_Name}">
+            {!v.translationsMap.Quote_Name}
+          </div>
+        </th>
+        <th class="" scope="col">
+          <div class="slds-truncate" title="{!v.translationsMap.Status}">
+            {!v.translationsMap.Status}
+          </div>
+        </th>
+        <th scope="col">
+          <div class="slds-truncate" id="column-group-header">
+            {!v.translationsMap.Primary}
+          </div>
+        </th>
+        <th class="" scope="col">
+          <div class="slds-truncate" title="{!v.translationsMap.Package}">
+            {!v.translationsMap.Package}
+          </div>
+        </th>
+        <th class="" scope="col">
+          <div
+            class="slds-truncate"
+            title="{!v.translationsMap.License + ' (#)'}"
+          >
+            {!v.translationsMap.License + ' (#)'}
+          </div>
+        </th>
+        <th class="" scope="col">
+          <div class="slds-truncate" title="{!v.translationsMap.Payment_Term}">
+            {!v.translationsMap.Payment_Term}
+          </div>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <aura:iteration items="{!v.QuoteList}" var="eachQuote" indexVar="index">
+        <tr class="slds-hint-parent">
+          <td>
+            <div class="slds-truncate">
+              <a class="{!index}" onclick="{!c.redirectTOQuoteTool}"
+                >{!eachQuote.Name__c} ({!eachQuote.Name})</a
+              >
+            </div>
+          </td>
+          <td>
+            <div class="slds-truncate">{!eachQuote.Status__c}</div>
+          </td>
+          <td id="{!index}">
+            <lightning:input
+              type="checkbox"
+              class="{!index}"
+              checked="{!eachQuote.Primary__c}"
+              disabled="{!v.isReadOnlyProfile}"
+              onchange="{!c.updatePartnerQuotes}"
+            />
+          </td>
+          <td>
+            <div class="slds-truncate">
+              {!eachQuote.Product_Edition__r.Name}
+            </div>
+          </td>
+          <td>
+            <div class="slds-truncate">{!eachQuote.Number_of_Licenses__c }</div>
+          </td>
+          <td>
+            <div class="slds-truncate">{!eachQuote.Payment_Term__c}</div>
+          </td>
+        </tr>
+      </aura:iteration>
+    </tbody>
+  </table>
+  <aura:if isTrue="{!v.Spinner}">
+    <div class="slds-is-relative">
+      <div class="spinnerHolder">
+        <lightning:spinner
+          alternativeText="{!v.translationsMap.Loading +'...'}"
+          aura:id="loadingSpinner"
+          class="slds-hide"
+          size="medium"
+        />
+      </div>
+    </div>
+  </aura:if>
+</aura:component>

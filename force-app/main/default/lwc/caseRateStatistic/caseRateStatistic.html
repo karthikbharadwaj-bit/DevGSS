@@ -1,0 +1,85 @@
+<template>
+    <lightning-card title="Cases Statistic">
+        <div class="filter-container">
+            <div class="filter-application">
+                <div class="year-combobox">
+                    <lightning-combobox
+                        class="date-combobox"
+                        label="Date Filter: "
+                        value={applyingFilters.dateOption}
+                        options={dateFilterOptions}
+                        onchange={handleDateFilterChange}
+                    ></lightning-combobox>
+                    <c-multi-select-combobox
+                        label="'Create a Case' was used on: "
+                        name="caseOriginsOptions"
+                        select-all-option=true
+                        options={caseOriginsOptions}
+                        onchange={handleOriginsChange}
+                    ></c-multi-select-combobox>
+                </div>
+                <div class="slds-align_absolute-center slds-m-top_medium filter-buttons">
+                    <div class="slds-grid slds-gutters">
+                        <div class="slds-col">
+                            <button class={clearButtonClass} onclick={handleClearFilters} disabled={isClearDisabled}>Clear</button>
+                        </div>
+                        <div class="slds-col">
+                            <button class={applyButtonClass} onclick={handleApplyFilters} disabled={isApplyDisabled}>Apply Filters</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="year-filters">
+                <template if:true={showYearOptions}>
+                    <div class="year-filter">
+                        <div class="year-combobox">
+                            <lightning-combobox
+                                class="inner-filter"
+                                label="From"
+                                value={applyingFilters.dateRangeFrom}
+                                options={yearFromOptions}
+                                onchange={handleYearFromFilterChange}
+                            ></lightning-combobox>
+                            <lightning-combobox
+                                class="inner-filter"
+                                label="To"
+                                value={applyingFilters.dateRangeTo}
+                                options={yearToOptions}
+                                onchange={handleYearToFilterChange}
+                            ></lightning-combobox>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <table class="slds-table slds-table_bordered">
+            <thead>
+                <tr>
+                    <template for:each={tableColumns} for:item="col">
+                        <th key={col.field} class="slds-is-sortable" scope="col">
+                            <div class="cell">
+                                {col.label}
+                            </div>
+                        </th>
+                    </template>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={tableRows} for:item="row">
+                    <tr key={row.id}>
+                        <template for:each={row.cells} for:item="cell">
+                            <td key={cell.field}>
+                                <div class="cell">
+                                    {cell.value}
+                                </div>
+                            </td>
+                        </template>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+
+        
+    </lightning-card>
+</template>

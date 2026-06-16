@@ -1,0 +1,26 @@
+<aura:component>
+    <aura:handler name="change" value="{!v.fieldList}" action="{!c.init}" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="fieldList" type="List" />
+    <aura:attribute name="groupList" type="List" />
+    <aura:attribute name="formObject" type="Map" />
+    <aura:attribute name="groupName" type="String" />
+    <aura:attribute name="fieldConfig" type="Map" />
+
+    <div class="slds-p-around_small">
+        <div class="slds-grid slds-wrap slds-grid_pull-padded-small slds-grid_vertical-stretch">
+            <aura:iteration items="{!v.groupList}" var="group">
+                <div class="item slds-p-around_small">
+                    <p class="slds-text-title_caps">{!group.label || '&nbsp;'}</p>
+
+                    <div class="panel slds-m-top_x-small">
+                        <aura:iteration items="{!group.items}" var="groupItem">
+                            <c:FraudPreventionEntry fieldConfig="{!groupItem}" formObject="{!v.formObject}" settings="{!v.settings}" />
+                        </aura:iteration>
+                    </div>
+                </div>
+            </aura:iteration>
+        </div>
+    </div>
+
+</aura:component>

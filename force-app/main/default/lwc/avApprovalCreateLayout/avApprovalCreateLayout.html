@@ -1,0 +1,72 @@
+<template>
+    <div if:true={sections.length} class="slds-tabs_card">
+        <div class="slds-text-heading_medium slds-text-align_center">
+            New Approval: {recordtypename}
+        </div>
+
+        <template for:each={sections} for:item="section">
+            <div if:true={section.isShown} class="slds-section__title slds-m-top_x-small section" key={section.id}>
+                <span class="section-header-title slds-p-horizontal--small slds-truncate">{section.sectionName}
+                </span>
+            </div>
+
+            <div class="slds-grid slds-wrap" key={section.id}>
+                <template for:each={section.columns} for:item="column" key={section.id}>
+                    <div class={section.style} key={column.id}>
+                        <template for:each={column.items} for:item="field" key={column.id}>
+                            <div if:true={field.isShown} key={field.id}>
+                                <lightning-input if:true={field.isSimpleInput}
+                                                 class={field.fieldClass}
+                                                 key={field.id}
+                                                 label={field.label}
+                                                 required={field.isRequired}
+                                                 data-id={field.id}
+                                                 field-level-help={field.helpText}
+                                                 onchange={onInputChange}
+                                                 value={field.value}
+                                                 step={field.step}
+                                                 type={field.type}>
+                                </lightning-input>
+                                <lightning-input if:true={field.isCheckBox}
+                                                 class={field.fieldClass}
+                                                 key={field.id}
+                                                 label={field.label}
+                                                 required={field.isRequired}
+                                                 data-id={field.id}
+                                                 field-level-help={field.helpText}
+                                                 onchange={onInputChange}
+                                                 type={field.type}
+                                                 checked={field.value}>
+                                </lightning-input>
+                                <lightning-combobox if:true={field.isPickList}
+                                                    class={field.fieldClass}
+                                                    key={field.id}
+                                                    label={field.label}
+                                                    required={field.isRequired}
+                                                    data-id={field.id}
+                                                    field-level-help={field.helpText}
+                                                    onchange={onInputChange}
+                                                    value={field.value}
+                                                    options={field.options}>
+                                </lightning-combobox>
+                                <c-input-lookup if:true={field.isLookUp}
+                                                custom-class={field.fieldClass}
+                                                key={field.id}
+                                                label={field.label}
+                                                required={field.isRequired}
+                                                data-id={field.id}
+                                                onchange={onInputLookupChange}
+                                                value={field.value}
+                                                method="getRecords"
+                                                icon={field.icon}
+                                                placeholder={field.lookUpPlaceHolder}
+                                                params={field.lookUpParams}
+                                ></c-input-lookup>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

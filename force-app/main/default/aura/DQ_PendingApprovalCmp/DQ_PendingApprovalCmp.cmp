@@ -1,0 +1,163 @@
+<aura:component controller="DQ_PendingApprovalController"
+	implements="force:appHostable,flexipage:availableForAllPageTypes" access="global">
+
+	<!-- Attributes -->
+	<aura:attribute name="pendingApprovalList" type="List" access="PRIVATE" />
+	<aura:attribute name="approverId" type="String" access="PRIVATE" />
+	<aura:attribute name="dealQualId" type="String" access="PRIVATE" />
+	<aura:attribute name="isApprovalAction" type="Boolean" access="PRIVATE" default="false" />
+	<aura:attribute name="isForApprove" type="Boolean" access="PRIVATE" default="false" />
+	<aura:attribute name="isLoading" type="Boolean" access="PRIVATE" default="false" />
+	<aura:attribute name="columns" type="List" access="PRIVATE" />
+	<aura:attribute name="selectedDQRecords" type="List" access="PRIVATE" />
+	<aura:attribute name="isModalOpen" type="boolean" default="false" access="PRIVATE"/>
+	<aura:attribute name="bulkAction" type="String" access="PRIVATE"/>
+	<aura:attribute name="comments" type="String" access="PRIVATE"/>
+	<aura:attribute name="isDisabled" type="Boolean" default="true" access="PRIVATE"/>
+    
+
+
+	<!-- Handler -->
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	<!-- Method -->
+	<aura:method name="refreshApproverList" action="{!c.doInit}" access="PUBLIC" />
+
+	<!--<aura:if isTrue="{!not(empty(v.pendingApprovalList))}">-->
+		<aura:if isTrue="{!$Browser.formFactor == 'DESKTOP'}">
+
+			<lightning:card  title="Pending Approvals - Deal Qualification ONLY">
+				<aura:set attribute="actions">
+					<lightning:button name="Approve" label="Approve" disabled="{!v.isDisabled}"
+						variant="success" onclick="{!c.handleBtnClick}"/>
+					<lightning:button name="Reject" label="Reject" variant="destructive" 
+					disabled="{!v.isDisabled}" onclick="{!c.handleBtnClick}"/>
+				</aura:set>
+				<div class="slds-p-horizontal_small">
+					<lightning:datatable keyField="id" data="{! v.pendingApprovalList }" columns="{! v.columns }"
+					onrowselection="{! c.handleRowAction }"
+                     onrowaction="{!c.handleRowHandlerAction}"                    />
+				</div>
+
+			</lightning:card>
+			<aura:set attribute="else">
+				<lightning:card title="Pending Deal Qualification Approval">
+					<p class="slds-p-horizontal_small">
+
+						<aura:iteration items="{!v.pendingApprovalList}" var="approval">
+							<lightning:card variant="Narrow">
+								<aura:set attribute="title">
+									<header class="slds-media slds-media_center slds-has-flexi-truncate">
+
+										<div class="slds-media__figure">
+											<lightning:icon iconName="standard:event" alternativeText="Event"
+												title="Event" size="small" />
+										</div>
+										<div class="slds-media__body">
+											<h2 class="slds-card__header-title">
+												<div onclick="{! c.handleClick }" data-dqid="{!approval.oppId}">
+													<lightning:button variant="base" label="{!approval.dqName}"
+														title="{!approval.dqName}" />
+												</div>
+											</h2>
+										</div>
+									</header>
+								</aura:set>
+								<aura:set attribute="actions">
+									<lightning:buttonMenu alternativeText="Show menu" onselect="{! c.handleMenuSelect }"
+										variant="border" menuAlignment="auto"
+										class="{!approval.id + ':' + approval.dealQualId}">
+										<lightning:menuItem value="approve" label="Approve" />
+										<lightning:menuItem value="reject" label="Reject" />
+									</lightning:buttonMenu>
+								</aura:set>
+								<aura:set attribute="footer">
+
+								</aura:set>
+								<p class="slds-p-horizontal_small">
+								<div class="slds-tile__detail">
+									<dl class="slds-list_horizontal slds-wrap">
+										<!--<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Level">Level:</dt>-->
+										<dd class="slds-item_detail slds-truncate"
+											title="{!approval.level + ' - ' + approval.status}">{!approval.level} -
+											{!approval.status}</dd>
+										<!--<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Submitted Date">
+									Submitted Date:</dt>-->
+										<dd class="slds-item_detail slds-truncate" title="{!approval.submittedDate}">
+											<lightning:formattedDateTime value="{!approval.submittedDate}"
+												year="numeric" month="numeric" day="numeric" hour="2-digit"
+												minute="2-digit" />
+										</dd>
+										<!--<dt class="slds-item_label slds-text-color_weak slds-truncate" title="Reason">Reason:
+								</dt>-->
+										<dd class="slds-item_detail slds-truncate" title="{!approval.reason}">
+											<aura:if isTrue="{!approval.reason}">
+												<ul class="slds-list_dotted">
+													<aura:iteration items="{!approval.reason}" var="reason">
+														<li class="wrap">{!reason}</li>
+													</aura:iteration>
+												</ul>
+											</aura:if>
+											<div class="slds-text-body_regular wrap">
+												{!approval.reason}
+											</div>
+										</dd>
+									</dl>
+								</div>
+					</p>
+				</lightning:card>
+				</aura:iteration>
+				</p>
+				</lightning:card>
+
+
+			</aura:set>
+			<aura:set attribute="else">
+				<lightning:card>
+					<div class="slds-m-left_small slds-text-heading_small">No approval request found.</div>
+				</lightning:card>
+			</aura:set>
+		</aura:if>
+
+	<!--</aura:if>-->
+	<aura:if isTrue="{!v.isApprovalAction}">
+		<c:DQ_ApproverAction showApprovalAction="{!v.isApprovalAction}" enabledApprove="{!v.isForApprove}"
+			isUserHavePermission="{!v.isApprovalAction}" approvalRecordId="{!v.approverId}" isFromMobileAction="true"
+			dealQualId="{!v.dealQualId}" parent="{!THIS}" />
+	</aura:if>
+
+	<aura:if isTrue="{!v.isLoading}">
+		<c:SpinnerComponent />
+	</aura:if>
+	<aura:if isTrue="{!empty(v.pendingApprovalList)}">
+        No record(s) to approve.
+    </aura:if>
+	<aura:if isTrue="{!v.isModalOpen}">
+	
+		<!-- Modal/Popup Box starts here-->
+		<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+			aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+			<div class="slds-modal__container">
+				<!-- Modal/Popup Box Header Starts here-->
+				<header class="slds-modal__header">
+					<lightning:buttonIcon iconName="utility:close" onclick="{! c.closeModel }" alternativeText="close"
+						variant="bare-inverse" class="slds-modal__close" />
+					<h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.bulkAction} Selected Pending Approvals</h2>
+				</header>
+				<!--Modal/Popup Box Body Starts here-->
+				<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+					<p> 
+						<lightning:textarea name="comment" value="{!v.comments}"
+							label="Comments" placeholder="type here..."/>
+					</p>
+				</div>
+				<!--Modal/Popup Box Footer Starts here-->
+				<footer class="slds-modal__footer">
+					<lightning:button variant="neutral" label="Cancel" title="Cancel" onclick="{! c.closeModel }" />
+					<lightning:button variant="brand" label="{!v.bulkAction}" title="{!v.bulkAction}" onclick="{!c.submitDetails}" />
+				</footer>
+			</div>
+		</section>
+		<div class="slds-backdrop slds-backdrop_open"></div>
+	</aura:if>
+</aura:component>

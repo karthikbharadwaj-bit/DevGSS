@@ -1,0 +1,42 @@
+<aura:component implements="flexipage:availableForAllPageTypes,forceCommunity:availableForAllPageTypes" access="global"
+                controller="Partner_HelpController">
+   <aura:attribute name="Subject" type="String"/>
+   <aura:attribute name="EmailBody" type="String"/>
+   <aura:attribute name="EmailSent" type="Boolean" default="false"/>
+   <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+   <aura:attribute name="title" type="String" default=" "/>
+   <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+   <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <div>
+        <aura:if isTrue="{!v.EmailSent}">
+            <div class="slds-is-relative toastwrap">
+                <div class="slds-notify slds-notify_toast slds-theme_info" role="status">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">Email Sent Successfully!</h2>
+                    </div>
+                </div>
+            </div>  
+        </aura:if>
+        <!-- BZS-5042 Begins --> 
+        <div class="slds-align_absolute-center" >
+            <h2>If you require help to complete your activity within the portal complete the below form and an administrator will be in touch as soon as possible.</h2>
+        </div>
+        <br>
+        </br>
+        <!-- BZS-5042 ends --> 
+        <aura:if isTrue="{!!v.EmailSent}">
+            <div style="margin-left:20%;margin-right:20%;">
+                <lightning:card variant="Narrow" title="{!v.title}" iconName="standard:email">
+                    <div class="slds-p-around_medium">
+                        <lightning:input name="Subject" label="Subject" placeholder="type subject here..." value="{!v.Subject}"/>
+                        <lightning:inputRichText value="{!v.EmailBody}" label="Email Body" labelVisible="true" />
+                        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium">
+                            <lightning:button variant="brand" label="Send Email" iconName="utility:forward" iconPosition="right" onclick="{!c.sendEmail}"/>
+                        </div>
+                    </div>
+                </lightning:card>
+            </div>
+        </aura:if>
+    </div>
+</aura:component>

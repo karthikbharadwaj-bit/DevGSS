@@ -1,0 +1,97 @@
+<template>
+  <template if:true={shouldShowBanner}>
+    <div class="slds-is-relative carousel-container">
+      <div class="slds-grid carousel-wrapper" style={carouselWrapperStyle}>
+        <template for:each={bannerDetailsList} for:item="eventRecord">
+          <div class="slds-card carousel-item" key={eventRecord}>
+            <!-- Header Section -->
+            <header
+              class="slds-card__header slds-text-align_center slds-border_bottom slds-p-around_small slds-m-bottom_none">
+              <h2 class="slds-text-heading_large">
+                {eventRecord.type} Details
+              </h2>
+            </header>
+
+            <!-- Sub-header Section -->
+            <div class={eventRecord.titleClass}>
+              <h3 class="slds-text-heading_small">{eventRecord.title}</h3>
+            </div>
+
+            <!-- Body Section: Two Columns -->
+            <div class="slds-card__body body-style">
+              <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_3-of-4 slds-p-around_medium slds-border_right">
+                  <div class="slds-m-bottom_medium">
+                    <label class="labelClass">Status</label>
+                    <p class={eventRecord.statusClass}>{eventRecord.status}</p>
+                  </div>
+                  <div class="slds-m-bottom_medium">
+                    <label class="labelClass">Details</label>
+                    <p>
+                      <lightning-formatted-text
+                        value={eventRecord.details}
+                        linkify>
+                      </lightning-formatted-text>
+                    </p>
+                  </div>
+                  <template if:true={eventRecord.dunningMessage}>
+                    <div class="slds-m-bottom_medium">
+                      <label class="labelClass">Dunning Period Message</label>
+                      <p>
+                        <lightning-formatted-text
+                          value={eventRecord.dunningMessage}
+                          linkify>
+                        </lightning-formatted-text>
+                      </p>
+                    </div>
+                  </template>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-p-around_medium">
+                  <div class="slds-m-bottom_medium">
+                    <label class="labelClass">Start Time</label>
+                    <p>{eventRecord.startTime}</p>
+                  </div>
+                  <div class="slds-m-bottom_medium">
+                    <label class="labelClass">End Time</label>
+                    <p>{eventRecord.endTime}</p>
+                  </div>
+                  <div class="slds-m-bottom_medium">
+                    <label class="labelClass">Duration</label>
+                    <p>{eventRecord.duration}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Navigation Buttons -->
+       <div if:false={hideNavigation}>
+        <a
+          if:false={isPrevDisabled}
+          class="slds-is-absolute prev"
+          onclick={hanldePrevious}>&#10094;</a>
+        <a
+          if:false={isNextDisabled}
+          class="slds-is-absolute next"
+          onclick={hanldeNext}>&#10095;</a>
+      </div>
+
+      <!-- Navigation Circles -->
+      <div class="slds-grid slds-is-absolute carousel-nav">
+        <template
+          for:each={bannerDetailsList}
+          for:item="eventRec"
+          for:index="eventIndex">
+          <span
+            key={eventRec}
+            class={eventRec.dotClass}
+            onclick={handleDotClick}
+            data-index={eventIndex}>
+          </span>
+        </template>
+      </div>
+    </div>
+  </template>
+</template>

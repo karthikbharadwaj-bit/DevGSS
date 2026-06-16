@@ -1,0 +1,46 @@
+<apex:page sidebar="true" showHeader="true" standardController="AccountContactRole" extensions="AccountContactRoleCreationController" tabStyle="Account" lightningStylesheets="true">
+	<style>
+		.buttonClass {
+		  text-decoration:none;
+		  padding:4px;
+		}
+		.linkClass {
+		  font-weight:normal;
+		  text-decoration : none;
+		  color : #015ba7 !important
+		}
+	</style>
+	<apex:sectionHeader title="Contact Roles for {!$CurrentPage.parameters.accName}"/>
+	<apex:form id="list">
+		<apex:pageBlock title="Account Contact Role Edit">
+            <apex:pageBlockSection title="Contact Role" columns="2" collapsible="false">
+	        	<apex:inputField value="{!contactRole.ContactId}"/>
+	        	<apex:inputField id="roleSelectorId" required="true" value="{!contactRole.Role}"/>
+	        	<apex:inputField value="{!contactRole.IsPrimary}"/>
+	        </apex:pageBlockSection>
+	        <apex:pageBlockButtons location="bottom">
+	        	<!-- Save Contact Role Button -->
+	        	<apex:commandLink target="_parent" styleClass="btn buttonClass" action="{!save}" value="Save"/>
+	        	<!-- Save and New Contact Role Button -->
+	        	<apex:commandLink target="_parent" styleClass="btn buttonClass"
+                                  action="{!saveAndNew}" value="Save & New"/>
+	        	<!-- Cancel Contact Role Button -->
+	        	<apex:commandLink target="_parent" styleClass="btn buttonClass" action="{!cancel}" value="Cancel"/>
+        	</apex:pageBlockButtons>
+            <apex:pageMessages />
+            <script type="text/javascript">
+                (function(){
+                    const isCustomerAccount = '{!$CurrentPage.parameters.isCustomerAcc}';
+                    if (isCustomerAccount === 'true') {
+                        const roles = document.querySelectorAll('[id$="roleSelectorId"]')[0];
+                        for (let i = 0; i < roles.length; i++) {
+                            if (roles.options[i].value === 'Billing Support') {
+                                roles.remove(i);
+                            }
+                        }
+                    }
+                })();
+            </script>
+	    </apex:pageBlock>
+	</apex:form>
+</apex:page>

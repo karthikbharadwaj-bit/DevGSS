@@ -1,0 +1,76 @@
+<template>
+    <!-- Modal Header -->
+    <header class="slds-modal__header">
+        <h2 class="slds-modal__title slds-hyphenate">Create Jira</h2>
+    </header>
+
+    <!-- Loading State -->
+    <template if:true={isLoading}>
+        <div class="slds-modal__content slds-p-around_medium">
+            <div class="slds-align_absolute-center">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="slds-spinner slds-spinner_medium slds-spinner_brand" role="alert">
+                        <span class="slds-assistive-text">Loading</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                    <div class="slds-text-body_regular slds-m-top_small">
+                        Please wait. Jira creation in progress...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Main Content (when not loading) -->
+    <template if:false={isLoading}>
+        <!-- Existing Jira Case -->
+        <template if:true={jiraExists}>
+            <div class="slds-modal__content slds-p-around_medium">
+                <p class="slds-text-heading_small slds-align_absolute-center slds-m-bottom_medium">
+                    A Jira ticket already exists for this Case.
+                </p>
+            </div>
+
+            <footer class="slds-modal__footer slds-grid slds-grid_align-end">
+                <lightning-button label="Close" onclick={handleCancel} variant="neutral"></lightning-button>
+            </footer>
+        </template>
+
+        <!-- Access restricted -->
+        <template if:false={jiraExists}>
+            <template if:true={showAccessDenied}>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-text-color_weak slds-align_absolute-center slds-m-bottom_medium">
+                        {accessMessage}
+                    </p>
+                </div>
+                <footer class="slds-modal__footer slds-grid slds-grid_align-end">
+                    <lightning-button label="Close" onclick={handleCancel} variant="neutral"></lightning-button>
+                </footer>
+            </template>
+        </template>
+
+        <!-- Create Jira Confirm -->
+        <template if:false={jiraExists}>
+            <template if:false={showAccessDenied}>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <p class="slds-text-heading_small slds-align_absolute-center slds-m-bottom_medium">
+                        Are you sure you want to create a Jira ticket for this case?
+                    </p>
+                </div>
+
+                <footer class="slds-modal__footer slds-grid slds-grid_align-end">
+                    <lightning-button label="Cancel" onclick={handleCancel} variant="neutral"></lightning-button>
+                    <lightning-button 
+                        label="Confirm" 
+                        onclick={confirmCreation} 
+                        variant="brand" 
+                        class="slds-m-left_small" 
+                        disabled={isConfirmDisabled}>
+                    </lightning-button>
+                </footer>
+            </template>
+        </template>
+    </template>
+</template>

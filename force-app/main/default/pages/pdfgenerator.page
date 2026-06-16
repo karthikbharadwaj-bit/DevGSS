@@ -1,0 +1,261 @@
+<apex:page controller="pdfGenerator" showHeader="false" sidebar="false" standardStylesheets="false">
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        html,
+        body,
+        .main,
+        iframe {
+            height: 100%;
+        }
+        .main {
+            display: flex;
+            -webkit-flex-direction: column;
+            -ms-flex-direction: column;
+            flex-direction: column;
+        }
+        .header {
+            border-bottom: 2px solid rgb(216, 221, 230);
+            background-color: rgb(244, 246, 249);
+        }
+        .footer {
+            border-top: 2px solid rgb(216, 221, 230);
+            background-color: rgb(244, 246, 249);
+            box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.16);
+        }
+        .main .pdf {
+            position: relative;
+            flex: 1;
+        }
+        .h100 {
+            height: 100%;
+        }
+        .custom-absolute {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+
+    <apex:slds />
+
+    <div class="main slds-scope">
+        <div class="header slds-p-vertical_small slds-p-horizontal_medium">
+            <button class="slds-button slds-button_neutral" onclick="showModal();">Select Template</button>
+        </div>
+
+        <div id="pdf" class="pdf">
+            <p id="iframe-message" class="h100 slds-align_absolute-center custom-absolute slds-text-title_caps">Select available template to render pdf.</p>
+        </div>
+
+        <div class="footer slds-p-vertical_small slds-p-horizontal_medium slds-text-align_center">
+            <button id="attach" class="slds-button slds-button_brand" onclick="attachTo();" disabled="true">Attach To {!objectLabel}</button>
+        </div>
+
+        <section id="modal" tabindex="-1" class="slds-modal">
+            <div class="slds-modal__container">
+              <header class="slds-modal__header">
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Available template</h2>
+              </header>
+              <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                  <fieldset id="template-options" class="slds-form-element">
+                    <div class="slds-form-element__control">
+
+                        <apex:outputPanel rendered="{!pdfTemplateList.size == 0}">
+                            <p class="slds-text-align_center">No available templates</p>
+                        </apex:outputPanel>
+
+                        <apex:repeat value="{!pdfTemplateList}" var="template">
+                            <span class="slds-radio">
+                              <input type="radio" id="option-{!template.Id}" name="options" value="{!template.Id}" />
+                              <label class="slds-radio__label" for="option-{!template.Id}">
+                                <span class="slds-radio_faux"></span>
+                                <span class="slds-form-element__label">{!template.Name}</span>
+                              </label>
+                            </span>
+                        </apex:repeat>
+
+                    </div>
+                  </fieldset>
+
+              </div>
+              <footer class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral" onclick="closeModal();">Cancel</button>
+                <button class="slds-button slds-button_brand" onclick="closeModal(true);">Select</button>
+              </footer>
+            </div>
+        </section>
+        <div id="bg" class="slds-backdrop"></div>
+    </div>
+
+    <!-- spinner -->
+    <div id="spinner" class="slds-spinner_container slds-hide">
+        <div role="status" class="slds-spinner slds-spinner_medium">
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+    </div>
+
+    <!-- toast -->
+    <div id="toastContainer" class="slds-notify_container">
+        <div id="successToast" class="slds-hide">
+            <div class="notification">
+                <div class="slds-notify slds-notify_toast slds-theme_success" role="alert">
+                    <span class="slds-assistive-text">success</span>
+                    <span class="slds-icon_container slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                        <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                        </svg>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="message slds-text-heading_small"></h2>
+                    </div>
+                    <button onclick="closeToast();" class="slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" title="Close">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="errorToast" class="slds-hide">
+            <div class="notification">
+                <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">error</span>
+                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                        <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#error')}"></use>
+                        </svg>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="message slds-text-heading_small"></h2>
+                    </div>
+                    <button onclick="closeToast();" class="closeToast slds-button slds-button_icon slds-notify__close slds-button_icon-inverse" title="Close">
+                        <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        var objectId = '{!objectid}';
+        var templateId;
+        var templateList = JSON.parse('{!pdfTemplateListJson}');
+        if(templateList.length === 1) {
+            templateId = templateList[0].Id
+            document.getElementById('option-'+templateId).checked = true;
+            selectTemplate();
+        } else {
+            showModal();
+        }
+
+
+        function showModal() {
+            var modal = document.getElementById('modal');
+            var bg = document.getElementById('bg');
+
+            modal.classList.add('slds-fade-in-open');
+            bg.classList.add('slds-backdrop_open');
+        }
+        function closeModal(proceed) {
+            var modal = document.getElementById('modal');
+            var bg = document.getElementById('bg');
+
+            modal.classList.remove('slds-fade-in-open');
+            bg.classList.remove('slds-backdrop_open');
+
+            proceed && selectTemplate();
+        }
+        function selectTemplate() {
+            var options = document.getElementById('template-options').getElementsByTagName('input');
+
+            for(var i = 0; i < options.length; i++) {
+                console.log(options[i].value +' - '+options[i].checked);
+                if(options[i].checked) {templateId = options[i].value; break;}
+            }
+
+            var iframe = document.getElementById('iframe');
+            if( iframe ) {
+                document.getElementById('pdf').removeChild(iframe);
+            }
+
+            var iframeMessage = document.getElementById('iframe-message');
+            var attachButton = document.getElementById('attach');
+
+            if(!templateId || templateId.length < 15) {
+                iframeMessage.classList.remove('slds-hide');
+                attachButton.disabled = true;
+            } else {
+                attachButton.disabled = false;
+                iframeMessage.classList.add('slds-hide');
+                var url = '/apex/previewPDF?templateId='+templateId+'&objectid='+objectId;
+                var iframe = document.createElement("iframe");
+                iframe.setAttribute('src', url);
+                iframe.setAttribute('id', 'iframe');
+                iframe.setAttribute('width', '100%');
+                iframe.setAttribute("frameborder", "no");
+                document.getElementById('pdf').appendChild(iframe);
+            }
+        }
+
+        function attachTo() {
+            document.getElementById('spinner').classList.remove('slds-hide');
+
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.pdfGenerator.attachPdf}',
+                templateId,
+                objectId,
+                function(result, event){
+                    document.getElementById('spinner').classList.add('slds-hide');
+
+                    if (event.status) {
+                        if(result.Status === 'OK') {
+                            showMessage('success', 'Pdf has been Attached. Redirecting...');
+                            setTimeout(function() {
+                                window.location.replace('/'+objectId);
+                            }, 2000);
+                        }
+                        else showMessage('error', result.Message);
+                    } else if (event.type === 'exception') {
+                        showMessage('error', event.message + ' ' + event.where);
+                    } else {
+                        showMessage('error', event.message);
+                    }
+                },
+                {escape: true}
+            );
+        }
+
+        function showMessage(type, message) {
+            var toastId = 'defaultToast';
+
+            if(type === 'success') toastId = 'successToast';
+            if(type === 'error') toastId = 'errorToast' ;
+
+            var toastContainer = document.getElementById('toastContainer');
+            var toast = document.getElementById(toastId).firstElementChild.cloneNode(true);
+
+            toast.getElementsByClassName('message')[0].innerText = message;
+            toastContainer.prepend(toast);
+        }
+
+        function closeToast() {
+            event.toElement.parentElement.parentElement.parentElement.remove()
+        }
+    </script>
+
+
+</apex:page>

@@ -1,0 +1,43 @@
+<aura:component description="DocuSignEnvelope">
+    <!-- Attributes -->
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="envelope" type="Object"/>
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="envelopeVoidClicked" type="c:ComponentEvent"/>
+
+    <li class="slds-m-bottom_xx-small slds-p-vertical_xx-small contact">
+        <div class="slds-media slds-media_center">
+            <lightning:layout class="slds-media__body">
+                <lightning:layoutItem size="3">
+                    <p>
+                        <a href="{!'/' + v.envelope.record.Id }" target="_blank">{! v.envelope.name }</a>
+                    </p>
+                    <p class="slds-text-color_weak" title="Created Date">
+                        <lightning:formattedDateTime value="{! v.envelope.createdDate }"/>
+                    </p>
+                </lightning:layoutItem>
+                <lightning:layoutItem size="7"
+                                      class="slds-grid slds-grid_vertical-align-center slds-truncate">
+                    <p>{! v.envelope.attachmentsMessage }</p>
+                </lightning:layoutItem>
+                <lightning:layoutItem size="{! v.envelope.isVoidPending ? 2 : 1}"
+                                      class="slds-grid slds-grid_vertical-align-center slds-truncate">
+                    <p>
+                        {! v.envelope.status }
+                        <aura:if isTrue="{! v.envelope.isVoidPending }">
+                            <span class="slds-text-color--weak slds-m-left_small">(Void pending...)</span>
+                            <c:Tooltip text="Void Envelope was initiated. Refresh list to update status." />
+                        </aura:if>
+                    </p>
+                </lightning:layoutItem>
+                <aura:if isTrue="{! and(v.envelope.isVoidable, v.app.isVoidEnvelopesAllowed) }">
+                    <lightning:layoutItem size="1"
+                                          class="slds-grid slds-grid_vertical-align-center slds-grid_align-end">
+                        <c:Button label="Void" onclick="{! c.void }"/>
+                    </lightning:layoutItem>
+                </aura:if>
+            </lightning:layout>
+        </div>
+    </li>
+</aura:component>

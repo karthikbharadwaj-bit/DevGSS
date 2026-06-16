@@ -1,0 +1,134 @@
+<template>
+    <lightning-card class="slds-card slds-card_boundary headerBottomBorder" style="display:block">
+        <!-- showTable : True when its a non-restricted record -->
+        <!-- showPagination : True when one or more file records are available -->
+        <slot name="title" style="width:100%">
+            <header slot="title" class="slds-page-header" style="margin-bottom: 15px;">
+                <h1 slot="title" style="font-weight:bold;">
+                    <lightning-icon icon-name="standard:file" size="small" style="margin-right:10px;"></lightning-icon>
+                    Notes and Attachments
+                </h1>
+                <!-- CRM-5858 - Introduction of Custom Notes in this component - Start -->
+                <template if:true={showTable}>
+                    <h3 style="float:right !important; margin-top:-27px;">
+                        <lightning-button label="New Note" onclick={openModal}></lightning-button>
+                    </h3>
+                </template>
+            </header>
+        </slot>
+        <template if:true={isModalOpen}>
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-02" aria-modal="true"
+                aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close" onclick={closeModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" variant="inverse"
+                                size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 id="modal-heading-02" class="slds-text-heading_medium slds-hyphenate">New Custom Note</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-2">
+                        <lightning-input label="Title" value={noteTitle} onchange={handleTitleChange}
+                            placeholder="Untitled Note"></lightning-input>
+                        <br>
+                        Content
+                        <br>
+                        <lightning-input-rich-text value={noteContent} onchange={handleContentChange}
+                            placeholder="Enter a note here.."></lightning-input-rich-text>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <button class="slds-button slds-button_neutral" onclick={closeModal}
+                            title="Cancel">Cancel</button>
+                        <button class="slds-button slds-button_brand" onclick={createCustomNoteJS}
+                            title="Create">Create</button>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+        <!-- CRM-5858 - Introduction of Custom Notes in this component - End -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small" variant="brand"></lightning-spinner>
+        </template>
+        <!-- CRM-5857 - Drag and Drop Area Expansion - Start -->
+        <template if:true={showTable}>
+            <lightning-layout-item size="12">
+                <lightning-file-upload label="" name="fileUploader" record-id={recordId}
+                    onuploadfinished={handleUploadFinished} class="file-selector-large" multiple>
+                </lightning-file-upload>
+            </lightning-layout-item>
+        </template>
+        <!-- CRM-5857 - Drag and Drop Area Expansion - End -->
+                 <!--CRM-5815-Pagination for this EU Component - START-->
+        <template if:true={showpagination}>
+            <div class="slds-float_right slds-p-right_xx-small">
+                <lightning-layout-item flexibility="auto" class="slds-row" size="2" padding-right="around-small">
+                    <lightning-layout>
+                        Records Per Page:
+                    </lightning-layout>
+                    <lightning-layout>
+                        <select class="slds-select" id="recordsPerPage1" onchange={handleRecordsPerPage}>
+                            <template for:each={pageSizeOptions} for:item="option">
+                                <option key={option} value={option}>{option}</option>
+                            </template>
+                        </select>
+                    </lightning-layout>
+                </lightning-layout-item>
+            </div>
+            <br /><br /><br />
+        </template>
+         <!--CRM-5815-Pagination for this EU Component - End-->
+        <template if:true={showpagination}>
+            <div class="slds-var-p-around_small">
+                <lightning-datatable key-field="id" class="file-selector-larger" data={dataList1} hide-checkbox-column
+                    columns={columnsList} onrowaction={handleRowAction} column-widths-mode="auto">
+                </lightning-datatable>
+            </div>
+            <div class="slds-clearfix">
+                <br />
+                <div class="slds-float_right paginationbuttons">
+                    <lightning-button disabled={bDisableLast} icon-name="utility:chevronright" label="Next"
+                        alternative-text="Next" onclick={nextPage} class="slds-p-horizontal_x-small" variant="brand"
+                        icon-position="right"></lightning-button>
+                </div>
+                <div class="slds-float_right paginationbuttons">
+                    <lightning-button disabled={bDisableFirst} icon-name="utility:chevronleft" label="Prev"
+                        alternative-text="Previous" onclick={previousPage} icon-position="left" variant="brand">
+                    </lightning-button>
+                </div>
+                <p class="slds-truncate slds-m-top_x-small">&nbsp;Displaying {recordStart}-{recordEnd} of
+                    {totalRecords} | Page
+                    {pageNumber} of {totalPages}</p>
+            </div>
+        </template>
+
+
+        <template if:false={showTable}>
+            <div class="slds-align_absolute-center">
+                No Document to display
+            </div>
+        </template>
+    </lightning-card>
+    <template if:true={isDialogVisible}>
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+            aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container" style="max-width:30rem !important">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirmation</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <p>Are you sure to delete this file?</p>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning-button style="float:left;" variant="neutral" name="cancel" label="Cancel" title="Cancel"
+                        onclick={deleteFile}></lightning-button>
+                    <lightning-button style="float:right;" variant="brand" name="confirm" label="Delete" title="Delete"
+                        onclick={deleteFile}></lightning-button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+</template>

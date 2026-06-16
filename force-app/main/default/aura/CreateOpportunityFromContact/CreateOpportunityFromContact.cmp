@@ -1,0 +1,62 @@
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader" access="global" controller="OpportunityCreationFormController">
+	<ltng:require styles="{!$Resource.multilineToastCSS}" />
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+
+    <aura:attribute name="isSubmit" type="Boolean" default="true"/>
+    <aura:attribute name="contactRecord" type="Contact"/>
+    <aura:attribute name="contactCenterUsers" type="String"/>
+    <aura:attribute name="engageDigitalUsers" type="String"/>
+    <aura:attribute name="engageVoiceUsers" type="String"/>
+    <aura:attribute name="globalOfficeUsers" type="String"/>
+    <aura:attribute name="officeUsers" type="String"/>
+    <aura:attribute name="rcVideoUsers" type="String"/>
+
+    <aura:html tag="style">
+        .cuf-content {
+        padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+        padding: 0rem !important;
+        }       
+        .slds-modal__content{
+        overflow-y:hidden !important;
+        height:unset !important;
+        max-height:unset !important;
+        }
+    </aura:html>    
+        <!-- Header -->
+        <div class="modal-header slds-modal__header slds-size_1-of-1">
+            <h4 class="title slds-text-heading–medium">Create Opportunity - Enter Forecasted Users</h4>
+        </div>
+        
+        <div class="slds-align_absolute-center slds-grid slds-gutters">
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted Contact Center Users" name="input1" value="{!v.contactCenterUsers}"/></div>
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted Engage Digital Users" name="input2" value="{!v.engageDigitalUsers}"/></div>
+        </div>
+        <div class="slds-align_absolute-center slds-grid slds-gutters">
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted Engage Voice Users" name="input3" value="{!v.engageVoiceUsers}"/></div>
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted Global Office Users" name="input4" value="{!v.globalOfficeUsers}"/></div>        
+        </div>
+        <div class="slds-align_absolute-center slds-grid slds-gutters">
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted Office Users" name="input5" value="{!v.officeUsers}"/></div>
+            <div class="slds-col slds-size_1-of-2"><lightning:input label="Forecasted RingCentral Video Users" name="input6" value="{!v.rcVideoUsers}"/></div>
+        </div>
+        <br/>
+
+        <!-- Footer -->
+        <div class="modal-footer slds-modal__footer slds-size_1-of-1">
+            <lightning:button label="Cancel" title="Cancel" onclick="{!c.handleCancel}"/>
+            <lightning:button variant="brand" label="Create Opportunity" title="Create Opportunity" onclick="{!c.handleSubmit}" />
+        </div>
+    
+    <aura:if isTrue="{!v.showLoading}">
+        <div>Creating Opportunity</div>
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+            </div>
+        </div>
+    </aura:if>
+</aura:component>

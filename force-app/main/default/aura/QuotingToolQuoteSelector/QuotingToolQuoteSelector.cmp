@@ -1,0 +1,185 @@
+<aura:component controller="QuotingToolQuoteApexController" extends="c:QuotingToolHelper">
+    <!-- shared attributes -->
+    <aura:attribute name="isCC" type="Boolean" />
+    <aura:attribute name="isProserv" type="Boolean"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="config" type="Map"/>
+    <aura:attribute name="settings" type="Map"/>
+    <aura:attribute name="state" type="Map"/>
+    <aura:attribute name="cartItems" type="List"/>
+    <aura:attribute name="quotes" type="Quote[]"/>
+    <aura:attribute name="proServQuote" type="Quote" description="Quote with ProServ RecordType on Opportunity"/>
+    <aura:attribute name="ccProServQuote" type="Quote" description="Quote with CC ProServ RecordType on Opportunity"/>
+    <aura:attribute name="isCartChanged" type="Boolean"/>
+    <aura:attribute name="isHasCCActiveEntitlement" type="Boolean" default="false"/>
+    <aura:attribute name="isSummaryChanged" type="Boolean" default="false"
+                    description="Indicates that there is unsaved chages in summary"/>
+    <aura:attribute name="isExpDateValid" type="Boolean" default="false"
+                    description="Indicates that new expiration date is valid"/>
+    <aura:attribute name="primaryQuote" type="Quote" description="Quote with primary flag on Opportunity"/>
+
+    <!-- component attributes -->
+    <aura:attribute name="currentQuoteId" type="String"/>
+    <aura:attribute name="opportunityId" type="String"/>
+    <aura:attribute name="legalApprovalId" type="String"/>
+    <aura:attribute name="primaryButtonDisabled" type="Boolean" default="true"/>
+    <aura:attribute name="cartIsChanged" type="Boolean" default="false"/>
+    <aura:attribute name="targetAction" type="String"/>
+    <aura:attribute name="targetQuoteId" type="String"/>
+    <aura:attribute name="modalCloseButton" type="Map" default="{disabled:false}"/>
+    <aura:attribute name="oldQuote" type="Quote"/>
+    <aura:attribute name="quote" type="Quote"/>
+    <aura:attribute name="user" type="User"/>
+    <aura:attribute name="effectiveNoOfEmployeesRange" type="String"/>
+    <aura:attribute name="addOnsValues" type="String[]"/>
+    <aura:attribute name="accomodationValues" type="String[]"/>
+    <aura:attribute name="featureAddOnsValues" type="String[]"/>
+    <aura:attribute name="legalEngagementTypeValues" type="String[]"/>
+    <aura:attribute name="changeOrderTypeValues" type="String[]"/>
+    <aura:attribute name="docuSignComponent" type="Aura.Component"/>
+    <!-- registered events -->
+    <aura:registerEvent name="getQuote" type="c:QuotingToolGetQuoteEvent"/>
+    <aura:registerEvent name="newQuote" type="c:QuotingToolNewQuoteEvent"/>
+    <aura:registerEvent name="deleteQuote" type="c:QuotingToolDeleteQuoteEvent"/>
+    <!-- handlers -->
+    <aura:handler event="c:QuotingToolOpportunityInitEvent" action="{!c.loadOptions}"/>
+    <aura:handler event="c:QuotingToolModalResponseEvent" action="{!c.modalResponse}"/>
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}"/>
+    <aura:handler event="c:QuotingToolPropagateUserEvent" action="{!c.propagateUser}"/>
+    <!-- cart actions -->
+    <aura:handler event="c:QuotingToolDiscardCardEvent" action="{!c.discardCart}"/>
+    <aura:handler event="c:QuotingToolCartSaveCompleteEvent" action="{!c.cartSaved}"/>
+    <!-- quote actions -->
+    <aura:handler event="c:QuotingToolQuoteDeletedEvent" action="{!c.quoteDeleted}"/>
+    <aura:handler event="c:QuotingToolDiscardQuoteEvent" action="{!c.discardQuote}"/>
+    <aura:handler event="c:QuotingToolQuoteSaveCompleteEvent" action="{!c.quoteSaved}"/>
+    <!-- markup -->
+    <div class="slds-grid slds-grid--vertical-align-end management">
+
+        <!-- Quote selector -->
+        <div class="slds-col slds-col--padded slds-form-element quotes">
+            <label class="slds-form-element__label">Quotes</label>
+            <div class="slds-form-element__control">
+                <div class="slds-select_container">
+                    <ui:inputSelect aura:id="quoteSelector" class="slds-select" change="{!c.changeQuote}"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="slds-col slds-col--padded slds-grid">
+            <!-- New Quote -->
+            <div class="slds-show_inline-block slds-hide" aura:id="newQuoteButtonWrapper">
+                <lightning:button label="New Quote"
+                                  variant="neutral"
+                                  iconName="utility:add"
+                                  iconPosition="left"
+                                  onclick="{!c.newQuote}"
+                                  aura:id="newQuoteButton"/>
+            </div>
+            <!-- Primary Quote -->
+            <span data-buttonauraid="primaryButton"
+                  onmouseover="{!c.showPopover}"
+                  onmouseout="{!c.hidePopover}">
+                    <button class="slds-button slds-button--neutral slds-m-left--xx-small"
+                            onclick="{!c.makePrimary}"
+                            disabled="{!v.primaryButtonDisabled}"
+
+                            aura:id="primaryButton">
+                    <lightning:spinner variant="brand" size="small"
+                                       class="button-spinner" alternativeText="Making quote primary"/>
+                        {! (v.quote.isPrimary__c) ? 'Primary Quote' : 'Make Primary' }
+                </button>
+            </span>
+
+            <aura:if isTrue="{!or(!v.isCC, and(v.isCC, v.Wizard.settings.isTelus))}">
+                <div class="slds-show_inline-block" aura:id="approvalButtons">
+                    <c:QuotingToolApprovals Wizard="{!v.Wizard}"/>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!and(and(v.isCC, and(
+                                    and(not(v.Wizard.opportunity.isBTBusiness),
+                                        not(v.Wizard.opportunity.isVodafone)),
+                                    not(v.Wizard.opportunity.isTelus))),
+                                and(v.Wizard.currentQuote, !v.isHasCCActiveEntitlement))}">
+                <div>
+                    <c:QuotingToolFreeServiceCredit Wizard="{!v.Wizard}"
+                                                    quote="{!v.quote}"
+                                                    isCartChanged="{!v.isCartChanged}"/>
+                </div>
+            </aura:if>
+
+            <div class="slds-show_inline-block" aura:id="engageButtons">
+
+                <c:QuotingToolEngageLegalDesk aura:id="engageLegalDesk"
+                                              quote="{!v.quote}"
+                                              quotes="{!v.quotes}"
+                                              primaryQuote="{!v.primaryQuote}"
+                                              legalApprovalId="{!v.legalApprovalId}"
+                                              opportunityId="{!v.opportunityId}"
+                                              addOnsValues="{!v.addOnsValues}"
+                                              accomodationValues="{!v.accomodationValues}"
+                                              featureAddOnsValues="{!v.featureAddOnsValues}"
+                                              legalEngagementTypeValues="{!v.legalEngagementTypeValues}"
+                                              changeOrderTypeValues="{!v.changeOrderTypeValues}"
+                                              state="{!v.state}"
+                                              settings="{!v.settings}"
+                                              Wizard="{! v.Wizard }"/>
+
+                <c:QuotingToolEngageProServ quote="{!v.quote}"
+                                            isCC="{!v.isCC}"
+                                            user="{!v.user}"
+                                            numberOfDls="{!v.numberOfDls}"
+                                            state="{!v.state}"
+                                            quotes="{!v.quotes}"
+                                            settings="{!v.settings}"
+                                            proServQuote="{!v.proServQuote}"
+                                            ccProServQuote="{!v.ccProServQuote}"
+                                            primaryQuote="{!v.primaryQuote}"
+                                            Wizard="{! v.Wizard }"/>
+
+            </div>
+
+            <c:Button label="{! or(v.Wizard.opportunity.isHasDocuSignActiveEnvelopes, v.Wizard.opportunity.isNewEnvelopePending) ? 'Manage DocuSign' : 'Send with DocuSign' }"
+                     aura:id="sendWithDocuSignButton"
+                     onclick="{! c.sendWithDocuSign }"/>
+
+        </div>
+
+        <div class="{! and(v.Wizard.settings.featureToggle.NewChangeOrderFlow__c, v.quote.Opportunity.Parent_Order__c != null,
+            or(v.quote.RecordType.Name == v.Wizard.settings.CC_PROSERV_QUOTE_RT_NAME, v.quote.RecordType.Name == v.Wizard.settings.PROSERV_QUOTE_RT_NAME)) ? 'slds-hide' : 'slds-show'}">
+            <div class="slds-col slds-col--padded slds-no-flex slds-form-element">
+                <div class="slds-form-element">
+                    <span onmouseover="{!c.showPopover}"
+                        onmouseout="{!c.hidePopover}"
+                        data-buttonauraid="deleteButton"
+                        class="slds-show_inline-block">
+                        <lightning:button label="Delete"
+                                        onclick="{!c.removeQuote}"
+                                        aura:id="deleteButton"/>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="{! and(v.Wizard.settings.featureToggle.NewChangeOrderFlow__c, v.quote.Opportunity.Parent_Order__c != null,
+                       or(v.quote.RecordType.Name == v.Wizard.settings.CC_PROSERV_QUOTE_RT_NAME, v.quote.RecordType.Name == v.Wizard.settings.PROSERV_QUOTE_RT_NAME)) ? 'slds-show' : 'slds-hide'}">
+            <div class="slds-col slds-col--padded slds-no-flex slds-form-element">
+                <div class="slds-form-element">
+                    <span onmouseover="{!c.showPopover}"
+                        onmouseout="{!c.hidePopover}"
+                        data-buttonauraid="cancelChangeOrderButton"
+                        class="slds-show_inline-block">
+                        <lightning:button label="Cancel change order"
+                                        onclick="{!c.cancelQuote}"
+                                        aura:id="cancelChangeOrderButton"/>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {! v.docuSignComponent }
+</aura:component>

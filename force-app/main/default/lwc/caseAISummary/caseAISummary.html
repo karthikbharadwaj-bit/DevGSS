@@ -1,0 +1,127 @@
+<template>
+    <lightning-card>
+
+        <!-- Collapsed header (Show …  |  Powered by AI) -->
+        <template if:false={isVisible}>
+            <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header">
+                <div class="toggle-label" onclick={toggleContent}>
+                    Show
+                    <lightning-icon icon-name="utility:chevrondown" size="x-small"
+                        class="chevron-icon"></lightning-icon>
+                </div>
+                <div class="powered-ai">Powered by <strong>AI</strong> ✨</div>
+            </div>
+        </template>
+
+        <!-- Expanded content -->
+        <template if:true={isVisible}>
+
+            <!-- Loading state -->
+            <template if:true={isLoading}>
+                <div
+                    class="slds-p-around_medium slds-align_absolute-center slds-grid slds-grid_vertical slds-text-align_center">
+                    <lightning-spinner size="small" alternative-text="Loading summary..."></lightning-spinner>
+                    <div class="fetching-message">🔄 Fetching AI-Powered Summary…</div>
+                    <div class="loading-note">⏳ Hang tight, AI is generating your insights…</div>
+                </div>
+            </template>
+
+            <!-- Loaded state -->
+            <template if:false={isLoading}>
+
+                <!-- AT&T dedicated banner -->
+                <template if:true={isHighRiskBrandCase}>
+                    <c-case-banner-att class="slds-m-horizontal_small slds-m-bottom_medium" record-id={recordId}
+                        max-width="760px">
+                    </c-case-banner-att>
+                </template>
+
+                <!-- Existing banner for non-AT&T -->
+                <template if:false={isHighRiskBrandCase}>
+                    <c-case-banner class="slds-m-horizontal_small slds-m-bottom_medium" record-id={recordId}
+                        max-width="760px">
+                    </c-case-banner>
+                </template>
+
+
+                <!-- Bullets -->
+                <ul class="custom-list slds-p-horizontal_small">
+                    <template for:each={visiblePoints} for:item="point">
+                        <li key={point}>{point}</li>
+                    </template>
+                </ul>
+
+                <template if:false={visiblePoints.length}>
+                    <div class="slds-p-around_medium">
+                        <lightning-formatted-text value="Summary not available."></lightning-formatted-text>
+                    </div>
+                </template>
+
+                <!-- Footer: left link, right thumbs -->
+                <div class="cta-row slds-p-horizontal_small slds-m-top_large">
+
+                    <div class="cta-center">
+                        <span class="inline-actions">
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                alternative-text="Like this Summary" title="Like this Summary" onclick={submitLike}
+                                selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+
+                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                selected-icon-name="utility:dislike" alternative-text="Dislike this Summary"
+                                title="Dislike this Summary" onclick={submitDislike} selected={summaryIsDisliked}
+                                variant={dislikeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+
+                            <span class="no-border-fix">
+                                <lightning-button-icon-stateful icon-name={copyIcon}
+                                    selected-icon-name="utility:copy" alternative-text="Copy Summary"
+                                    title="Copy summary" onclick={handleCopy}>
+                                </lightning-button-icon-stateful>
+                            </span>
+                        </span>
+
+                        <!-- row below thumbs -->
+                        <template if:false={summaryReviewed}>
+                            <template if:false={showFeedback}>
+                                <a class="feedback-link" href="javascript:void(0);" onclick={toggleFeedback}>Give
+                                    Feedback</a>
+                            </template>
+                        </template>
+                        <template if:true={summaryReviewed}>
+                            <span class="thanks-badge">Thanks for the review</span>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Feedback row -->
+                <template if:true={showFeedback}>
+                    <div class="slds-p-horizontal_small slds-m-top_small feedback-row">
+                        <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…" value={feedback}
+                            oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}>
+                    </textarea>
+                        <div class="feedback-actions">
+                            <lightning-button class="btn-compact" variant="brand" label="Send" onclick={onSendFeedback}
+                                disabled={sendDisabled}>
+                            </lightning-button>
+                            <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                onclick={onCancelFeedback}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </template>
+
+            </template>
+
+            <!-- Bottom Hide row (like Similar Cases) -->
+            <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header bottom-toggle">
+                <div class="toggle-label" onclick={toggleContent}>
+                    Hide
+                    <lightning-icon icon-name="utility:chevronup" size="x-small" class="chevron-icon"></lightning-icon>
+                </div>
+                <div class="slds-text-color_weak" style="font-size: 0.8rem;">Powered by <strong>AI</strong> ✨</div>
+            </div>
+        </template>
+
+    </lightning-card>
+</template>

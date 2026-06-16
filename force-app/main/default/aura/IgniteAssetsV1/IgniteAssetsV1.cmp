@@ -1,0 +1,38 @@
+<aura:component
+  implements="forceCommunity:availableForAllPageTypes"
+  access="global"
+>
+  <aura:attribute name="Show" type="Boolean" default="true" />
+  <aura:attribute name="Promo" type="Boolean" default="false" />
+  <aura:attribute name="ShowDes" type="Boolean" default="true" />
+  <aura:attribute name="AssetLabel" type="String" />
+  <aura:attribute name="ImageURL" type="String" />
+  <aura:attribute name="PublicURL" type="String" />
+  <aura:attribute name="Title" type="String" />
+  <aura:attribute name="Description" type="String" />
+
+  <aura:if isTrue="{!v.Show}">
+      <div class="my-rounded2">
+        <div class="bg-image1">
+          <div class="cat2-cont">
+            <!-- Label -->
+            <aura:if isTrue="{!v.Promo}">
+              <div class="cat1-label">{!v.AssetLabel}</div>
+            </aura:if>
+          </div>
+          <!-- Image -->
+          <a target="_blank" href="{!v.PublicURL}">
+            <img src="{!'./sfsites/c/file-asset/'+ v.ImageURL}" />
+          </a>
+        </div>
+        <div class="text-link1">
+          <!-- Title and Link -->
+          <a target="_blank" class="inactive bg-text" href="{!v.PublicURL}">
+            <aura:unescapedHtml value="{!v.Title}" /> &rarr;</a
+          ><aura:if isTrue="{!v.ShowDes}">
+            <p><aura:unescapedHtml value="{!v.Description}"/></p>
+          </aura:if>
+        </div>
+      </div>
+  </aura:if>
+</aura:component>

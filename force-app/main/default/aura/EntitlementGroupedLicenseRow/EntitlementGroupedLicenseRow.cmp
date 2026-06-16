@@ -1,0 +1,98 @@
+<aura:component>
+    <aura:attribute name="data" type="Map"/>
+    <aura:attribute name="isShowDetails" type="Boolean" default="false"/>
+    <aura:attribute name="display" type="Map"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <!-- Main row for grouped license -->
+    <tr class="entitlement-row slds-border--top" onclick="{!c.toggleDetails}">
+        <th scope="row">
+            <!-- Expand/Collapse Button -->
+            <aura:if isTrue="{!not(empty(v.data.childLicenses))}">
+                <lightning:icon class="arrow-icon left-padding"
+                    iconName="{!v.isShowDetails ? 'utility:down' : 'utility:right'}" size="xx-small"
+                    alternativeText="{!v.isShowDetails ? 'Collapse' : 'Expand'}"/>
+            </aura:if>
+
+
+            <!-- Name with grouping indicator -->
+            <div>
+                <span class="slds-truncate left-padding">{!v.display.description}</span>
+                <aura:if isTrue="{!v.data.isGrouped}">
+                    <span> ({!v.data.childLicenses.length})</span>
+                </aura:if>
+            </div>
+        </th>
+
+        <!-- Start Date -->
+        <td>
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.Start_Date__c}"/>
+            </div>
+        </td>
+
+        <!-- End Date -->
+        <td>
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.End_Date__c}"/>
+            </div>
+        </td>
+
+        <!-- Charge Term -->
+        <td>
+            <div class="slds-truncate" title="{!v.display.chargeTerm}">{!v.display.chargeTerm}</div>
+        </td>
+
+        <!-- Quantity -->
+        <td>
+            <div class="slds-truncate" title="{!v.display.quantity}">{!v.display.quantity}</div>
+        </td>
+
+        <!-- List Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.price, false) }">
+                    <c:outputCurrency value="{!v.display.price}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Discount -->
+        <td>
+            <aura:if isTrue="{! notequals(v.display.discount, false) }">
+                <c:outputCurrency value="{!v.display.discount}"
+                                  currencyCode="{!v.display.discountCurrencyCode}"
+                                  precision="{!v.display.currencyPrecision}"/>
+            </aura:if>
+        </td>
+
+        <!-- Your Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.yourPrice, false) }">
+                    <c:outputCurrency value="{!v.display.yourPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Total Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.totalPrice, false) }">
+                    <c:outputCurrency value="{!v.display.totalPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+                </aura:if>
+            </div>
+        </td>
+    </tr>
+
+    <!-- Details section for grouped licenses -->
+    <aura:if isTrue="{!and(v.isShowDetails, v.data.isGrouped, !empty(v.data.childLicenses))}">
+        <aura:iteration items="{!v.data.childLicenses}" var="childLicense" indexVar="index">
+            <c:EntitlementGroupedLicenseRow data="{!childLicense}"/>
+        </aura:iteration>
+    </aura:if>
+</aura:component>

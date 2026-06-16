@@ -1,0 +1,87 @@
+<aura:component controller="Quote_PartnerQuoteEngageLegalController" access="global" implements="flexipage:availableForAllPageTypes,force:appHostable">
+
+<!--Functional Public Attributes-->
+<aura:attribute name="IsOpenInCommunity" type="Boolean" />
+<aura:attribute access="public" name="showUploadFile" type="boolean" default="false"/>
+<aura:attribute access="public" name="accept" type="List" default="['.jpg', '.jpeg', '.docx', '.pdf', '.ppt', '.pptx', '.xls', '.xlsx', '.gif','.png', '.csv']"/>
+<aura:attribute access="public" name="multiple" type="Boolean" default="true"/>
+<aura:attribute access="public" name="disabled" type="Boolean" default="false"/>
+<aura:attribute access="public" name="uploadedFiles" type="List" default=""/>
+<aura:attribute access="public" name="sObjectAttachedFiles" type="List" default="[]"/>
+<aura:attribute access="public" name="sObjectName" type="String" default=""/>
+<aura:attribute access="public" name="sObjectId" type="String" default=""/>
+<aura:attribute name="partnerQuoteId" type="String" />
+<!-- Used for navigation purpose -->
+<lightning:navigation aura:id="navService"/>
+
+<aura:handler name="init" value="{!this}" action="{!c.getExistingFiles}"/>
+    
+<!-- <lightning:button label="Cancel File Upload" variant="brand" onclick="{!c.handleCancelUpload}"/> -->
+<lightning:fileUpload name="fileUploader"
+                          multiple="{!v.multiple}"
+                          accept="{!v.accept}"
+                          recordId="{!v.partnerQuoteId}"
+                          onuploadfinished="{!c.handleUploadFinished}"/>
+
+<!-- Responsive Layout to show File Cards on the Modal -->
+<lightning:layout multipleRows="true">
+    
+    <aura:if isTrue="{!v.IsOpenInCommunity}">    
+        <aura:iteration items="{!v.sObjectAttachedFiles}" var="file">
+            <lightning:layoutItem padding="around-small">
+                <lightning:fileCard fileId="{!file.Id}" description="{!file.Title}"/>
+            </lightning:layoutItem>
+        </aura:iteration>
+    </aura:if>
+    	
+</lightning:layout>
+    <aura:if isTrue="{!!v.IsOpenInCommunity}">
+       <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+           <thead>
+               <tr class="slds-text-title_caps">
+                   <th scope="col">
+                       <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                   </th>
+                   <th scope="col">
+                       <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                   </th>
+                   <th scope="col">
+                       <strong><div class="slds-truncate" title="Created Date">Created Date</div></strong>
+                   </th>
+                   
+               </tr>
+           </thead>
+           <tbody>
+               <aura:iteration items="{!v.sObjectAttachedFiles}" var="att">
+                   <tr>
+                       <th scope="row" data-label="Title">
+                           <div class="slds-truncate" title="{!att.Title}">
+                               <a aria-live="assertive"
+                                  class="slds-text-link"
+                                  target="_blank"
+                                  href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ att.LatestPublishedVersionId}"
+                                  download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!att.Title}</a>
+                               
+                           </div>
+                       </th>
+                       
+                       <th scope="row" data-label="Attachment Type">
+                           <div class="slds-truncate" title="{!att.FileType}">
+                               {!att.FileType}
+                           </div>
+                       </th>
+                       <th scope="row" data-label="Attachment Type">
+                           <div class="slds-truncate" title="{!att.CreatedDate}">
+                               <ui:outputDate value="{!att.CreatedDate}"/>
+                           </div>
+                       </th>
+                       
+                   </tr>
+               </aura:iteration>
+           </tbody>
+        </table>
+    </aura:if>
+
+
+
+</aura:component>

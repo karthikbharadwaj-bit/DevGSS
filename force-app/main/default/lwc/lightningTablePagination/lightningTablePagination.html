@@ -1,0 +1,112 @@
+<!-- 
+*LWC Component Name	: lightningTablePagination
+*Parent Component Name : recordSearcher
+*Description 	: This is a custom lightning data table with pagination. 
+*params         : records= Send the records for the data table
+                  columns= Columns of the lightning Data table
+                  recordsperpage - specify the number of records should be loaded per page
+                  onactions - rowaction
+                    
+*Developer Name 	: Manovasanth Balasankar
+Modification History:
+*--------------------------------------------------------------------------------------------------------------------
+Date              User Story#                   Developer Name                    Changes done
+*-------------------------------------------------------------------------------------------------------------------
+05/04/2022         CRM 4864                   Manovasanth Balasankar            New LWC
+-->
+<template>
+    <div class="slds-m-aroung_small slds-align_absolute-center">
+        <lightning-spinner if:true={isLoading} alternative-text="Loading" size="small"></lightning-spinner>
+        <div slot="actions">
+            <lightning-button
+            variant="neutral"
+            title="first"
+            label="First"
+            class="slds-float_left"
+            icon-name="utility:chevronleft"
+            icon-position="left"
+            onclick={handleClick}
+            ></lightning-button>
+        &nbsp;
+            <lightning-button
+            variant="neutral"
+            title="previous"
+            class="slds-float_left"
+            label="Previous"
+            icon-name="utility:chevronleft"
+            icon-position="left"
+            onclick={handleClick}
+            ></lightning-button>
+        <template if:true={pagelinks}>
+            <lightning-button-group>
+                <template for:each={pagelinks} for:item="page">
+                <lightning-button
+                    key={page}
+                    label={page}
+                    onclick={handlePage}
+                ></lightning-button>
+                </template>
+            </lightning-button-group>
+        </template>
+            <lightning-button
+            variant="neutral"
+            title="next"
+            class="slds-float_right"
+            label="Next"
+            icon-name="utility:chevronright"
+            icon-position="right"
+            onclick={handleClick}
+            ></lightning-button>
+            &nbsp;
+            <lightning-button
+            variant="neutral"
+            title="last"
+            class="slds-float_right"
+            label="Last"
+            icon-name="utility:chevronright"
+            icon-position="right"
+            onclick={handleClick}
+            ></lightning-button>
+        </div>
+    </div>
+    <div class="slds-m-top_small"></div>
+        <h2
+        class="slds-m-aroung_small slds-align_absolute-center"
+        style="color: black;"
+        >
+        Current Page No:
+        <strong>&nbsp;{pageNo}/{totalPages}&nbsp;</strong> displaying records : &nbsp;
+        <template if:true={end}>
+              {endRecord}/{totalRecords}
+        </template>
+        <template if:false={end}>
+             ({startRecord}-{endRecord})/{totalRecords}
+        </template>
+        </h2>
+        <div class="slds-m-top_small"></div>
+        <div class="slds-m-aroung_small">
+        <template if:true={showTable}>
+            <div style="height: 400px;" >
+            <lightning-spinner if:true={isLoading} alternative-text="Loading" size="small"></lightning-spinner>
+            <template if:false={isLoading}>
+            <lightning-datatable
+                key-field="Id"
+                data={recordsToDisplay}
+                
+                hide-checkbox-column
+                columns={columns}
+                onrowaction={handleRowAction}
+                default-sort-direction={defaultSortDirection}
+                sorted-direction={sortDirection}
+                sorted-by={sortedBy}
+                wrap-text-max-lines="3"
+                onsort={onHandleSort}
+                draft-values={draftValues} 
+            >
+           
+            </lightning-datatable>
+            </template>
+             </div>
+        </template>
+        </div>
+</template>

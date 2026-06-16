@@ -1,0 +1,62 @@
+<template>
+    <div class="chat-container">
+       
+        <div style="display: flex; align-items: center; padding: 10px;">
+            <img src={botImage} alt="Bot" style="height: 35px; width: 35px; margin-right: 10px;" />
+            <h1 style="font-size: 18px;"><b>Support Agent AI Assist</b></h1>
+        </div>
+ 
+        <!-- Chat scrollable area -->
+        <div class="slds-box slds-box_xx-small slds-var-m-horizontal_xx-small slds-theme_default slds-scrollable_y slds-chat chat">
+            <div class="slds-text-heading_small slds-text-align_center slds-m-bottom_small" style="padding: 20px 0;">
+                How may I assist you? 😊
+            </div>          
+            <ul class="slds-chat-list">
+                <template for:each={conversation} for:item="message">
+                    <li key={message.id} class="slds-chat-listitem slds-var-m-bottom_small">
+                        <div class={message.containerClass}>
+                            <div class="slds-chat-message__text slds-text-align_left">
+                                <template if:true={message.isBot}>
+                                    <!-- Using innerHTML for dynamic HTML content -->
+                                    <div class={message.textClass} lwc:dom="manual" data-id={message.id}></div>
+                                </template>
+                                <template if:false={message.isBot}>
+                                    <span class={message.textClass}>{message.text}</span>
+                                </template>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+ 
+        <!-- Input and Buttons -->
+        <div class="slds-grid slds-gutters slds-var-p-horizontal_xx-small slds-var-p-top_xx-small input-box">
+            <div class="slds-col slds-size_2-of-3">
+                <lightning-input
+                    type="text"
+                    value={messageInput}
+                    onchange={handleChange}
+                    onkeyup={handleKeyUp}
+                    placeholder="Type your message..."
+                ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-3 slds-align-bottom slds-var-p-top_medium">
+                <div class="slds-grid slds-gutters_xx-small slds-grid_align-end">
+                    <lightning-button
+                        label="Send"
+                        onclick={handleSendMessage}
+                        variant="brand"
+                        disabled={isLoading}
+                    ></lightning-button>
+                    <br/>
+                    <lightning-button
+                        label="Reset"
+                        onclick={handleResetChat}
+                        variant="destructive"
+                    ></lightning-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

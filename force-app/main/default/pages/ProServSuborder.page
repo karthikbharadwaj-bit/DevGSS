@@ -1,0 +1,53 @@
+<apex:page title="SubOrder" standardController="Order" extensions="ProServSuborderController">
+    <head>
+        <apex:slds />
+        <apex:includeLightning />
+        <c:HerokuScripts />
+    </head>
+    <style>
+        .container {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            width: 100%;
+            background: #FFF;
+        }
+    </style>
+    <div class="container">
+        <div id="newtab-tab" data-name="newtab" class="slds-grid slds-grid_reverse">
+            <slds-button class="slds-button slds-m-right_x-small" href="javascript:void(0);" onclick="openNewTab()">Open in New Tab</slds-button>
+        </div>
+        <div id="angular" class="slds-scope"></div>
+    </div>
+
+    <script type="text/javascript">
+        const orderId = '{!orderId}';
+        const quoteId = '{!quoteId}';
+        const opportunityId = '{!opportunityId}';
+        const herokuEndpoint = '{!JSENCODE(billingWizardURL)}';
+        const sessionId = '{!sessionId}';
+        const origin = '{!JSENCODE(origin)}';
+        const isSuborderFlow = true;
+
+        var openNewTab = function() {
+            window.open('/apex/ProServSuborder?id={!orderId}', '_blank');
+        }
+
+        const angular = document.createElement('app-root');
+        angular.routeParams = {
+            name: 'pro-serv',
+            data: {
+                billingParams: {
+                    herokuEndpoint,
+                    sessionId,
+                    origin
+                },
+                orderId,
+                quoteId,
+                opportunityId,
+                isSuborderFlow
+            }
+        }
+        document.getElementById('angular').appendChild(angular);
+    </script>
+</apex:page>

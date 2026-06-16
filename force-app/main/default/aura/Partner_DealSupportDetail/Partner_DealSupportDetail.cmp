@@ -1,0 +1,1029 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 03-01-2020
+* Description    : Component for Deal Support Record Detail Page- Partner_DealSupportDetail
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction"
+                access="global" controller="Partner_DealSupport">
+    <aura:attribute name="baseURL" type="String" />
+    <aura:attribute name="CustomerURLLink" type="String" />
+    <aura:attribute name="PartnerURLLink" type="String" />
+    <aura:attribute name="OpportunityURLLink" type="String" />
+    <aura:attribute name="QuoteURLLink" type="String" />
+    <aura:attribute name="LeadURLLink" type="String" />
+    <aura:attribute name="recordID" type="String" />
+    <aura:attribute name="ShowListView" type="boolean" default="false" />
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="true" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    <aura:attribute name="ShowComponentButtons" type="boolean" default="false" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" />
+    <aura:attribute name="selectedValue" type="string" access="public" />
+    <aura:attribute name="selectedStatusValue" type="string" access="public" />
+    <aura:attribute name="selectedTypeValue" type="string" access="public" />
+    <aura:attribute name="ShowNewSection" type="boolean" default="false" />
+    <aura:attribute name="Attachments" type="List" />
+    <aura:attribute name="documentId" type="String" />
+    <aura:attribute name="files" type="List" />
+    <aura:attribute name="Message" type="boolean" default="false" />
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false" />
+    <aura:attribute name="ShowOnlyALE" type="boolean" default="false" />
+    <aura:attribute name="FilesMessage" type="boolean" default="false" />
+    <aura:attribute name="AttachmentsMessage" type="boolean" default="false" />
+    <aura:attribute name="ShowFilesMessage" type="string" />
+    <aura:attribute name="ShowOppFilesMessage" type="string" />
+    <aura:attribute access="public" name="accept" type="List" default="['.pdf']" />
+    <aura:attribute name="UploadDisabled" type="Boolean" default="false" />
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    
+    <aura:attribute name="accountId" type="String" />
+    <aura:attribute name="DealSupportRecord" type="Deal_Support__c" default="{
+                                                                             'SObjectType': 'Deal_Support__c'
+                                                                             }" />
+    <aura:attribute name="showAssignToRCButton" type="Boolean" />
+    <aura:registerEvent name="goBackEvent" type="c:Partner_OpportunitiesGoBackEvent" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="ShowSpinnerDeal" type="boolean" default="true" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+    
+    <aura:attribute name="selTabId" type="String" default="detailTab" />
+    <aura:attribute name="ShowConAcc" type="boolean" />
+    <aura:attribute name="Discount" type="Integer" />
+    <aura:attribute name="DisableApproval" type="boolean" default="true" />
+    <aura:attribute name="isPOCQuote" type="boolean" default="false" />
+    <aura:attribute name="SalesOverlayQueue" type="String" />
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false" />
+    <aura:attribute name="isReadOnly" type="boolean" default="false" />
+    <aura:attribute name="partnerCommunity" type="String" />
+    <aura:attribute name="portalCloudSpecialist" type="String" />
+    
+    <aura:attribute name="communityDetailsRecord" type="Object" />
+    
+    <!--Added for getting files uploaded from SF Lightning - starts-->
+    <aura:attribute name="AttachmentsForDeal" type="List" />
+    <aura:attribute name="AttachmentsForDealMsg" type="boolean" default="false" />
+    <aura:attribute name="Lightningfiles" type="List" />
+    <aura:attribute name="LightningFilesMessage" type="boolean" default="false" />
+    <!--Added for getting files uploaded from SF Lightning - ends-->
+    <!--Added for getting files uploaded from SF Lightning opportunity AS - starts-->
+    <aura:attribute name="LightningfilesOpp" type="List" />
+    <aura:attribute name="LightningFilesOppMessage" type="boolean" default="false" />
+    <!--Added for getting files uploaded from SF Lightning opportunity AS - END-->
+    <aura:attribute name="availProServ" type="boolean" default="true" />
+    
+    <!-- Added attrs and aura:if for JIRA fix as part of ACO 4.0 -->
+    <aura:attribute name="showChangeRequestCMP" type="Boolean" default="false" />
+    <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false" />
+    <aura:attribute name="changeOrderId" type="String" />
+    <aura:attribute name="isChangeOrderSubmitted" type="Boolean" default="false" />
+    <aura:attribute name="oppID" type="String" />
+    
+    <!-- Added for BZS-4698 -->
+    <aura:attribute name="JustificationForRejection" type="String" default="" access="public" />
+    <aura:attribute name="showModal" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyAtos" type="boolean" default="false" />
+    <!-- Added for BZS-4698 -->
+    
+    <aura:attribute name="dealSupportFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+    
+    <aura:attribute name="TypeValueTranslation" type="String" default="" access="public" />
+    <aura:attribute name="StatusValueTranslation" type="String" default="" access="public" />
+    <!--Added for PBC-11030-->
+    <aura:attribute name="isVATNumber" type="Boolean" default="false" />
+    
+    <aura:if isTrue="{!v.showChangeRequestCMP}">
+        <c:Quote_OrderChangeRequest accountId="{!v.accountId}" isChangeOrderSubmitted="true"
+                                    changeOrderId="{!v.changeOrderId}" ExistingChangeOrder="true" showChangeRequestCMP="{!v.showChangeRequestCMP}" />
+    </aura:if>
+    <aura:if isTrue="{!!v.showChangeRequestCMP}">
+        <aura:if isTrue="{!v.ShowSpinnerDeal}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="{!v.translationsMap.Loading +'...'}" aura:id="loadingSpinner" class="slds-hide" size="medium" />
+                </div>
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!v.Message}">
+            <div class="errorMessageDivDetail">
+                <div class="slds-is-relative errorMessageDivDetail">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        
+        <aura:if isTrue="{!!v.Message}">
+            <aura:if isTrue="{!v.ShowRecordDetail}">
+                <!--<aura:if isTrue="{!v.DealSupportRecord.Owner.Name == $Label.c.Sales_Overlay_Queue}">
+             <div class="errorMessageDiv">
+                    <div class="slds-is-relative errorMessageDiv">
+                        <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">This record is assigned to RC for approval</h2>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+            </aura:if>-->
+                <!--<aura:if isTrue="{!v.DealSupportRecord.Owner.Name != $Label.c.Sales_Overlay_Queue}">-->
+                <lightning:card variant="Narrow" title="{!v.translationsMap.Deal_Status_Details}" iconName="standard:case">                    
+                    <aura:set attribute="actions">                        
+                        <lightning:button variant="brand" label="{!v.translationsMap.Go_Back}" iconName="action:recall" iconPosition="left"
+                                          onclick="{!c.goBackToViewList}" />
+                    </aura:set>
+                                        
+                    <lightning:tabset selectedTabId="{!v.selTabId}">
+                        <lightning:tab  id="detailTab">
+                            <aura:set attribute="label">
+                                {!v.translationsMap.Details}
+                            </aura:set>
+                            <!--<lightning:card variant="Narrow" title="Deal Support Detail" iconName="standard:case">-->
+                            <!-- commented for ALE safari browser issue -->
+                            <!--<div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div> -->
+                            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                <aura:if isTrue="{!!v.isReadOnly}">
+                                    <aura:if isTrue="{!!v.ShowEditSection}">
+                                        <aura:if isTrue="{!and(v.DealSupportRecord.Type__c == 'POC Request', v.ShowOnlyAvaya)}">
+                                            <div
+                                                 class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium"
+                                                 style="border-bottom:.25rem !important;">
+                                                <lightning:button variant="brand" label="Edit" iconName="action:edit" iconPosition="left"
+                                                                  onclick="{!c.showEditSectionAres}" />
+                                                <aura:if isTrue="{!v.showAssignToRCButton}">
+                                                    <lightning:button variant="brand" label="{!v.translationsMap.Assign_to_RC}" onclick="{!c.assignToRC}" />
+                                                </aura:if>
+                                            </div>
+                                        </aura:if>
+                                        <aura:if
+                                                 isTrue="{!and(and(v.DealSupportRecord.Owner.Name != v.communityDetailsRecord.Portal_SalesOverlay_Queue__c,
+                                                         not(v.DealSupportRecord.Type__c == 'POC Request')), and(v.DealSupportRecord.Status__c != 'Closed-Approved',v.DealSupportRecord.Status__c != 'Closed-Rejected'))}">
+                                            <div
+                                                 class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium"
+                                                 style="border-bottom:.25rem !important;">
+                                                <aura:if isTrue="{!and(v.showAssignToRCButton,v.ShowOnlyAvaya)}">
+                                                    <lightning:button variant="brand" label="{!v.translationsMap.Edit}" iconName="action:edit" iconPosition="left"
+                                                                      onclick="{!c.showEditSectionAres}" />
+                                                </aura:if>
+                                                <aura:if isTrue="{!v.isPOCQuote}">
+                                                    <lightning:button disabled="{!v.DealSupportRecord.POC_Conversion_to_Paid_Requested__c}"
+                                                                      variant="brand" label="POC Conversion to Paid Requested"
+                                                                      onclick="{!c.checkedPOCConversion}" />
+                                                </aura:if>
+                                                <aura:if isTrue="{!v.showAssignToRCButton}">
+                                                    <lightning:button variant="brand" label="{!v.translationsMap.Assign_to_RC}" onclick="{!c.assignToRC}" />
+                                                </aura:if>
+                                                <aura:if isTrue="{!!v.ShowOnlyALE}">
+                                                    <aura:if isTrue="{!and(v.DealSupportRecord.Type__c == 'Discount Request',v.ShowOnlyAvaya)}">
+                                                        <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE == v.partnerCommunity}">
+                                                 <lightning:button variant="brand" label="Assign to Avaya Deal Desk" onclick="{!c.assignToAvayaDealDesk}" disabled="{!v.DealSupportRecord.Escalated_To_Avaya_Deal_Desk__c}"/>
+                                             </aura:if>
+                                             <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE != v.partnerCommunity}">-->
+                                                        <lightning:button variant="brand"
+                                                                          label="{!v.communityDetailsRecord.Portal_Assign_To_Deal_Desk_Label__c}"
+                                                                          onclick="{!c.assignToAvayaDealDesk}"
+                                                                          disabled="{!v.DealSupportRecord.Escalated_To_Avaya_Deal_Desk__c}" />
+                                                        
+                                                    </aura:if>
+                                                </aura:if>
+                                                <!--<lightning:button variant="brand" label="Test" title="Brand action" onclick="{! c.handleClick }" />-->
+                                                <aura:if isTrue="{!and(v.DealSupportRecord.Type__c == 'Discount Request', v.ShowConAcc)}">
+                                                    <lightning:button variant="brand" label="{!v.translationsMap.Approve}" iconName="action:check" iconPosition="left"
+                                                                      aura:id="Approve" onclick="{!c.changeQuoteStatus}" />
+                                                                                 <!--<Added rejectionJustification for 4698>-->
+                                                    <lightning:button variant="brand" label="{!v.translationsMap.Reject}" iconName="action:close" iconPosition="left"
+                                                                      aura:id="Reject" onclick="{!c.rejectionJustification}"/>
+                                                    
+                                                </aura:if>                                                
+                                            </div>
+                                        </aura:if>
+                                    </aura:if>
+                                </aura:if>
+                            </aura:if>
+                             <!-- BZS-4698 begins -->
+                            <aura:if isTrue="{!v.showModal}">
+                                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" 
+                                         aria-modal="true" aria-describedby="modal-content-id-1" 
+                                         class="slds-modal slds-fade-in-open">
+                                    <div class="slds-modal__container">
+                                        <!--Modal/Popup Box Body Starts here-->
+                                        <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                                            <div class="slds-col slds-size_3-of-7 slds-p-horizontal_x-small slds-p-top_large" style="color:gray;">
+                                                <span  aura:id="rejectionReasonLabel" >Justification for Rejection</span>
+                                            </div>
+                                            <div class="slds-col slds-size_3-of-7 slds-p-horizontal_x-small">
+                                                <lightning:textarea type="text"   name="rejectionreason" aura:id="rejectionReason"   value="{!v.JustificationForRejection}"/>
+                                            </div>
+                                        </div>
+                                        <!--Modal/Popup Box Footer Starts here-->
+                                        <footer class="slds-modal__footer">
+                                            <lightning:button variant="neutral"
+                                                              label="Cancel"
+                                                              title="Cancel"
+                                                              onclick="{! c.hideModel }"/>
+                                            <lightning:button variant="brand"
+                                                              label="Save"
+                                                              title="Save"
+                                                              onclick="{!c.changeQuoteStatus}"/>
+                                        </footer>
+                                    </div>
+                                </section>
+                                <div class="slds-backdrop slds-backdrop_open"></div>
+                            </aura:if>
+                            <!-- BZS-4698 ends -->
+                            <div class="slds-grid slds-wrap">
+                                <aura:if isTrue="{!v.ShowEditSection}">
+                                    <div class="slds-col slds-size_2-of-7">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-horizontal_x-small slds-p-top_large" style="color:gray;">
+                                        <span class="slds-float_right">{!v.translationsMap.Status}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-horizontal_x-small">
+                                        <lightning:select name="SupportStatus" variant="label-hidden" aura:id="SupportStatus"
+                                                          value="{!v.selectedStatusValue}" onchange="{!c.onChangeOfStatus}">
+                                            <option value="New">{!v.translationsMap.New}</option>
+                                            <option value="In Progress">{!v.translationsMap.In_Progress}</option>
+                                            <option value="Ready for Signature">{!v.translationsMap.Ready_for_Signature}</option>
+                                            <option value="Signature Complete">{!v.translationsMap.Signature_Complete}</option>
+                                            <option value="Closed-Approved">{!v.translationsMap.Closed_Approved}</option>
+                                            <option value="Closed-Rejected">{!v.translationsMap.Closed_Rejected}</option>
+                                            <option value="Closed">{!v.translationsMap.Closed}</option>
+                                        </lightning:select>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7">
+                                        <span></span>
+                                    </div>
+                                    <aura:if isTrue="{!v.DealSupportRecord.Type__c=='Discount Request'}">
+                                        <div class="slds-col slds-size_1-of-7 slds-p-horizontal_x-small slds-p-top_large"
+                                             style="color:gray;">
+                                            <span class="slds-float_right requiredField" aura:id="discountLabel">{!v.translationsMap.Approved_Discount}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-p-horizontal_x-small">
+                                            <lightning:input class="discountInput" fieldName="Discount" required="true" aura:id="discount"
+                                                             value="{!v.Discount}" type="number" max="100" />
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7">
+                                            <span></span>
+                                        </div>
+                                    </aura:if>
+                                     <!-- BZS-4698 begins -->
+                                    <aura:if isTrue="{!v.DealSupportRecord.Type__c != 'Discount Request'}">
+                                        <aura:if isTrue="{!and(v.ShowOnlyAtos,v.selectedStatusValue=='Closed-Rejected')}">
+                                            <div class="slds-col slds-size_1-of-7 slds-p-horizontal_x-small slds-p-top_large" style="color:gray;">
+                                                <span class="slds-float_right" aura:id="rejectionReasonLabel" ><span>Justification for Rejection</span></span>
+                                            </div>
+                                            <div class="slds-col slds-size_2-of-7 slds-p-horizontal_x-small">
+                                                <lightning:textarea type="text"   name="rejectionreason" aura:id="rejectionReason"   value="{!v.JustificationForRejection}"/>
+                                            </div>
+                                            <div class="slds-col slds-size_2-of-7">
+                                                <span></span>
+                                            </div>
+                                        </aura:if>
+                                    </aura:if>
+                  <!-- BZS-4698 ends -->
+                                    <aura:if isTrue="{!v.DealSupportRecord.Type__c == 'Discount Request'}">
+                                        <aura:if isTrue="{!and(v.ShowOnlyAtos,v.selectedStatusValue=='Closed-Rejected')}">
+                                            <div class="slds-col slds-size_3-of-7 slds-p-horizontal_x-small slds-p-top_large" style="color:gray;">
+                                                <span class="slds-float_right" aura:id="rejectionReasonLabel" ><span>Justification for Rejection</span></span>
+                                            </div>
+                                            <div class="slds-col slds-size_2-of-7 slds-p-horizontal_x-small">
+                                                <lightning:textarea type="text"   name="rejectionreason" aura:id="rejectionReason"   value="{!v.JustificationForRejection}"/>
+                                            </div>
+                                            <div class="slds-col slds-size_2-of-7">
+                                                <span></span>
+                                            </div>
+                                        </aura:if>
+                                    </aura:if>
+                                    <!-- BZS-4698 ends -->
+                                    <aura:if
+                                             isTrue="{!and(v.DealSupportRecord.Type__c=='Initial Order',v.DealSupportRecord.Brand_Name__c == 'Avaya Cloud Office')}">
+                                        <div class="slds-col slds-size_1-of-7  slds-p-top_medium" style="color:gray;">
+                                            <span class="slds-float_right">
+                                                <!--aura:if isTrue="{!v.ShowOnlyAvaya}">Avaya</aura:if-->Avaya ProServ
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-p-horizontal_x-small slds-p-top_medium">
+                                            <lightning:input fieldName="partnerProServ" aura:id="partnerProServ" value="{!v.availProServ}"
+                                                             checked="{!v.availProServ}" type="checkbox" />
+                                        </div>
+                                    </aura:if>
+                                    <div class="slds-col slds-size_2-of-7">
+                                        <span></span>
+                                    </div>
+                                    
+                                    <div
+                                         class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium"
+                                         style="border-bottom:.25rem !important;">
+                                        <lightning:button variant="brand" label="{!v.translationsMap.Save}" name="Save" type="button" iconName="action:check"
+                                                          iconPosition="left" onclick="{!c.editDealSupport}" />
+                                        <lightning:button variant="brand" type="Cancel" name="Cancel" iconName="action:close"
+                                                          iconPosition="left" label="{!v.translationsMap.Cancel}" onclick="{!c.cancelEditDealSupport}" />
+                                    </div>
+                                </aura:if>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.translationsMap.Name}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>{!v.DealSupportRecord.Name}</span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.translationsMap.Customer_Account}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>
+                                        <!--<a href="{!'/partner/s/partnercustomers?id='+v.DealSupportRecord.Customer_Account__c}">
+                                    {!v.DealSupportRecord.Customer_Account__r.Name}
+                                    </a>-->
+                                        <a href="{!v.CustomerURLLink  +v.DealSupportRecord.Customer_Account__c}">
+                                            {!v.DealSupportRecord.Customer_Account__r.Name}
+                                        </a>
+                                    </span>
+                                </div>
+                                <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Partner_Account}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            <!--<a href="{!'/partner/s/partnerdetails?id='+v.DealSupportRecord.Partner_Account__c}">
+                                        {!v.DealSupportRecord.Partner_Account__r.Name}
+                                        </a>-->
+                                            <a href="{!v.PartnerURLLink +v.DealSupportRecord.Partner_Account__c}">
+                                                {!v.DealSupportRecord.Partner_Account__r.Name}
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Partner_Contact}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>{!v.DealSupportRecord.Partner_Contact__r.FirstName}{!v.DealSupportRecord.Partner_Contact__r.LastName}</span>
+                                    </div>
+                                    
+                                </aura:if>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>{!v.translationsMap.Type}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.TypeValueTranslation}</span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>{!v.translationsMap.Status}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.StatusValueTranslation}</span>
+                                </div>
+                                
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>{!v.translationsMap.Opportunity}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>
+                                        <!--<a href="{!'/partner/s/partneropportunities?id='+v.DealSupportRecord.Opportunity__c}">
+                                    {!v.DealSupportRecord.Opportunity__r.Name}
+                                    </a>-->
+                                        <a href="{!v.OpportunityURLLink +v.DealSupportRecord.Opportunity__c}">
+                                            {!v.DealSupportRecord.Opportunity__r.Name}
+                                        </a>
+                                    </span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                                <!-- <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>Sub Status</span>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.DealSupportRecord.Sub_Status__c}</span>
+                            </div> -->
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>{!v.translationsMap.Partner_Quote}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>
+                                        <!--<a href="{!'/partner/s/quotetool?step=5&amp;id='+v.DealSupportRecord.Partner_Quote__c}">
+                                    {!v.DealSupportRecord.Partner_Quote__r.Name}
+                                    </a>-->
+                                        <!--commented for Jira issue as part of aco 4.0 -->
+                                        <!--<a href="{!v.QuoteURLLink +v.DealSupportRecord.Partner_Quote__c}">-->
+                                        <a onclick="{!c.redirectTOQuoteTool}">
+                                            {!v.DealSupportRecord.Partner_Quote__r.Name}</a>
+                                    </span>
+                                </div>
+                                <!-- BZS-4698 begins -->
+                                <aura:if isTrue="{!and(v.ShowOnlyAtos,v.selectedStatusValue =='Closed-Rejected')}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                        <span>Justification for Rejection</span>
+                                    </div>      
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Justification_for_Rejection__c}
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-7 slds-border_top ">
+                                        <span></span>
+                                    </div> 
+                                </aura:if>
+                                <!-- BZS-4698 ends -->
+                                <!-- <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                <span></span>
+                            </div> -->
+                                <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                    <aura:if isTrue="{!!v.ShowOnlyALE}">
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                             style="color:gray;">
+                                            <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE == v.partnerCommunity}">
+                                        <span>Avaya Cloud Specialist</span>
+                                    </aura:if>
+                                    <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE != v.partnerCommunity}">-->
+                                            <span> {!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</span>
+                                            
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                            <aura:if isTrue="{!v.DealSupportRecord.Opportunity__c!=null}">
+                                                <span>{!v.DealSupportRecord.Opportunity__r.Portal_Cloud_Specialist__r.Name}</span>
+                                            </aura:if>
+                                            <aura:if isTrue="{!v.DealSupportRecord.Opportunity__c==null}">
+                                                <span>{!v.DealSupportRecord.Lead__r.Portal_Cloud_Specialist__r.Name}</span>
+                                            </aura:if>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                    </aura:if>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.RC_Overlay}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>{!v.DealSupportRecord.Opportunity__r.Owner.Name}</span>
+                                    </div>
+                                    <aura:if isTrue="{!v.ShowOnlyALE}">
+                                        <div class="slds-col slds-size_4-of-7 slds-p-around_x-small slds-border_top">
+                                        </div>
+                                    </aura:if>
+                                </aura:if>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>{!v.translationsMap.Owner}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>
+                                        {!v.DealSupportRecord.Owner.Name}
+                                    </span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                                <aura:if isTrue="{!v.DealSupportRecord.Type__c == 'Engage ProServ'}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.dealSupportFieldsMap.Partner_ProServ_Notes__c}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Partner_ProServ_Notes__c}
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_3-of-7 slds-border_top"></div>
+                                </aura:if>
+                                <aura:if isTrue="{!v.DealSupportRecord.Type__c != 'Engage ProServ'}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Discount}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            <aura:if isTrue="{!v.DealSupportRecord.Discount__c > 0 }">
+                                                {!v.DealSupportRecord.Discount__c}
+                                            </aura:if>
+                                            <aura:if isTrue="{!v.DealSupportRecord.Discount_Amount__c > 0 }">
+                                                {!v.DealSupportRecord.Discount_Amount__c}
+                                            </aura:if>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Non_Standard_Request_Justification}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Discount_Details__c}
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Approved_Discount}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Approved_Discount__c}
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.translationsMap.Lead}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            <!--<a href="{!'/partner/s/partnerleads?id='+v.DealSupportRecord.Lead__c}">
+                                    {!v.DealSupportRecord.Lead__r.Company}
+                                    </a>-->
+                                            <a href="{!v.LeadURLLink +v.DealSupportRecord.Lead__c}">
+                                                {!v.DealSupportRecord.Lead__r.Company}
+                                            </a>
+                                        </span>
+                                    </div>
+                                    <!-- aura:if Added for ALE -->
+                                    <!-- commented for BZS-4808-->
+                                    <!--<aura:if isTrue="{!v.DealSupportRecord.Type__c=='Lead Conversion'}">
+                                    <aura:if isTrue="{!v.ShowOnlyALE}">
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                            <span>Is this for RFP?</span>
+                                        </div>                        
+                                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                            <span><lightning:input type="checkbox" checked="{!v.DealSupportRecord.is_RFP_Needed__c}" disabled="true" /></span>
+                                        </div>  
+                                    </aura:if>
+                                </aura:if>-->
+                                </aura:if>
+                                <aura:if
+                                         isTrue="{!and(v.DealSupportRecord.Type__c=='Initial Order',v.DealSupportRecord.Brand_Name__c == 'Avaya Cloud Office')}">
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>
+                                            <!--aura:if isTrue="{!v.ShowOnlyAvaya}">Avaya</aura:if-->Avaya ProServ
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            <lightning:input type="checkbox" name="partnerps"
+                                                             checked="{!v.DealSupportRecord.Partner_ProServ__c}" disabled="true" />
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_3-of-7 slds-border_top"></div>
+                                </aura:if>
+                                <aura:if isTrue="{!v.DealSupportRecord.Type__c == 'Discount Request'}">
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.dealSupportFieldsMap.Promo_Code__c}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Promo_Code__c}
+                                        </span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE == v.partnerCommunity}">
+                                        <span>Escalated To Avaya Deal Desk</span>
+                                    </aura:if>
+                                    <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE != v.partnerCommunity}">-->
+                                        <span>{!v.PRMSpecificTranslationsMap.Portal_Deal_Desk_Escalation}</span>
+                                        
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            <lightning:input type="checkbox" disabled="true"
+                                                             checked="{!v.DealSupportRecord.Escalated_To_Avaya_Deal_Desk__c}" />
+                                        </span>
+                                    </div>
+                                    <!--<div class="slds-col slds-size_3-of-7 slds-border_top">
+                                    <span></span>
+                                </div>-->
+                                </aura:if>
+                                
+                                <!--<div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span></span>
+                            </div>                        
+                            <div class="slds-col slds-size_3-of-7 slds-p-around_x-small slds-border_top">
+                            <span></span>
+                            </div>-->
+                                <!-- aura:if Added for ALE -->
+                                <aura:if isTrue="{!v.ShowOnlyALE}">
+                                    <aura:if isTrue="{!v.DealSupportRecord.Type__c!='Lead Conversion'}">
+                                        <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                    </aura:if>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.ShowOnlyALE}">
+                                    <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                </aura:if>
+                                <aura:if isTrue="{!v.DealSupportRecord.Type__c=='New Contract Request'}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.dealSupportFieldsMap.Escalated_To_Legal__c}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <lightning:input type="checkbox" disabled="true"
+                                                         checked="{!v.DealSupportRecord.Escalated_To_Legal__c}" />
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>{!v.dealSupportFieldsMap.Engage_Legal_Comments__c}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                        <span>
+                                            {!v.DealSupportRecord.Engage_Legal_Comments__c}
+                                        </span>
+                                    </div>
+                                </aura:if>
+                            </div>
+                            <aura:if isTrue="{!v.DealSupportRecord.Type__c == 'POC Request'}">
+                                <lightning:card variant="Narrow" title="POC Request Detail">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top slds-p-around_x-small alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.dealSupportFieldsMap.POC_Term__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                            <span>{!v.DealSupportRecord.POC_Term__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top slds-p-around_x-small alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.translationsMap.Number_Of_Users}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                            <span>
+                                                {!v.DealSupportRecord.Number_of_User__c}
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.dealSupportFieldsMap.Edition__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                            <span>{!v.DealSupportRecord.Edition__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.dealSupportFieldsMap.Phone_type__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                            <span>
+                                                {!v.DealSupportRecord.Phone_type__c}
+                                            </span>
+                                        </div>
+                                        <!--
+                                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>-->
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.dealSupportFieldsMap.Main_Area_Code__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                            <span>
+                                                {!v.DealSupportRecord.Main_Area_Code__c}
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.translationsMap.Phone_and_Shipment_Comments}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                            <span>
+                                                {!v.DealSupportRecord.Phone_and_Shippment__c}
+                                            </span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top slds-p-around_x-small alignRight"
+                                             style="color:gray;">
+                                            <span>{!v.translationsMap.Additional_Comments}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                            <span>{!v.DealSupportRecord.Comment__c}</span>
+                                        </div>
+                                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                            <span></span>
+                                        </div>
+                                        <!--Added for PBC-11030-->
+                                        <aura:if isTrue="{!v.isVATNumber}">
+                                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                                <span>{!v.translationsMap.VAT_Number_PI}</span>
+                                            </div>
+                                            <div class="slds-col slds-size_2-of-7 slds-border_top slds-p-around_x-small">
+                                                <span>
+                                                    {!v.DealSupportRecord.Customer_Account__r.VATNumber__c}
+                                                </span>
+                                            </div>
+                                            <aura:set attribute="else">
+                                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                                    <span></span>
+                                                </div>
+                                                <div class="slds-col slds-size_2-of-7 slds-border_top">
+                                                    <span></span>
+                                                </div>
+                                            </aura:set>
+                                        </aura:if>
+                                    </div>
+                                </lightning:card>
+                            </aura:if>
+                            <!--</lightning:card>-->
+                        </lightning:tab>
+                        <lightning:tab  id="commentsTab">
+                            <aura:set attribute="label">
+                                {!v.translationsMap.Comments}
+                            </aura:set>
+                            <c:Partner_DealSupportComments DealSupportRecordId="{!v.recordID}" isReadOnly="{!v.isReadOnly}" />
+                        </lightning:tab>
+                        <lightning:tab  id="orderTab">
+                            <aura:set attribute="label">
+                                {!v.translationsMap.Order_Package}
+                            </aura:set>
+                            <!-- commented for ALE safari browser issue -->
+                            <!--<div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div>-->
+                            <aura:if isTrue="{!and(v.AttachmentsMessage,v.LightningFilesOppMessage)}">
+                                <div class="errorMessageDivDetail">
+                                    <div class="slds-is-relative errorMessageDivDetail">
+                                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                            <div class="slds-notify__content">
+                                                <h2 class="slds-text-heading_small">{!v.ShowOppFilesMessage}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{!!and(v.AttachmentsMessage,v.LightningFilesOppMessage)}">
+                                <aura:if
+                                         isTrue="{!or(or(v.DealSupportRecord.Status__c == 'Ready for Signature',v.DealSupportRecord.Status__c =='Signature Complete'),v.DealSupportRecord.Status__c == 'Closed-Approved')}">
+                                    
+                                    <div class="slds-m-around_xx-small">
+                                        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                            <thead>
+                                                <tr class="slds-text-title_caps">
+                                                    <th scope="col">
+                                                        <strong>
+                                                            <div class="slds-truncate" title="{!v.translationsMap.Name}">{!v.translationsMap.Name}</div>
+                                                        </strong>
+                                                    </th>
+                                                    <!-- <th scope="col">
+                                                    <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                                </th> -->
+                                                    
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <aura:iteration items="{!v.Attachments}" var="att">
+                                                    
+                                                    <tr>
+                                                        <th scope="row" data-label="Title">
+                                                            <div class="slds-truncate" title="{!att.Name}">
+                                                                <a aria-live="assertive" class="slds-text-link"
+                                                                   href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}" download="true">
+                                                                    <lightning:icon iconName="utility:download" size="x-small"
+                                                                                    alternativeText="Download" />
+                                                                    &nbsp;{!att.Name}
+                                                                </a>
+                                                                
+                                                            </div>
+                                                        </th>
+                                                        
+                                                    </tr>
+                                                    
+                                                    
+                                                </aura:iteration>
+                                                <!-- Added for lightning Files FROM Opportunity Start-->
+                                                <aura:iteration items="{!v.LightningfilesOpp}" var="file">
+                                                    <tr>
+                                                        <th scope="row" data-label="Title">
+                                                            <div class="slds-truncate" title="{!file.Title}">
+                                                                <a aria-live="assertive" class="slds-text-link" target="_blank"
+                                                                   href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                                   download="true">
+                                                                    <lightning:icon iconName="utility:download" size="x-small"
+                                                                                    alternativeText="Download" />
+                                                                    &nbsp;{!file.Title}
+                                                                </a>
+                                                                
+                                                            </div>
+                                                        </th>
+                                                        <!--<th scope="row" data-label="Name">
+                                                        <div class="slds-truncate" title="{!file.Title}">
+                                                            <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                                {!file.Title}
+                                                            </a>                                                        
+                                                        </div>
+                                                    </th>-->
+                                                    </tr>
+                                                </aura:iteration>
+                                                <!--END Opportunity Files -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </aura:if>
+                            </aura:if>
+                        </lightning:tab>
+                        <lightning:tab  id="attachmentTab">
+                            <aura:set attribute="label">
+                                {!v.translationsMap.Upload_Signed_Documents}
+                            </aura:set>
+                            <!-- commented for ALE safari browser issue -->
+                            <!--<div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div>-->
+                            <!--<aura:if isTrue="{!!v.isReadOnly}">-->
+                            <div class="slds-grid slds-wrap slds-align_absolute-center">
+                                <lightning:fileUpload label="{!v.translationsMap.Attach_files}" name="fileUploader" multiple="true" accept="{!v.accept}"
+                                                      recordId="{!v.recordID}" disabled="{!v.UploadDisabled}"
+                                                      onuploadfinished="{!c.handleUploadFinished}" />
+                            </div>
+                            <!-- </aura:if>-->
+                            <!-- Added to get files saved in SF Lightning -->
+                            <!--<aura:if isTrue="{!v.FilesMessage}">-->
+                            <aura:if isTrue="{!and(v.AttachmentsForDealMsg,v.LightningFilesMessage)}">
+                                <div class="errorMessageDivDetail">
+                                    <div class="slds-is-relative errorMessageDivDetail">
+                                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                            <div class="slds-notify__content">
+                                                <h2 class="slds-text-heading_small">{!v.ShowFilesMessage}</h2>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aura:if>
+                            <!--commented for getting files uploaded from SF Lightning -->
+                            <!--<aura:if isTrue="{!!v.FilesMessage}">
+                            <div class="slds-m-around_xx-small">        
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                    <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Name">Name</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="Attachment Type">Attachment Type</div></strong>
+                                            </th>
+                                            
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        
+                                        <aura:iteration items="{!v.files}" var="file"> 
+                                            <tr>
+                                                <th scope="row" data-label="Name">
+                                                    <div class="slds-truncate" title="{!file.Title}">
+                                                        <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                            {!file.Title}
+                                                        </a> 
+                                                        
+                                                    </div>
+                                                </th>
+                                                <th scope="row" data-label="Attachment Type">
+                                                    <div class="slds-truncate" title="{!file.FileType}">
+                                                        {!file.FileType}
+                                                    </div>
+                                                </th>
+                                                
+                                            </tr>
+                                        </aura:iteration>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </aura:if>-->
+                            <!--Added for getting files uploaded from SF Lightning - starts-->
+                            <aura:if isTrue="{!!and(v.AttachmentsForDealMsg,v.LightningFilesMessage)}">
+                                <div class="slds-m-around_xx-small">
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                        <thead>
+                                            <tr class="slds-text-title_caps">
+                                                <th scope="col">
+                                                    <strong>
+                                                        <div class="slds-truncate" title="Name">{!v.translationsMap.Name}</div>
+                                                    </strong>
+                                                </th>
+                                                <th scope="col">
+                                                    <strong>
+                                                        <div class="slds-truncate" title="Attachment Type">{!v.translationsMap.Attachment_Type}
+                                                        </div>
+                                                    </strong>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <aura:iteration items="{!v.Lightningfiles}" var="file">
+                                                <tr>
+                                                    <th scope="row" data-label="Title">
+                                                        <div class="slds-truncate" title="{!file.Title}">
+                                                            <a aria-live="assertive" class="slds-text-link" target="_blank"
+                                                               href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                               download="true">
+                                                                <lightning:icon iconName="utility:download" size="x-small" alternativeText="Download" />
+                                                                &nbsp;{!file.Title}
+                                                            </a>
+                                                            
+                                                        </div>
+                                                    </th>
+                                                    <!--<th scope="row" data-label="Name">
+                                                    <div class="slds-truncate" title="{!file.Title}">
+                                                        <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                                            {!file.Title}
+                                                        </a>                                                        
+                                                    </div>
+                                                </th>-->
+                                                    <th scope="row" data-label="Attachment Type">
+                                                        <div class="slds-truncate" title="{!file.FileType}">
+                                                            {!file.FileType}
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </aura:iteration>
+                                            <aura:iteration items="{!v.AttachmentsForDeal}" var="att">
+                                                <tr>
+                                                    <th scope="row" data-label="Title">
+                                                        <div class="slds-truncate" title="{!att.Name}">
+                                                            <a aria-live="assertive" class="slds-text-link"
+                                                               href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}" download="true">
+                                                                <lightning:icon iconName="utility:download" size="x-small" alternativeText="Download" />
+                                                                &nbsp;{!att.Name}
+                                                            </a>
+                                                        </div>
+                                                    </th>
+                                                    <th>
+                                                        <div class="slds-truncate" title="{!att.contentType}">
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </aura:if>
+                            <!--Added for getting files uploaded from SF Lightning - ends-->
+                        </lightning:tab>
+                    </lightning:tabset>
+                </lightning:card>
+                <!--</aura:if>-->
+            </aura:if>
+        </aura:if>
+    </aura:if>
+</aura:component>

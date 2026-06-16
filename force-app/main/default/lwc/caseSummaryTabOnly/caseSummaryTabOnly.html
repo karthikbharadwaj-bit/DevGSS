@@ -1,0 +1,135 @@
+<template>
+    <div class="tab-container">
+        <!-- header -->
+        <div class="case-header">
+            <lightning-icon class="case-header__icon" icon-name="standard:case" size="small"></lightning-icon>
+            <div class="case-header__text">
+                <div class="case-header__meta">
+                    <span>Case: <strong>{caseNumber}</strong></span>
+                    <span>Status: <span class={statusPillClass}>{status}</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <lightning-tabset variant="scoped" class="tabset-bold">
+            <lightning-tab label="✨Insights">
+                <!-- Dynamic banner: AT&T / High Risk brand banner OR normal banner -->
+                <template if:true={isHighRiskBrandCase}>
+                    <c-case-banner-att class="slds-m-horizontal_small slds-m-bottom_medium"
+                        record-id={recordId} max-width="900px">
+                    </c-case-banner-att>
+                </template>
+                <template if:false={isHighRiskBrandCase}>
+                    <c-case-banner class="slds-m-horizontal_small slds-m-bottom_medium"
+                        record-id={recordId} max-width="900px">
+                </c-case-banner>
+                </template>
+
+
+
+                <!-- cards -->
+                <div class="summary-list">
+                    <template for:each={filteredCards} for:item="card">
+                        <div key={card.id} class="summary-card">
+                            <div class="summary-header-row" onclick={toggleCard} data-id={card.id}>
+                                <img src={card.icon} class="summary-icon" alt="icon" />
+                                <span class="summary-title">{card.title}</span>
+
+                                <!-- loading badges -->
+                                <template if:true={card.isComment}>
+                                    <template if:true={commentsLoading}>
+                                        <span class="ai-badge">
+                                            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                                            <span>Generating…</span>
+                                        </span>
+                                    </template>
+                                </template>
+
+                                <template if:true={card.isEmail}>
+                                    <template if:true={emailsLoading}>
+                                        <span class="ai-badge">
+                                            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                                            <span>Generating…</span>
+                                        </span>
+                                    </template>
+                                </template>
+
+                                <template if:true={card.isJiraComment}>
+                                    <template if:true={jiraCommentLoading}>
+                                        <span class="ai-badge">
+                                            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                                            <span>Generating…</span>
+                                        </span>
+                                    </template>
+                                </template>
+
+                                <template if:true={card.isChatTranscript}>
+                                    <template if:true={chatTranscriptLoading}>
+                                        <span class="ai-badge">
+                                            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                                            <span>Generating…</span>
+                                        </span>
+                                    </template>
+                                </template>
+
+                                <template if:true={card.isFeedSummary}>
+                                    <template if:true={feedSummaryLoading}>
+                                        <span class="ai-badge">
+                                            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+                                            <span>Generating…</span>
+                                        </span>
+                                    </template>
+                                </template>
+
+                                <lightning-icon icon-name={card.iconName} size="x-small"
+                                    class="summary-toggle-icon"></lightning-icon>
+                            </div>
+
+                            <!-- Keep children in DOM; just hide/show -->
+                            <div class={card.contentClass}>
+                                <template if:true={card.isComment}>
+                                    <c-case-comment-summary record-id={recordId} onccsloading={handleCommentsLoading}
+                                        onccsloaded={handleCommentsLoaded}>
+                                    </c-case-comment-summary>
+                                </template>
+
+                                <template if:true={card.isEmail}>
+                                    <c-email-summary record-id={recordId} onemloading={handleEmailLoading}
+                                        onemloaded={handleEmailLoaded}>
+                                    </c-email-summary>
+                                </template>
+
+                               <template if:true={card.isJiraComment}>
+                                    <c-jira-comment-summary record-id={recordId} onjcsloading={handleJiraCommentLoading}
+                                        onjcsloaded={handleJiraCommentLoaded}>
+                                    </c-jira-comment-summary>
+                                </template>
+
+                                <template if:true={card.isChatTranscript}>
+                                    <c-chat-transcript-summary record-id={recordId} onctsloading={handleChatTranscriptLoading}
+                                        onctsloaded={handleChatTranscriptLoaded}>
+                                    </c-chat-transcript-summary>
+                                </template>
+
+                                <template if:true={card.isFeedSummary}>
+                                    <c-case-feed-summary record-id={recordId} onfssloading={handleFeedSummaryLoading}
+                                        onfssloaded={handleFeedSummaryLoaded}>
+                                    </c-case-feed-summary>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </lightning-tab>
+
+            <template if:true={hasSupportAgent}>
+                <lightning-tab label="📚Articles" onactive={handleArticlesTabActive}>
+                    <div class="no-space">
+                        <c-get-knowledge-articles-for-g-c-p record-id={recordId}></c-get-knowledge-articles-for-g-c-p>
+                    </div>
+                </lightning-tab>
+            </template>
+        </lightning-tabset>
+    </div>
+</template>

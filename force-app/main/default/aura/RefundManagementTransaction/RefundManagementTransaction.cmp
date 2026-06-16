@@ -1,0 +1,230 @@
+<aura:component description="RefundManagementTransaction" controller="RefundManagementController">
+    <!-- Attributes -->
+    <aura:attribute name="app" type="object"/>
+    <aura:attribute name="transaction" type="object"/>
+
+    <aura:attribute name="padding" type="Integer" default="3" />
+    <aura:attribute name="offset" type="Integer" default="1.5" />
+    <aura:attribute name="isLoading" type="Boolean" default="false" />
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="RefundManagementEvent" type="c:RefundManagementEvent"/>
+
+    <tr class="{! join(' ', 'transaction', v.transaction.isExpandable ? 'clickable' : '') }"
+        onclick="{! v.transaction.isExpandable ? c.toggleExpand : null }">
+
+        <!-- TRANSACTION ID -->
+        <td class="transaction__name slds-truncate"
+            style="{!'padding-left: '+v.padding+'rem;'}"
+            title="{! v.transaction.name }">
+            <lightning:buttonIcon class="{! join(' ', 'slds-m-right_small expand-icon',
+                v.transaction.isExpandable ? '' : 'slds-hide') }"
+                                  variant="bare"
+                                  iconName="{! v.transaction.isExpanded ? 'utility:down' : 'utility:right'}"
+                                  size="small"
+                                  alternativeText="{! v.transaction.isExpanded ? 'Collapse' : 'Expand'}"/>
+            {# v.transaction.name }
+        </td>
+
+        <!-- DATE -->
+        <td>
+            <aura:if isTrue="{! !!v.transaction.ngbsType }">
+                <lightning:formattedDateTime value="{! v.transaction.date }"
+                                            month="short"
+                                            day="2-digit"
+                                            year="numeric"
+                                            timeZone="UTC" />
+                <aura:set attribute="else">
+                    <lightning:formattedDateTime value="{! v.transaction.date }"
+                                                month="short"
+                                                day="2-digit"
+                                                year="numeric" />
+                </aura:set>
+            </aura:if>
+        </td>
+
+        <!-- REFUNDED DATE -->
+        <td>
+            <aura:if isTrue="{! !!v.transaction.ngbsType }">
+                <lightning:formattedDateTime value="{! v.transaction.refundedDate }"
+                                            month="short"
+                                            day="2-digit"
+                                            year="numeric"
+                                            timeZone="UTC" />
+                <aura:set attribute="else">
+                    <lightning:formattedDateTime value="{! v.transaction.refundedDate }"
+                                                month="short"
+                                                day="2-digit"
+                                                year="numeric" />
+                </aura:set>
+            </aura:if>
+        </td>
+
+        <!-- STATUS -->
+        <td>
+            {! v.transaction.status }
+        </td>
+
+        <!-- TOTAL -->
+        <td>
+            <c:outputCurrency value="{! v.transaction.amount }"
+                              currencyCode="{! v.transaction.currencyCode }"/>
+        </td>
+
+        <!-- AVAILABLE REFUND AMOUNT -->
+        <td>
+            <c:outputCurrency value="{! v.transaction.availableRefund }"
+                              currencyCode="{! v.transaction.currencyCode }"/>
+        </td>
+
+        <!-- REFUNDED AMOUNT -->
+        <aura:if isTrue="{! !empty(v.app.approval.record.Account__r.Billing_ID__c) }">
+            <td>
+                <aura:if isTrue="{! !!v.transaction.ngbsType}">
+                    <c:outputCurrency value="{! v.transaction.refundedAlready }"
+                                        currencyCode="{! v.transaction.currencyCode }"/>
+                </aura:if>
+            </td>
+        </aura:if>
+
+        <!-- REFUND AMOUNT -->
+        <td aura:id="refundCell">
+            <aura:if isTrue="{! or(v.transaction.isRefunded, v.app.isReadOnly) }">
+                <c:outputCurrency
+                    value="{! v.transaction.refundedAmountSaved }"
+                    currencyCode="{! v.transaction.currencyCode }"
+                />
+
+                <aura:set attribute="else">
+                    <aura:if isTrue="{! !v.transaction.postRefundResult.isInProgress }">
+                        <span class="ref-amount">
+                            <c:outputCurrency
+                                value="{! v.transaction.refundedAmount }"
+                                currencyCode="{! v.transaction.currencyCode }"
+                            />
+                        </span>
+
+                        <a class="refund-link"
+                           href="javascript:void(0);"
+                           onclick="{! c.onFullRefundClicked }">
+                            Full Refund
+                        </a>
+
+                        <aura:set attribute="else">
+                            <c:outputCurrency
+                                value="{! v.transaction.refundedAmount }"
+                                currencyCode="{! v.transaction.currencyCode }"
+                            />
+                        </aura:set>
+                    </aura:if>
+                </aura:set>
+            </aura:if>
+        </td>
+
+        <!-- Result -->
+        <td>
+            <div class="badge-wrapper slds-grid">
+                <lightning:badge label="{! v.transaction.postRefundResult.label }"
+                                 class="{! join(' ', 'slds-theme_' + v.transaction.postRefundResult.theme,
+                                     empty(v.transaction.postRefundResult.label) ? 'slds-hide' : '' ) }"/>
+
+                <div class="slds-show_inline-block slds-m-left_small slds-is-relative">
+                    <a href="javascript:void(0);"
+                       onclick="{! c.toggleResultDetails }"
+                       class="{! join(' ', 'action-link show-details',
+                           empty(v.transaction.postRefundResult.message) ? 'slds-hide' : '' ) }">
+                    {! v.transaction.postRefundResult.isMessageShown ? 'Hide' : 'Show' } Details
+                    </a>
+                </div>
+            </div>
+        </td>
+    </tr>
+
+    <!-- Transaction Details -->
+    <aura:if isTrue="{! v.transaction.postRefundResult.isMessageShown }">
+        <tr class="transaction-details">
+            <td colspan="8">
+                <dl class="slds-list_stacked">
+                    <dt class="slds-item_label slds-text-color_weak slds-truncate">Transaction response message:</dt>
+                    <dd class="slds-item_detail transaction-details__message">
+                        <aura:text value="{! v.transaction.postRefundResult.message }"/>
+                    </dd>
+                </dl>
+            </td>
+        </tr>
+    </aura:if>
+
+    <aura:if isTrue="{! v.isLoading }">
+        <tr>
+            <td colspan="{! v.app.totalOfColumns }">
+                <c:LoadingPlaceholder type="list"/>
+            </td>
+        </tr>
+    </aura:if>
+
+    <aura:if isTrue="{! v.transaction.isExpanded }">
+        <!-- Products Header -->
+        <tr class="slds-text-title--caps header products-header">
+            <th colspan="{! v.app.totalOfColumns }" class="products-header__name" style="{!'padding-left:'+(v.padding + v.offset)+'rem;'}">
+                <div class="slds-truncate">Product</div>
+            </th>
+        </tr>
+
+        <!-- Products -->
+        <aura:iteration items="{! v.transaction.entities }" var="entity">
+            <aura:if isTrue="{!entity.isBillingTransaction}">
+                <!-- Billing Transactions -->
+
+                <!-- Cost Center -->
+                <aura:if isTrue="{!entity.billingCodeId}">
+                    <c:RefundManagementCostCenter
+                        aura:id="RefundManagementCostCenter"
+                        app="{!v.app}"
+                        transaction="{!v.transaction}"
+                        entity="{!entity}"
+                        padding="{!v.padding + v.offset}"
+                        offset="{!v.offset}"
+                    />
+                    <aura:set attribute="else">
+                        <!-- Grouped Products -->
+                        <aura:if isTrue="{!entity.products}">
+                            <c:RefundManagementProductGroup
+                                aura:id="RefundManagementProductGroup"
+                                app="{!v.app}"
+                                transaction="{!v.transaction}"
+                                entity="{!entity}"
+                                padding="{!v.padding + v.offset}"
+                                offset="{!v.offset}"
+                            />
+                        </aura:if>
+                        <!-- Single Product -->
+                        <aura:if isTrue="{! !entity.products }">
+
+                            <c:RefundManagementProduct
+                                aura:id="RefundManagementProduct"
+                                app="{!v.app}"
+                                transaction="{!v.transaction}"
+                                product="{!entity}"
+                                padding="{!v.padding + v.offset}"
+                                offset="{!v.offset}"
+                            />
+                        </aura:if>
+                    </aura:set>
+                </aura:if>
+
+                <!-- Talend Transaction -->
+                <aura:set attribute="else">
+                    <c:RefundManagementProduct
+                        aura:id="RefundManagementProduct"
+                        app="{!v.app}"
+                        transaction="{!v.transaction}"
+                        product="{!entity}"
+                        padding="{!v.padding + v.offset}"
+                        offset="{!v.offset}"
+                    />
+                </aura:set>
+            </aura:if>
+        </aura:iteration>
+    </aura:if>
+
+</aura:component>

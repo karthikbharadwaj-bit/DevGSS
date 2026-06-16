@@ -1,0 +1,154 @@
+<aura:component >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{!v.caseType}" action="{!c.caseTypeChange}"/>
+    <aura:handler name="change" value="{!v.openInternalWorkflowValues}" action="{!c.validateOpenInternalWorkflowRequiredChange}"/>
+    <aura:handler name="change" value="{!v.csatPredictionData}" action="{!c.csatPredictionDataChange}"/>
+    <aura:handler name="change" value="{!v.csatPredictionAfterManagerCallbackData}" action="{!c.csatPredictionAfterManagerCallbackDataChange}"/>
+    <aura:handler name="change" value="{!v.caseObj}" action="{!c.caseObjChange}"/>
+
+    <aura:handler name="change" value="{!v.productValues}" action="{!c.validateProductRequiredChange}"/>
+    <aura:handler name="change" value="{!v.csatPredictionAMC}" action="{!c.pushChangesToRecordRecord}"/>
+    <aura:handler name="change" value="{!v.csatPrediction}" action="{!c.pushChangesToRecordRecord}"/>
+    <aura:handler name="change" value="{!v.closeInternalWorkflowValues}" action="{!c.validateCloseInternalWorkflowRequiredChange}"/>
+    <aura:handler event="c:CaseTaggingToolPickListChangeEvent" action="{!c.clearInputs}"/>
+
+    <aura:registerEvent name="SaveCase" type="c:CaseTaggingToolSaveCaseEvent"/>
+
+    <aura:attribute name="tabName" type="String"/>
+    <aura:attribute name="caseObj" type="Case"/>
+    <aura:attribute name="record" type="Map"/>
+    <aura:attribute name="csatPredictionData" type="List"/>
+    <aura:attribute name="csatPredictionAfterManagerCallbackData" type="List"/>
+    <aura:attribute name="caseType" type="String"/>
+
+    <aura:attribute name="openInternalWorkflowData" type="Map"/>
+    <aura:attribute name="openInternalWorkflowReadonly" type="Boolean"/>
+    <aura:attribute name="openInternalWorkflowValues" type="List"/>
+    <aura:attribute name="openInternalWorkflowValid" type="Boolean"/>
+    <aura:attribute name="openInternalWorkflowErrors" type="List"/>
+
+    <aura:attribute name="productData" type="Map"/>
+    <aura:attribute name="productReadonly" type="Boolean"/>
+    <aura:attribute name="productRequired" type="Boolean"/>
+    <aura:attribute name="productValues" type="List"/>
+    <aura:attribute name="productValid" type="Boolean"/>
+    <aura:attribute name="productErrors" type="List"/>
+
+    <aura:attribute name="csatPrediction" type="String"/>
+    <aura:attribute name="csatPredictionAMC" type="String"/>
+    <aura:attribute name="resolveNow" type="Boolean"/>
+
+    <aura:attribute name="closeInternalWorkflowData" type="Map"/>
+    <aura:attribute name="closeInternalWorkflowReadonly" type="Boolean"/>
+    <aura:attribute name="closeInternalWorkflowValues" type="List"/>
+    <aura:attribute name="closeInternalWorkflowValid" type="Boolean"/>
+    <aura:attribute name="closeInternalWorkflowErrors" type="List"/>
+
+    <aura:attribute name="isEmbeddedToLayoutBuilder" type="Boolean" default="false"/>
+    <aura:attribute name="isCleaned" type="Boolean" default="false"/>
+
+    <!-- Methods -->
+    <aura:method name="validate" action="{!c.validate}"/>
+    <aura:method name="pushChangesToRecord" action="{!c.pushChangesToRecordRecord}"/>
+
+    <!-- Markup -->
+    <div class="slds-tabs--default__content slds-hide" role="tabpanel" aura:id="wrapperTab" style="flex-grow:1;">
+        <h2 class="slds-text-heading--medium slds-m-bottom--x-small">Why did the customer contact Support?</h2>
+
+        <aura:if isTrue="{!not(empty(v.openInternalWorkflowData))}">
+            <c:CaseTaggingToolPicklistSearch searchLabel="Search for Function, Specific Issue being encountered and Where the issue is happening"
+                fieldsLabel="['Function','Specific Issue being encountered','Where the issue is happening']"
+                readonly="{!v.openInternalWorkflowReadonly}"
+                required="true"
+                picklistsData="{!v.openInternalWorkflowData}"
+                values="{!v.openInternalWorkflowValues}"
+                isValid="{!v.openInternalWorkflowValid}"
+                errors="{!v.openInternalWorkflowErrors}"
+                tabName = "{!v.tabName}"
+                aura:id="openInternalWorkflowPicklist"/>
+        </aura:if>
+
+        <h2 class="slds-text-heading--medium slds-m-bottom--x-small">What was the customer primarily using when they reported the problem?</h2>
+        <aura:if isTrue="{!not(empty(v.productData))}">
+            <c:CaseTaggingToolPicklistSearch searchLabel="Search for Product/App and Model/Version/Platform"
+                fieldsLabel="['Product/App','Model/Version/Platform']"
+                readonly="{!v.productReadonly}"
+                picklistsData="{!v.productData}"
+                values="{!v.productValues}"
+                isValid="{!v.productValid}"
+                errors="{!v.productErrors}"
+                tabName = "{!v.tabName}"
+                aura:id="productPicklist"/>
+        </aura:if>
+        
+        <div class="slds-grid slds-grid--pull-padded" style="margin-bottom:1rem;">
+            <div class="slds-p-horizontal--small slds-size--2-of-4 slds-large-size--1-of-4">
+                <lightning:select label="Customer Sentiment Prediction" aura:id="csatPredictionSelect" onchange="{!c.changeActionfire}" required="true" value="{!v.csatPrediction}" disabled="{!v.caseObj.Status == 'Closed'}">
+                    <aura:iteration items="{!v.csatPredictionData}" var="item">
+                        <option value="{!item.value}" selected="{!item.value == v.csatPrediction}">{!item.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="slds-p-horizontal--small slds-size--2-of-4 slds-large-size--1-of-4">
+                <lightning:select label="Sentiment after the Manager Callback" onchange="{!c.changeActionfire}" value="{!v.csatPredictionAMC}" disabled="{!v.caseObj.Status == 'Closed'}">
+                    <aura:iteration items="{!v.csatPredictionAfterManagerCallbackData}" var="item">
+                        <option value="{!item.value}" selected="{!item.value == v.csatPredictionAMC}">{!item.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+        </div>
+
+        <fieldset class="slds-form-element" style="margin-bottom:1rem;display:none;">
+            <div class="slds-form-element__control">
+                <div class="slds-radio--button-group">
+                    <span class="slds-button slds-radio--button">
+                        <input name="resolve" type="radio" id="resolveNow" checked="{!v.resolveNow == true}"/>
+                        <label class="slds-radio--button__label" for="resolveNow" onclick="{!c.changeResolveType}">
+                            <span class="slds-radio--faux" data-value="true">I'm resolving the case now</span>
+                        </label>
+                    </span>
+                    <span class="slds-button slds-radio--button">
+                        <input name="resolve" type="radio" id="resolveLater" checked="{!v.resolveNow == false}"/>
+                        <label class="slds-radio--button__label" for="resolveLater" >
+                            <span class="slds-radio--faux">I will resolve the case later</span>
+                        </label>
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="slds-tabs--scoped" style="margin-bottom:1rem;padding-top:1rem;">
+            <ul class="slds-tabs--scoped__nav" style="margin-bottom:1rem">
+                <li class="{!v.resolveNow == true ? 'slds-tabs--scoped__item slds-size--1-of-2 slds-active': 'slds-tabs--scoped__item slds-size--1-of-2' }" style="margin-bottom:0">
+                    <a class="slds-tabs--scoped__link" href="javascript:void(0);" data-value="true" onclick="{!c.changeResolveType}" style="width:100%;text-align:center;">I'm resolving the case now</a>
+                </li>
+                <li class="{!v.resolveNow != true ? 'slds-tabs--scoped__item slds-size--1-of-2 slds-active': 'slds-tabs--scoped__item slds-size--1-of-2' }" style="margin-bottom:0">
+                    <a class="slds-tabs--scoped__link" href="javascript:void(0);" onclick="{!c.changeResolveType}" style="width:100%;text-align:center;">I will resolve the case later</a>
+                </li>
+            </ul>
+            <div class="{!v.resolveNow == true ? '' : 'slds-hide'}">
+                <h2 class="slds-text-heading--medium slds-m-bottom--x-small">What did you do to resolve the issue</h2>
+                <aura:if isTrue="{!not(empty(v.closeInternalWorkflowData))}">
+                    <c:CaseTaggingToolPicklistSearch searchLabel="Search for Function, Specific Action being taken and Where the action was taken if needed"
+                        fieldsLabel="['Function','Specific Action being taken','Where the action was taken if needed']"
+                        readonly="{!v.closeInternalWorkflowReadonly}"
+                        required="true"
+                        picklistsData="{!v.closeInternalWorkflowData}"
+                        values="{!v.closeInternalWorkflowValues}"
+                        isValid="{!v.closeInternalWorkflowValid}"
+                        errors="{!v.closeInternalWorkflowErrors}"
+                        tabName = "{!v.tabName}"
+                        aura:id="closeInternalWorkflowPicklist"/>
+                </aura:if>
+            </div>
+            <div class="{!v.resolveNow != true ? '' : 'slds-hide'}">
+              
+            </div>
+        </div>
+
+            <div class="{! v.isEmbeddedToLayoutBuilder ? 'slds-hide' : '' }" style="text-align:center">
+                <lightning:button variant="neutral" label="Discard" onclick="{!c.discard}" disabled="{!v.caseObj.Status == 'Closed'}"/>
+                <lightning:button variant="brand" label="Save" onclick="{!c.save}" disabled="{!v.caseObj.Status == 'Closed'}"/>
+            </div>
+    </div>
+</aura:component>

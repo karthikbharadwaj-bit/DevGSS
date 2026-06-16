@@ -1,0 +1,61 @@
+<template>
+    <div class="notifications-wrapper" if:true={notifications.length}>
+        <div data-ui-auto="notification-bar"
+             class={notificationsContainer}
+             title="Click to show/hide all notifications">
+
+            <!-- Notifications List -->
+            <div class="slds-grow notifications slds-scrollable-y slds-theme_shade">
+                <!-- Notification -->
+                <div class={notification.containerCssClass}
+                     for:each={notifications}
+                     for:item="notification"
+                     key={notification.id}>
+                    <div class="notification__figure" data-ui-auto="toggle-notifications" onclick={toggleNotifications}>
+                        <span class="notification__icon-container slds-icon_container slds-m-right_small slds-no-flex slds-align-top">
+                            <lightning-icon icon-name={notification.icon}
+                                            data-ui-auto="notification-icon"
+                                            size="small"
+                                            class={notification.iconClass}>
+                            </lightning-icon>
+                        </span>
+                    </div>
+                    <div class={notification.textContainer} data-ui-auto="toggle-notifications" onclick={toggleNotifications}>
+                        <h2 class="slds-text-heading_small" data-ui-auto={notification.text}>
+                            {notification.text}
+                        </h2>
+                        <div if:true={notification.linkHref}
+                              class={notification.helpTextCssClass}>
+                            {notification.helpTextFirstPart}
+                            <a href={notification.linkHref}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="theme_error link-under"
+                               title="">
+                                {notification.linkText}
+                            </a>
+                            {notification.helpTextSecondPart}
+                        </div>
+                        <div if:false={notification.linkHref}
+                              class={notification.helpTextCssClass}>
+                              {notification.helpText}
+                        </div>
+                    </div>
+                    <!-- Right Info -->
+                    <div class="notification__figure" data-ui-auto="notifications-quantity">
+                        <div if:true={showNotificationsQuantity}>
+                            <div if:true={notification.isShowQuantity}>
+                                <button class="slds-button slds-button--icon-border notifications-button">
+                                    <span class={notification.quantityIconClass}>
+                                        <span>+</span>
+                                        {notificationsQuantity}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,54 @@
+<aura:component description="QuotingToolPhaseManagement" controller="QuotingToolQuoteApexController">
+    <!-- Resources -->
+    <ltng:require scripts="{!$Resource.PhaseManagementDependencies + '/PM.js'}"
+                  afterScriptsLoaded="{! c.pmLoaded }"/>
+
+    <!-- Shared attributes -->
+    <aura:attribute name="cartItems" type="List" default="[]" />
+    <aura:attribute name="stage" type="Integer" />
+    <aura:attribute name="opportunityId" type="Id" />
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="isNewChangeOrder" type="Boolean" />
+    <aura:attribute name="phases" type="List" default="[]" />
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="isAppRunning" type="Boolean"/>
+
+    <!-- Component attributes -->
+    <aura:attribute name="cartItemsForPhases" type="List" default="[]" />
+
+    <!-- Event Handlers -->
+    <aura:handler event="c:QuotingToolButtonEvent" action="{! c.onButtonEvent }" />
+    <aura:handler event="c:QuotingToolDeleteQuoteEvent" action="{! c.stopApp }" />
+    <aura:handler event="c:QuotingToolGetQuoteEvent" action="{! c.stopApp }" />
+    <aura:handler event="c:QuotingToolUpdateProductListEvent" action="{! c.reloadPhases }" />
+    <aura:handler event="c:QuotingToolNotificationActionEvent" action="{!c.onNotificationActionEvent}" />
+
+    <!-- Attribute change handlers -->
+    <aura:handler name="change" value="{!v.phases}" action="{!c.phasesChanged}" />
+    <aura:handler name="change" value="{!v.cartItems}" action="{!c.cartItemsChanged}" />
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}" />
+    <aura:handler name="change" value="{!v.Tabs}" action="{!c.tabsChanged}" />
+
+    <!-- Methods -->
+    <aura:method name="save" action="{! c.save }" description="Save changes made by user"/>
+    <aura:method name="discard" action="{! c.discard }" description="Discard changes made by user"/>
+    <aura:method name="deletePhaseLineItems" description="Delete specified Phase Line Items from Salesforce">
+        <aura:attribute name="phaseLineItemIdsToDelete" type="List" />
+    </aura:method>
+    <aura:method name="deletePhases" description="Delete Specified Phases from SalesForce">
+        <aura:attribute name="phaseIdsToDelete" type="List" />
+    </aura:method>
+
+    <section aura:id="phaseManagementTab" class="{! v.Tabs.phases.isOpen ? '' : 'slds-hide' }">
+        <c:PhaseManagement aura:id="phaseManagement"
+                           cartItems="{! v.cartItems }"
+                           isPhasesChanged="{! v.isPhasesChanged }"
+                           phases="{! v.phases }"
+                           isNewChangeOrder="{! v.isNewChangeOrder }"
+                           quote="{! v.Wizard.currentQuote.record }"
+                           onChangesSaved="{! c.onChangesSaved }"
+        />
+    </section>
+
+</aura:component>

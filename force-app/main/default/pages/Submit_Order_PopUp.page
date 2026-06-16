@@ -1,0 +1,386 @@
+<apex:page controller="SubmitOrderPopUpController" lightningStylesheets="true" tabStyle="Order" docType="html-5.0" showheader="false" sidebar="false" title="Submit Order Form">
+
+    <script src="/soap/ajax/64.0/connection.js" type="text/javascript"></script>
+    <script src="/soap/ajax/64.0/apex.js" type="text/javascript"></script>
+
+    <style type="text/css">
+    	html, body {
+            max-width: 750px;
+            max-height: 390px;
+        }
+        form {
+    		width: 950px;
+    	}
+
+        .label--required:before{
+            content: "*";
+            color: #c00;
+        }
+        .input{
+            width: 100%;
+            max-width: 170px;
+            box-sizing: border-box;
+        }
+        .input--textarea{
+            border: 1px solid #CCC;
+            min-height: 70px;
+        }
+        .buttons{
+            text-align: center;
+        }
+        body .bPageBlock{
+            margin-bottom: 0; /* override margin-bottom:10px */
+        }
+        #invalidEmailLabel{
+            display: block;
+        }
+    </style>
+    
+    <apex:form id="apForm">
+
+        <apex:pageBlock id="thePageBlock" title="Submit Order Form">
+
+            
+            <apex:pageMessages id="pageMessages" escape="false" />
+            <apex:outputPanel id="createdCaseId">
+                <script type="text/javascript">
+                    var createdCaseId = "{!newCaseId}";
+                </script>
+            </apex:outputPanel>
+            
+
+            <apex:pageBlockSection id="thePageBlockSection" columns="2">
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Account_Name__c.Label}" />
+            		<apex:input disabled="true" value="{!accountName}" styleClass="input"/>	
+            	</apex:pageBlockSectionItem>
+
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.CC_Order_Type__c.Label}" />
+            		<!-- <apex:input id="ccOrderType" styleClass="validateField" value="{!ccOrderType}"/> -->
+                    <apex:selectList id="ccOrderType" value="{!ccOrderType}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!ccOrderTypeValues}"/>
+                    </apex:selectList>
+            	</apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Case.fields.inContact_BU_ID__c.Label}" id="inContactBuIdLabel"/>
+                    <apex:input type="number" id="inContactBuId" styleClass="input validateField" value="{!inContactBuId}"/>  
+                </apex:pageBlockSectionItem>
+
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.RingCentral_UID__c.Label}" />
+            		<apex:input disabled="true" value="{!ringCentralUId}" styleClass="input"/>
+            	</apex:pageBlockSectionItem>
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Contact_Center_Number__c.Label}" styleClass="label--required"/>
+            		<apex:input id="contactCenterNumber" styleClass="input validateField" value="{!contactCenterNumber}"/>	
+            	</apex:pageBlockSectionItem>
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.RingCentral_Account_Number__c.Label}" />
+            		<apex:input disabled="true" value="{!ringCentralAccountNumber}" styleClass="input"/>
+            	</apex:pageBlockSectionItem>
+            	
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Default_Time_Zone__c.Label}" />
+            		<!-- <apex:input id="defaultTimeZone" styleClass="validateField" value="{!defaultTimeZone}"/> -->
+                    <apex:selectList value="{!defaultTimeZone}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!defaultTimeZoneValues}"/>
+                    </apex:selectList>
+            	</apex:pageBlockSectionItem>
+            	
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Geo_Region__c.Label}" />
+            		<!-- <apex:input id="geoRegion" styleClass="validateField" value="{!geoRegion}"/> -->
+                    <apex:selectList value="{!geoRegion}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!geoRegionValues}"/>
+                    </apex:selectList>
+            	</apex:pageBlockSectionItem>
+                
+            	<apex:pageBlockSectionItem id="descriptionBlockSectionItem">
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Description.Label}" styleClass="label--required"/>
+            		<apex:inputTextarea id="description" styleClass="input input--textarea validateField" value="{!description}"/>
+            	</apex:pageBlockSectionItem>
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Subject.Label}" styleClass="label--required"/>
+            		<apex:input id="subject" styleClass="input validateField" value="{!subject}"/>
+            	</apex:pageBlockSectionItem>
+            	
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Origin.Label}" />
+            		<!-- <apex:input disabled="true" value="{!caseOrigin}"/> -->
+                    <apex:selectList disabled="true" value="{!caseOrigin}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!caseOriginValues}"/>
+                    </apex:selectList>
+            	</apex:pageBlockSectionItem>
+            	
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Product_or_Service__c.Label}" />
+            		<!-- <apex:input disabled="true" value="{!productOrService}"/> -->
+                    <apex:selectList value="{!productOrService}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!productOrServiceValues}"/>
+                    </apex:selectList>
+            	</apex:pageBlockSectionItem>
+
+            	<apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Contact_Name__c.Label}" styleClass="label--required"/>
+            		<apex:input type="email" id="contactName" styleClass="input validateField" value="{!contactName}"/>
+            	</apex:pageBlockSectionItem>
+            	
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.Implementation_Team__c.Label}" />
+            		<!-- <apex:input id="implementationTeam" styleClass="validateField" value="{!implementationTeam}"/> -->
+                    <apex:selectList value="{!implementationTeam}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!implementationTeamValues}"/>
+                    </apex:selectList>                    
+            	</apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="{!$ObjectType.Case.fields.Customer_Notification__c.Label}" />
+                    <apex:inputCheckbox id="customerNotification" value="{!customerNotification}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+            		<apex:outputLabel value="{!$ObjectType.Case.fields.inContact_Segment__c	.Label}" />
+                    <apex:selectList disabled="true" value="{!inContactSegment}" size="1" styleClass="input">
+                        <apex:selectOptions value="{!inContactSegmentValues}"/>
+                    </apex:selectList>                    
+            	</apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+            <div class="buttons">
+                <apex:commandButton value="Cancel" onclick="window.close(); return false;"/>
+                <apex:commandButton value="Submit" onclick="validateFieldsAndCreateCase(); return false;"/>
+            </div>
+        </apex:pageBlock>
+
+        <apex:actionFunction action="{!validateFromVF}" name="serverValidate" rerender="pageMessages, createdCaseId" oncomplete="onLoadResize(); return false"></apex:actionFunction>
+        <apex:actionFunction action="{!createCaseFromVF}" name="createCaseAF" rerender="pageMessages, createdCaseId" oncomplete="closePopUpAndRedirect(); return false"></apex:actionFunction>
+        <apex:actionFunction action="{!updateBillingStatus}" name="updBillingStatus" rerender="pageMessages, createdCaseId" oncomplete="closePopUpAndRedirect(); return false"></apex:actionFunction>
+    </apex:form>
+
+    <script type="text/javascript">
+
+        //resize window on onload
+        if (window.addEventListener) {
+            window.addEventListener('load', onLoadResize, false);
+        } else if (window.attachEvent) {
+            window.attachEvent('onload', onLoadResize);
+        }
+
+        function onLoadResize() {
+            var form = document.querySelector('[id$="apForm"]');
+            var width = form.clientWidth;
+            var height = form.clientHeight;
+
+            console.log('clientWidth >>> ', width);
+            console.log('clientHeight >>> ', height);
+
+            console.log('in onload resize. toSet: width >> ', width, '; height >>> ', height);
+            resizeToFitContent(width, height);
+        }
+        function resizeToFitContent(width, height) {
+            var tmp = document.documentElement.style.overflow;
+            document.documentElement.style.overflow = "scroll";
+
+            if (window.outerWidth) {
+                window.resizeTo(
+                    width + (window.outerWidth - document.documentElement.clientWidth),
+                    height + (window.outerHeight - document.documentElement.clientHeight)
+                );
+            } else {
+                window.resizeTo(500, 500);
+                window.resizeTo(
+                    width + (500 - document.documentElement.clientWidth),
+                    height + (500 - document.documentElement.clientHeight)
+                );
+            }
+
+            document.documentElement.style.overflow = tmp;
+        };
+        function valuesLengthValidator(event) {
+            event.preventDefault();
+            var value = event.target.value;   
+
+            if(event.target.type == 'email') {
+                if( !validateEmail( value.toString() ) ) {
+                    if(!this.style.border) {
+
+                        this.style.border = '1px solid red';
+
+                        var label = document.createElement('label');
+                        label.id = 'invalidEmailLabel';
+                        label.textContent = 'email is invalid';
+                        label.style.color = 'red';
+                        this.parentElement.appendChild(label);
+
+                    }
+                }else{
+                    var invalidEmailLabel = document.getElementById("invalidEmailLabel");
+                    if(invalidEmailLabel) {
+                        invalidEmailLabel.outerHTML = "";
+                        delete invalidEmailLabel;
+                    }
+
+                    if(this.style.border && value.toString().length > 0) {
+                        this.style.border = '';
+                    }
+                }
+            }else if(value.toString().length < 1) {
+
+                var isBuIdField = (event.target.id.indexOf('inContactBuId') != -1);
+
+                if( isBuIdField ) {
+
+                    // get current ccOrderType value
+                    var currentCcOrderTypeValue = document.querySelector('[id$="ccOrderType"]').value;
+
+                    if( currentCcOrderTypeValue == 'New Order' ) {
+                        // in this case field inContactBuId is not required
+                        this.style.border = '';        
+                    }else{
+                        this.style.border = '1px solid red';
+                    }
+
+                }else{
+                    this.style.border = '1px solid red';
+                }
+
+            }else if(this.style.border && value.toString().length > 0) {
+                this.style.border = '';
+            }
+        }
+
+        // add fields length validation on onchange event
+        var fieldsToValidate = document.getElementsByClassName("validateField");
+        [].forEach.call(fieldsToValidate, function (item) {
+            item.onchange = valuesLengthValidator;
+        });
+
+
+        // add onchange handler for CC Order Type field
+        var ccOrderTypeField = document.querySelector('[id$="ccOrderType"]');
+        ccOrderTypeField.onchange = function(event) {
+            var value = event.target.value;
+            var inContactBuIdField = document.querySelector('[id$="inContactBuId"]');
+            var inContactBuIdLabel = document.querySelector('[id$="inContactBuIdLabel"]');
+            if( value == 'New Order' ) {
+                // inContactBuIdField is not required inthis case
+                if( inContactBuIdField.style.border ) {
+                    inContactBuIdField.style.border = '';
+                    inContactBuIdLabel.classList.remove('label--required');
+                }
+            }else{
+                if( inContactBuIdField.value.toString().length < 1 ) {
+                    inContactBuIdField.style.border = '1px solid red';
+                    inContactBuIdLabel.classList.add('label--required');
+                }
+            }
+
+        }
+
+
+
+        function validateBeforeSubmit() {
+            var fieldsToValidate = document.getElementsByClassName("validateField");
+            console.log('fieldsToValidate.length >>> ', fieldsToValidate.length);
+            var isValid = true;
+            for(var i = 0; i < fieldsToValidate.length; i++) {
+
+                if( fieldsToValidate[i].type == 'email' ) {
+
+                    if( !validateEmail( fieldsToValidate[i].value.toString() ) ) {
+                        
+                        fieldsToValidate[i].style.border = '1px solid red';
+
+                        var invalidEmailLabel = document.getElementById("invalidEmailLabel");
+                        if(!invalidEmailLabel) {
+                            var label = document.createElement('label');
+                            label.id = 'invalidEmailLabel';
+                            label.textContent = 'email is invalid';
+                            label.style.color = 'red';
+                            fieldsToValidate[i].parentElement.appendChild(label);
+                        }
+
+                        isValid = false;
+                    }else{
+                        fieldsToValidate[i].style.border = '';
+                        var invalidEmailLabel = document.getElementById("invalidEmailLabel");
+                        if(invalidEmailLabel) {
+                            invalidEmailLabel.outerHTML = "";
+                            delete invalidEmailLabel;
+                        }
+
+                        isValid = true;
+                    }
+
+                }else if(fieldsToValidate[i].value.toString().length < 1) {
+                    // fieldsToValidate[i].style.border = '1px solid red';
+                    // isValid = false;
+
+                    var isBuIdField = (fieldsToValidate[i].id.indexOf('inContactBuId') != -1);
+
+                    if( isBuIdField ) {
+
+                        // get current ccOrderType value
+                        var currentCcOrderTypeValue = document.querySelector('[id$="ccOrderType"]').value;
+
+                        if( currentCcOrderTypeValue == 'New Order' ) {
+                            // in this case field inContactBuId is not required
+                            fieldsToValidate[i].style.border = '';
+                            isValid = true;
+                        }else{
+                            fieldsToValidate[i].style.border = '1px solid red';
+                            isValid = false;
+                        }
+
+                    }else{
+                        fieldsToValidate[i].style.border = '1px solid red';
+                        isValid = false;
+                    }
+
+                }else if(fieldsToValidate[i].style.border && fieldsToValidate[i].value.toString().length > 0) {
+                    fieldsToValidate[i].style.border = '';
+                    isValid = true;
+                }
+
+
+            }
+            return isValid;
+        }
+
+        function validateFieldsAndCreateCase() {
+
+            serverValidate();
+
+            if( validateBeforeSubmit() ) {
+                createCaseAF();
+            }else{
+                console.log('validation error');
+            }
+
+            updBillingStatus();
+        }
+
+
+        function validateEmail(email) {
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+
+
+        function closePopUpAndRedirect() {
+            if(createdCaseId.length > 0) {
+
+                window.opener.location.href = '/'+createdCaseId;
+                window.close();
+
+            }
+        }
+
+        function updateBillingStatus() {
+
+        }
+    </script>
+
+</apex:page>

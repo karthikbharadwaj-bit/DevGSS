@@ -1,0 +1,610 @@
+<apex:page id="pg" standardController="Case" extensions="PurchaseCase">
+      <apex:variable var="ctxt" value="1" />  
+      <script src="{!URLFOR($Resource.ImplementationScheduler, '/jquery.min.js')}"></script>
+      <script src="{!URLFOR($Resource.ImplementationScheduler, '/jquery-ui.min.js')}"></script>
+
+        <style>
+            .mainHeadingTd {
+                font-weight: bold;
+                font-size: 14px;    
+                text-align: center;   
+            } 
+            
+            .mainHeading{
+                border: 1px solid gray;
+                width:100%;
+                margin:auto;
+                border-radius:5px;
+                height:20px;
+                padding-top:12px;  
+                font-size:larger;           
+                color:white;
+                background:url({!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/LC-Menu-BG.jpg')}) 0 0 repeat-x;
+            }
+            
+            .sectionTable {
+                width: 100%;
+            }
+            
+            .sectionContainer {
+                border: 1px solid gray;
+                margin-top: 15px;  
+                margin:auto;            
+                width: 100%;    
+                border-radius:10px;
+                margin-top: 30px;
+                background: #FAFAFA !important;
+            }
+                
+            .sectionTable td { 
+                padding: 5px;  
+                width: 100%;
+            }
+            
+            .sectionTable div {
+                float: left;
+                font-weight: bold!important;
+            }
+            
+            label, input[type="button"],input[type="reset"], input[type="submit"], input[type="radio"], input[type="radio"] {
+                cursor: auto!important;
+            }
+            
+            .sectionTable input[type=text] {
+                padding: 2px;
+            }
+            
+            .sectionTable textarea {
+                padding: 2px;
+                width: 96% !important;
+            }
+            
+            .sectionHeading {
+                /*font-weight: bold;
+                float: none;*/
+                font-family: 'Verdana','Geneva',sans-serif;
+                font-family: 'Verdana','Geneva',sans-serif;
+                font-size: 100%;
+                margin-top: 10px;
+                display: inline;
+            }
+            
+            .innerDiv {
+                width: 100%;
+            }
+            
+            .Maxwidth select{
+                max-width :145px;
+            }
+            
+            div.line {
+                width: 96%;
+                height: 1px;
+                background: grey;
+            }
+            
+            .actionBtn {
+                width: auto;
+                height: 30px;
+                padding: 8px!important;
+                color: white!important;
+                background:gray!important;
+                cursor:pointer!important;
+            }
+            
+            .bodyDiv {
+                background:white!important;            
+            }        
+            
+            .body{
+                -webkit-user-select: none;
+            }
+            
+            .styleTable { border-collapse: separate;}
+            .styleTable TD { font-weight: normal !important; padding: .4em; border-top-width: 0px !important; }
+            .styleTable TH { text-align: center; padding: .8em .4em; }
+            .styleTable TD.first, .styleTable TH.first { border-left-width: 0px !important; }
+            
+            .blockUI.blockOverlay {
+                opacity: 0 !important;
+            }
+            
+            .main-content {
+                width: 100% !important;
+                max-width: 960px;
+            }
+        </style>
+       
+        <apex:composition template="ITPortalTemplate1">
+            <apex:define name="content">
+                <apex:form id="mainForm" styleclass="formCls" enctype="multipart/form-data">
+                    
+                    <apex:actionStatus id="OverlayStatus" onStart="Purchase.showOverlay();" onStop="Purchase.hideOverlay();"/>
+                    
+                    <div id="outerDiv">
+                        
+                        <div class="mainHeading">
+                            {!titleText}
+                        </div>
+                        
+                        <apex:pageMessages />
+                        
+                        <div class="message errorM3" style="display:none">
+                            <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+                                <tbody>
+                                    <tr valign="top">
+                                        <td>
+                                            <img alt="ERROR" class="msgIcon" src="/s.gif" title="ERROR"/>
+                                        </td>
+                                        <td class="messageCell">
+                                            <div class="messageText">                                           
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                    </tr> 
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 10px;">
+                            <apex:outputPanel >
+                                <apex:actionFunction action="{!saveData}" name="reviewRequestAction" reRender="mainForm" status="OverlayStatus" />                          
+                                <apex:commandButton onClick="Purchase.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus" id="saveBtn1"/>
+                                <apex:commandButton action="{!reloadPage}" value="Cancel" immediate="true" rendered="{!IF(caseObj.Id!=null && isEdit, true, false)}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                                <apex:commandButton action="{!editData}" value="Edit" rendered="{!IF(caseObj.Status=='New' && !isEdit,true,false)}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                                <apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!IF(caseObj.Status=='New' && !isEdit,true,false)}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                            </apex:outputPanel>
+                        </div>  
+                        
+                        <div class="sectionContainer">
+                            <apex:outputPanel >
+                                <apex:inputHidden value="{!jsonStr}" id="myHiddenField"/>
+                                
+                                <apex:actionFunction name="passStringToController" action="{!jsMethod}" rerender="tablePanel"/>
+                                
+                                <table class="sectionTable">
+                                    <tr>
+                                        <td>
+                                            <br/><div class="sectionHeading">Requester Information</div><div class="line"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>    
+                                        <td>
+                                            <div class="innerDiv">
+                                                <div style="width:12%">
+                                                    <apex:outputLabel value="Requester Name: " />
+                                                </div>
+                                                <div style="width:25%"> 
+                                                    <apex:outputField value="{!caseObj.ContactId}"/>
+                                                    <!-- <apex:inputField rendered="{!isEdit}" value="{!caseObj.ContactId}"/> -->
+                                                </div>
+                                                <div style="width:12%">
+                                                    <apex:outputLabel value="Request Status: " />
+                                                </div>
+                                                <div style="width:15%">
+                                                    <apex:outputField value="{!caseObj.Status}"/>
+                                                </div>
+                                                <div style="width:11%">
+                                                    <apex:outputLabel value="Request Date: " rendered="{!!isEdit}"/>
+                                                </div>
+                                                <div style="width:24%">
+                                                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}" rendered="{!!isEdit}">
+                                                        <apex:param value="{!caseObj.createdDate}" />
+                                                    </apex:outputText>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>
+                                            <br/><div class="sectionHeading">User Information</div><div class="line"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="innerDiv">
+                                                <div style="width:12%">
+                                                    <apex:outputLabel value="User Name: "/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.User_Name__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.User_Name__c}"/>
+                                                </div>                                            
+                                            </div><br/><br/>
+                                            <div class="innerDiv">
+                                                <div style="width:12%">
+                                                    <apex:outputLabel value="Title: "/>
+                                                </div>
+                                                <div style="width:25%">
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Title__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Title__c}"/>
+                                                </div>                                 
+                                            </div><br/><br/>
+                                            <div class="innerDiv">
+                                                <div style="width:12%">
+                                                    <apex:outputLabel value="Department: "/>
+                                                </div>
+                                                <div style="width:25%">
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Department__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Department__c}"/>
+                                                </div>
+                                            </div>  
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>
+                                            <br/><div class="sectionHeading">Request Information</div><div class="line"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="innerDiv">
+                                                <div style="width:20%">
+                                                    <apex:outputLabel value="Procurement Requester Subject: "/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Subject}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Subject}"/>
+                                                </div>
+                                            </div><br/><br/>
+                                           <div class="innerDiv">
+                                                <div style="width:20%">
+                                                    <apex:outputLabel value="Request Branch: "/>
+                                                </div>
+                                                <div>                                               
+                                                    <apex:inputField id="selectId" styleClass="{!IF(caseObj.Id!=null,'selectId','selectId1')}" rendered="{!isEdit}" value="{!caseObj.Request_Type__c}"/>
+                                                    <!-- <apex:inputText id="selectIdLoad" rendered="{!IF(caseObj.Id==null && isEdit, true, false)}}" value="{!caseObj.Request_Type__c}" /> 
+                                                    <apex:inputText id="selectId" rendered="{!IF(caseObj.Id!=null && isEdit, true, false)}" value="{!caseObj.Request_Type__c}" /> -->  
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Request_Type__c}"/>     
+                                                </div>
+                                            </div><br/><br/>
+                                            <div class="innerDiv">
+                                                <div style="width:20%">
+                                                    <apex:outputLabel value="Request Item: "/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Request_Subtype_1__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Request_Subtype_1__c}"/> 
+                                                </div>
+                                            </div><br/><br/>
+                                            <div class="innerDiv">
+                                                <div style="width:20%">
+                                                    <apex:outputLabel value="Problem/Request: "/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Request_Subtype_2__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Request_Subtype_2__c}"/> 
+                                                </div>
+                                            </div><br/><br/>
+                                            <div class="innerDiv">
+                                                <div style="width:20%">
+                                                    <apex:outputLabel value="Request Justification: "/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField rendered="{!isEdit}" value="{!caseObj.Request_Justification__c}"/>
+                                                    <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Request_Justification__c}"/>
+                                                </div>
+                                            </div>  
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>
+                                            <br/><div class="sectionHeading">Requested Item Information</div><div class="line"></div>
+                                        </td>
+                                    </tr>
+                                    <apex:actionRegion >
+                                        <tr>
+                                            <td>
+                                                <div class="innerDiv">
+                                                    <apex:outputPanel id="tablePanel" rendered="{!isEdit}">
+                                                        <apex:actionFunction action="{!deleteRow}" name="deleteAction" reRender="tablePanel" status="OverlayStatus">
+                                                            <apex:param value="" assignTo="{!itemToDelete}" name="DeleteItem"/>
+                                                        </apex:actionFunction>
+                                                        <apex:actionFunction action="{!updateModel}" name="updateRowAction" reRender="msgs, tablePanel" onComplete="Purchase.updateAllPicklistsWithModel({!itemToDelete})"  status="OverlayStatus">
+                                                            <apex:param value="" assignTo="{!itemToDelete}" name="UpdateItem"/>
+                                                        </apex:actionFunction>
+                                                           <apex:actionFunction action="{!updateSubType}" name="updateSubTypeAction" onComplete="Purchase.updateAllPicklistsWithSubType({!itemToDelete})" reRender="tablePanel"
+                                                            status="OverlayStatus">
+                                                            <apex:param value="" assignTo="{!itemToDelete}" name="UpdateSubType"/>
+                                                        </apex:actionFunction>
+                                                        <apex:actionFunction action="{!updatePrice}" name="updatePriceAction" reRender="tablePanel" status="OverlayStatus">
+                                                            <apex:param value="" assignTo="{!itemToDelete}" name="UpdatePrice"/>
+                                                        </apex:actionFunction>
+                                                        <apex:actionFunction action="{!updatePriceOnQuantity}" name="updatePriceOnQuantityAction" reRender="tablePanel" status="OverlayStatus">
+                                                            <apex:param value="" assignTo="{!itemToDelete}" name="UpdatePriceOnQuantity"/>
+                                                        </apex:actionFunction>
+                                                 
+                                                        <table class="tblCls styleTable" style="width:50%" id="tbl">
+                                                            <tr>
+                                                                <th class="ui-state-default">Action</th>
+                                                                <!-- <th style="text-align:center;">Sr. No.</th> -->
+                                                                <th class="ui-state-default first">Quantity</th>
+                                                                <th class="ui-state-default first">Item Type</th>
+                                                                <th class="ui-state-default first">Item Sub Type</th>                                                       
+                                                                <th class="ui-state-default first">Model</th>
+                                                                <th class="ui-state-default first">Price</th>
+                                                                <th class="ui-state-default first">Vendor</th>
+                                                            </tr>
+                                                            <apex:repeat value="{!itemWrapperMap}" var="fieldKey">
+                                                                <tr>
+                                                                    <td class="ui-widget-content" style="text-align:center">
+                                                                        <apex:image id="theImage" style="cursor:pointer;" onClick="Purchase.deleteRow('{!itemWrapperMap[fieldKey].srNo}');return false;" value="{!$Resource.deleteIcon}" width="30px" height="30px"></apex:image>
+                                                                    </td> 
+                                                                    <td class="ui-widget-content first">
+                                                                        <apex:inputText value="{!itemWrapperMap[fieldKey].quantity}" onkeypress="return Purchase.isNumberKey(event);" onChange="Purchase.updatePriceOnQuantity('{!itemWrapperMap[fieldKey].srNo}',this); return false;" style="width:50px;"/>                                                                
+                                                                    </td>                                                          
+                                                                    <td class="ui-widget-content first">
+                                                                        <apex:selectList value="{!itemWrapperMap[fieldKey].itemType}" size="1"  onChange="Purchase.updateSubType('{!itemWrapperMap[fieldKey].srNo}'); return false;" id="typeSelectList">
+                                                                            <apex:selectOptions value="{!itemTypeList}"  />
+                                                                        </apex:selectList>
+                                                                    </td>
+                                                                    <td class="ui-widget-content first">
+                                                                        <apex:selectList value="{!itemWrapperMap[fieldKey].itemSubType}" size="1"  onChange="Purchase.updateRow('{!itemWrapperMap[fieldKey].srNo}');return false;" id="subTypeSelectList">
+                                                                            <apex:selectOptions value="{!itemWrapperMap[fieldKey].itemSubTypeList}"  />
+                                                                        </apex:selectList>
+                                                                    </td>                                                            
+                                                                    <td class="ui-widget-content first"  >                                                               
+                                                                    <div  class ="Maxwidth" > <apex:selectList value="{!itemWrapperMap[fieldKey].model}" size="0"  onChange="Purchase.updatePrice('{!itemWrapperMap[fieldKey].srNo}');return false;" id="modelSelectList" styleclass="modelData{!itemWrapperMap[fieldKey].srNo}">
+                                                                            <apex:selectOptions value="{!itemWrapperMap[fieldKey].modelPickList}"  />
+                                                                        </apex:selectList></div>
+                                                                    </td>
+                                                                    <td class="ui-widget-content first">
+                                                                        <apex:outputText value="{!itemWrapperMap[fieldKey].price}" styleclass="price{!itemWrapperMap[fieldKey].srNo}" id="priceText"/>
+                                                                    </td>  
+                                                                    <td class="ui-widget-content first">
+                                                                        <apex:selectList disabled="true" value="{!itemWrapperMap[fieldKey].vendor}" size="1" id="vendorSelectList" styleclass="vendorData{!itemWrapperMap[fieldKey].srNo}">
+                                                                            <apex:selectOptions value="{!itemVendor}"  />
+                                                                        </apex:selectList>                                                               
+                                                                    </td>                                                        
+                                                                </tr> 
+                                                            </apex:repeat>
+                                                        </table>                                                
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!!isEdit}">
+                                                        <apex:outputField value="{!caseObj.Items__c}" rendered="{!!isEdit}"/>
+                                                    </apex:outputPanel>
+                                                </div><br/><br/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <apex:commandButton action="{!addRow}" rendered="{!isEdit}" value="Add more Items" reRender="tablePanel" styleClass="actionBtn" status="OverlayStatus"/>
+                                                
+                                            </td>
+                                        </tr>
+                                    </apex:actionRegion>
+                                    <tr>
+                                        <td>
+                                            If items you are looking for is not in the list. Kindly write it down the box below:<br/><br/>
+                                            <apex:inputField rendered="{!isEdit}" value="{!caseObj.Extra_Item_Detail__c}" style="width:960px"/>
+                                            <apex:outputText rendered="{!!isEdit}" value="{!caseObj.Extra_Item_Detail__c}"/>
+                                        </td> 
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <b>Case#:</b> <a href="javascript:void(0);" onClick="Purchase.openCase();">{!caseObj.CaseNumber}</a><br/><br/>                                        
+                                        </td> 
+                                    </tr>
+                                </table>
+                            </apex:outputPanel>
+                        </div>
+                        
+                        <div style="text-align: center; margin-top: 10px;">
+                            <apex:outputPanel >
+                                <apex:actionFunction action="{!saveData}" name="reviewRequestAction" reRender="mainForm" status="OverlayStatus" />                          
+                                <apex:actionFunction action="{!editData}" name="editDataAction" reRender="mainForm" status="OverlayStatus" />
+                                <apex:commandButton onClick="Purchase.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus" id="saveBtn2"/>
+                                <apex:commandButton action="{!reloadPage}" value="Cancel" immediate="true" rendered="{!IF(caseObj.Id!=null && isEdit, true, false)}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                                <apex:commandButton action="{!editData}"  value="Edit" rendered="{!IF(caseObj.Status=='New' && !isEdit,true,false)}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                                <apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!IF(caseObj.Status=='New' && !isEdit,true,false)}"  style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+                            </apex:outputPanel>
+                        </div>  
+                        
+                    </div>  
+                    <script>
+                        $('.selectId1').prop('disabled', 'disabled');
+                        $('.selectId1').css('-moz-user-select', 'none'); 
+                        $('.selectId1').css('-webkit-user-select', 'none');                    
+                    </script>                                  
+                </apex:form> 
+            </apex:define>
+        </apex:composition>     
+        
+        <apex:includeScript value="{!URLFOR($Resource.HelperResource, '/js/jquery.blockUI.js')}"/>
+        
+        <script type="text/javascript"> 
+          function openLookup(baseURL, width, modified, searchParam){
+           // alert('here'+ originalbaseURL +':::'+baseURL);
+            var originalbaseURL = baseURL;
+            var originalwidth = width;
+            var originalmodified = modified;
+            var originalsearchParam = searchParam;
+        
+            var lookupType = baseURL.substr(baseURL.length-3, 3);
+           // alert('lookupType '+ lookupType );
+            if (modified == '1') baseURL = baseURL + searchParam;
+        
+            var isCustomLookup = false;
+        
+            // Following "003" is the lookup type for Account object so change this as per your standard or custom object
+            if(lookupType == "003"){
+              //alert('Inside case');
+              var urlArr = baseURL.split("&");
+              var txtId = '';
+              if(urlArr.length > 2) {
+                urlArr = urlArr[1].split('=');
+                txtId = urlArr[1];
+              }
+              // alert('Outside case'+baseURL );
+              // Following is the url of Custom Lookup page. You need to change that accordingly
+              if({!isPortal}){
+                    baseURL = "/helpdesk/apex/CommunityPortalUserLookup?txt=" + txtId;
+              } else {
+                    baseURL = "/apex/CommunityPortalUserLookup?txt=" + txtId;
+              } 
+              
+              //alert('base'+baseURL );
+              // Following is the id of apex:form control "myForm". You need to change that accordingly
+              baseURL = baseURL + "&frm=" + escapeUTF("{!$Component.myForm}");
+              if (modified == '1') {
+                baseURL = baseURL + "&lksearch=" + searchParam;
+              }
+        
+              // Following is the ID of inputField that is the lookup to be customized as custom lookup
+              if(txtId.indexOf('Case') > -1 ){
+                isCustomLookup = true;
+              }
+            }
+        
+        
+            if(isCustomLookup == true){
+              openPopup(baseURL, "lookup", 350, 480, "width="+width+",height=480,toolbar=no,status=no,directories=no,menubar=no,resizable=yes,scrollable=no", true);
+            }
+            else {
+              if (modified == '1') originalbaseURL = originalbaseURL + originalsearchParam;
+              openPopup(originalbaseURL, "lookup", 350, 480, "width="+originalwidth+",height=480,toolbar=no,status=no,directories=no,menubar=no,resizable=yes,scrollable=no", true);
+            } 
+          }
+         </script>
+         <script>        
+            var Purchase = {
+               showOverlay : function(){
+                   $.blockUI({ css: { 
+                       border: 'none', 
+                       padding: '15px', 
+                       backgroundColor: '#000',                                      
+                       '-webkit-border-radius': '10px', 
+                       '-moz-border-radius': '10px',                    
+                        opacity : 1, 
+                        color: '#fff'                      
+                       }});
+                },             
+                hideOverlay : function(){
+                    $.unblockUI();
+                },
+                validate : function(srNo){
+                    reviewRequestAction();
+                },
+                showTable : function(){
+                    $(".tblCls").styleTable();
+                },
+                deleteRow : function(srNo){
+                    deleteAction(srNo);
+                },
+                updateRow : function(srNo){
+                    updateRowAction(srNo);                
+                },
+                updateSubType : function(srNo){
+                    updateSubTypeAction(srNo);
+                },            
+                updatePrice : function(srNo){
+                    updatePriceAction(srNo);
+                },
+                updatePriceOnQuantity : function(srNo,input){
+                    if (input.value <= 0) input.value = 1;
+                    if (input.value > 9999) input.value = 9999;
+                    updatePriceOnQuantityAction(srNo);
+                },
+                updateAllPicklistsWithSubType : function(srNo){
+                    $('.price'+srNo).html("");
+                    $('.modelData'+srNo).prop('selectedIndex', 0);
+                    $('.vendorData'+srNo).prop('selectedIndex', 0);
+                },
+                updateAllPicklistsWithModel : function(srNo){
+                    $('.price'+srNo).html("");                
+                    $('.vendorData'+srNo).prop('selectedIndex', 0);
+                },
+                openCase : function(){
+                    var stringVal = '{!caseObj.id}';
+                    if({!isPortal}){
+                        var url = '/helpdesk/'+stringVal;
+                    } else {
+                        var url = '/'+stringVal ;  
+                    } 
+                    window.open(url,'Popup','height=500,width=600,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+                },
+                isNumberKey : function (evt) {
+                    var charCode = (evt.which) ? evt.which : evt.keyCode;                               
+                    if (charCode > 31 && (charCode < 48 || charCode > 57)) 
+                        return false;               
+                    return true;
+                },          
+                fnOpenLookup : function() {
+                    var strSearch = $('[id$=inventorNameField]').val();
+                    if({!isPortal}){
+                        var url = '/helpdesk/apex/inventionCustomLookup?strSearch='+ strSearch;
+                    } else {
+                        var url = '/apex/inventionCustomLookup?strSearch='+ strSearch;  
+                    }               
+                    //$('[id$=inventorNameField]').val('');
+                    window.open(url,'Popup','height=500,width=600,left=100,top=100,resizable=no,scrollbars=yes,toolbar=no,status=no');
+                }
+            };
+            
+            (function ($) {
+               $.fn.styleTable = function (options) {
+                   var defaults = {
+                       css: 'styleTable'
+                   };
+                   options = $.extend(defaults, options);
+       
+                   return this.each(function () {
+       
+                       input = $(this);
+                       input.addClass(options.css);
+       
+                       input.find("tr").live('mouseover mouseout', function (event) {
+                           if (event.type == 'mouseover') {
+                               $(this).children("td").addClass("ui-state-hover");
+                           } else {
+                               $(this).children("td").removeClass("ui-state-hover");
+                           }
+                       });
+       
+                       input.find("th").addClass("ui-state-default");
+                       input.find("td").addClass("ui-widget-content");
+       
+                       input.find("tr").each(function () {
+                           $(this).children("td:not(:first)").addClass("first");
+                           $(this).children("th:not(:first)").addClass("first");
+                       });
+                   });
+               };
+           })(jQuery);
+           
+           $(document).ready(function() {
+               var tbl = $('.tblCls tr:has(td)').map(function(i, v) {
+                   var $td =  $('td', this);
+                   //console.log('='+$td.eq(0).text()+'='+$td.eq(1).text()+'='+$td.eq(2).text()+'='+$td.eq(3).text()+'='+$td.eq(4).text()+'='+$td.eq(5).text()+'='+$td.eq(6).text());
+                   //console.log('='+$td.eq(0).text().trim().length+'='+$td.eq(1).text().trim().length+'='+$td.eq(2).text().trim().length+'='+$td.eq(3).text().trim().length+'='+$td.eq(4).text().trim().length+'='+$td.eq(5).text().trim().length+'='+$td.eq(6).text().trim().length);
+                   return {                         
+                        srNo: $td.eq(0).text(),
+                        quantity: $td.eq(1).text(),
+                        itemType: $td.eq(2).text(),
+                        itemSubType: $td.eq(3).text(),
+                        vendor: $td.eq(4).text(),
+                        model: $td.eq(5).text(),
+                        price: $td.eq(6).text(),
+                        unitPrice: parseFloat($td.eq(6).text()) / parseFloat($td.eq(1).text())
+                      }
+               }).get();
+               if(tbl[0].srNo=='1' ){       
+                   jQuery('[id$=myHiddenField]').val(JSON.stringify(tbl));
+                   console.log('Enter');
+                   passStringToController();
+               }
+               $(".tblCls").styleTable();
+               //$('[id$=selectId]').prop('disabled', 'disabled');                 
+           });
+           
+        </script> 
+        
+        <apex:pageMessages id="msgs" showDetail="true"/>
+         
+    </apex:page>

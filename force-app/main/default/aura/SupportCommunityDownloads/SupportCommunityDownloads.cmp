@@ -1,0 +1,37 @@
+<aura:component  implements="forceCommunity:availableForAllPageTypes" description="Support Community Downloads" controller="SupportCommunityImageController" access="global">
+    <aura:attribute name="title" type="String" default="Downloads" />
+    <aura:attribute name="viewall" type="String" default="https://success.ringcentral.com/lc/cms/downloads" />
+    <aura:attribute name="dl_1_mac" type="String" default="https://downloads.ringcentral.com/glip/rc/GlipForMac" />
+    <aura:attribute name="dl_1_win" type="String" default="https://downloads.ringcentral.com/glip/rc/GlipForWindows64" />
+    <aura:attribute name="dl_2_mac" type="String" default="http://dn.ringcentral.com/data/web/download/RCMeetings/1210/RCMeetingsClientSetup.pkg" />
+    <aura:attribute name="dl_2_win" type="String" default="http://dn.ringcentral.com/data/web/download/RCMeetings/1210/RCMeetingsClientSetup.exe" />
+    <aura:attribute name="dl_3_mac" type="String" default="http://downloads.ringcentral.com/sp/RingCentralForMac" />
+    <aura:attribute name="dl_3_win" type="String" default="http://downloads.ringcentral.com/sp/RingCentralForWindows" />
+    <aura:attribute name="downloads" type="List"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdate}"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <div class="sc-downloads">
+        <div class="sc-downloads__header">{! v.title }</div>
+        <div class="sc-downloads__body">
+            <ul>
+                <aura:iteration items="{!v.downloads}" var="item" indexVar="inx">
+                    <li>
+                        <div class="sc-downloads__icon">
+                            <img src="{!item.image}"/>
+                        </div>
+                        <div class="sc-downloads__info">
+                            <div class="sc-downloads__title">{!item.title}</div>
+                            <div class="sc-downloads__links">
+                                <a href="{!item.win}" target="_blank">{!$Label.c.SC_windows}</a>
+                                <a href="{!item.mac}" target="_blank">{!$Label.c.SC_macOS}</a>
+                            </div>
+                        </div>
+                    </li>
+                </aura:iteration>
+            </ul>
+        </div>
+        <div class="sc-downloads__footer"><a href="{!v.viewall}" target="_blank">{!$Label.c.SC_allDownloads}</a></div>
+    </div>
+
+</aura:component>

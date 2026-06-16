@@ -1,0 +1,52 @@
+<template>
+    <template if:true={showMsg}>
+        <div class="slds-notify_container slds-is-relative" id="toastCmp">
+            <div class={toastInfo.toastcss} role="alert">
+                <div class="slds-align_absolute-center slds-notify__content">
+                    <div class="slds-align_relative-center">
+                        <h1 class="my-h1 slds-align_absolute-center slds-text-heading_extra_small">{toastInfo.toastType}</h1>
+                        <div class="displayInline">
+                            <div class="slds-align-top slds-m-top_xx-small slds-m-right_x-small" if:true={isInfoMessage}>
+                                <lightning-icon class="slds-m-top_none my-info-icon" size="x-small" icon-name="utility:info" alternative-text="Info!" title="Info"></lightning-icon>
+                            </div>
+                            <div class="slds-align-top slds-m-top_xx-small slds-m-right_x-small" if:true={isError}>
+                                <lightning-icon class="slds-m-top_none my-error-icon" size="x-small" icon-name="utility:error" alternative-text="Error!" title="Error"></lightning-icon>                    
+                            </div>
+                            <h2 class="my-h2 slds-text-heading_extra_small">
+                                <template if:true={showAtLeastOneMsg}>
+                                    <p>
+                                        You must enter at least one of these fields to search: <a name="lastName" onclick={handleScroll}>Last Name</a>
+                                        , <a name="companyName" onclick={handleScroll}>Company Name</a>
+                                        , <a name="emailAddress" onclick={handleScroll}>Email Address</a>
+                                        , <a name="contactPhone" onclick={handleScroll}>Contact Phone Number</a>.
+                                    </p>
+                                </template>
+                                <template if:true={showAllFieldsMsg}>
+                                    <p>
+                                        Please fill all <a name="lastName" onclick={handleScroll}>Last Name</a>
+                                        , <a name="companyName" onclick={handleScroll}>Company Name</a>
+                                        , <a name="emailAddress" onclick={handleScroll}>Email</a>
+                                        , <a name="leadSource" onclick={handleScroll}>Lead Source</a>
+                                        , <a name="employeeRange" onclick={handleScroll}>No. of Employees (Range)</a>
+                                        , <a name="industry" onclick={handleScroll}>Industry</a> to create a new lead.
+                                    </p>
+                                </template>
+                                <!-- <template if:true={showEnrichmentMsg}>
+                                    <p>
+                                        Enrichment not done. Please provide either <a name="firstName" onclick={handleScroll}>First Name</a> or <a name="lastName" onclick={handleScroll}>Last Name</a>
+                                        , <a name="emailAddress" onclick={handleScroll}>Email</a>
+                                        , <a name="leadSource" onclick={handleScroll}>Lead Source</a>
+                                        , <a name="companyName" onclick={handleScroll}>Company Name</a> then enrich again.
+                                    </p>
+                                </template> -->
+                                <template if:true={showPlainText}>
+                                    {toastInfo.toastMsg}
+                                </template>
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</template>

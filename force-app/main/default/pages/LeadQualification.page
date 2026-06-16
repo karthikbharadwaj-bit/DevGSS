@@ -1,0 +1,538 @@
+<apex:page standardController="Lead" extensions="LeadQualificationController">
+    <apex:outputpanel id="container">
+        <apex:form >
+            <script src="{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/jquery-1.9.1.js')}"></script>
+            <style type="text/css">
+                .textlabel {
+                    color: #084B8A;
+                    font-size: 13px
+                }
+                #innerheaderDiv {
+                    padding:10px !important;
+                    width: 50%;
+                    margin: 0px 28px;
+                }
+                .NewDiscoverySection{
+                    width: 1500px;
+                    margin: auto;
+                    border: 1px solid #A5A6A5;
+                    margin-bottom: 10px;
+                    -moz-border-radius: 11px;
+                    -webkit-border-radius: 11px;
+                    border-radius: 11px;
+                    box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -webkit-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -moz-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    background: white !important;
+                }
+                .btnDiv {
+                    width: 1500px;
+                    margin: auto;
+                    border: 1px solid #A5A6A5;
+                    margin-bottom: 10px;
+                    -moz-border-radius: 11px;
+                    -webkit-border-radius: 11px;
+                    border-radius: 11px;
+                    box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -webkit-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -moz-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    text-align: center;
+                }
+                /* -----------------------------------------New Tabbed panel controller style css---------------------- */
+                .tabbed-area{
+                }
+                .tabbed-area > ul{
+                    list-style:none;
+                    height: 27px;
+                    width: 1200px;
+                }
+                .tabbed-area > ul > li{
+                    float:left;
+                    margin: 0 2px 0 0;
+                    padding: 9px 10px 13px;
+                    display: inline-block !important;
+                    position: relative;
+                    box-shadow: 0px -42px 54px -20px #236FBD inset;
+                    -webkit-box-shadow: 0px -54px 54px -20px #236FBD inset;
+                    -moz-box-shadow: 0px -42px 54px -20px #236FBD inset;
+                    border-radius: 10px 10px 0px 0px;
+                    -webkit-border-radius: 10px 10px 0px 0px;
+                    -moz-border-radius: 10px 10px 0px 0px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                }
+                .tabbed-area > ul > li >a{
+                    padding-top:20px;
+                    text-align:center;
+                    color: white;
+                    text-decoration: none;
+                    font-size: 13px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                    font-weight: bolder;
+                }
+                .tabbed-area > ul > li:hover{
+                    background: white;
+                    cursor: pointer;
+                    box-shadow: 0px -42px 54px -20px rgba(73, 72, 72, 0.98) inset;
+                }
+                .tabbed-area > ul > li.tabActiveHeader{
+                    background: white;
+                    cursor: pointer;
+                    box-shadow: 0px -54px 54px -20px orange inset;
+                }
+                .tabbed-area > ul > li.tabActiveHeader > a {
+                    padding-top:20px;
+                    text-align:center;
+                    color: black;
+                    text-decoration: none;
+                    font-size: 13px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                    font-weight: bolder;
+                }
+                .tabContentWrapper{
+                    border: 1px solid #C1C9CA;
+                    width: 86%;
+                    padding: 20px;
+                    margin-left: 40px;
+                    min-height: 124px;
+                    border-top: 6px solid orange;
+                    margin-top: -3px;
+                    border-radius: 0px 15px 15px 0px;
+                }
+                .removeMargin{
+                    padding-left: 0px;
+                    -webkit-padding-start: 0px;
+                }
+                .lightInsight{
+                }
+                .errorTab{
+                    border-top: 3px solid red;
+                }
+                .blockHeader {
+                    width: 45%;
+                    padding: 7px 1px 5px 11px;
+                    box-shadow: 1px 0px 16px 1px gray;
+                }
+
+                .blockHeader > h3{
+                    font-size: 17px;
+                }
+                .fullwidthWithBorder{
+                    /*width: 96%;*/
+                    outline:none;
+                    margin-top: 11px;
+                    height: 125px;
+                    resize: none;
+                    box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -webkit-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -moz-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    font-size: 12px !important;
+                    line-height: 1 !important;
+                    border: 1px solid lightgray !important;
+                    border-radius: 10px !important;
+                    -webkit-border-radius: 10px !important;
+                    -moz-border-radius: 10px !important;
+                    box-sizing : border-box;
+                    padding : 5px;
+                }
+                .box-wrap{
+
+                    border: 1px solid #C1C9CA;
+                    width: 1360px;
+                    /* border-radius: 15px; */
+                    padding: 20px;
+                    margin-left: 40px;
+                    min-height: 124px;
+                    border-top: 6px solid orange;
+                    margin-top: -3px;
+                    border-radius: 0px 15px 15px 15px;
+                }
+                .footerNotesC {
+                    width: 1160px;
+                    padding: 20px;
+                }
+                #overlay {
+                    background: url("/resource/1398195934000/EmailValidation/loading.gif") no-repeat scroll center center rgba(177, 177, 177, 0.71);
+                    border: 0px solid #000000;
+                    bottom: 0;
+                    left: 0;
+                    opacity: 0.75;
+                    position: fixed;
+                    top: 0;
+                    visibility: hidden;
+                    width: 100%;
+                    border-radius: 15px;
+                    z-index: 1000;
+                }
+
+                .fixedTextAreaSize, .discoveryNotes, .managerNotes, .fullwidthWithBorder {
+                    width: 650px;
+                }
+                .currentSituation, .benefits, .problems, .decisionMaking, .impact, .competitiveLandscape, .idealSituation, .relationshipBuildingExtras, .discoveryNotesOld {
+                    outline:none;
+                    resize: none;
+                    width: 1300px;
+                    height: 600px;
+                    box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -webkit-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -moz-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    font-size: 12px !important;
+                    line-height: 1 !important;
+                    border: 1px solid lightgray !important;
+                    border-radius: 10px !important;
+                    -webkit-border-radius: 10px !important;
+                    -moz-border-radius: 10px !important;
+                    box-sizing : border-box;
+                    padding : 5px;
+                }
+
+                .hidden {
+                    display: none;
+                }
+
+                .tableBorder {
+                    border-top: 1px solid #cd9e5a;
+                    border-bottom: 1px solid #cd9e5a;
+                    border-left: 1px solid #cd9e5a;
+                }
+
+                .tableBorder th {
+                    color: #cd9e5a;
+                    border-right: 1px solid #cd9e5a;
+                }
+
+                .tableBorder td {
+                    border-top: 1px solid #cd9e5a;
+                    border-right: 1px solid #cd9e5a;
+                }
+
+                .hiddenPageBlock {
+                    background-color: inherit;
+                    border-bottom: 0px solid #eaeaea;
+                    border-left: 0px solid #eaeaea;
+                    border-right: 0px solid #eaeaea;
+                    border-radius: 0px;
+                }
+                .bPageBlock .pbBody { background-color:#EEEEEE; }
+
+                .requiredField{
+                    border-left: 2px solid red !important;
+                }
+            </style>
+            <script>
+
+                //--------------------------------------Function to initiate tab nature-------------------------------------------
+                function initiateTabs(tabWrapper,options){
+                    var optionsJson = jQuery.parseJSON(options);
+                    if(optionsJson.activeTab != null){
+                        $(tabWrapper).children('.tabdiv').hide().eq(optionsJson.activeTab).show();
+                    }
+                    else{
+                        $(tabWrapper).children('.tabdiv').hide().eq(0).show();
+                    }
+                };
+                //-------------------------------------Function to check and show errors in discovery tab-------------------------
+                function CheckErrorTabs(){
+                    $.each($(".box-wrap").children(".tabdiv"),function(){
+                        var parent = $(this);
+                        $(this).find(".errorMsg").filter(function(){
+
+                            $(".box-wrap").siblings("ul").find("li[id*="+parent.attr('id')+"]").each(function(){
+                                $(this).addClass("errorTab");
+                                //     alert($(this).attr("id"));
+
+                            });
+                        });
+                    });
+                };
+                //-------------------------------------Function to check and show errors in discovery tab-------------------------
+                //-------------------------------------Function to check length of field on page level/7/3/2014----------------------------
+                function TextAreaLengthCheck(areaId,FieldName,validlength){
+
+                    $(areaId).keyup(function () {
+                        var maxLength = validlength;
+                        var text = $(this).val();
+                        var textLength = text.length;
+                        if (textLength > maxLength) {
+                            $(this).val(text.substring(0, (maxLength)));
+                            alert("Sorry, you are only " + maxLength + " characters allowed for "+FieldName);
+                        }
+                        else {
+                            //alert("Required Min. 500 characters");
+                        }
+                    });
+                };
+                //------------------------Methods to show and hide overlay on page----------------------------
+                function showOverlay() {
+                    var o = document.getElementById('overlay');
+                    o.style.visibility = 'visible';
+                }
+                function hideOverlay() {
+                    var o = document.getElementById('overlay');
+                    o.style.visibility = 'hidden';
+                }
+                //------------------------Method to  refresh parent page of current Inline page--------------
+                function parentRefresh(){
+                    //--------------------Accessing parent view url and reloading----------------------------
+                    window.top.location.href = '{!redirectUrl}';
+                }
+                //------------------------Method to confirm user action--------------------------------------
+                function ConfirmUserAction(msg){
+                    var action = confirm(msg);
+                    if(action){
+                        parentRefresh();
+                    }else{
+
+                        return false;
+                    }
+
+                }
+
+                function checkRequiredFields() {
+                    if ('{!isInsideSalesProfile}' === 'true') {
+                        const requiredFields = document.getElementsByClassName('required');
+                        let isChecked = true;
+
+                        if (requiredFields && requiredFields.length) {
+                            for (let field of requiredFields) {
+                                let fieldValue = field.value.replace(/\s+/g, '');
+                                if (!fieldValue) {
+                                    const height = field.style.height;
+                                    field.style.cssText = `border: 3px solid red !important; height: ${height};`;
+                                    isChecked = false;
+                                } else {
+                                    const height = field.style.height;
+                                    field.style.cssText = `border: 1px solid lightgray !important; height: ${height};`;
+                                }
+                            }
+                        }
+                        if (!isChecked) {
+                            alert('Please populate all required fields.');
+                            return false;
+                        }
+                    }
+                    save();
+                }
+            </script>
+            <apex:actionFunction name="save" action="{!save}" status="renderMeStatus" oncomplete="parentRefresh();"/>
+            <div class="btnDiv" id="readModeButton"   >
+                <apex:outputpanel rendered="{!viewMode == 'read'}">
+                    <apex:commandButton value="Edit" reRender="container" action="{!showEdit}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="addFieldClass()"/>
+                </apex:outputpanel>
+                <apex:outputpanel rendered="{!viewMode == 'edit'}">
+                    <apex:commandButton value="Save" action="{!save}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="parentRefresh();" onClick="return checkRequiredFields()"/>
+                    <apex:commandButton value="Cancel"  onClick="return ConfirmUserAction('Do you really want to continue without saving changes?')" status="renderMeStatus" style="padding: 8px 20px 8px 20px;"/>
+                </apex:outputpanel>
+            </div>
+
+            <!-- -------------------------New Discovery section starts------------------------- -->
+            <div  class="NewDiscoverySection">
+                <div class="pbHeader" id ="innerheaderDiv"  style="background: none;border: none;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                        <tr>
+                            <td class="pbTitle" style="padding-left: 0px;">
+                                <h2 class="mainTitle" style="color: #084B8A;font-size: 15px;"></h2>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <apex:outputpanel style="padding-left: 40px;background: none;border: none;height:inherit !important;">
+
+                    <div style="margin-top: -10px;">
+
+                        <div class="tabbed-area">
+
+                            <ul class="tabs group" id="tabsItems">
+                                <li class="tabActiveHeader" id="#box1"><a>Summary</a></li>
+                                <li id="#box2"><a>History tracking</a></li>
+                            </ul>
+
+                            <div class="box-wrap" id="sss">
+
+                                <!-- ###################################### Summary ###################################### -->
+                                <div id="box1" class="tabdiv">
+                                    <apex:outputpanel id="summary">
+                                        <apex:panelGrid columns="2" border="0" width="98%" style="margin-bottom: 10px;">
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="*Current Situation"/> <c:helpIcon helpText="Information about the company's current state. Tell me about your current communication solution"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes currentSituationSum required"  value="{!lq.Current_Situation__c}" onchange="setValToElement($(this).val(), $('.currentSituation'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Benefits"/> <c:helpIcon helpText="How would their business be positively impacted by resolving these problems? What would it mean to your business if these problems were resolved?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes benefitsSum"  value="{!lq.Benefits__c}" onchange="setValToElement($(this).val(), $('.benefits'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="*Problems"/> <c:helpIcon helpText="What are the challenges they have with their current solution?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4" style="height: 200px;"  styleclass="fullwidthWithBorder notes problemsSum required"  value="{!lq.Problems__c}" onchange="setValToElement($(this).val(), $('.problems'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="*Decision Making"/> <c:helpIcon helpText="What is their decision making progress? Who are the decision makers? What is their project time frame?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes decisionMakingSum required"  value="{!lq.Decision_Making_Process__c}" onchange="setValToElement($(this).val(), $('.decisionMaking'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Impact"/> <c:helpIcon helpText="What are the impacts of the problems they are experiencing?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes impactSum"  value="{!lq.Impact__c}" onchange="setValToElement($(this).val(), $('.impact'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Competitive Landscape"/> <c:helpIcon helpText="What other solutions are they looking for? What are we replacing?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes competitiveLandscapeSum"  value="{!lq.Competitive_Landscape__c}" onchange="setValToElement($(this).val(), $('.competitiveLandscape'));" />
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Ideal Situation"/> <c:helpIcon helpText="What would be their ideal solution? How would they like their communication system to work?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes idealSituationSum"  value="{!lq.Ideal_Situation__c}" onchange="setValToElement($(this).val(), $('.idealSituation'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Relationship Building Extras"/> <c:helpIcon helpText="Any RBEs that were conducted"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes relationshipBuildingExtrasSum"  value="{!lq.Relationship_Building_Extras__c}" onchange="setValToElement($(this).val(), $('.relationshipBuildingExtras'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="*Next Steps"/> <c:helpIcon helpText="Confirm the customer is willing to meet. What is the next ideal meeting time? How would they like to meet, who shoud attend?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4" style="height: 120px;"  styleclass="fullwidthWithBorder discoveryNotes required"  value="{!lq.NextSteps__c}" id="nxt"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Coaching Notes"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 120px;" styleclass="fullwidthWithBorder managerNotes"  value="{!lq.CoachingNotes__c}" id="mngr"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                        </apex:panelGrid>
+                                    </apex:outputpanel>
+                                </div>
+                                <div id="box2" class="tabdiv">
+                                    <div >
+                                        <apex:pageBlock >
+                                            <apex:pageBlockTable value="{!history}" var="historyItem" cellpadding="2" styleClass="tableBorder" rendered="true">
+                                                <apex:column >
+                                                    <apex:facet name="header">User Name</apex:facet>
+                                                    <apex:outputText >{!historyItem.changer}</apex:outputText>
+                                                </apex:column>
+                                                <apex:column >
+                                                    <apex:facet name="header">Modified field</apex:facet>
+                                                    <apex:outputText >{!historyItem.fieldName}</apex:outputText>
+                                                </apex:column>
+                                                <apex:column >
+                                                    <apex:facet name="header">Modified date</apex:facet>
+                                                    <apex:outputText value="{0, date, M/d/yyyy HH:mm:ss}">
+                                                            <apex:param value="{!historyItem.modifyDate + offset}"/>
+                                                        </apex:outputText>
+                                                </apex:column>
+                                            </apex:pageBlockTable>
+                                        </apex:pageBlock>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputpanel>
+            </div>
+
+            <apex:outputpanel rendered="{!viewMode == 'read'}" >
+                <script>
+                    $(".NewDiscoverySection").find("input,select,textarea").prop('disabled',true);
+                </script>
+            </apex:outputpanel>
+            <apex:actionStatus id="renderMeStatus" onStart="showOverlay();" onstop="jsLoad();hideOverlay();"/>
+
+
+            <!-- -------------------------New Discovery section ends------------------------- -->
+            <div class="btnDiv" id="readModeButton"   >
+                <apex:outputpanel rendered="{!viewMode == 'read'}">
+                    <apex:commandButton value="Edit" reRender="container" action="{!showEdit}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="addFieldClass()"/>
+                </apex:outputpanel>
+                <apex:outputpanel rendered="{!viewMode == 'edit'}">
+                    <apex:commandButton value="Save" action="{!save}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="parentRefresh();" onClick="return checkRequiredFields()"/>
+                    <apex:commandButton value="Cancel"  onClick="return ConfirmUserAction('Do you really want to continue without saving changes?')" status="renderMeStatus" style="padding: 8px 20px 8px 20px;"/>
+                </apex:outputpanel>
+            </div>
+
+            <script>
+                function jsLoad(){
+                    initiateTabs('.box-wrap','{"activeTab" : 0}');
+                    $("#tabsItems").find("li").on('click',function(){
+
+                        var targetId = $(this).attr('id');
+                        $(".box-wrap").children('.tabdiv').hide();
+                        $(targetId).show();
+                        $(this).siblings().removeClass('tabActiveHeader');
+                        $(this).addClass('tabActiveHeader');
+                    });
+
+                    CheckErrorTabs();
+                    <!-- ---------------------------------------------As/Simplion/7/3/2014-------------------- -->
+                    TextAreaLengthCheck('.discoveryNotes','Discovery Notes',32000);
+                    TextAreaLengthCheck('.discoveryNextStep','Next Step',32000);
+                    TextAreaLengthCheck('.notes','Manger Notes',32000);
+                }
+
+                jsLoad();
+
+                function setFocusOnLoad() {
+                    $('.discoveryNotes').blur();
+                    $('.discoveryNextStep').blur();
+                    $('.notes').blur();
+                }
+                <!-- ---------------------------------------------As/Simplion/7/3/2014-------------------- -->
+                //sets given value to the given element. Needed to dynamically change text from current situation inputTextarea on Sum page to current situation inputTextarea on current situation page.
+                function setValToElement(value, field) {
+                    $(field).val(value);
+                }
+
+                const addFieldClass = () => {
+                    if ('{!isInsideSalesProfile}' === 'true') {
+                        const requiredFields = document.getElementsByClassName('required');
+                        if (requiredFields && requiredFields.length) {
+                            for (let field of requiredFields) {
+                                field.classList.add('requiredField');
+                            }
+                        }
+                    }
+                }
+                addFieldClass();
+            </script>
+
+        </apex:form>
+    </apex:outputpanel>
+    <div id="overlay"></div>
+</apex:page>

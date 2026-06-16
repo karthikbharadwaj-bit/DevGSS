@@ -1,0 +1,27 @@
+<template>
+
+    <!-- icon -->
+    <div if:true={item.isBlocked} class="slds-progress__marker"></div>
+
+    <template if:false={item.isBlocked}>
+
+        <!-- synced -->
+        <span if:true={item.isSync} class="slds-icon_container slds-icon-utility-success slds-progress__marker slds-progress__marker_icon slds-progress__marker_icon-success" title="Complete">
+            <lightning-icon icon-name="utility:success" alternative-text="Success" variant="success" size="x-small"></lightning-icon>
+        </span>
+
+        <template if:false={item.isSync}>
+            <!-- skipped -->
+            <span if:true={item.isSkip} class="slds-icon_container slds-icon-utility-skip slds-progress__marker slds-progress__marker_icon slds-progress__marker_icon-warning" title="skip">
+                <lightning-icon icon-name="utility:skip" alternative-text="skip" variant="warning" size="x-small"></lightning-icon>
+            </span>
+
+            <!-- not synced -->
+            <div if:false={item.isSkip} class="slds-progress__marker"></div>
+        </template>
+    </template>
+
+
+    <!-- text -->
+    <div if:false={isHideLabel} class="slds-progress__item_content slds-grid slds-grid_align-spread">{step.label}</div>
+</template>

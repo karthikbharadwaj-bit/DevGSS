@@ -1,0 +1,116 @@
+<apex:page sidebar="false" showHeader="true" applyBodyTag="false" title="Convert Lead: {! Lead.Name }" tabStyle="Lead" standardController="Lead">
+
+    <title>Convert Lead</title>
+    <apex:includeScript value="{!$Resource.ConvertLeadDependencies + '/CLPage.js'}"/>
+    <apex:includeScript value="{!$Resource.ConvertLeadDependencies + '/CL.js'}"/>
+    <apex:includeScript value="/support/console/46.0/integration.js"/>
+    <c:HerokuScripts />
+    <apex:includeLightning />
+
+    <style type="text/css">
+        html,
+        body,
+        .slds-scope:not(html),
+        .slds-scope body {
+            height: 100%;
+        }
+
+        html body.sfdcBody {
+            padding: 0; /* Remove body padding */
+        }
+
+        .noSidebarCell, .bodyDiv .outerNoSidebar {
+            padding: 0;
+        }
+
+        .noTableFooter {
+            margin-left: 0;
+        }
+
+        #lightning {
+            min-height: 100%;
+        }
+
+        #auraErrorMessage {
+            display: none;
+        }
+
+        .console-view .bPageHeader,
+        .console-view .bPageFooter {
+            display: none;
+        }
+
+        .console-view .brdPalette {
+            border: none;
+        }
+
+        .console-view {
+            background: #1797c0;
+        }
+
+        .console-view body {
+            margin: 0;
+            box-shadow: 0 8px 10px hsla(0, 0%, 0%, .25);
+            position: relative;
+        }
+
+        /*
+         * lwcNotificationBar
+         * Workaround for https://github.com/salesforce/lwc/issues/1536
+         */
+        @keyframes jiggle-bar {
+            0% {
+                transform: translate(0, 0%);
+            }
+            20% {
+                transform: translate(0, -5%);
+            }
+            40% {
+                transform: translate(0, 10%);
+            }
+            60% {
+                transform: translate(0, -5%);
+            }
+            80% {
+                transform: translate(0, 2%);
+            }
+            100% {
+                transform: translate(0, 0%);
+            }
+        }
+
+        .notification:first-child .notification__text {
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+        }
+    </style>
+    <div id="lightning">
+        <!-- spinner -->
+        <div class="slds-scope" id="spinner">
+            <div class="slds-spinner_container wizard-loader">
+                <div class="slds-spinner slds-spinner--medium wizard-loader__spinner" aria-hidden="false" role="alert">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Make CL variable visible for LWC and Angular
+        const CL = window.CLBundle;
+        if (sforce.console.isInConsole()) {
+            document.querySelector('html').classList.add('console-view');
+            sforce.console.setTabTitle('Convert Lead: {! JSENCODE(Lead.Name) }');
+            document.querySelector('#lightning').onkeydown = event => event.stopPropagation();
+        }
+        const referrerPage = document.referrer;
+        const isPrmFlow = referrerPage.includes('my.site.com') ? true : false;
+        // Init LWC App
+        $Lightning.use('c:ConvertLeadApp', () => $Lightning.createComponent('c:clWrapper', {isPrmFlow : isPrmFlow}, 'lightning', () => {
+            const spinner = document.querySelector('#spinner');
+            spinner.parentNode.removeChild(spinner);
+        }));
+    </script>
+</apex:page>

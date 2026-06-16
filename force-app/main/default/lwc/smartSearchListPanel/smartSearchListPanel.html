@@ -1,0 +1,78 @@
+<template>
+    <c-smart-search-confirmation-dialog title='Confirmation'
+                           message={messageConfirmationDialog}
+                           confirm-label="Yes"
+                           reject-label="No"
+                           cancel-label={cancelLabel}
+                           visible={isDialogVisible}
+                           original-message={originalMessage}
+                           params={params}
+                           name="confirmModal"
+                           onbuttonclick={handleButtonClick}>
+    </c-smart-search-confirmation-dialog>
+    <div class="slds-box slds-m-around_small backColor">
+        <div data-id="matchedContacts" class="slds-m-bottom_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Matched Contacts</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={matchedContactData}
+                    columns={matchedContactColumns}
+                    onrowaction={handleMergeToContactAction}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div>
+        <div data-id="protectedLeads" class="slds-m-vertical_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Protected Leads</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={protectedLeadData}
+                    columns={protectedLeadColumns}
+                    onrowaction={handleLeadAction}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div>
+        <div data-id="protectedOppsWithCO" class="slds-m-vertical_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Protected Opportunities with Current Owners</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={protectedOppsCurrentOwnersData}
+                    columns={protectedOppsColumns}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div>
+        <div data-id="protectedOpps" class="slds-m-vertical_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Protected Opportunities (ActivePipe and 3 Days Closed)</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={protectedOppsActivePipeData}
+                    columns={protectedOppsColumns}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div>
+        <div data-id="unprotectedOpps" class="slds-m-vertical_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Unprotected Opportunities</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={unprotectedOppsData}
+                    columns={unprotectedOppsColumns}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div>
+        <div data-id="unprotectedLeads" class="slds-m-top_large">
+            <h3 class="slds-text-heading_small slds-m-bottom_small boxTitle">Unprotected Leads</h3>
+            <lightning-datatable
+                    key-field="id"
+                    data={unprotectedLeadsData}
+                    columns={unprotectedLeadColumns}
+                    onrowaction={handleLeadAction}
+                    hide-checkbox-column="true"
+                    column-widths-mode="fixed">
+            </lightning-datatable>
+        </div> 
+    </div>
+</template>

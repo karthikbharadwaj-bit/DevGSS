@@ -1,0 +1,27 @@
+<aura:component description="Support Community Layout Trust" implements="forceCommunity:layout" access="global" >
+    <!--controller="SupportCommunityTrustController"-->
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="header" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="second_block" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="main_block" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="preloader" type="Boolean" default="false" />
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdateUser}"/>
+    <div class="sc-trust__body">
+        <aura:if isTrue="{!v.preloader}">
+            <div class="preloader">
+                <lightning:spinner alternativeText="Loading" size="large" />
+            </div>
+        </aura:if>
+        <div class="wrapper">
+            <div class="wrapper__section wrapper__section_1">
+                <div class="sc-trust__header">{!v.header}</div>
+                <div class="sc-trust__main">{!v.main_block}</div>
+            </div>
+            <div class="wrapper__section wrapper__section_2">
+                <div class="sc-trust__second">{!v.second_block}</div>
+            </div>
+            <!--<c:scBackToTop selector=".sc-trust__body"/>-->
+        </div>
+    </div>
+</aura:component>

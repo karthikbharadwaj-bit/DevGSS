@@ -1,0 +1,340 @@
+<aura:component description="PhaseManagement" controller="PhaseManagementController" >
+    <!-- Documentation: https://aquiva.atlassian.net/wiki/spaces/RC/pages/171606035/Phase+Management -->
+
+    <!-- Resources -->
+    <ltng:require scripts="{!$Resource.PhaseManagementDependencies + '/PM.js'}"/>
+
+    <!-- Shared attributes -->
+    <aura:attribute name="cartItems" type="List" default="[]" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="orderId" type="Id" />
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false"
+                    description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="phases" type="List" default="[]" />
+    <aura:attribute name="isHideCompetedSection" type="Boolean" default="false"/>
+    <aura:attribute name="isHideNonCompetedSection" type="Boolean" default="false"/>
+    <aura:attribute name="isCompletedLoading" type="Boolean" default="false"/>
+    <aura:attribute name="isNonCompletedLoading" type="Boolean" default="false"/>
+    <aura:attribute name="hasSelectedCartItems" type="Boolean" default="false"/>
+    <aura:attribute name="order" type="Order" />
+    <aura:attribute name="preventDeselection" type="Boolean" />
+    <aura:attribute name="isUnassignedAllowed" type="Boolean" />
+    <aura:attribute name="isAddPhasesAllowed" type="Boolean" />
+    <aura:attribute name="isCompletePhaseAllowed" type="Boolean" />
+    <aura:attribute name="isMoveProductsAllowed" type="Boolean" />
+    <aura:attribute name="isMoveSitesAllowed" type="Boolean" />
+    <aura:attribute name="isEditAllowed" type="Boolean" />
+    <aura:attribute name="isCartItemsEditAllowed" type="Boolean" />
+    <aura:attribute name="isLocationsEnabled" type="Boolean" />
+    <aura:attribute name="isNewChangeOrder" type="Boolean" />
+    <aura:attribute name="changeOrderPhases" type="List" default="[]" />
+    <aura:attribute name="userAccessInfo" type="Object" />
+    <aura:attribute name="rcVariousSettings" type="Object" />
+    <aura:attribute name="userPermissions" type="Map" />
+    <aura:attribute name="phaseTypes" type="List" />
+
+    <!-- Component attributes -->
+    <aura:attribute name="app" type="Object" description="Core functionality with displayed data"/>
+    <aura:attribute name="qliToPhase" type="Map" default="{}" />
+
+    <!-- handlers -->
+    <aura:handler name="change" value="{!v.isUnassignedAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isAddPhasesAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isCompletePhaseAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isMoveProductsAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isMoveSitesAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isEditAllowed}" action="{!c.setAppPermissions}"/>
+    <aura:handler name="change" value="{!v.isCartItemsEditAllowed}" action="{!c.setAppPermissions}"/>
+
+    <!-- Event Handlers -->
+    <aura:handler event="c:PhaseManagementEvent" action="{!c.onPhaseManagementEvent}"/>
+
+    <!-- Actions -->
+    <aura:attribute name="onChangesSaved" type="Aura.Action" description="Callback when user selected new value"/>
+
+    <!-- Methods -->
+    <aura:method name="startApp" action="{! c.startApp }" description="Loads Phases from SF and init app">
+        <aura:attribute name="config" type="Object" />
+    </aura:method>
+    <aura:method name="discard" action="{! c.discard }" description="Discard changes made by user"/>
+    <aura:method name="save" action="{! c.save }" description="Save changes made by user"/>
+    <aura:method name="stopApp" action="{! c.stopApp }" description="Remove event listeners and etc"/>
+    <aura:method name="reloadPhases" action="{! c.reloadPhases }" description="Reloads Phases from SalesForce"/>
+    <aura:method name="getPhaseTypePicklist" action="{! c.getPhaseTypePicklist }" description="Get Types from SalesForce"/>
+    <aura:method name="reloadChangeOrderPhases" action="{! c.reloadChangeOrderPhases }"
+                 description="Reloads Change Order Phases from SalesForce"/>
+    <aura:method name="deletePhaseLineItemsFromSF" description="Delete Specified Phase Line Items from SalesForce">
+        <aura:attribute name="phaseLineItemIdsToDelete" type="List" />
+    </aura:method>
+    <aura:method name="deletePhasesFromSF" description="Delete Specified Phases from SalesForce">
+        <aura:attribute name="phaseIdsToDelete" type="List" />
+    </aura:method>
+    <aura:method name="loadUserAccessInfo" action="{! c.loadUserAccessInfo }"/>
+
+    <lightning:layout class="{! join(' ', 'slds-grow slds-wrap' + if(v.quote, ' phases-management')) }">
+
+        <aura:if isTrue="{! v.app.isUnassignedAllowed }">
+
+        <!-- Unassigned Section -->
+            <div class="{! join(' ',
+                    'slds-size--1-of-1 slds-small-size_1-of-1 slds-medium-size_5-of-12 slds-large-size_3-of-12',
+                    'unassigned slds-grid slds-grid_vertical slds-scrollable slds-p-right--small slds-p-left--small',
+                    v.app.readyToDrop ? 'unassigned_has-drop' : '') }"
+                 ondragenter="{! c.onDragEnter }"
+                 ondragover="{! c.onDragOver }"
+                 ondrop="{! c.onDropInto }">
+
+                <!-- Help message -->
+                <div class="slds-scoped-notification slds-media slds-media_center slds-scoped-notification_light slds-m-bottom--small"
+                     role="status">
+                    <div class="slds-media__figure">
+                        <lightning:icon iconName="utility:info" alternativeText="information"/>
+                    </div>
+                    <div class="slds-media__body">
+                        <p>
+                            Click and drag items to assign them to Phase.
+                            Use <code>cmd</code> <code>(⌘)</code> key on Mac or <code>Ctrl</code> key on Windows and
+                            <code>Shift</code> keys to select multiple items.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Unassigned cart items -->
+                <div  class="{! v.app.dragItems.length == 0 ? 'slds-hide' : ''}">
+                    <h3 class="slds-text-title_caps slds-m-bottom--x-small" > Cart Items </h3>
+
+                    <ul class="slds-m-bottom--small">
+
+                        <aura:iteration items="{! v.app.dragItems }" var="cartItem">
+
+                            <c:PhaseManagementCartItem cartItem="{! cartItem }"
+                                                       phase="{! phase }"
+                                                       app="{! v.app }"
+                                                       isPhasesChanged="{! v.isPhasesChanged }"
+                                                       preventDeselection="{! v.preventDeselection }"
+                            />
+
+                        </aura:iteration>
+
+                    </ul>
+                </div>
+
+                <!-- Empty Cart message -->
+                <div class="{! and(v.app.dragItems.length == 0) ?
+                        'slds-grid slds-grid_vertical-align-center slds-grow' :
+                        'slds-hide'}">
+                    <div class="rc-message">Nothing to assign</div>
+                </div>
+
+            </div>
+
+        </aura:if>
+
+        <!-- Phases Section -->
+        <lightning:layoutItem size="12"
+                              smallDeviceSize="12"
+                              mediumDeviceSize="{! v.app.isUnassignedAllowed ? 7 : 12 }"
+                              largeDeviceSize="{! v.app.isUnassignedAllowed ? 9 : 12 }"
+                              padding="horizontal-small"
+                              class="{! 'phases slds-grid slds-grid_vertical'  + if(v.quote, ' slds-scrollable')}">
+
+            <div>
+                <aura:if isTrue="{! v.app.isUnassignedAllowed }">
+                    <h3 class="slds-text-title_caps slds-m-bottom_small slds-show_inline-block"> Phases </h3>
+                </aura:if>
+                <!-- Add phase button -->
+                <aura:if isTrue="{! v.app.isAddPhasesAllowed }">
+                    <lightning:button label="Add phase"
+                                      class="slds-m-bottom_x-small slds-m-left_x-small slds-m-top_xx-small"
+                                      iconName="utility:add"
+                                      disabled="{! v.order.Status == 'Locked' }"
+                                      onclick="{! c.createPhase }"/>
+                </aura:if>
+
+                <aura:if isTrue="{! v.order.Status != 'Locked' }">
+                    <aura:if isTrue="{! and(v.quote, v.isLocationsEnabled) }">
+                        <!-- Default Location -->
+                        <div class="slds-show_inline-block slds-m-left_medium">
+                            <p class="slds-text-title slds-truncate slds-m-bottom--xx-small">
+                                Default Implementation Address
+                                <span class="tooltip-position-fix">
+                                    <c:Tooltip text="All non-Site Phase Line Items will be created with this Address"/>
+                                </span>
+                            </p>
+                            <div class="slds-media slds-media_center">
+
+                                <div class="slds-media__figure">
+                                    <!-- Location Icon -->
+                                    <lightning:icon iconName="utility:checkin"
+                                                    alternativeText="Location"
+                                                    size="x-small"/>
+                                </div>
+
+                                <!-- Product Name -->
+                                <div class="slds-media__body">
+                                    <div>
+                                        <span class="slds-truncate">
+                                            <aura:text value="{! v.app.defaultLocation.adressString }"/>
+                                        </span>
+                                        <lightning:dynamicIcon type="score"
+                                                            class="slds-m-left_x-small address-indicator"
+                                                            option="{! v.app.defaultLocation.isAddressValid ? 'positive' : 'negative'}"/>
+                                        <aura:if isTrue="{! v.app.defaultLocation.isEditable }">
+                                            <!--  Edit Location Button -->
+                                            <span class="slds-m-left_x-small" aura:id="editDefaultLocationButton">
+                                                <lightning:buttonIcon iconName="utility:edit"
+                                                                    alternativeText="Edit Location"
+                                                                    variant="bare"
+                                                                    onclick="{! c.openDefaultLocationForm }"
+                                                />
+                                            </span>
+                                        </aura:if>
+                                    </div>
+                                </div>
+
+                                <span class="slds-is-relative location__spinner">
+                                <lightning:spinner alternativeText="Loading"
+                                                size="small"
+                                                class="{! v.app.defaultLocation.isLoading ? '' : 'slds-hide' }" />
+                                </span>
+                            </div>
+                        </div>
+                    </aura:if>
+
+                    <!-- Address validation status -->
+                    <div class="{! join(' ', 'slds-m-left_medium',
+                            and(v.app.isLocationsEnabled, v.app.isHasLocations) ? 'slds-show_inline-block' : 'slds-hide')}">
+                        <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Address Validation</p>
+                        <span>
+                            <span class="{! v.app.isAnyAddressInfoPopulated ? 'slds-hide' : '' }">
+                                No Address Info
+                            </span>
+                            <span class="{! v.app.isValidationInProgress ? 'slds-hide' : '' }">
+                                <span class="{! v.app.isAnyAddressInfoPopulated ? '' : 'slds-hide' }">
+                                    <span class="{! v.app.isAllLocationAdressesValid ? '' : 'slds-hide' }">
+                                        All valid
+                                    </span>
+                                    <span class="{! v.app.isAllLocationAdressesValid ? 'slds-hide' : '' }">
+                                        <a href="javascript:void(0)" onclick="{! c.onValidateLocation }">Validate</a>
+                                    </span>
+                                </span>
+                                <lightning:dynamicIcon type="score"
+                                                    class="slds-m-left_x-small address-indicator"
+                                                    option="{! v.app.isAllLocationAdressesValid ? 'positive' : 'negative'}"/>
+                            </span>
+
+                            <span class="{! join(' ', 'slds-is-relative',
+                                    v.app.isValidationInProgress ? '' : 'slds-hide')}">
+                                Validating...
+                                <lightning:spinner  alternativeText="Loading"
+                                                    class="slds-is-relative location__spinner"
+                                                    size="small" />
+                            </span>
+                        </span>
+                    </div>
+                </aura:if>
+            </div>
+
+            <!-- Phases -->
+            <ul class="{! v.app.phases.length == 0  ? 'slds-hide' : 'slds-accordion slds-grow' }"
+                onwheel="{! c.onListWheel }">
+                <aura:if isTrue="{! v.order }">
+                    <div class="{!'slds-is-relative' + if(not(v.isHideCompetedSection), ' hide-show-section') + if(v.quote, ' slds-m-top_x-small')}">
+                        <aura:if isTrue="{! v.isCompletedLoading }">
+                            <lightning:spinner size="small" 
+                                               alternativeText="Loading"/>
+                        </aura:if>
+                        <div class="{!'hidden-section ' + if(v.isHideCompetedSection, 'hide-show-section')}" onclick="{!c.toggleCompletedSection}">
+                            <span class="hidden-icon">
+                                <lightning:icon iconName ="{! if(v.isHideCompetedSection,'utility:chevronright', 'utility:chevrondown')}"
+                                                size     ="x-small"
+                                                title    ="{! if(v.isHideCompetedSection, 'Show Competed Phases', 'Hide Competed Phases')}"/>
+                            </span>
+                            <span class="hidden-label" title ="{! if(v.isHideCompetedSection, 'Show Competed Phases', 'Hide Competed Phases')}">
+                                Completed Phases
+                            </span>
+                        </div>
+                        <aura:if isTrue="{!not(v.isHideCompetedSection)}">
+                            <aura:iteration items="{! v.app.phases }" var="phase">
+                                <aura:if isTrue="{!phase.isComplete}">
+    
+                                    <c:PhaseManagementPhase parent="{! this }"
+                                                            app="{! v.app }"
+                                                            phase="{! phase }"
+                                                            phases="{! v.phases }"
+                                                            phaseTypes="{! v.phaseTypes}"
+                                                            isPhasesChanged="{! v.isPhasesChanged }"
+                                                            quote="{! v.quote }"
+                                                            order="{! v.order }"
+                                                            preventDeselection="{! v.preventDeselection }"
+                                                            userAccessInfo="{! v.userAccessInfo }"
+                                                            rcVariousSettings="{! v.rcVariousSettings }"
+                                                            isNewChangeOrder="{! v.isNewChangeOrder }"
+                                                            userPermissions="{! v.userPermissions }"
+                                                            hasSelectedCartItems="{! v.hasSelectedCartItems}"
+                                    />
+                                </aura:if>
+    
+                            </aura:iteration>
+                        </aura:if>
+                    </div>
+                </aura:if>
+                <div class="{!'slds-is-relative slds-m-top_xx-small ' + if(not(v.isHideNonCompetedSection), 'hide-show-section')}">
+                    <aura:if isTrue="{! v.order }">
+                        <aura:if isTrue="{! v.isNonCompletedLoading }">
+                            <lightning:spinner size="small" 
+                                               alternativeText="Loading"/>
+                        </aura:if>
+                        <div class="{!'hidden-section ' + if(v.isHideNonCompetedSection, 'hide-show-section')}" onclick="{! c.toggleNonCompletedSection}">
+                            <span class="hidden-icon">
+                                <lightning:icon iconName ="{! if(v.isHideNonCompetedSection,'utility:chevronright', 'utility:chevrondown')}"
+                                                size     ="x-small"
+                                                title    ="{! if(v.isHideNonCompetedSection, 'Show Non Competed Phases', 'Hide Non Competed Phases')}"/>
+                            </span>
+                            <span class="hidden-label" title ="{! if(v.isHideNonCompetedSection, 'Show Non Competed Phases', 'Hide Non Competed Phases')}">
+                                Non Completed Phases
+                            </span>
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!not(v.isHideNonCompetedSection)}">
+                        <aura:iteration items="{! v.app.phases }" var="phase">
+                            <aura:if isTrue="{! if(v.order, not(phase.isComplete), phase)}">
+
+                                <c:PhaseManagementPhase parent="{! this }"
+                                                        app="{! v.app }"
+                                                        phase="{! phase }"
+                                                        phases="{! v.phases }"
+                                                        phaseTypes="{! v.phaseTypes}"
+                                                        isPhasesChanged="{! v.isPhasesChanged }"
+                                                        quote="{! v.quote }"
+                                                        order="{! v.order }"
+                                                        preventDeselection="{! v.preventDeselection }"
+                                                        userAccessInfo="{! v.userAccessInfo }"
+                                                        rcVariousSettings="{! v.rcVariousSettings }"
+                                                        isNewChangeOrder="{! v.isNewChangeOrder }"
+                                                        userPermissions="{! v.userPermissions }"
+                                                        hasSelectedCartItems="{! v.hasSelectedCartItems}"
+                                />
+                            </aura:if>
+
+                        </aura:iteration>
+                    </aura:if>
+                </div>
+            </ul>
+
+            <!-- Empty Phases message -->
+            <div class="{! v.app.phases.length != 0 ?
+                    'slds-hide' :
+                    'slds-grid slds-grid_vertical-align-center  slds-grow'}">
+                <div class="rc-message">There are no Phases</div>
+            </div>
+
+            <div class="slds-text-align_right slds-p-top--small">
+                <label class="label_weak">Phase Grand Total:</label>
+                <b><c:outputCurrency value="{! v.app.phaseTotal }"/></b>
+            </div>
+        </lightning:layoutItem>
+
+    </lightning:layout>
+
+</aura:component>

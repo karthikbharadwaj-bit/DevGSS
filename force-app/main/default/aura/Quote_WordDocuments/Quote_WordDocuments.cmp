@@ -1,0 +1,231 @@
+<aura:component >
+    <aura:attribute name="partnerContractServiceList" type="Partner_Contract_Service__c[]"/> 
+    <aura:attribute name="partnerContractTypeWrapperList" type="List" />
+    <aura:attribute name="partnerContractWrapperList" type="List" /> 
+    <aura:attribute name="isAvaya" type="Boolean" default="false" />
+    <aura:attribute name="IsOpenInCommunity" type="Boolean" />
+    <!--Added by Ishwarya to get respective Community Details-->
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    <aura:attribute name="RespectiveTabURL" type="string"/>
+    <aura:attribute name="baseURL" type="string"/>
+    <aura:attribute name="Quote" type="Quote" default="{ 'sobjectType': 'Partner_Quote__c',
+                        'Status__c': 'Draft'}" />
+    
+	<div class="slds-grid slds-wrap">
+            <aura:iteration items="{!v.partnerContractTypeWrapperList}" var="partnerContractTypeWrapper">
+                <aura:if isTrue="{!partnerContractTypeWrapper.contractType == 'Standard Attachments'}"> 
+                    <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"><b>
+                        <span>
+                            {!partnerContractTypeWrapper.contractType}
+                        </span>
+                             </b></h1>
+                   
+                    <div class="slds-col slds-size_2-of-2 slds-p-vertical_xx-small"></div>
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="heading">
+                            <b>Standard:</b>
+                        </span>
+                        <br/>
+                        
+                        <table class="">
+                            <thead>
+                                <tr>
+                                    <aura:if isTrue="{!v.isAvaya}">
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate slds-text-align_center" title="Download">Download</div></strong>
+                                        </th>
+                                    </aura:if>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" indexVar="index" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Word Document' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                <aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == false,attachmentTypeWrapperStd.approvalRequired == false))}">
+                                    <tr>
+                                       <aura:if isTrue="{!!v.isAvaya}">
+                                        <td scope="row" data-label="Name">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                    {!attachmentTypeWrapperStd.attachmentName} 
+                                            </div>     
+                                        </td>
+                                        </aura:if>
+                                       <aura:if isTrue="{!v.isAvaya}">
+                                        <td scope="row" data-label="Name">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.docName}"
+                                                     data-value="{!attachmentTypeWrapperStd.docName}" style="text-align:center">
+                                               <aura:if isTrue="{!!v.IsOpenInCommunity}"> 
+                                                   <a data-row-index="{!attachmentTypeWrapperStd.docName}" aria-live="assertive" class="slds-text-link"
+                                                        target="_blank"
+                                                      	onclick="{!c.openLink}"
+                                                    >
+                                                      <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                               </aura:if> 
+                                               <aura:if isTrue="{!v.IsOpenInCommunity}">
+                                                   <!--<a aria-live="assertive" class="slds-text-link"
+                                                        href="{!v.baseURL+'/partner/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                      download="true">-->
+                                                    <a aria-live="assertive" class="slds-text-link"
+                                                        href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                      download="true">
+                                                      <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                               </aura:if>
+                                            </div>     
+                                        </td>
+                                       <td scope="row">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                {!attachmentTypeWrapperStd.attachmentName}
+                                            </div>
+                                        </td>
+                                            </aura:if>
+                                    </tr>
+                                </aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                    <aura:if isTrue="{!v.isAvaya}">
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="heading">
+                            <b>Self Approved:</b>
+                        </span>
+                        <br/>
+                        
+                        <table >
+                            <thead>
+                                <tr>
+                                    <aura:if isTrue="{!v.isAvaya}">
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate slds-text-align_center" title="Download">Download</div></strong>
+                                        </th>
+                                    </aura:if>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" indexVar="index" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Word Document' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                <aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == true,attachmentTypeWrapperStd.approvalRequired == false))}">
+                                    <tr>
+                                        <aura:if isTrue="{!!v.isAvaya}">
+                                            <td scope="row" data-label="Name">
+                                               <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                        {!attachmentTypeWrapperStd.attachmentName} 
+                                                </div>     
+                                            </td>
+                                        </aura:if>
+                                       <aura:if isTrue="{!v.isAvaya}">
+                                        <td scope="row" data-label="Name">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.docName}"
+                                                     data-value="{!attachmentTypeWrapperStd.docName}" style="text-align:center">
+                                                <aura:if isTrue="{!!v.IsOpenInCommunity}">   
+                                                    <a aria-live="assertive" class="slds-text-link"
+                                                       data-row-index="{!attachmentTypeWrapperStd.docName}"
+                                                       onclick="{!c.openLink}"
+                                                        >
+                                                      <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                               </aura:if>  
+                                               <aura:if isTrue="{!v.IsOpenInCommunity}"> 
+                                                   <!--<a aria-live="assertive" class="slds-text-link"
+                                                        href="{!v.baseURL+'/partner/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                      download="true">-->
+                                                   <a aria-live="assertive" class="slds-text-link"
+                                                          href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                          download="true">
+                                                      <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                               
+                                               </aura:if>
+                                            </div>     
+                                        </td>
+                                       <td scope="row">
+                                           <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                {!attachmentTypeWrapperStd.attachmentName}
+                                            </div>
+                                        </td>
+                                            </aura:if>
+                                    </tr>
+                                </aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                    <!--Added By Ankit Sharma to show this section on the basis of No of Licence -->
+                    <aura:if isTrue="{!v.Quote.Number_of_Licenses__c >= $Label.c.Quote_MinimumLicenceShowApprovalRequiredContract}">
+                        
+                    <div class="slds-col slds-size_1-of-3 slds-p-vertical_xx-small">
+                        
+                        <span class="heading">
+                            <b>Approval Required:</b>
+                        </span>
+                        <br/>
+                        
+                        <table >
+                            <thead>
+                                <tr>
+                                    <aura:if isTrue="{!v.isAvaya}">
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate slds-text-align_center" title="Download">Download</div></strong>
+                                        </th>
+                                    </aura:if>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="Attachment Name">Attachment Name</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <aura:iteration items="{!partnerContractTypeWrapper.attachmentTypesWrapper}" indexVar="index" var="attachmentTypeWrapperStd">
+                                <aura:if isTrue="{!attachmentTypeWrapperStd.isAvailable == 'Word Document' || attachmentTypeWrapperStd.isAvailable == 'Both Contract and Document'}">
+                                	<aura:if isTrue="{!and(attachmentTypeWrapperStd.Description=='Standard',and(attachmentTypeWrapperStd.selfApproved == false,attachmentTypeWrapperStd.approvalRequired == true))}">
+                                        <tr>
+                                            <aura:if isTrue="{!!v.isAvaya}">
+                                                <td scope="row" data-label="Name">
+                                                   <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                            {!attachmentTypeWrapperStd.attachmentName} 
+                                                    </div>     
+                                                </td>
+                                            </aura:if>
+                                           <aura:if isTrue="{!v.isAvaya}">
+                                            <td scope="row" data-label="Name">
+                                               <div class="slds-truncate" title="{!attachmentTypeWrapperStd.docName}"
+                                                         data-value="{!attachmentTypeWrapperStd.docName}" style="text-align:center">
+                                                   <aura:if isTrue="{!v.IsOpenInCommunity}">   
+                                                       <!--<a aria-live="assertive" class="slds-text-link"
+                                                            href="{!v.baseURL+'/partner/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                          download="true">-->
+                                                       <a aria-live="assertive" class="slds-text-link"
+                                                              href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+attachmentTypeWrapperStd.docName}"
+                                                              download="true">
+                                                          <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                                   </aura:if> 
+                                                   <aura:if isTrue="{!!v.IsOpenInCommunity}">
+                                                       <a aria-live="assertive" class="slds-text-link"
+                                                            data-row-index="{!attachmentTypeWrapperStd.docName}"
+                                                           onclick="{!c.openLink}">
+                                                          <lightning:icon iconName="utility:download" size="small" alternativeText="Download"/></a>
+                                                   </aura:if>
+                                                </div>     
+                                            </td>
+                                           <td scope="row">
+                                               <div class="slds-truncate" title="{!attachmentTypeWrapperStd.attachmentName}">
+                                                    {!attachmentTypeWrapperStd.attachmentName}
+                                                </div>
+                                            </td>
+                                                </aura:if>
+                                        </tr>
+                                	</aura:if>
+                                </aura:if>
+                            </aura:iteration> 
+                        </table> 
+                    </div>
+                        </aura:if>
+                    </aura:if>
+                   
+                </aura:if>
+               
+                
+            </aura:iteration>
+            </div>
+</aura:component>

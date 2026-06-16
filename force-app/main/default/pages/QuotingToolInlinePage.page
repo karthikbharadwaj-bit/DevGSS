@@ -1,0 +1,106 @@
+<apex:page standardController="opportunity"
+           extensions="QuoteWizardPageController"
+           showHeader="false"
+           sidebar="false"
+           standardStylesheets="false">
+
+    <style>
+        .message {
+            background-color: #c00;
+            border-style: solid;
+            border-width: 1px;
+            color: #000;
+            padding: 6px 8px 6px 6px;
+            margin: 4px 20px;
+            color: white;
+        }
+        .message .messageText {
+            margin-left: 8px;
+            color: white;
+        }
+    </style>
+    <apex:pageMessage escape="false" summary="{!$Label.Prepare_Unused_Pages_For_Deletion_Part_1}" severity="error" strength="3" />
+    <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+    <apex:includeScript value="{!$Resource.QuotingToolDependencies + '/QWPage.js'}" />
+    <apex:includeLightning />
+
+    <div id="lightning"></div>
+
+    <div style="display: none;">
+        <!-- Fake form with input to get picklist values from SF -->
+        <apex:form id="fakeForm">
+            <apex:inputField value="{!engageLegalApprovalMock.Type__c}" id="legalEngagementTypeField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Add_ons__c}" id="addOnsField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Accomodations__c}" id="accomodationField"/>
+            <apex:inputField value="{!engageLegalApprovalMock.Feature_Add_ons__c}" id="featureAddOnsField"/>
+        </apex:form>
+    </div>
+
+    <script>
+
+        var legalEngagementTypeValues = QWPage.getPicklistOptions('{!$Component.fakeForm.legalEngagementTypeField}').values;
+        var addOnsValues = QWPage.getPicklistOptions('{!$Component.fakeForm.addOnsField}').values;
+        var accomodationValues = QWPage.getPicklistOptions('{!$Component.fakeForm.accomodationField}').values;
+        var featureAddOnsValues = QWPage.getPicklistOptions('{!$Component.fakeForm.featureAddOnsField}').values;
+
+        var op = '{!currentOpportunity.Id}';
+        var legalAprovalId = '{!currentOpportunity.Special_TOS_Approval__c}';
+        var cc = '{!currentOpportunity.CurrencyIsoCode}';
+        var sp = '{!servicePlan}';
+        var tr = '{!rcTier}';
+        var id = '{!currentOpportunity.Account.RC_User_ID__c}';
+        var pp = '{!paymentPlan}';
+        var dls = '{!numberDLs}';
+        var cdays = '{!contractDays}';
+        var recordTypeName = '{!currentOpportunity.RecordType.Name}';
+        var stageName = '{!currentOpportunity.StageName}';
+        var effectiveNoOfEmployeesRange = '{!currentOpportunity.Effective_No_of_Employees_Range__c}';
+        var defaultUpsellStatus = '{!defaultUpsellStatus}';
+        var tiers = {!BLANKVALUE(flatTiers,'null')};
+        var user = {!BLANKVALUE(user,'null')};
+        var quoteTypeValues = {!BLANKVALUE(quoteTypeValues,'null')};
+        var initialTermMonthsValues = {!BLANKVALUE(initialTermMonthsValues,'null')};
+        var specialTermsValues = {!BLANKVALUE(specialTermsValues,'null')};
+        var termMonthsValues = {!BLANKVALUE(termMonthsValues,'null')};
+        var statusValues = {!BLANKVALUE(statusValues,'null')};
+        var proServStatusValues = {!BLANKVALUE(proServStatusValues,'null')};
+        var currentOpportunity = {!BLANKVALUE(flatCurrentOpportunity, 'null')};
+
+        var settings = {!BLANKVALUE(settings,'null')};
+        console.log(settings);
+
+        $Lightning.use("c:QuotingWizard", function() {
+            $Lightning.createComponent("c:QuotingToolWrapper", {
+                currentOpportunity          :currentOpportunity,
+                opportunityId               :op,
+                legalApprovalId             :legalAprovalId,
+                currencyIsoCode             :cc,
+                servicePlan                 :sp,
+                rcTier                      :tr,
+                rcUserId                    :id,
+                paymentPlan                 :pp,
+                numberDLs                   :dls,
+                contractDays                :cdays,
+                recordTypeName              :recordTypeName,
+                stageName                   :stageName,
+                effectiveNoOfEmployeesRange :effectiveNoOfEmployeesRange,
+                defaultUpsellStatus         :defaultUpsellStatus,
+                tiers                       :tiers,
+                user                        :user,
+                quoteTypeValues             :quoteTypeValues,
+                initialTermMonthsValues     :initialTermMonthsValues,
+                specialTermsValues          :specialTermsValues,
+                termMonthsValues            :termMonthsValues,
+                statusValues                :statusValues,
+                addOnsValues                :addOnsValues,
+                accomodationValues          :accomodationValues,
+                featureAddOnsValues         :featureAddOnsValues,
+                legalEngagementTypeValues   :legalEngagementTypeValues,
+                proServStatusValues         :proServStatusValues,
+                settings                    :settings
+            }, "lightning", function(cmp) {
+            });
+        });
+    </script>
+
+</apex:page>

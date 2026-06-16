@@ -1,0 +1,17 @@
+<apex:page standardController="Approval__c" extensions="TaxExemptionController" showHeader="false" sidebar="false">
+    <apex:includeLightning />
+        <div id="container"></div>
+    <script>
+        const showTEappForCurrentUser = "{!$Setup.Feature_Toggle__c.Enable_Account_Based_Tax_Exemption__c}";
+        const TE = window;
+        // Init LWC App
+        if (showTEappForCurrentUser === 'true') {
+            $Lightning.use("c:TaxExemptionApp", () => $Lightning.createComponent("c:teWrapper",
+                {
+                    approvalId: '{!Approval__c.Id}',
+                    opportunityBI: '{!Approval__c.Opportunity__r.BusinessIdentity__c}',
+                    opportunityType: '{!Approval__c.Opportunity__r.Type}',
+                }, "container"));
+        }
+    </script>
+</apex:page>

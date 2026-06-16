@@ -1,0 +1,44 @@
+<apex:page showHeader="true" sidebar="false" title="Create SLA" standardController="SLA__c">
+
+    <apex:includeScript value="{!$Resource.RCHelper + '/RCPage.js'}"/>
+    <apex:includeLightning />
+
+    <style type="text/css">
+        .noSidebarCell, .bodyDiv .outerNoSidebar {
+            padding: 0;
+        }
+
+        .noTableFooter {
+            margin-left: 0;
+        }
+
+        #lightning {
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            min-height: 20rem;
+            transition: opacity .3s ease;
+        }
+
+        #auraErrorMessage {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: rgba(255, 255, 0, .4);
+            border: 1px solid #e9eaec;
+            z-index: 9999;
+        }
+    </style>
+
+    <div id="lightning"></div>
+
+    <script type="text/javascript">
+        $Lightning.use("c:SLAManagement", function () {
+            $Lightning.createComponent("c:SLAManagementWrapper", {}, "lightning", function () {
+                document.getElementById('lightning').style.opacity = '1';
+                RCPage.setFullHeightForContent('lightning', true);
+            });
+        });
+    </script>
+
+</apex:page>

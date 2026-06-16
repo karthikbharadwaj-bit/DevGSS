@@ -1,0 +1,1156 @@
+<apex:page StandardController="Lead" showHeader="true" applyBodyTag="false" title="New Partner Lead" extensions="LeadCreationPartnerVAR"
+        tabStyle="Partner_Leads__tab" standardStylesheets="true" docType="html-5.0">
+    <title>New Partner Lead</title>
+    <apex:includeScript value="{!URLFOR($Resource.jquery, 'js/jquery-1.4.2.min.js')}" />
+    <script src="{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/jquery-1.9.1.js')}"></script>
+    <script src="{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/jquery-ui.js')}"></script>
+    <link href="{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/jquery-ui.css')}" type="text/css" rel="stylesheet"  media="screen" />
+    <apex:includeScript value="{!URLFOR($Resource.rcnotify, 'rcnotify.js')}" />
+    <style>
+        .panelgrid1 {
+            width:50%;
+        }
+        .panelgrid3 {
+            width:50%;
+        }
+        .panelgrid2 {
+            width:0%
+        }
+        .innerpanelgrid1 {
+            width:30%;
+            text-align:right;
+        }
+        .innerpanelgrid2 {
+            width: 60%;
+            text-align:left;
+            padding-left:10px;
+            white-space: nowrap;
+        }
+        .innerpanelgrid3 {
+            width: 30%;
+            text-align:right;
+        }
+        .innerpanelgrid4 {
+            width: 60%;
+            text-align:left;
+            padding-left:10px;
+            white-space: nowrap;
+        }
+        .innerpanelgrid5 {
+            width: 10%;
+        }
+        li {
+            padding-bottom:5px;
+         }
+
+        .defaultText {
+            width: 275px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            padding-left: 7px;
+            height: 22px;
+            border : 1px solid #A5A6A5;
+            color:#474747;
+            font-weight:bolder;
+        }
+        .required {
+            /*border : 2px solid red;*/
+        }
+        .defaultTextActive {
+            color: #9A9A9A;
+            font-style: italic;
+            width: 275px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            padding-left: 7px;
+            height: 22px;
+            border : 1px solid #A5A6A5;
+            font-weight:normal;
+        }
+        .innerpanelgrid2 select {
+            width: 270px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            padding-left: 7px;
+            height: 22px;
+            border : 1px solid #A5A6A5;
+            margin-left:2px;
+        }
+        .selectlist {
+            width: 80%;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            padding-left: 7px;
+            height: 22px;
+            border : 1px solid #A5A6A5;
+        }
+        .selectlist:focus {
+            outline: none;
+        }
+        #innerheaderDiv {
+            padding:10px !important;
+            width: 95%;
+            margin: 0px auto;
+        }
+
+        .textlabel {
+            color: #084B8A;
+            font-size: 13px;
+        }
+
+        .rowAdjust td {
+            //line-height: 14px; !important;
+        }
+        .btn {
+            color: #084B8A !important;
+            border: 1px solid #A5A6A5 !important;
+            padding: 9px !important;
+            background:#FFF;
+            box-shadow:-4px -23px 18px -19px #A5A6A5 inset;
+            -webkit-box-shadow:-4px -23px 18px -19px #A5A6A5 inset;
+            -moz-box-shadow:-4px -23px 18px -19px #A5A6A5 inset;
+        }
+        .parallelspace {
+            margin-left:2px;
+        }
+        [disabled] {
+            width: 270px;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            padding-left: 7px;
+            height: 22px;
+            border : 1px solid #A5A6A5;
+            margin-left: 2px;
+        }
+        .searchResultCls {
+            border-top: 4px solid lightgray !important;
+            border: 1px solid lightgray;
+            border-radius: 4px 4px 4px 4px;
+            box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            -webkit-box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            -moz-box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            background: white !important;
+        }
+        #searchListPanel .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin: 0px !important;
+        }
+        #topBtnLevel .messageCell {
+            text-align:left !important;
+        }
+        #searchListPanel {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            /*min-height: 100px;*/
+            padding-top: 5px;
+            padding-bottom: 5px;
+            background: white !important;
+            /*background-color: #CEE3F6;*/
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /*behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -webkit-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -moz-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            text-align: center;
+        }
+        #searchListPanel .leadTab .secondaryPalette, .individualPalette .leadBlock .secondaryPalette {
+            border: none !important;
+        }
+
+        .inputWithErrors {
+            border: 2px solid red !important;
+        }
+    </style>
+    <style>
+        .ui-state-default .ui-icon {
+            background-image: url('{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/images/ui-icons_222222_256x240.png')}');
+        }
+        .ui-accordion .ui-accordion-header .ui-accordion-header-icon {
+            left: -0.5em;
+            margin-top: -10px;
+        }
+    </style>
+
+    <style>
+    .ui-dialog-titlebar-close{
+        display: none;
+    }
+    .ui-icon-closethick {
+        margin-left: -7px !important;
+        margin-top: -8px !important;
+    }
+    #confirmationDiv .message {
+        border: none!important;
+    }
+    .ui-dialog{
+        border: 2px solid #3399FF;
+        position: fixed !important;
+        top:50% !important;
+    }
+    .ui-widget-header {
+        background-color: #ffffcc !important;
+        margin-left: -4px !important;
+        margin-right: -3px !important;
+        margin-top: -3px !important;
+    }
+
+    #confirmationDiv {
+        background-color: #ffffcc !important;
+        margin-left: -3px !important;
+        margin-right: -3px !important;
+        margin-top: -3px !important;
+        margin-bottom: -3px !important;
+    }
+    .que1op:nth-child(odd){
+        /*border: 1px solid red;*/
+        width: 45%;
+        padding-bottom: 2px;
+        padding-top: 2px;
+        margin-left: -13px;
+    }
+
+   .que1op:nth-child(even){
+        margin-top: -20px;
+        margin-left: 310px;
+        /*border: 1px solid green;*/
+        width: 45%;
+        padding-bottom: 2px;
+        padding-top: 2px;
+        margin-left: 52%;
+    }
+    </style>
+    <script>
+
+        function confirmCancel() {
+            var isCancel = confirm("Are you sure you wish to cancel?");
+            if (isCancel) {
+                return true;
+            }
+            return false;
+        }
+
+        function formatNumber(phoneNum) {
+            var sVal = '';
+            var oldValue;
+            var nVal = phoneNum.length;
+            var sChar = '';
+            oldValue = phoneNum;
+
+            try {
+                for (c = 0; c < nVal; c++) {
+                    sChar = phoneNum.charAt(c);
+                    sChar = phoneNum.charAt(c);
+                    nChar = sChar.charCodeAt(0);
+
+                    if ((nChar >= 48) && (nChar <= 57)) {
+                        sVal += phoneNum.charAt(c);
+                    }
+                }
+            } catch (exception) { //AlertError("Format Number",exception);
+                sVal = oldValue;
+            }
+            /*if (sVal.length > 10) {
+                try {
+                    oldValue = sVal;
+                    sVal = sVal.substring((sVal.length - 10));
+                } catch (exception) {
+                    sVal = oldValue;
+                }
+            }*/
+            return sVal;
+        }
+
+        $(document).ready(function() {
+            $(".defaultText").click(function(srcc) {
+                if ($(this).val() == $(this)[0].title) {
+                    $(this).removeClass("defaultTextActive");
+                    $(this).val("");
+                }
+            });
+            $(".defaultText").focus(function(srcc) {
+                if ($(this).val() == $(this)[0].title) {
+                    if($(this)[0].title != 'First Name') {
+                        $(this).removeClass("defaultTextActive");
+                        // alert($(this)[0].title);
+                        $(this).val("");
+                    }
+                }
+            });
+            $(".defaultText").blur(function() {
+                if ($(this).val() == "") {
+                    $(this).addClass("defaultTextActive");
+                    $(this).val($(this)[0].title);
+                } else if($(this).val() != "" ) {
+                    if($(this)[0].title == "Contact Phone Number" && $(this).val() != "Contact Phone Number") {
+                        var phoneVal = FormatNumber($(this).val());
+                        $(this).val(phoneVal);
+                    } else if($(this).val() == $(this)[0].title){
+                        $(this).addClass("defaultTextActive");
+                        $(this).val($(this)[0].title);
+                    }
+                }
+            });
+            $(".defaultText").blur();
+        });
+
+        $(document).ready(function() {
+            if ($.browser && $.browser.mozilla) {
+                 $('textarea[rows]').each(function(i, el) {
+                     if (!$(el).data('ffRowsFixed')) {
+                         var rows = parseInt($(el).attr('rows'));
+                         if (rows > 1) {
+                             $(el).attr('rows', (rows - 1));
+                         }
+                         $(el).data('ffRowsFixed', true);
+                     }
+                 });
+            }
+        });
+
+        function checkLength(control, maximum, e) {
+            var keycode;
+            if (window.event) keycode = window.event.keyCode;
+            else if (e) keycode = e.which;
+            if(keycode != 8) {
+                var length = control.value.length;
+                if (e.keyCode == 32 && (length >= maximum)) {
+                    e.preventDefault();
+                } else {
+                    if (length >= maximum) {
+                        alert('Please limit your value to '+ maximum + ' characters. There are currently ' + length + ' characters.');
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+
+        function fnClaimOwnership(clickedField) {
+            var claimedLeadId = clickedField.value;
+             //alert(clickedField.id);
+             //alert(document.getElementById(clickedField.id).checked);
+            document.getElementById(clickedField.id).checked=false;;
+            if (claimedLeadId) {
+                $("#confirmationDivYes").attr('data-id', claimedLeadId);
+                $("#confirmationDiv").dialog({
+                     height : 140,
+                     width : 700,
+                     modal : true
+                });
+                $(".ui-widget-overlay").css("opacity","0.87");
+            } else {
+                return false;
+            }
+        }
+        function processClaim() {
+           var claimedLeadId = $("#confirmationDivYes").attr('data-id');
+           $("#claimedLeadIdInput").val(claimedLeadId);
+           $("#confirmationDiv").dialog('close');
+           rcnotify.showSpinner('We are creating your Lead. One moment please.');
+           claimLeadOwnership();
+        }
+
+        function stopClaim() {
+            $("#confirmationDiv").dialog('close');
+        }
+
+
+
+    </script>
+    <script>
+        function setFocusOnLoad() {
+          //$("[id$=firstName2]").focus();
+        }
+    </script>
+
+    <style>
+        .defaultText:focus {
+            outline: none;
+        }
+
+        #topBtnLevel .messageCell {
+            text-align:left !important;
+        }
+        .messageTable ul {
+            text-align:left;
+        }
+        .textareacls {
+            width: 270px;
+            height:106px;
+            border: 1px solid #A5A6A5;
+            border-radius: 10px 10px 10px 10px;
+            -webkit-border-radius: 10px 10px 10px 10px;
+            -moz-border-radius: 10px 10px 10px 10px;
+            outline:none;
+        }
+        .requiredfield,
+        .requiredfieldMultiSelect,
+        .requiredfieldinv,
+        .requiredfieldMultiSelectAdditionalQuestions {
+            width: 3px;
+            background: #F00;
+            padding-bottom: 3px;
+            float:left;
+            margin-top: 2px;
+        }
+        .requiredfield {
+            padding-top: 5px;
+        }
+        .requiredfieldMultiSelect {
+            padding-top: 95px;
+        }
+        .requiredfieldMultiSelectAdditionalQuestions {
+            padding-top: 115px;
+        }
+        .requiredfieldinv {
+            padding-top: 5px;
+            opacity: 0;
+            filter: alpha(opacity=0); /* For IE8 and earlier */
+        }
+        .optionalfield {
+            width: 2px;
+            padding-top: 5px;
+            padding-bottom: 3px;
+            float:left;
+            /*margin-right: 2px;*/
+        }
+    </style>
+
+    <style>
+        #CustomInfo {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            margin-bottom: 10px;
+            min-height: 100px;
+            /* background-color: #CEE3F6; */
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /* behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -webkit-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -moz-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            background: white !important;
+        }
+        #CustomerPro {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            margin-bottom: 10px;
+            min-height: 100px;
+            /*background-color: #CEE3F6;*/
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /*behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 2px -122px 45px -8px #C7D6E9 inset;
+            -webkit-box-shadow: 2px -122px 45px -8px #C7D6E9 inset;
+            -moz-box-shadow: 2px -122px 45px -8px #C7D6E9 inset;
+            background: white !important;
+        }
+        #LeadQual {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            margin-bottom: 10px;
+            min-height: 100px;
+            /*background-color: #C7D6E9;*/
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /*behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px -944px 654px 149px #C7D6E9 inset;
+            -webkit-box-shadow: 0px -944px 654px 149px #C7D6E9 inset;
+            -moz-box-shadow: 0px -944px 654px 149px #C7D6E9 inset;
+            background: white !important;
+        }
+        .btnDiv {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            /* min-height: 100px; */
+            margin-top: 5px;
+            //margin-bottom: 5px;
+            background: #FFF !important;
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /*behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px -71px 101px -19px #C7D6E9 inset;
+            -webkit-box-shadow: 0px -71px 101px -19px #C7D6E9 inset;
+            -moz-box-shadow: 0px -71px 101px -19px #C7D6E9 inset;
+            text-align: center;
+            /*padding:10px;*/
+            padding-top : 3px;
+            padding-bottom : 3px;
+        }
+        #MainDiv {
+            width: 100%;
+            margin: auto;
+            padding-bottom: 10px;
+            padding-top: 10px;
+        }
+        .defaultText:focus {
+            outline: none;
+        }
+        #searchListPanel {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            /*min-height: 100px;*/
+            padding-top: 5px;
+            padding-bottom: 5px;
+            background: white !important;
+            /*background-color: #CEE3F6;*/
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /*behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -webkit-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            -moz-box-shadow: 0px -38px 157px 62px #C7D6E9 inset;
+            text-align: center;
+        }
+        .searchListPanel {
+            width: 95%;
+            margin: auto;
+            border: 1px solid #A5A6A5;
+            margin-top: 10px;
+            min-height: 100px;
+            /* background-color: #CEE3F6; */
+            -moz-border-radius: 11px;
+            -webkit-border-radius: 11px;
+            border-radius: 11px;
+            /* behavior: url({!$Resource.BorderRadiusHTC});*/
+            box-shadow: 0px 3px 63px 0px #C7D6E9 inset;
+            -webkit-box-shadow: 0px 3px 63px 0px #C7D6E9 inset;
+            -moz-box-shadow: 0px 3px 63px 0px #C7D6E9 inset;
+            background: white !important;
+        }
+        #searchListPanel .leadTab .secondaryPalette, .individualPalette .leadBlock .secondaryPalette {
+            border: none !important;
+        }
+        .searchResultCls {
+            border-top: 4px solid lightgray !important;
+            border: 1px solid lightgray;
+            border-radius: 4px 4px 4px 4px;
+            box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            -webkit-box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            -moz-box-shadow: 0px 1px 69px 13px #DEEBEF inset;
+            background: white !important;
+        }
+        #searchListPanel .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin: 0px !important;
+        }
+        #topBtnLevel .messageCell {
+            text-align:left !important;
+        }
+        #SDRInfo {
+                width: 95%;
+                margin: auto;
+                border: 1px solid #A5A6A5;
+                margin-bottom: 10px;
+                /*min-height: 100px;*/
+                /*background-color: #CEE3F6;*/
+                -moz-border-radius: 11px;
+                -webkit-border-radius: 11px;
+                border-radius: 11px;
+                /*behavior: url({!$Resource.BorderRadiusHTC});*/
+                box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                -webkit-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                -moz-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                background: white !important;
+            }
+        #SDRsection {
+            height:inherit !important;
+        }
+        .tableBorder{
+            border-top: 0px !important;
+            border-left: 0px !important;
+            border-right: 0px !important;
+            /*border: 0px !important;*/
+        }
+        .innerpanelgrid2 select.statestyle {
+            style: color:#084B8A !important;
+            width: 270px !important;
+        }
+    </style>
+
+    <script>
+        /**
+         * Set newLead.Lead_Brand_Name__c in hidden field
+         * trigger rerendering Tier field with new picklist options
+         * @param string value - value for newLead.Lead_Brand_Name__c
+         */
+        function setRCBrand(value){
+            const brandHidden = document.getElementById('{!$Component.partnerForm.brandHidden}');
+            brandHidden.value = value;
+            if (value === '{!AVAYA_OFFICE}' || value === '{!ATOS_OFFICE}' || value === '{!RAINBOW_OFFICE}') {
+                handleTierPicklist(value);
+            }else if(value){
+            	handleTierPicklist(value);
+            }
+            else {
+                brandHidden.onchange();
+            }
+        }
+        function setRCTierValue(hiddenId,value) {
+            document.getElementById(hiddenId).value = value;
+        }
+        function populatePartnerId(){
+            console.log('Enter');
+            actionPopulatePartnerId();
+        }
+        function getCountryState(){
+            console.log('getState');
+            actionGetState();
+        }
+        function clearPicklist(picklist) {
+            while (picklist && picklist.firstChild) {
+                picklist.removeChild(picklist.firstChild);
+            }
+        }
+        function createOption(value) {
+            const option = document.createElement('option');
+            option.text = value;
+            option.label = value;
+
+            return option;
+        }
+        function populatePicklist(picklist, values) {
+            values.forEach(val => {
+                picklist.add(createOption(val));
+            });
+        }
+        function setDisabled(element, value) {
+            element.disabled = value;
+        }
+        function handleTierPicklist(value) {
+            const tierPicklist = document.getElementById('{!$Component.partnerForm.tierPicklist}');
+            let tiers = '';
+            if (value === '{!AVAYA_OFFICE}') {
+                tiers = '{!avayaTiers}'.split(';');
+                setDisabled(tierPicklist, false);
+            	clearPicklist(tierPicklist);
+            	populatePicklist(tierPicklist, tiers);
+            } else if (value === '{!ATOS_OFFICE}') {
+                tiers = '{!atosTiers}'.split(';');
+                setDisabled(tierPicklist, false);
+            	clearPicklist(tierPicklist);
+            	populatePicklist(tierPicklist, tiers);
+            } else if (value === '{!RAINBOW_OFFICE}') {
+                tiers = '{!rainbowTiers}'.split(';');
+                setDisabled(tierPicklist, false);
+            	clearPicklist(tierPicklist);
+            	populatePicklist(tierPicklist, tiers);
+            } else {
+                otherBrands(value); //CMR-358329
+            }
+        }
+    </script>
+
+    <script type="text/javascript">
+
+        function containsOther(val) {
+            if (val != null && (val.indexOf('Other - specify') > -1 || val.indexOf('Other - write in') > -1)) {
+                return true;
+            }
+            return false;
+        }
+
+        function onAdditionalQuestionPicklistSelect(e) {
+            var $that = $(e),
+                $textArea = $(document.getElementById($that.prop('id') + 'TextArea')),
+                $spanError = $(document.getElementById($that.prop('id') + 'Error')),
+                isOtherSelected = containsOther($that.val()) ;
+            if (isOtherSelected === true) {
+                $textArea.toggle(true);
+                $textArea.focus();
+            } else {
+                $textArea.toggle(false);
+                $textArea.val('');
+            }
+            $spanError.toggle(false);
+        }
+
+        function customFormValidate() {
+            var result = true;
+            if (document.getElementById('{!$Component.partnerForm.leadAdditionalQuestions}').childNodes.length === 0) {
+                return true;
+            }
+
+            var picklistIds = ['{!$Component.partnerForm.existingSolutionProviderList}',
+                '{!$Component.partnerForm.promptingChangeList}',
+                '{!$Component.partnerForm.competitorsList}',
+                '{!$Component.partnerForm.decisionMakerList}'];
+
+            for (var i = 0; i < picklistIds.length; ++i) {
+                result = result && validateAdditionalQuestionPicklist(picklistIds[i]);
+                if (result === true) {
+                    saveAdditionalQuestionAnswer(picklistIds[i]);
+                }
+            }
+            return result;
+        }
+
+        function validateAdditionalQuestionPicklist(picklistId) {
+            var result = true;
+            var isOtherSelected = containsOther($(document.getElementById(picklistId)).val()) ;
+            if (isOtherSelected) {
+                var $ctrl = $(document.getElementById(picklistId + 'TextArea'));
+                var error = validateQuestionUserValue($ctrl.val());
+                $ctrl.toggleClass('inputWithErrors', error.length > 0);
+                result = (error.length === 0);
+            }
+            return result;
+        }
+
+        function validateQuestionUserValue(value) {
+            if (!value || value.trim().length === 0) {
+                return 'Please, enter value';
+            }
+            return '';
+        }
+
+        function saveAdditionalQuestionAnswer(picklistId) {
+            var $picklist = $(document.getElementById(picklistId)),
+                $hidden = $(document.getElementById(picklistId + 'Hidden')),
+                answer = '',
+                isOtherSelected = containsOther($(document.getElementById(picklistId)).val());
+
+            if($picklist.val() != null){
+                answer = ($picklist.context.multiple) ? $picklist.val().join(';') : $picklist.val();
+            }
+            if (isOtherSelected) {
+                answer += ';' + $(document.getElementById(picklistId + 'TextArea')).val();
+            }
+            console.log(picklist, answer, $hidden);
+            $hidden.val(answer);
+        }
+    </script>
+
+    <apex:sectionHeader title="New Lead" subtitle="Search and Create"/>
+    <apex:form id="partnerForm" onsubmit="if(!customFormValidate()){return false;}">
+
+        <!-- Relayware -->
+        <apex:Actionfunction name="actionPopulatePartnerId" action="{!populatePartnerId}" reRender="PartnerIdPanel2,brandPicklist,leadAdditionalQuestions" status="Ajaxstatus1">
+            <apex:param name="contactId" value="" assignTo="{!selectedPartnerContactId}"/>
+        </apex:Actionfunction>
+
+        <apex:Actionfunction name="actionGetState" action="{!getCheckState}" reRender="StatePanel" status="Ajaxstatus1" />
+		<!--CMR-358329-->
+        <apex:actionFunction name="otherBrands" action="{!getTiersForOtherBrandsNames}" reRender="populateOtherBrands">
+            <apex:param name="brand" value="" assignTo="{!strSelectedBrand}"/>
+        </apex:actionFunction>
+        <!--CMR-358329-->
+        <apex:outputPanel id="populateOtherBrands">
+        	<script>
+            	const tierPicklist = document.getElementById('{!$Component.partnerForm.tierPicklist}');
+            	let tiers = '{!tiersForOtherBrands}'.split(';');
+            	setDisabled(tierPicklist, false);
+            	clearPicklist(tierPicklist);
+            	populatePicklist(tierPicklist, tiers);
+            </script>
+        </apex:outputPanel>
+        <!-- <apex:actionFunction name="claimLeadOwnership"
+            action="{!claimLeadOwnership}" rerender="msgPanel" /> -->
+        <input type="hidden" name="claimedLeadId" id="claimedLeadIdInput" />
+        <apex:inputField id="brandHidden" value="{!newLead.Lead_Brand_Name__c}" style="display: none;"/>
+
+        <!-- <apex:actionStatus id="ajaxStatus" onStart="showOverlay();" onstop="hideOverlay();"/> -->
+         <apex:actionStatus id="Ajaxstatus1" onStart="rcnotify.showSpinner('Please Wait...');" onstop="rcnotify.hideSpinner();"/>
+
+        <div class="btnDiv" id="topBtnLevel">
+            <!-- <apex:commandButton action="{!search}" rerender="resultPanel,msgPanel,conterPanel" value="Search" status="Ajaxstatus1" /> -->
+            <apex:commandButton action="{!createNew}" rerender="msgPanel,searchListPanel" value="Create New Lead" status="Ajaxstatus1"/>
+            <apex:commandButton action="{!cancel}" value="Cancel" immediate="true"/>
+            <apex:outputPanel id="msgPanel">
+                <apex:pageMessages escape="false"></apex:pageMessages>
+            </apex:outputPanel>
+        </div>
+
+        <apex:outputPanel id="resultPnl">
+        <div id="MainDiv">
+            <div id="CustomInfo">
+                <!-- Relayware -->
+                <div>
+                    <apex:panelGrid columns="3" columnClasses="panelgrid1,panelgrid2,panelgrid3" border="0" style="width:100%">
+                         <apex:outputPanel >
+                            <apex:panelGrid columns="4">
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                            </apex:panelGrid>
+                         </apex:outputPanel>
+                        <!-- <apex:outputPanel id="PartnerIdPanel">
+                            <apex:panelGrid columnClasses="innerpanelgrid3,innerpanelgrid4" columns="2" style="width:100%" border="0">
+                               <apex:outputLabel styleclass="textlabel" value="Partner Id" for="PartnerId"/>
+                                 <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputtext styleclass="selectlist parallelspace" id="PartnerId"   value="{!newLead.LeadPartnerID__c}"
+                                    style="color:#084B8A;width:70%;" disabled="true" />
+                                 </apex:outputpanel>
+                            </apex:panelGrid>
+                        </apex:outputPanel> -->
+                    </apex:panelGrid>
+                </div>
+                <!-- Relayware -->
+
+                <div>
+                    <apex:panelGrid columnClasses="panelgrid1,panelgrid2,panelgrid3" columns="3" border="0" style="width:100%">
+                        <apex:outputPanel id="PartnerIdPanel1">
+                            <apex:panelGrid columns="2" columnClasses="innerpanelgrid1,innerpanelgrid2" style="width:100%" border="0">
+                                <apex:outputLabel styleclass="textlabel" style="margin-left:25px;" value="Partner Contact" for="partnerContactId"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputField id="partnerContactId" styleclass="selectlist parallelspace" style="width:240px;"
+                                                        value="{!newLead.Partner_Contact__c}" onChange="populatePartnerId(); return false;"/>
+                                </apex:outputpanel>
+                            </apex:panelGrid>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel >
+                            <apex:panelGrid columns="4">
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                            </apex:panelGrid>
+                         </apex:outputPanel>
+
+                        <apex:outputPanel id="PartnerIdPanel2">
+                            <apex:panelGrid columnClasses="innerpanelgrid3,innerpanelgrid4" columns="3" style="width:100%" border="0">
+                                <apex:outputLabel styleclass="textlabel" value="Partner Id" for="partnerIdVal"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputText styleclass="selectlist parallelspace" id="partnerIdVal" style="color:#084B8A;width:70%;"
+                                                disabled="true" value="{!newLead.LeadPartnerID__c}"/>
+                                </apex:outputpanel>
+                            </apex:panelGrid>
+                        </apex:outputPanel>
+                    </apex:panelGrid>
+                </div>
+                <!-- Relayware End-->
+
+                <div class="pbHeader" id = "innerheaderDiv">
+                    <table border="0" cellpadding="0" cellspacing="0" style="width:100%;">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle" style="padding-left: 0px;">
+                                    <h2 class="mainTitle" style="color: #084B8A;font-size: 15px;">Customer Information</h2>
+                                </td>
+                                <td style="text-align:right;">
+                                    <span class="pbSubExtra"><span class="requiredLegend brandTertiaryFgr" style="background:none;"><span class="requiredExampleOuter"><span class="requiredExample">&nbsp;</span></span><span class="requiredMark">*</span><span class="requiredText"> = Required Information</span></span></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="/*padding-left: 20px; padding-right: 20px;*/">
+                        <apex:panelGrid columns="3" columnClasses="panelgrid1,panelgrid2,panelgrid3" border="0" style="width:100%">
+                          <apex:outputPanel id="Panel1">
+                            <apex:panelGrid columns="2" columnClasses="innerpanelgrid1,innerpanelgrid2" style="width:100%" border="0">
+                                <apex:outputLabel styleclass="textlabel" value="First Name:" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputText styleclass="selectlist parallelspace" title="First Name" id="firstName2" value="{!newLead.FirstName}" maxlength="40"/>
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Last Name:" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputText styleclass="selectlist parallelspace" title="Last Name" id="lastName2" value="{!newLead.LastName}"  maxlength="80"/>
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Business Title:" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputtext styleclass="selectlist parallelspace" id="Title" title="Business Title"  value="{!newLead.Title}" maxlength="128"/>
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Company Name:" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                <apex:inputText styleclass="selectlist parallelspace" title="Company Name" id="companyName2" value="{!newLead.Company}"  maxlength="255"/>
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Email Address:" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputText styleclass="selectlist parallelspace"  title="Email Address" id="emailAddress2" value="{!newLead.Email}"  maxlength="255"/>
+                               </apex:outputpanel>
+                               <apex:outputLabel styleclass="textlabel" value="Phone Number:" for="sourceSelector"/>
+                               <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                   <apex:outputPanel >
+                                        <apex:inputText styleclass="selectlist parallelspace"  title="Phone Number" id="contactNumber"
+                                        value="{!newLead.Phone}" maxlength="255" onblur="this.value = formatNumber(this.value);"/>
+                                        <br/><apex:outputText styleclass="textlabel" value="(eg: 4082343254)" />
+                                    </apex:outputPanel>
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Phone Number (Alternate):" for="sourceSelector"/>
+                               <apex:outputpanel >
+                                   <apex:outputPanel >
+                                        <apex:inputText styleclass="selectlist parallelspace"  title="Phone Number" id="contactNumberAlternate"
+                                        value="{!newLead.Phone_Alternate__c}" maxlength="255" onblur="this.value = formatNumber(this.value);"/>
+                                    </apex:outputPanel>
+                                </apex:outputpanel>
+
+                                <!-- Relayware -->
+                                <apex:outputLabel styleclass="textlabel" value="Street" for="Street"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:outputPanel >
+                                        <apex:inputField styleclass="selectlist parallelspace" id="Street"  value="{!newLead.Street}" style="color:#084B8A;" />
+                                    </apex:outputPanel>
+                                </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="City" for="City"/>
+                                <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputtext title="City" styleclass="selectlist parallelspace" id="city"  value="{!newLead.City}" maxlength="255" />
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="State/Province" for="State"/>
+                                <apex:outputpanel id="StatePanel">
+                                    <div class="{!IF(needToCheckState, 'requiredfield', 'requiredfieldinv')}">&nbsp;</div>
+                                    <apex:inputField id="State"  value="{!newLead.State__c}" styleclass="selectlist parallelspace" />
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Zip Code" for="sourceSelector"/>
+                                <apex:outputpanel >
+                                   <div class="requiredfield">&nbsp;</div>
+                                   <apex:inputtext title="Zip Code" styleclass="selectlist parallelspace" id="ZipCode"  value="{!newLead.PostalCode}" maxlength="255" />
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Country" for="Country"/>
+                                 <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputField styleclass="selectlist parallelspace" id="Country" value="{!newLead.Country__c}" style="color:#084B8A;width: 270px;" onchange="getCountryState();" />
+                                </apex:outputpanel>
+                                <!-- Relayware -->
+
+
+                                <apex:outputPanel >
+                                    <apex:outputLabel styleclass="textlabel" value="Forecasted Users:" for="sourceSelector"/>
+                                    <img src="/s.gif" alt="Help" class="helpIcon" title="The number of RC Office Users forecasted for this Customer"/>
+                                </apex:outputPanel>
+                                <apex:outputpanel >
+
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputtext title="Forecasted Users"  styleclass="selectlist parallelspace" id="Number_of_RC_Users"  value="{!rcUsers}" maxlength="18" />
+                                </apex:outputpanel>
+                                <apex:outputLabel styleclass="textlabel" value="Brand:" for="sourceSelector"/>
+                                 <apex:outputpanel id="brandPicklist">
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <script>
+                                        // update Brand on rerender
+                                        setRCBrand('{!strSelectedBrand}');
+                                    </script>
+                                    <apex:selectList id="RCBrand" value="{!strSelectedBrand}" onchange="setRCBrand(this.value);" size="1" style="color:#084B8A;width: 270px;outline:none;" >
+                                        <apex:selectOptions value="{!rcPartnerBrandItems}"/>
+                                        <!-- <apex:actionSupport event="onchange" action="{!onQuestionSelect}" rerender="Panel1" status="changetype" /> -->
+                                    </apex:selectList>
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="Tier:" for="sourceSelector"/>
+                                 <apex:outputpanel >
+                                    <div class="requiredfield">&nbsp;</div>
+                                    <apex:inputField id="tierPicklist" styleclass="selectlist parallelspace" value="{!newLead.Lead_Tier_Name__c}"  style="color:#084B8A; width: 270px;"/>
+                                 </apex:outputpanel>
+                            </apex:panelGrid>
+                         </apex:outputPanel>
+
+                         <apex:outputPanel >
+                            <apex:panelGrid columns="4">
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                                <apex:outputText value=" "></apex:outputText>
+                            </apex:panelGrid>
+                         </apex:outputPanel>
+
+                         <apex:outputPanel >
+                            <apex:panelGrid columns="2" columnClasses="innerpanelgrid3,innerpanelgrid4" style="width:100%" border="0">
+                                 <apex:outputLabel styleclass="textlabel" value="Partner Lead Source" for="PartnerLeadSource"/>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputfield rendered="{!!isSIAUser}" value="{!newLead.Partner_Lead_Source__c}" styleclass="selectlist parallelspace" style="color:#084B8A;width: 70%;"/>
+                                    <apex:selectList size="1"  rendered="{!isSIAUser}" value="{!newLead.Partner_Lead_Source__c}" styleclass="selectlist parallelspace" style="color:#084B8A;width: 70%;">
+                                        <apex:selectOptions value="{!partnerLeadSources}"/>
+                                    </apex:selectList>
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="No. of Employees (Range):" for="NumberOfEmployeesR"/>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputField styleclass="selectlist parallelspace" id="NumberOfEmployeesR"
+                                    value="{!newLead.NumberOfEmployees__c}"  style="color:#084B8A;width: 70%;"/>
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel parallelspace" value="No. of Locations:" for="NumberOfLocation" />
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputField styleclass="selectlist parallelspace" id="NumberOfLocation"
+                                    value="{!newLead.Number_of_Locations__c}"  style="color:#084B8A;width: 70%;"/>
+                                 </apex:outputpanel>
+
+                                 <apex:outputLabel styleclass="textlabel" value="Industry:" for="Industry"/>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputField styleclass="selectlist parallelspace" id="industry"  value="{!newLead.Industry}"
+                                    style="color:#084B8A;width: 70%;"/>
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="Estimated Close Date:" for="closedate"/>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputField styleclass="selectlist parallelspace" id="closedate"
+                                    value="{!newLead.Estimated_Close_Date__c}"  style="color:#084B8A;"/>
+                                 </apex:outputpanel>
+                                 <apex:outputpanel >
+                                    <apex:outputLabel styleclass="textlabel" value="How did you acquire this Lead?" for="HowacquireLead" />
+                                    <img src="/s.gif" alt="Help" class="helpIcon" title="A referral? Current customer?"/>
+                                 </apex:outputpanel>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield" style="height:101px;">&nbsp;</div>
+                                    <apex:inputField styleclass="textareacls parallelspace" id="HowacquireLead" label="true"
+                                    value="{!newLead.How_did_you_acquire_this_Lead__c}" style="width: 70%;height:106px;" />
+                                 </apex:outputpanel>
+                                 <apex:outputpanel >
+                                    <apex:outputLabel styleclass="textlabel" value="Description:" for="desc" />
+                                    <img src="/s.gif" alt="Help" class="helpIcon" title="Please provide lead details." />
+                                 </apex:outputpanel>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield" style="height:101px;">&nbsp;</div>
+                                    <apex:inputField styleclass="textareacls parallelspace" id="desc" label="true"
+                                    value="{!newLead.Description}" style="width: 70%;height:106px;" />
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="Website:" for="sourceSelector"/>
+                                 <apex:outputpanel >
+                                    <div class="optionalfield">&nbsp;</div>
+                                    <apex:inputtext title="Website"  styleclass="selectlist parallelspace" id="website"
+                                    value="{!newLead.website}" maxlength="255" style="width: 70%;"/>
+                                 </apex:outputpanel>
+                                 <apex:outputLabel styleclass="textlabel" value="Partner Request Source" for="partnerRequestSource"/>
+                                 <apex:outputpanel >
+                                 <apex:inputField styleclass="selectlist parallelspace" id="partnerRequestSource" value="{!newLead.Partner_Request_Source__c}"
+                                    style="color:#084B8A;width: 70%;"/>
+                                 </apex:outputpanel>
+                            </apex:panelGrid>
+                            <apex:outputPanel id="leadAdditionalQuestions">
+                                <apex:panelGrid rendered="{!ShowAdditionalQuestions}" columns="2" columnClasses="innerpanelgrid3,innerpanelgrid4" style="width:100%" border="0">
+                                    <apex:outputPanel >
+                                        <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Existing_Solution_Provider__c.Label}</apex:outputLabel>
+                                        <br/>
+                                        <span id="{!$Component.partnerForm.existingSolutionProviderList}Error" style="color: red; font-size: 12px; display: none; margin-top: 2em;"></span>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfield">&nbsp;</div>
+                                        <apex:selectList id="existingSolutionProviderList"
+                                            multiselect="false" size="1" styleclass="selectlist parallelspace" style="width: 70%; color:#084B8A;"
+                                            onchange="onAdditionalQuestionPicklistSelect(this);">
+                                            <apex:selectOptions value="{!LeadExistingSolutionProvider}"/>
+                                        </apex:selectList>
+                                        <br/>
+                                        <textarea class="textareacls parallelspace"
+                                            style="width: 70%; height: 2.3em; display: none; margin: 1em 0 1em 4px;"
+                                            id="{!$Component.partnerForm.existingSolutionProviderList}TextArea"
+                                            placeholder="Enter required information here"></textarea>
+                                        <apex:inputHidden id="existingSolutionProviderListHidden" value="{!newLead.Existing_Solution_Provider__c}"/>
+                                    </apex:outputPanel>
+
+
+                                    <apex:outputPanel >
+                                        <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Prompting_Change__c.Label}</apex:outputLabel>
+                                        <br/>
+                                        <span id="{!$Component.partnerForm.promptingChangeList}Error" style="color: red; font-size: 12px; display: none;"></span>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfieldMultiSelectAdditionalQuestions">&nbsp;</div>
+                                        <apex:selectList id="promptingChangeList"
+                                            multiselect="true" size="8" style="width: 70%; color:#084B8A;"
+                                            onchange="onAdditionalQuestionPicklistSelect(this);">
+                                            <apex:selectOptions value="{!LeadPromptingChange}"/>
+                                        </apex:selectList>
+                                        <br/>
+                                        <textarea class="textareacls parallelspace"
+                                            style="width: 70%; height: 2.3em; display: none; margin: 1em 0 1em 4px;"
+                                            id="{!$Component.partnerForm.promptingChangeList}TextArea"
+                                            placeholder="Enter required information here" maxlength="40"></textarea>
+                                        <apex:inputHidden id="promptingChangeListHidden" value="{!newLead.Prompting_Change__c}"/>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel >
+                                        <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Competitors__c.Label}</apex:outputLabel>
+                                        <br/>
+                                        <span id="{!$Component.partnerForm.competitorsList}Error" style="color: red; font-size: 12px; display: none;"></span>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfieldMultiSelectAdditionalQuestions">&nbsp;</div>
+                                        <apex:selectList id="competitorsList"
+                                            multiselect="true" size="8" style="width: 70%; color:#084B8A;"
+                                            onchange="onAdditionalQuestionPicklistSelect(this);">
+                                            <apex:selectOptions value="{!LeadCompetitors}"/>
+                                        </apex:selectList>
+                                        <br/>
+                                        <textarea class="textareacls parallelspace"
+                                            style="width: 70%; height: 2.3em; display: none; margin: 1em 0 1em 4px;"
+                                            id="{!$Component.partnerForm.competitorsList}TextArea"
+                                            placeholder="Enter required information here" maxlength="40"></textarea>
+                                        <apex:inputHidden id="competitorsListHidden" value="{!newLead.Competitors__c}"/>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel >
+                                        <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Decision_Maker__c.Label}</apex:outputLabel>
+                                        <br/>
+                                        <span id="{!$Component.partnerForm.decisionMakerList}Error" style="color: red; font-size: 12px; display: none;"></span>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfield">&nbsp;</div>
+                                        <apex:selectList id="decisionMakerList"
+                                            multiselect="false" size="1" styleclass="selectlist parallelspace" style="width: 70%; color:#084B8A;"
+                                            onchange="onAdditionalQuestionPicklistSelect(this);">
+                                            <apex:selectOptions value="{!LeadDecisionMakers}"/>
+                                        </apex:selectList>
+                                        <br/>
+                                        <textarea class="textareacls parallelspace"
+                                            style="width: 70%; height: 2.3em; display: none; margin: 1em 0 1em 4px;"
+                                            id="{!$Component.partnerForm.decisionMakerList}TextArea"
+                                            placeholder="Enter required information here"></textarea>
+                                        <apex:inputHidden id="decisionMakerListHidden" value="{!newLead.Decision_Maker__c}"/>
+                                    </apex:outputPanel>
+
+
+                                    <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Currently_in_a_contract__c.Label}</apex:outputLabel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfield">&nbsp;</div>
+                                        <apex:selectList id="currentlyInContractList"
+                                            multiselect="false" size="1" styleclass="selectlist parallelspace" style="width: 70%; color:#084B8A;"
+                                            value="{!newLead.Currently_in_a_contract__c}">
+                                            <apex:selectOptions value="{!LeadCurrentlyInContract}"/>
+                                        </apex:selectList>
+                                    </apex:outputPanel>
+
+                                    <apex:outputLabel styleclass="textlabel">{!$ObjectType.Lead.fields.Project_budget__c.Label}</apex:outputLabel>
+                                    <apex:outputPanel >
+                                        <div class="requiredfield">&nbsp;</div>
+                                        <apex:selectList id="projectBudjetList"
+                                            multiselect="false" size="1" styleclass="selectlist parallelspace" style="width: 70%; color:#084B8A;"
+                                            value="{!newLead.Project_budget__c}">
+                                            <apex:selectOptions value="{!LeadProjectBudget}"/>
+                                        </apex:selectList>
+                                    </apex:outputPanel>
+                                </apex:panelGrid>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                </apex:panelGrid>
+                </div><br/>
+            </div>
+         </div>
+         </apex:outputPanel>
+        <div class="btnDiv">
+            <!-- <apex:commandButton action="{!search}" rerender="resultPanel,msgPanel,conterPanel" value="Search" status="Ajaxstatus1" /> -->
+            <apex:commandButton action="{!createNew}" rerender="msgPanel,searchListPanel" value="Create New Lead" status="Ajaxstatus1"/>
+            <apex:commandButton action="{!cancel}" value="Cancel" immediate="true"/>
+
+        </div>
+  </apex:form>
+</apex:page>

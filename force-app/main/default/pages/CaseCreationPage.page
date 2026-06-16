@@ -1,0 +1,34 @@
+<apex:page id="CaseCreationPage"
+           tabStyle="Case"
+           title="New Case"
+           standardController="Case"
+           extensions="CaseCreationPageController"
+           action="{! checkAccess }">
+
+    <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+    <apex:includeLightning />
+
+    <div id="lightning"></div>
+
+    <script>
+        $Lightning.use("c:LayoutBuilder", function() {
+            $Lightning.createComponent("c:LayoutBuilderWrapper", {
+                enabledPages: [
+                    {   page: 'CaseTaggingToolInlinePage',
+                        lightning: 'c:CaseTaggingToolWrapper',
+                        params: {
+                            isEmbeddedToLayoutBuilder: true
+                        }
+                    }
+                ],
+                record: {
+                    sobjectType: 'Case',
+                    RecordTypeId: '{!JSENCODE($CurrentPage.parameters.RecordType)}',
+                    OwnerId: '{!$User.Id}',
+                    AccountId: '{!JSENCODE($CurrentPage.parameters.def_account_id)}',
+                    ContactId: '{!JSENCODE($CurrentPage.parameters.def_contact_id)}'
+                }
+            }, "lightning");
+        });
+    </script>
+</apex:page>

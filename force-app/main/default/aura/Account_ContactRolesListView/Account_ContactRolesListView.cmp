@@ -1,0 +1,194 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 27-08-2020
+* Description    : Component display list View of all AccountContactRole record available under an Account in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+
+<aura:component implements="flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:isUrlAddressable,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable" access="global" 
+                controller="AccountContactRoles_Controller" >
+     
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="accountId" type="Id" />
+    <aura:attribute name="accountName" type="String" />
+    <aura:attribute name="acrId" type="Id" />
+    <aura:attribute name="ContactRolesList" type="AccountContactRole[]"/>    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="isViewAll" type="boolean" default="false"/>
+    <aura:attribute name="editflag" type="boolean" default="false"/> 
+    <aura:attribute name="deleteflag" type="boolean" default="false"/> 
+    <aura:attribute name="createflag" type="boolean" default="false"/>
+    <aura:attribute name="validateState" type="boolean" default="true"/>
+    <!--attributes for pagination-->
+    <aura:attribute name="pageNumber" type="integer" default="1"/>
+    <aura:attribute name="totalPages" type="integer" default="0"/>
+    <aura:attribute name="totalRecords" type="integer" default="0"/>
+    <aura:attribute name="recordStart" type="integer" default="0"/>
+    <aura:attribute name="recordEnd" type="integer" default="0"/>
+    <aura:attribute name="pageSize" type="integer" default="10"/>
+    <!--attributes for pagination>-->    
+    
+           
+    <div>
+        
+        <div class="slds-grid slds-wrap slds-page-header slds-page-header__row">
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-2">
+                <span style="padding-top:1%; color : black" >
+                    Accounts > 
+                    <a href="{!'/lightning/r/Account/'+v.accountId+'/view'}">
+                        {!v.accountName}
+                    </a>
+                </span>
+                <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate font-size:16px" 
+                    title="Contact Roles"><b>Contact Roles</b></h1>
+            </div>
+            <aura:if isTrue="{!v.createflag}">
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-2 slds-float_right">
+                <lightning:button label="New" onclick="{!c.addContactRole}"/>
+            </div> 
+            </aura:if>
+        </div>
+    </div>
+    <div>
+    <aura:if isTrue="{!v.isViewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium slds-float_right">
+                        <lightning:select aura:id="pageSize" label="Display Records Per Page: " onchange="{!c.onSelectChange}">
+                            <option text="10" value="10" selected="true"/>
+                            <option text="20" value="20"/>
+                            <option text="30" value="30"/>
+                            <option text="40" value="40"/>
+                            <option text="50" value="50"/>
+                        </lightning:select>            
+                    </div> 
+                </aura:if>
+
+    </div>
+    <div class="slds-is-relative">
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+        </div>
+    </div>
+    <div class="slds-m-around_xx-small">        
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+            <thead>
+                <tr>
+                    <th scope="col" style="width:5rem;">
+                        <strong><div class="slds-truncate" title=""> </div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="ContactName">Contact Name</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Account">Account Name</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Email">Email</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Phone">Phone</div></strong>
+                    </th>
+                    <th scope="col" style="width:10rem;">
+                        <strong><div class="slds-truncate" title="Role">Role</div></strong>
+                    </th>
+                    <th scope="col">
+                        <strong><div class="slds-truncate" title="Primary">Primary</div></strong>
+                    </th> 
+                    <th scope="col" style="width:5rem;">
+                        <strong><div class="slds-truncate" title="Action"></div></strong>
+                    </th> 
+                </tr>
+            </thead>
+            <tbody>
+                <aura:iteration items="{!v.ContactRolesList}" var="acr" indexVar="index"> 
+                    <tr>
+                        <th scope="col" style="width:5rem;font-weight: 50">
+                            <strong><div class="slds-truncate" title="">{!index+1+v.pageSize*(v.pageNumber -1)} </div></strong>
+                        </th>
+                        <th scope="row" data-label="ContactName" style="width:14rem;">
+                            <div class="slds-truncate" title="{!acr.Contact.Name}"
+                                 data-value="{!acr.ContactId}">
+                                <a href="{!'/lightning/r/Contact/'+acr.ContactId+'/view'}">
+                                    {!acr.Contact.Name}
+                                </a>                                
+                            </div>
+                        </th>
+                        <th scope="row" data-label="Account" style="width:14rem;">
+                            <div class="slds-truncate" title="{!acr.Account.Name}"
+                                 data-value="{!acr.AccountId}">
+                                <a href="{!'/lightning/r/Account/'+acr.AccountId+'/view'}">
+                                    {!acr.Account.Name}
+                                </a>                                
+                            </div>
+                        </th>
+                        <th scope="row" data-label="Email" style="width:14rem;">
+                            <div class="slds-truncate" title="{!acr.Contact.Email}">
+                                {!acr.Contact.Email}
+                            </div>                            
+                        </th>
+                        <th scope="row" data-label="Phone" style="width:14rem;">
+                            <div class="slds-truncate" title="{!acr.Contact.Phone}">
+                                {!acr.Contact.Phone}
+                            </div>
+                        </th>
+                        
+                        <th scope="row" data-label="Role" style="width:10rem;">
+                            <div class="slds-truncate" title="{!acr.Role}">
+                                {!acr.Role}
+                            </div>
+                        </th>
+                        <th scope="row" data-label="Primary">
+                            <div class="slds-truncate" title="{!acr.IsPrimary}">
+                                <ui:outputCheckbox value="{!acr.IsPrimary}"/>  
+                            </div>
+                        </th>
+                        <th scope="row" data-label="actions">
+                            <div>
+                                 <aura:if  isTrue="{!or(v.editflag, v.deleteflag)}">
+                                <lightning:buttonMenu  onselect="{!c.handleSelect}" alternativeText="More Options" iconSize="small" >
+                                    <aura:if isTrue="{!v.editflag}">    
+                                    <lightning:menuItem value="{!acr.Id}" label="Edit" />
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.deleteflag}">
+                                    <lightning:menuItem value="{!acr.Id}" label="Delete"/>
+                                    </aura:if>
+                                </lightning:buttonMenu>
+                                </aura:if>
+                                
+                                
+                                
+                            </div>
+                        </th>
+                    </tr>
+                </aura:iteration>
+            </tbody>
+        </table>
+    </div>
+    <aura:if isTrue="{!v.isViewAll}">
+        <div class="slds-clearfix">   
+            <br/>
+            <div class="slds-float_right paginationbuttons"> 
+                <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                  aura:id="nextPage" variant="brand"
+                                  label="Next" onclick="{!c.handleNext}" iconName="utility:chevronright" iconPosition="right"/>
+                
+            </div>
+            <div class="slds-float_right paginationbuttons"> 
+                <lightning:button disabled="{!v.pageNumber == 1}"
+                                  variant="brand" aura:id="prevPage"
+                                  label="Prev" onclick="{!c.handlePrev}" iconName="utility:chevronleft" iconPosition="left"/>            
+                
+            </div>
+            <p class="slds-truncate">Displaying {!v.recordStart}-{!v.recordEnd} of {!v.totalRecords} | Page {!v.pageNumber} of {!v.totalPages}</p>
+        </div>
+        <br/>
+    </aura:if>
+  
+</aura:component>

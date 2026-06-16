@@ -1,0 +1,86 @@
+<aura:component controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+  <aura:attribute name="Quote" type="Partner_Quote__c" />
+  <aura:attribute name="selectedCategory" type="String" default="" />
+  <aura:attribute name="ProductEdition" type="Product_Package__c" />
+  <aura:attribute name="Step" type="String" />
+  <aura:attribute name="PricingYearly" type="Boolean" />
+  <aura:attribute name="ProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+  <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+  <aura:attribute name="NoOfSeats" type="Integer" />
+  <aura:attribute name="Spinner" type="Boolean" />
+  <aura:attribute name="BrandName" type="string" />
+  <aura:attribute name="isProductSelectedFROMPYNTab" type="Boolean" />
+  <aura:attribute name="ReloadDataOnLineDelete" type="Boolean" />
+  <aura:attribute name="translationsMap" type="Map" />
+  <aura:handler name="init" value="{!this}" action="{!c.loadPickYourNumberDetails}" />
+  <aura:handler name="change" value="{!v.ReloadDataOnLineDelete}" action="{!c.reloadPickYourNumberDetails}" />
+  <aura:handler name="evtSelectProduct" event="c:Quote_SelectProduct" action="{!c.addSelectedProduct}" />
+  <div class="slds-grid slds-gutters">
+    <div class="slds-col pickyournumbersleftwrap">
+      <h2>
+        {!v.translationsMap.Pick_your_Numbers_PI}
+      </h2>
+      <!-- BZS-5042 Begins -->
+      <aura:if
+        isTrue="{!and(v.Quote.CurrencyIsoCode  == 'EUR', v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office')}">
+        <div>
+          <p class="helpText">1.{!v.translationsMap.Select_the_type_of_number_you_would_like}
+            <br />
+            2. {!v.translationsMap.Please_ensure_you_collect_and_provide_o}
+          </p>
+        </div>
+      </aura:if>
+      <aura:if
+        isTrue="{!and(v.Quote.CurrencyIsoCode  != 'EUR', v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office')}">
+        <div>
+          <p class="helpText">
+            1. Select the type of number you would like for your main company number. User numbers and area codes are
+            selected separately at the “Submit Order” stage at checkout.
+          </p>
+        </div>
+      </aura:if>
+      <aura:if
+        isTrue="{!and(v.Quote.CurrencyIsoCode  == 'EUR', v.Quote.Opportunity__r.Brand_Name__c == 'Rainbow Office')}">
+        <div>
+          <p class="helpTextALE"> 1.{!v.translationsMap.Select_the_type_of_number_you_would_like}
+            <br />
+            2.{!v.translationsMap.Please_ensure_you_collect_and_provide_o}
+          </p>
+        </div>
+      </aura:if>
+      <aura:if
+        isTrue="{!and(v.Quote.CurrencyIsoCode  != 'EUR', v.Quote.Opportunity__r.Brand_Name__c == 'Rainbow Office')}">
+        <div>
+          <p class="helpTextALE"> 1.Select the type of number you would like for your main company number. User numbers
+            and area codes are selected separately at the “Submit Order” stage at checkout.
+          </p>
+        </div>
+      </aura:if>
+      <!-- BZS-5042 ends -->
+      <div class="">
+        <div class="">
+          <table class="slds-table slds-no-row-hover">
+            <tbody>
+              <c:Quote_PickYourNumbersProducts ProductList="{!v.ProductList}"
+                SelectedProductList="{!v.SelectedProductList}" NoOfSeats="{!v.NoOfSeats}"
+                ReloadDataOnLineDelete="{!v.ReloadDataOnLineDelete}" Spinner="{!v.Spinner}"
+                isProductSelectedFROMPYNTab="{!v.isProductSelectedFROMPYNTab}" />
+            </tbody>
+          </table>
+          <aura:if isTrue="{!v.Spinner}">
+            <br /><br /><br /><br />
+            <c:SpinnerComponent />
+          </aura:if>
+        </div>
+      </div>
+    </div>
+    <div class="slds-col slds-grow-none productsummarywrap">
+      <div><label class="editiontype">{!v.Quote.Product_Edition__r.Name} Edition</label></div>
+      <c:Quote_EditionProductsSummary ProductEdition="{!v.ProductEdition}" ShowAddMoreButton="true" Step="{!v.Step}"
+        Quote="{!v.Quote}" PricingYearly="{!v.PricingYearly}" SelectedProductList="{!v.SelectedProductList}"
+        ReloadDataOnLineDelete="{!v.ReloadDataOnLineDelete}"
+        isProductSelectedFROMPYNTab="{!v.isProductSelectedFROMPYNTab}" selectedCategory="{!v.selectedCategory}"
+        BrandName="{!v.BrandName}" />
+    </div>
+  </div>
+</aura:component>

@@ -1,0 +1,95 @@
+<aura:component>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler name="change" value="{!v.formObject}" action="{!c.changeFormObject}" />
+    <aura:handler name="change" value="{!v.settings.errors}" action="{!c.changeErrors}" />
+    <aura:handler name="dateChangeEvent" event="c:DateChange" action="{!c.changeField}" />
+
+    <aura:attribute name="fieldConfig" type="Map" />
+    <aura:attribute name="formObject" type="Map" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="value" type="String" />
+
+    <aura:attribute name="options" type="List" description="values for picklist" />
+
+    <!-- need to check -->
+    <aura:attribute name="inputType" type="String"/>
+    <aura:attribute name="picklistValues" type="List" />
+    <aura:attribute name="fieldLabel" type="String" />
+    <aura:attribute name="fieldName" type="String" />
+    <aura:attribute name="isPicklist" type="Boolean" />
+    <aura:attribute name="isMulti" type="Boolean" />
+    <aura:attribute name="storedValue" type="String" />
+    <aura:attribute name="errorMessage" type="String" />
+
+
+    <div class="{!v.errorMessage ? 'slds-has-error' : ''}">
+
+        <!-- Select -->
+        <aura:if isTrue="{!v.fieldConfig.type == 'select'}">
+            <lightning:select aura:id="inputField"
+                              label="{!v.fieldLabel}"
+                              onchange="{!c.changeField}"
+                              value="{!v.value}"
+                              disabled="{!v.settings.mode == 'view'}"
+                              required="{!v.fieldConfig.required}" >
+                <aura:if isTrue="{!!v.isMulti}">
+                    <option value="">--None--</option>
+                </aura:if>
+                <aura:iteration items="{!v.options}" var="o">
+                    <option value="{!o.value}" selected="{!o.value == v.value}">{!o.label}</option>
+                </aura:iteration>
+            </lightning:select>
+        </aura:if>
+
+        <!-- Date -->
+        <aura:if isTrue="{!v.fieldConfig.type == 'date'}">
+            <div class="slds-is-relative">
+                <c:DatePicker aura:id="closeDate"
+                              label="{!v.fieldLabel}"
+                              placeholder=""
+                              value="{!v.value}"
+                              formatSpecifier=""
+                              disabled="{!v.settings.mode == 'view'}"
+                              required="{!v.fieldConfig.required}" />
+            </div>
+        </aura:if>
+
+        <!-- Textarea -->
+        <aura:if isTrue="{!v.fieldConfig.type == 'textarea'}">
+            <lightning:textarea name="{!v.fieldName}"
+                                value="{!v.value}"
+                                label="{!v.fieldLabel}"
+                                onchange="{!c.changeField}"
+                                disabled="{!v.settings.mode == 'view'}"
+                                maxlength="300" />
+        </aura:if>
+
+
+        <!-- Other -->
+        <aura:if isTrue="{! v.fieldConfig.type &amp;&amp;
+                            v.fieldConfig.type != 'date' &amp;&amp;
+                            v.fieldConfig.type != 'select' &amp;&amp;
+                            v.fieldConfig.type != 'textarea' }">
+            <lightning:input aura:id="inputField"
+                             type="{!v.fieldConfig.type}"
+                             label="{!v.fieldLabel}"
+                             name="{!v.fieldName}"
+                             onchange="{!c.changeField}"
+                             value="{!v.value}"
+                             checked="{!v.value}"
+                             class="form-input"
+                             disabled="{!v.settings.mode == 'view'}"
+                             required="{!v.fieldConfig.required}" />
+        </aura:if>
+
+        <aura:if isTrue="{!v.errorMessage}">
+            <div class="slds-form-element__help" role="alert">{!v.errorMessage}</div>
+        </aura:if>
+
+    </div>
+
+
+
+
+</aura:component>

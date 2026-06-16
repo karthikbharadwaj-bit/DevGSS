@@ -1,0 +1,249 @@
+<apex:page showHeader="false" controller="CommunitiesLoginCustomController">
+  <style type="text/css">
+    @font-face {
+      font-family: 'GothamFont';
+      src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.eot')}");
+      src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.eot')}") format('embedded-opentype'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.woff')}") format('woff'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.ttf')}") format('truetype'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.ttf.svg#gotham_htfbook')}") format('svg');
+    }
+
+    @font-face {
+      font-family: 'PlayFair';
+      src: url("{!URLFOR($Resource.AvayaCommunityFontsNew, '/Fonts/PlayfairDisplay-Bold.ttf')}");
+    }
+
+    @font-face {
+      font-family: 'GothamMedium';
+      src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-medium-webfont.eot')}");
+      src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-medium-webfont.eot')}") format('embedded-opentype'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-medium-webfont.woff')}") format('woff'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-medium-webfont.ttf')}") format('truetype'),
+      url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-medium-webfont.ttf.svg#gotham_htfmedium')}") format('svg');
+    }
+
+    .pagewrap {
+      display: flex;
+      justify-content: space-evenly;
+      width: 100vw;
+      height: 90vh;
+      background:url("{!$Resource.CommunityLoginBG}");
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    .headerwrap {
+      width: 100vw;
+      background-color: #c91115;
+      padding: 20px 0 20px 0;
+    }
+
+    .bannertext {
+      margin: 0;
+      text-align: center;
+      font-size: large;
+      font-color: white;
+      color: white;
+      vertical-align: middle;
+      font-family: 'GothamFont';
+    }
+
+    _:-ms-lang(x),
+    .pagewrap {
+      justify-content: space-around;
+    }
+
+    .leftwrap {
+      width: 35vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .leftwrap img {
+      width: 100%;
+    }
+
+    .rightwrap {
+      width: 45vw;
+      padding: 40px 0;
+      display: flex;
+    }
+
+    .rightwrap .rightcontentwrap {
+      border: solid #da281c;
+      border-width: 7px 0 7px 0;
+      background-color: #f1f1f3;
+      display: flex;
+      flex-grow: 2;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      width: 100%;
+      background-image:url("{!$Resource.CommunityLoginFormBg}");
+      background-position: bottom;
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    .rightwrap .rightcontentwrap .headingwrap {
+      text-align: center;
+      margin-bottom: 38px;
+    }
+
+    .rightwrap .rightcontentwrap form {
+      text-align: center;
+    }
+
+    .rightwrap .rightcontentwrap .headingwrap h2 {
+      display: block;
+      font-size: 38px;
+      font-weight: normal;
+      line-height: 1;
+      padding-bottom: 22px;
+      font-family: PlayFair;
+    }
+
+    .headingwrap img {
+      height: 5px;
+    }
+
+    .rightwrap .rightcontentwrap .rightcontent {
+      flex-grow: 2;
+      max-width: 425px;
+      width: 100%;
+    }
+
+    .loginrightformwrap {
+      display: flex;
+      flex-grow: 2;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loginrightform h3 {
+      text-align: center;
+      display: block;
+      color: #000;
+      font-size: 18px;
+      font-family: GothamMedium;
+      margin-bottom: 35px;
+    }
+
+    .usernamewrap {
+      margin-bottom: 25px;
+    }
+
+    .passwordwrap {
+      margin-bottom: 27px;
+    }
+
+    .loginrightform label {
+      font-size: 15px;
+      color: #000;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .loginrightform {
+      width: 100%;
+    }
+
+    input:not(.forgotpasswordbtn) {
+      width: 100%;
+      height: 60px;
+    }
+
+    .forgotpasswordbtn {
+      background: transparent!important;
+      border: 0!important;
+      font-weight: normal!important;
+    }
+
+    .forgotpasswordbtn:hover {
+      color: #c91115!important;
+    }
+
+    .forgotpasswordwrap {
+      text-align: center;
+    }
+
+    input {
+      outline: 0;
+      font-size: 16px!important;
+      font-family: GothamFont!important;
+      color: #000!important;
+    }
+
+    .forgotpasswordwrap input {
+      font-family: GothamMedium!important;
+    }
+
+    .input {
+      border: 1px solid #a8a8a8;
+      padding: 0 10px;
+      box-sizing: border-box;
+      font-size: 16px!important;
+    }
+
+    input::placeholder {
+      font-size: 16px;
+    }
+
+    .submitbtn {
+      background: #c91115!important;
+      border: 1px solid #c91115!important;
+      color: #fff!important;
+      font-weight: normal!important;
+      border-radius: 0!important;
+      margin-bottom: 20px!important;
+    }
+
+    .submitbtn:hover {
+      background-color: rgb(166, 26, 20)!important;
+    }
+  </style>
+  <div class='headerwrap'>
+    <p class='bannertext'>Avaya Cloud Office has moved to the Avaya Store. Click
+      <a style="color: white" href="https://www.avaya.com/store/shopping/quotes/list">here</a> to be re-directed.
+    </p>
+  </div>
+  <div class='pagewrap'>
+    <div class='leftwrap'>
+      <apex:image url="{!$Resource.CommunityLogoNew}" />
+    </div>
+    <div class='rightwrap'>
+      <div class='rightcontentwrap'>
+        <div class='rightcontent'>
+          <div class='headingwrap'>
+            <h2>
+              Partner Portal
+            </h2>
+            <apex:image url="{!$Resource.CommunityAvayaRedLine}" />
+          </div>
+          <apex:form >
+            <div class="loginrightformwrap">
+              <div class="loginrightform">
+                <apex:pageMessages id="showmsg"></apex:pageMessages>
+                <!-- <h3>Login Now</h3> -->
+                <div class="usernamewrap">
+                  <!-- <label>User Name</label> -->
+                  <apex:inputText styleClass="input" value="{!userName}" html-placeholder="Username" />
+                </div>
+                <div class="passwordwrap">
+                  <!-- <label>Password</label> -->
+                  <apex:inputSecret styleClass="input" value="{!password}" html-placeholder="Password" />
+                </div>
+                <apex:commandButton styleClass="submitbtn" action="{!doLogin}" value="Submit" />
+                <div class="forgotpasswordwrap">
+                  <apex:commandButton styleClass="forgotpasswordbtn" value="Forgot Password?" action="{!forgotPassword}" />
+                </div>
+              </div>
+            </div>
+          </apex:form>
+        </div>
+      </div>
+    </div>
+  </div>
+</apex:page>

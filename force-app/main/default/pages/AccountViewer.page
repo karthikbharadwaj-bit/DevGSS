@@ -1,0 +1,104 @@
+<apex:page applyBodyTag="false"
+           docType="html-5.0"
+           standardStylesheets="false"
+           standardController="Account"
+           extensions="AccountViewerController"
+           showQuickActionVfHeader="false"
+>
+    <apex:includeLightning />
+        <head>
+            <apex:slds />
+            <c:HerokuScripts />
+            <style type="text/css">
+                html, body {
+                    height: 100%;
+                }
+            </style>
+        </head>
+    <script type='text/javascript' src='/canvas/sdk/js/publisher.js'></script>
+    <body class="slds-scope">
+        <app-root id="account-viewer"></app-root>
+        <div id="partner-operations"></div>
+        <div id="BobEngageApprovalLayout"></div>
+    </body>
+    <script>
+        const herokuEndpoint = '{!JSENCODE(herokuEndpoint)}';
+        const sessionId = '{!sId}';
+        const origin = '{!JSENCODE(origin)}';
+        const bapLink = '{!JSENCODE(bapLink)}';
+        const initialAccountId = new URL(window.location.href).searchParams.get('id');
+        const profileWorksWithPartnerOperations = '{!JSENCODE(profileWorksWithPartnerOperations)}';
+        const accountRecordTypeMap = '{!JSENCODE(accountRecordTypeMap)}';
+        const billOnBehalfPartnerTypes = '{!JSENCODE(billOnBehalfPartnerTypes)}';
+        const wholesalePartnerTypes = '{!JSENCODE(wholesalePartnerTypes)}';
+        const currentPartnerOperation = '{!JSENCODE(currentPartnerOperation)}';
+
+        const angular = document.querySelector('app-root');
+        angular.routeParams = {
+            name: 'account-viewer',
+            data: {
+                billingParams: {
+                    herokuEndpoint,
+                    sessionId,
+                    origin,
+                    bapLink
+                },
+                initialAccountId,
+                profileWorksWithPartnerOperations,
+                accountRecordTypeMap,
+                billOnBehalfPartnerTypes,
+                wholesalePartnerTypes,
+                currentPartnerOperation
+            }
+        };
+
+        angular.addEventListener('rootEvent', event => {
+            const eventData = event.detail.data;
+            switch(event.detail.name) {
+                case 'approvalDetails':
+                    openBobMultiApprovalLayout(eventData);
+                    break;
+                case 'partnerOperations':
+                    openPartnerOperations(eventData);
+                    break;
+                case 'discardConfirmed':
+                    location.reload();
+                    break;
+                default:
+                    console.group('Account Viewer: Unknown event');
+                    console.log(event);
+                    console.groupEnd();
+                }
+            });
+
+        function openPartnerOperations(details) {
+            $Lightning.use("c:PartnerOperationsApp",
+                () => $Lightning.createComponent("c:snPartnerOperations",
+                    {
+                        initialLog: details,
+                        oppRecordType: '{!JSENCODE(newSalesOpportunityRecordTypeId)}'
+                    },
+                    "partner-operations",
+                    () => {
+                        document.querySelector('c-sn-partner-operations')?.addEventListener('refreshPage', () => {
+                            location.reload();
+                        });
+                        const angular = document.querySelector('app-root');
+                        angular.remove();
+                    }
+                )
+            );
+        }
+
+        function openBobMultiApprovalLayout(details) {
+            $Lightning.use("c:BobMultiApprovalApp", () => $Lightning.createComponent("c:avBobMultiApprovalWrapper",
+                {approvalDetailsRaw: details}, "BobEngageApprovalLayout", () => {
+                    document.querySelector('c-av-bob-multi-approval-wrapper')?.addEventListener("closeBobMultiApprovalPage", e =>
+                        Sfdc.canvas.publisher.publish({name: "publisher.close", payload: {refresh: "true"}})
+                    );
+                    const angular = document.querySelector('app-root');
+                    angular.remove();
+                }));
+        }
+    </script>
+</apex:page>

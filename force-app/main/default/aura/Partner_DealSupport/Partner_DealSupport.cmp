@@ -1,0 +1,692 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 02-01-2020
+* Description    : Component for Deal Support - Partner_DealSupport
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component
+    implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction"
+    access="global" controller="Partner_DealSupport">
+
+    <aura:attribute name="dealSupportList" type="Deal_Support__c[]" />
+    <aura:attribute name="partnerAccounts" type="List" />
+    <aura:attribute name="selectedValue" type="string" access="public" />
+    <aura:attribute name="selectedStatusValue" type="string" access="public" />
+    <aura:attribute name="selectedTypeValue" type="string" access="public" />
+    <aura:attribute name="isClosedStsIncluded" type="boolean" default="true" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="recordID" type="String" />
+    <aura:attribute name="Message" type="boolean" default="false" />
+    <aura:attribute name="ShowListView" type="boolean" default="true" />
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false" />
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="ShowNewSection" type="boolean" default="false" />
+    <aura:handler name="cancelEvent" event="c:Partner_OpportunitiesGoBackEvent" action="{!c.handleNewCancel}" />
+    <aura:handler name="goBackEvent" event="c:Partner_OpportunitiesGoBackEvent"
+        action="{!c.handleGoBackComponentEvent}" />
+
+    <aura:attribute name="ShowSpinnerDeal" type="boolean" default="true" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+
+    <aura:attribute name="pageNumber" type="integer" default="1" />
+    <aura:attribute name="totalPages" type="integer" default="0" />
+    <aura:attribute name="totalRecords" type="integer" default="0" />
+    <aura:attribute name="recordStart" type="integer" default="0" />
+    <aura:attribute name="recordEnd" type="integer" default="0" />
+
+    <aura:attribute name="partnerAccountName" type="String" />
+    <aura:attribute name="ShowConAcc" type="boolean" default="false" />
+    <aura:attribute name="viewAll" type="boolean" default="false" />
+    <aura:attribute name="salesOverlay" type="boolean" default="false" />
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+
+    <aura:attribute name="searchBy" type="String" default="Name" />
+    <aura:attribute name="searchKeyword" type="String" />
+
+    <aura:attribute name="escalatedToLegal" type="boolean" default="false" />
+    <aura:attribute name="escalatedToAvayaDealDesk" type="boolean" default="false" />
+    <aura:attribute name="showLegalToggle" type="boolean" default="true" />
+
+    <aura:attribute name="isReadOnly" type="boolean" default="true" />
+    <aura:attribute name="RespectiveTabURL" type="string" />
+    <aura:attribute name="partnerCommunity" type="List" />
+
+    <aura:attribute name="communityDetailsRecord" type="Object" />
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false" />
+    <aura:attribute name="ShowOnlyALE" type="boolean" default="false" />
+    <aura:attribute name="includeRecordsRoutedToDD" type="boolean" default="true" />
+
+    <aura:attribute name="dealSupportFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+
+
+    <aura:handler name="populatePartnerEvent" event="c:Partner_SearchContactEvent"
+        action="{!c.handlePartnerComponentEvent}" />
+    <aura:if isTrue="{!v.ShowListView}">
+        <aura:if isTrue="{!v.ShowSpinnerDeal}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide"
+                        size="medium" />
+                </div>
+            </div>
+        </aura:if>
+
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                    title="Deal Support">
+                    <lightning:icon iconName="standard:case" /><b>{! ' ' + v.translationsMap.Deal_Status}</b>
+                </h1>
+            </div>
+            <aura:if isTrue="{!v.ShowConAcc}">
+                <div
+                    class="slds-col slds-has-flexi-truncate slds-size_2-of-7 slds-p-top_small slds-p-left_small filterby">
+                    <div class="slds-grid slds-grid_align-left">
+                        <div class="slds-col slds-grow-none durationtoggle">
+                            <div class="slds-grid togglewrap">
+                                <label for="filterType"
+                                    class="slds-form-element__label
+                                                               slds-grid_align-center nowrap">{!v.translationsMap.Filter_By+':'}</label>
+                                <span style="font-weight: 600;padding-top:1%;" class='nowrap'>
+                                    &nbsp;{!v.dealSupportFieldsMap.Partner_Account__c}
+                                </span>
+                                <lightning:input aura:id="filterType" type="toggle" name="filterAccounts"
+                                    checked="{!v.viewAll}" onchange="{!c.toggleFilterBy}" />
+                                <span style="font-weight: 600;padding-top:1%;" class='nowrap'>
+                                    &nbsp; {!v.translationsMap.All_Accounts}&nbsp;&nbsp;
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--<aura:if isTrue="{!!v.showLegalToggle}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5"> 
+                    
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5">           
+                    
+                </div></aura:if>-->
+                <aura:if isTrue="{!v.ShowOnlyRC}">
+                    <div class="slds-col slds-size_5-of-7"></div>
+                </aura:if>
+                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                    <aura:if isTrue="{!v.showLegalToggle}">
+                        <div
+                            class="slds-col slds-has-flexi-truncate slds-size_2-of-7 slds-p-top_small slds-p-left_small salesover">
+                            <div class="slds-grid slds-grid_align-left">
+                                <div class="slds-col slds-grow-none durationtoggle">
+                                    <div class="slds-grid nowrap salesoverlay">
+                                        <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE == v.partnerCommunity}">
+                                    <span style="font-weight: 600;padding-top: 1%;">
+                                        &nbsp; Avaya Queue
+                                    </span>
+                                </aura:if>
+                                <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE != v.partnerCommunity}">-->
+                                        <span style="font-weight: 600;padding-top: 1%;">
+                                            &nbsp;
+                                            {!v.PRMSpecificTranslationsMap.Portal_Queue}
+                                        </span>
+
+                                        <lightning:input aura:id="filterTypeOwner" type="toggle"
+                                            name="filterAccountsbyOwner" checked="{!v.salesOverlay}"
+                                            onchange="{!c.toggleFilterBy}" />
+                                        <aura:if isTrue="{!!v.ShowOnlyALE}">
+                                            <span style="font-weight: 600;padding-top:1%;">
+                                                &nbsp; {!v.communityDetailsRecord.Portal_SalesOverlay_Queue__c}
+                                            </span>
+                                        </aura:if>
+                                        <aura:if isTrue="{!v.ShowOnlyALE}">
+                                            <span style="font-weight: 600;padding-top:1%;" class='nowrap salesoverlay'>
+                                                &nbsp; &nbsp; {!v.PRMSpecificTranslationsMap.Sales_Overlay_Queue}
+                                            </span>
+                                        </aura:if>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!--<div class="slds-col slds-has-flexi-truncate slds-size_2-of-7"> 
+                    
+                </div> 
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7"> 
+                    
+                </div>-->
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+
+            <aura:if isTrue="{!and(!v.ShowOnlyRC,!v.ShowOnlyALE)}">
+                <aura:if isTrue="{!or(v.selectedTypeValue=='Discount Request',v.selectedTypeValue=='Any')}">
+
+                    <div class="slds-has-flexi-truncate slds-size_2-of-7 slds-p-top_small slds-p-left_small">
+                        <div class="slds-grid slds-grid_align-left">
+                            <div class="slds-col slds-grow-none dealToggle">
+                                <div class="slds-grid togglewrap dealToggle">
+                                    <!-- <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE == v.partnerCommunity}">
+                                    <label for="filterType" class="slds-form-element__label
+                                                               slds-grid_align-center">Avaya Deal Desk Queue:</label>
+                                </aura:if>
+                                <aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE != v.partnerCommunity}">-->
+                                    <label for="filterType"
+                                        class="slds-form-element__label
+                                                                   slds-grid_align-center">{!v.PRMSpecificTranslationsMap.Portal_Deal_Desk_Queue}:</label>
+
+                                    <span style="font-weight: 600;padding-top:1.5%;">
+                                        {!v.translationsMap.Escalated}?
+                                    </span>
+                                    <lightning:input aura:id="filterEscalatedToAvayaDeal" type="toggle"
+                                        name="filterEscalatedToAvaya" checked="{!v.escalatedToAvayaDealDesk}"
+                                        onchange="{!c.toggleFilterBy}" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <aura:if isTrue="{!!v.ShowConAcc}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_5-of-7"> </div>
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+            <aura:if isTrue="{! and(v.ShowOnlyALE,v.ShowConAcc)}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_3-of-7"> </div>
+            </aura:if>
+            <aura:if isTrue="{!and(!v.ShowOnlyRC,!v.ShowOnlyALE)}">
+                <aura:if isTrue="{!v.ShowConAcc}">
+                    <aura:if isTrue="{!!v.showLegalToggle}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_3-of-7"> </div>
+                    </aura:if>
+                    <!--<aura:if isTrue="{!!v.viewAll}">
+                <aura:if isTrue="{!v.selectedTypeValue=='Any'}">
+                <aura:if isTrue="{!v.escalatedToAvayaDealDesk}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_3-of-7">  </div>
+                </aura:if>
+                </aura:if>
+                </aura:if>-->
+
+                    <aura:if isTrue="{!!v.escalatedToAvayaDealDesk}">
+                        <aura:if isTrue="{!or(v.selectedTypeValue=='Any',v.selectedTypeValue=='Discount Request')}">
+                            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7"> </div>
+                        </aura:if>
+                    </aura:if>
+
+                    <aura:if isTrue="{!!or(v.selectedTypeValue=='Discount Request',v.selectedTypeValue=='Any')}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_3-of-7">
+                        </div>
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+
+            <aura:if isTrue="{!!v.viewAll}">
+                <aura:if isTrue="{!v.ShowConAcc}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+
+                        <label for="partnerAccountIdDiv"
+                            class="slds-form-element__label">{!v.translationsMap.Filter_by_Partner}:</label>
+                        <lightning:buttonIcon iconName="utility:search" variant="bare"
+                            onclick="{!c.createAccountLookup}" alternativeText="Please choose a Partner Account" />
+                        <div id="partnerAccountIdDiv"
+                            class="slds-p-top_x-small slds-truncate slds-box slds-box_xx-small boxheight">
+                            {!v.partnerAccountName}&nbsp;&nbsp;
+                        </div>
+                    </div>
+                </aura:if>
+            </aura:if>
+
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                <lightning:input label="{!v.translationsMap.Keyword}" value="{!v.searchKeyword}"
+                    placeholder="{!v.translationsMap.search_placeholder + '...'}" aura:id="searchField" />
+            </div>
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                <lightning:select name="searchBy" value="{!v.searchBy}" label="{!v.translationsMap.Search_by+':'}">
+                    <option value="Name">{!v.translationsMap.Name}</option>
+                    <option value="Customer_Account__r.Name">{!v.translationsMap.Customer_Name}</option>
+                    <option value="Partner_Account__r.BillingCountry">{!v.translationsMap.Country}</option>
+                    <option value="Partner_Account__r.BillingState">{!v.translationsMap.State}</option>
+                    <aura:if isTrue="{!and(!v.ShowOnlyRC,!v.ShowOnlyALE)}">
+                        <option value="Portal_Cloud_Specialist__c">
+                            {!v.PRMSpecificTranslationsMap.Portal_Cloud_Specialist}
+                        </option>
+                    </aura:if>
+                    <aura:if isTrue="{!v.isSingleLogin}">
+                        <option value="Partner_Account__r.Partner_ID__c">{!v.translationsMap.Partner_ID}</option>
+                        <option value="Partner_Account__r.name">{!v.translationsMap.Partner_Name}</option>
+                    </aura:if>
+                    <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                        <option value="Last_Comment_By__r.Full_Name__c">{!v.dealSupportFieldsMap.Last_Comment_By__c}
+                        </option>
+                    </aura:if>
+                </lightning:select>
+            </div>
+            <!--STATUS DROP DOWN -->
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                <lightning:select name="SupportStatus" label="{!v.translationsMap.Support_Status + ':'}"
+                    aura:id="SupportStatus" value="{!v.selectedStatusValue}">
+                    <option value="Any" selected="true">{!v.translationsMap.Any}</option>
+                    <option value="New">{!v.translationsMap.New}</option>
+                    <option value="In Progress">{!v.translationsMap.In_Progress}</option>
+                    <option value="Signature Complete">{!v.translationsMap.Signature_Complete}</option>
+                    <option value="Closed-Approved">{!v.translationsMap.Closed_Approved}</option>
+                    <option value="Closed-Rejected">{!v.translationsMap.Closed_Rejected}</option>
+                    <option value="Closed">{!v.translationsMap.Closed}</option>
+                    <option value="Internal User Review Awaiting">{!v.translationsMap.Internal_User_Review_Awaiting}
+                    </option>
+                    <!-- <option value="{!v.communityDetailsRecord.Portal_Main_Label__c +' Review Awaiting'}">{!v.communityDetailsRecord.Portal_Main_Label__c} Review Awaiting</option>-->
+                    <aura:if isTrue="{!!v.ShowOnlyRC}">
+                        <option value="Avaya Review Awaiting">{!v.PRMSpecificTranslationsMap.Review_Awaiting}</option>
+                    </aura:if>
+                    <option value="Ready for Signature">{!v.translationsMap.Ready_for_Signature}</option>
+                </lightning:select>
+            </div>
+            <!--TYPE DROP DOWN -->
+            <aura:if isTrue="{!!v.escalatedToAvayaDealDesk}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                    <lightning:select name="Type" label="{!v.translationsMap.Type + ':'}" aura:id="SupportType"
+                        value="{!v.selectedTypeValue}">
+                        <option value="Any" selected="true">{!v.translationsMap.Any}</option>
+                        <option value="Initial Order">{!v.translationsMap.Initial_Order}</option>
+                        <option value="Change Order">{!v.translationsMap.Change_Order}</option>
+                        <option value="Lead Conversion">{!v.translationsMap.Lead_Conversion}</option>
+                        <option value="Discount Request">{!v.translationsMap.Discount_Request}</option>
+                        <option value="Change Account">{!v.translationsMap.Change_Account}</option>
+                        <option value="New Contact Request">{!v.translationsMap.New_Contact_Request}</option>
+                        <option value="New Contract Request">{!v.translationsMap.New_Contract_Request}</option>
+                        <option value="POC Request">{!v.translationsMap.POC_Request}</option>
+                        <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                            <option value="Engage ProServ">{!v.translationsMap.Engage_ProServ}</option>
+                        </aura:if>
+                    </lightning:select>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.escalatedToAvayaDealDesk}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                    <lightning:select name="Type" label="{!v.translationsMap.Type + ':'}" aura:id="SupportType1"
+                        value="{!v.selectedTypeValue}">
+                        <option value="Discount Request" selected="true">{!v.translationsMap.Discount_Request}</option>
+                    </lightning:select>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <aura:if isTrue="{!v.showLegalToggle}">
+                    <aura:if isTrue="{!or(v.selectedTypeValue=='New Contract Request',v.selectedTypeValue=='Any')}">
+                        <div class="slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                            <div class="slds-col slds-grow-none durationtoggle">
+                                <div class="slds-p-around_x_small slds-p-left_small">
+                                    <label for="filterType"
+                                        class="slds-form-element__label slds-grid_align-center salesoverlay">{!v.translationsMap.Legal_Status}:
+                                    </label>
+                                </div>
+                                <div class="slds-p-around_x_small slds-grid togglewrap salesoverlay"
+                                    style="padding-top:4%;">
+                                    <span style="font-weight: 600;padding-top:2%;">
+                                        &nbsp; {!v.translationsMap.All}
+                                    </span>
+                                    <lightning:input aura:id="filterEscalated" type="toggle"
+                                        name="filterEscalatedToLegal" checked="{!v.escalatedToLegal}"
+                                        onchange="{!c.toggleFilterBy}" />
+                                    <span style="font-weight: 600;padding-top:2%;">
+                                        &nbsp; {!v.translationsMap.Escalated}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                <div style="padding-top:23px;">
+                    <lightning:button variant="brand" label="{!v.translationsMap.Go}" iconName="utility:forward"
+                        iconPosition="right" onclick="{!c.doFilter}" />
+                </div>
+            </div>
+            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <aura:if isTrue="{!!v.ShowConAcc}">
+                    <aura:if isTrue="{!or(v.escalatedToAvayaDealDesk,v.selectedTypeValue=='Discount Request')}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7"> </div>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!v.viewAll}">
+                    <aura:if isTrue="{!v.escalatedToAvayaDealDesk}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7"> </div>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!v.viewAll}">
+                    <aura:if isTrue="{!or(v.selectedTypeValue=='New Contract Request',v.selectedTypeValue=='Any')}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!!or(v.selectedTypeValue=='New Contract Request',v.selectedTypeValue=='Any')}">
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small alltoggleWidth">
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small">
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small alltoggleWidth">
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small">
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small alltoggleWidth">
+                        </div>
+                        <div class="slds-col slds-has-flexi-truncate slds-7-of-7 slds-p-around_small">
+                        </div>
+                    </aura:if>
+                </aura:if>
+                <aura:if isTrue="{!!v.ShowConAcc}">
+                    <aura:if isTrue="{!!or(v.selectedTypeValue=='New Contract Request',v.selectedTypeValue=='Any')}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                        </div>
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+            <aura:if isTrue="{!v.ShowOnlyRC}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small">
+                </div>
+            </aura:if>
+            <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                <aura:if isTrue="{!!v.isReadOnly}">
+                    <lightning:button variant="brand" label="{!v.translationsMap.New}" iconName="action:new"
+                        iconPosition="left" onclick="{!c.showNewSectionArea}" />
+                </aura:if>
+            </div>
+            <div class="slds-col slds-has-flexi-truncate slds-size_3-of-5 slds-p-around_small">
+            </div>
+
+            <aura:if isTrue="{!!v.viewAll}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-bottom_small slds-float_right">
+                    <lightning:select aura:id="pageSize" label="{!v.translationsMap.Display_Deals_Per_Page}"
+                        onchange="{!c.onSelectChange}">
+                        <option text="50" value="50" selected="true" />
+                        <option text="100" value="100" />
+                        <option text="150" value="150" />
+                        <option text="200" value="200" />
+                    </lightning:select>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{!v.viewAll}">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-bottom_small slds-float_right">
+                    <lightning:select aura:id="pageSizeForAll" label="{!v.translationsMap.Display_Deals_Per_Page}"
+                        onchange="{!c.onSelectChange}">
+                        <option text="50" value="50" selected="true" />
+                        <option text="100" value="100" />
+                        <option text="150" value="150" />
+                        <option text="200" value="200" />
+                    </lightning:select>
+                </div>
+            </aura:if>
+        </div>
+
+
+        <aura:if isTrue="{!v.Message}">
+            <div class="errorMessageDiv">
+                <div class="slds-is-relative errorMessageDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found}...</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+
+        <aura:if isTrue="{!!v.Message}">
+
+            <div class="slds-m-around_xx-small slds-p-top_xx-small">
+                <table
+                    class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout dealsupportlistatble">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width:14rem;">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.Deal_Status_Name}">
+                                        {!v.translationsMap.Deal_Status_Name}</div>
+                                </strong>
+                            </th>
+                            <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.translationsMap.Partner_Account__c}">
+                                            {!v.translationsMap.Partner_Account}</div>
+                                    </strong>
+                                </th>
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.translationsMap.Partner_ID}">
+                                            {!v.translationsMap.Partner_ID}</div>
+                                    </strong>
+                                </th>
+                                <aura:if isTrue="{!v.ShowConAcc}">
+                                    <th scope="col">
+                                        <strong>
+                                            <div class="slds-truncate" title="{!v.translationsMap.Partner_Contact__c}">
+                                                {!v.translationsMap.Partner_Contact}</div>
+                                        </strong>
+                                    </th>
+                                </aura:if>
+                            </aura:if>
+                            <!-- <th scope="col">
+                                <strong><div class="slds-truncate" title="Partner Quote">Partner Quote</div></strong>
+                            </th>-->
+                            <!-- <th scope="col">
+                                <strong><div class="slds-truncate" title="Partner Channel Manager">Partner Channel Manager</div></strong>
+                            </th> -->
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.Customer}">
+                                        {!v.translationsMap.Customer}</div>
+                                </strong>
+                            </th>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.Status}">
+                                        {!v.translationsMap.Status}</div>
+                                </strong>
+                            </th>
+                            <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.translationsMap.Type}">
+                                            {!v.translationsMap.Type}</div>
+                                    </strong>
+                                </th>
+                            </aura:if>
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.dealSupportFieldsMap.Last_Comment_By__c}">
+                                            {!v.dealSupportFieldsMap.Last_Comment_By__c}</div>
+                                    </strong>
+                                </th>
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate"
+                                            title="{!v.dealSupportFieldsMap.Last_Comment_Date__c}">
+                                            {!v.dealSupportFieldsMap.Last_Comment_Date__c}</div>
+                                    </strong>
+                                </th>
+                            </aura:if>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.Country}">
+                                        {!v.translationsMap.Country}</div>
+                                </strong>
+                            </th>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.State}">
+                                        {!v.translationsMap.State}</div>
+                                </strong>
+                            </th>
+                            <aura:if isTrue="{!and(!v.ShowOnlyRC,!v.ShowOnlyALE)}">
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate"
+                                            title="{!v.PRMSpecificTranslationsMap.Portal_Cloud_Specialist}">
+                                            {!v.PRMSpecificTranslationsMap.Portal_Cloud_Specialist}</div>
+                                    </strong>
+                                </th>
+                            </aura:if>
+                            <th scope="col">
+                                <strong>
+                                    <div class="slds-truncate" title="{!v.translationsMap.Created_Date}">
+                                        {!v.translationsMap.Created_Date}</div>
+                                </strong>
+                            </th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.dealSupportList}" var="deal">
+                            <tr>
+                                <th scope="row" data-label="Name" style="width:14rem;">
+                                    <div class="slds-truncate" title="{!deal.Name}" data-value="{!deal.Id}">
+                                        <!--<a href="{!'/partner/s/dealsupport?id='+deal.Id}">
+                                            {!deal.Name}
+                                        </a>    -->
+                                        <a href="{!v.RespectiveTabURL +'?id=' +deal.Id}">
+                                            {!deal.Name}
+                                        </a>
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                    <th scope="row" data-label="Partner Account">
+                                        <div class="slds-truncate" title="{!deal.PartnerAccount}">
+                                            {!deal.PartnerAccount}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="PartnerId">
+                                        <div class="slds-truncate" title="{!deal.PartnerId}">
+                                            {!deal.PartnerId}
+                                        </div>
+                                    </th>
+                                    <aura:if isTrue="{!v.ShowConAcc}">
+                                        <th scope="row" data-label="Partner Contact">
+                                            <div class="slds-truncate" title="{!deal.PartnerContact}">
+                                                {!deal.PartnerContact}
+                                            </div>
+                                        </th>
+                                    </aura:if>
+                                </aura:if>
+                                <!-- <th scope="row" data-label="Partner Quote">
+                                    <div class="slds-truncate" title="{!deal.PartnerQuote}">
+                                        {!deal.PartnerQuote}
+                                    </div>
+                                </th> -->
+                                <!--<th scope="row" data-label="Partner Channel Manager">
+                                    <div class="slds-truncate" title="{!deal.Partner_Channel_Manager__c}">
+                                        {!deal.Partner_Channel_Manager__c}
+                                    </div>
+                                </th>-->
+                                <th scope="row" data-label="Customer Account">
+                                    <div class="slds-truncate" title="{!deal.CustomerAccount}">
+                                        {!deal.CustomerAccount}
+                                    </div>
+                                </th>
+
+                                <th scope="row" data-label="Status">
+                                    <div class="slds-truncate" title="{!deal.Status__c}">
+                                        {!deal.Status__c}
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                    <th scope="row" data-label="Type">
+                                        <div class="slds-truncate" title="{!deal.Type__c}">
+                                            {!deal.Type__c}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                    <th scope="row" data-label="Last Comment By">
+                                        <div class="slds-truncate" title="{!deal.Last_Comment_By__r.Full_Name__c}">
+                                            {!deal.Last_Comment_By__r.Full_Name__c}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="Last Comment Date">
+                                        <div class="slds-truncate">
+                                            <lightning:formattedDateTime value="{!deal.Last_Comment_Date__c}"
+                                                month="numeric" day="numeric" year="numeric" hour="2-digit"
+                                                minute="2-digit" timeZone="{!$Locale.timezone}" />
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <aura:if isTrue="{!deal.Type__c!='Lead Conversion'}">
+                                    <th scope="row" data-label="Type">
+                                        <div class="slds-truncate" title="{!deal.Customer_Account__r.BillingCountry}">
+                                            {!deal.Customer_Account__r.BillingCountry}
+                                        </div>
+                                    </th>
+
+                                    <th scope="row" data-label="Type">
+                                        <div class="slds-truncate" title="{!deal.Customer_Account__r.BillingState}">
+                                            {!deal.Customer_Account__r.BillingState}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <aura:if isTrue="{!deal.Type__c=='Lead Conversion'}">
+                                    <th scope="row" data-label="Type">
+                                        <div class="slds-truncate" title="{!deal.Lead__r.Country__c}">
+                                            {!deal.Lead__r.Country__c}
+                                        </div>
+                                    </th>
+
+                                    <th scope="row" data-label="Type">
+                                        <div class="slds-truncate" title="{!deal.Lead__r.State__c}">
+                                            {!deal.Lead__r.State__c}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <aura:if isTrue="{!and(!v.ShowOnlyRC,!v.ShowOnlyALE)}">
+                                    <th scope="row" data-label="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">
+                                        <div class="slds-truncate" title="{!deal.PortalCloudSpecialist}">
+                                            {!deal.PortalCloudSpecialist}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <th scope="row" data-label="Created Date">
+                                    <div class="slds-truncate">
+                                        <lightning:formattedDateTime value="{!deal.CreatedDate}" month="numeric"
+                                            day="numeric" year="numeric" hour="2-digit" minute="2-digit"
+                                            timeZone="{!$Locale.timezone}" />
+                                    </div>
+                                </th>
+
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <div class="slds-clearfix">
+                <div class="slds-float_right">
+                    <lightning:button disabled="{!v.pageNumber == 1}" variant="brand" aura:id="prevPage"
+                        label="{!v.translationsMap.Previous}" onclick="{!c.handlePrev}" iconName="utility:chevronleft"
+                        iconPosition="left" />
+                    <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                        aura:id="nextPage" variant="brand" label="{!v.translationsMap.Next}" onclick="{!c.handleNext}"
+                        iconName="utility:chevronright" iconPosition="right" />
+                </div>
+                <p class="slds-truncate">{!v.translationsMap.Displaying + ' '}
+                    {!v.recordStart}-{!v.recordEnd}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalRecords} |
+                    {!v.translationsMap.Page + ' '} {!v.pageNumber}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalPages}
+                </p>
+            </div>
+        </aura:if>
+
+    </aura:if>
+    <aura:if isTrue="{!v.ShowRecordDetail}">
+        <div aura:id="dealSupportDetailDiv"></div>
+    </aura:if>
+    <aura:if isTrue="{!v.ShowNewSection}">
+        <div aura:id="NewDealSupportDiv"></div>
+    </aura:if>
+    <div aura:id="lookupSearchDiv"></div>
+</aura:component>

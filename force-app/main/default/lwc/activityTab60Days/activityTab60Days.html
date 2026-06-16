@@ -1,0 +1,29 @@
+<template>   
+  <div class="showSpinner" if:true={showSpinner}>
+    <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+  </div>
+  <p style="font-size: larger;"><b>Current Readiness Score: {readinessScoreWithComments}  </b></p>
+  <br/>
+  <template if:false={canEdit}>
+    <lightning-datatable key-field="id" data={records} columns={columns} hide-checkbox-column>
+    </lightning-datatable>
+  </template>
+
+  <template if:true={canEdit}>
+    <c-custom-datatable class="slds-max-medium-table_stacked" onvaluechange={handleValueChange}
+                    oncellchange={handleCellChange} data={records} columns={columns} show-row-number-column="false"
+                    key-field="Id" draft-values={draftValues} onsave={handleSave} data-record="Id" onedit={handleEdit}
+                    hide-checkbox-column="true" oncancel={handleCancel}>
+    </c-custom-datatable>    
+  </template>
+
+  <div class="slds-m-around_small">
+    <div class="slds-m-vertical_medium content" style="display: flex;justify-content: space-between;">            
+          <p><b>Total Records : {totalRecountCount} </b></p>
+            <p><b>Displaying {page} of {totalPage} Page </b></p>
+    </div>
+    <template if:false={hidePagination}>
+      <c-paginator onprevious={previousHandler} onnext={nextHandler} current-page={currentPage} last-page={lastPage}></c-paginator>     
+    </template>
+</div> 
+</template>

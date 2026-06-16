@@ -1,0 +1,35 @@
+<aura:component controller="TemplatePanelController">
+    <ltng:require scripts="{!$Resource.TemplatePanelDependencies + '/TP.js'}" afterScriptsLoaded="{!c.templatePanelHelperLoaded}"/>
+    <!-- Shared Attributes -->
+    <aura:attribute name="templates" type="RC_Quote_Template__c[]"/>
+    <aura:attribute name="sections" type="TemplateSections__c[]"/>
+    <aura:attribute name="selectedSection" type="TemplateSections__c"/>
+    <aura:attribute name="selectedTemplate" type="RC_Quote_Template__c"/>
+    <aura:attribute name="templateId" type="String"/>
+    <!-- Handlers -->
+    <aura:handler event="c:TemplatePanelEvent" action="{!c.onTemplatePanelEvent}"/>
+
+    <!-- Markup -->
+
+    <c:Toasts />
+    <div class="templates-panel slds-grid">
+        <section class="section slds-grid flex-column" aura:id="templateListContainer">
+            <c:TemplatePanelTemplateList templates="{!v.templates}"
+                                          sections="{!v.sections}"
+                                          selectedSection="{!v.selectedSection}"
+                                          selectedTemplate="{!v.selectedTemplate}"/>
+        </section>
+        <section class="section slds-grid flex-column slds-hide slide-out--right" aura:id="templateViewContainer">
+            <c:TemplatePanelTemplateView templates="{!v.templates}"
+                                          sections="{!v.sections}"
+                                          selectedSection="{!v.selectedSection}"
+                                          selectedTemplate="{!v.selectedTemplate}"/>
+        </section>
+        <section class="section slds-grid flex-column slds-hide slide-out--right" aura:id="sectionBuilderContainer" style="min-height: 1100px">
+            <c:TemplatePanelSectionBuilder templates="{!v.templates}"
+                                            sections="{!v.sections}"
+                                            selectedSection="{!v.selectedSection}"
+                                            selectedTemplate="{!v.selectedTemplate}"/>
+        </section>
+    </div>
+</aura:component>

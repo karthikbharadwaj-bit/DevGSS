@@ -1,0 +1,89 @@
+<apex:page standardController="Case" extensions="CaseTaggingToolInlinePageController" showHeader="false" sidebar="false" standardStylesheets="false">
+    <apex:pageBlock rendered="{!$ObjectType.Case.fields.OpenCustomerSupportLevel1__c.Accessible &&
+                                $ObjectType.Case.fields.OpenCustomerSupportLevel2__c.Accessible &&
+                                $ObjectType.Case.fields.OpenCustomerSupportLevel3__c.Accessible &&
+                                $ObjectType.Case.fields.CloseCustomerSupportLevel1__c.Accessible &&
+                                $ObjectType.Case.fields.CloseCustomerSupportLevel2__c.Accessible &&
+                                $ObjectType.Case.fields.CloseCustomerSupportLevel3__c.Accessible &&
+                                $ObjectType.Case.fields.ProductType__c.Accessible &&
+                                $ObjectType.Case.fields.ProductVersionModelPlatform__c.Accessible &&
+                                $ObjectType.Case.fields.OpenInternalWorkflowLevel1__c.Accessible &&
+                                $ObjectType.Case.fields.OpenInternalWorkflowLevel2__c.Accessible &&
+                                $ObjectType.Case.fields.OpenInternalWorkflowLevel3__c.Accessible &&
+                                $ObjectType.Case.fields.CloseInternalWorkflowLevel1__c.Accessible &&
+                                $ObjectType.Case.fields.CloseInternalWorkflowLevel2__c.Accessible &&
+                                $ObjectType.Case.fields.CSAT_Prediction__c.Accessible &&
+                                $ObjectType.Case.fields.CSAT_Prediction_after_Manager_Callback__c.Accessible &&
+                                $ObjectType.Case.fields.Status.Accessible}">
+
+        <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+        <apex:includeLightning />
+        <style type="text/css">
+        html,
+        body {
+            font-family: 'Salesforce Sans', Arial, sans-serif;
+        }
+        
+        .case-tagging-loader{
+            opacity: 0;
+        }
+
+        .slds-scope .case-tagging-loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .slds-scope .case-tagging-loader__spinner {
+            position: relative;
+            top: auto;
+            left: auto;
+            height: 2.75rem;
+            transform: none;
+        }
+        
+        .loader--fadeout {
+            opacity: 0;
+            transition: .5s ease;
+        }
+        
+        #auraErrorMessage {
+            position: absolute;
+            bottom: 0;
+            background: #FFF;
+            z-index: 9999;
+        }
+        </style>
+        <div class="slds-scope" id="case_tagging_loader">
+            <div class="slds-spinner_container case-tagging-loader slds-fade-in-open">
+                <div class="slds-spinner slds-spinner--large case-tagging-loader__spinner" aria-hidden="false" role="alert" id="case_tagging_loader_spinner">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+                <p class="case-tagging-loader__text" id="case_tagging_loader_text">Loading Case Tagging Tool</p>
+            </div>
+        </div>
+        <div id="lightning" ></div>
+        <script>
+            var caseObj = {!caseObjJson};
+
+            // loader spinner
+            var loaderSpinner = document.getElementById('case_tagging_loader_spinner');
+            var loader = document.getElementById('case_tagging_loader');
+            loaderSpinner.classList.add('slds-spinner--brand');
+
+            // init app
+            $Lightning.use("c:CaseTaggingTool", function() {
+                $Lightning.createComponent("c:CaseTaggingToolWrapper", {
+                    caseObj: caseObj
+                }, "lightning", function() {
+                    loader.classList.add('loader--fadeout');
+                    setTimeout(function() {
+                        loader.style.display = "none";
+                    }, 500);
+                });
+            });
+        </script>
+    </apex:pageBlock>
+</apex:page>

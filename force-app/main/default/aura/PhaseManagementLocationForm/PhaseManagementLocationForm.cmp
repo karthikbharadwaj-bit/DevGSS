@@ -1,0 +1,191 @@
+<aura:component description="PhaseManagementLocationForm" controller="PhaseManagementController">
+    <!-- Atttributes -->
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="cartItem" type="Object"/>
+    <aura:attribute name="phase" type="Object"/>
+    <aura:attribute name="location" type="Object"/>
+    <aura:attribute name="nubbinPosition" type="String" default="left-top"/>
+    <aura:attribute name="style" type="String" />
+    <aura:attribute name="isDefaultLocationForm" type="Boolean" />
+
+    <aura:attribute access="private" name="isFormRendered" type="Boolean" />
+    <aura:attribute access="private" name="target" type="Object"/>
+
+    <!-- Event handlers -->
+    <aura:handler event="c:PhaseManagementEvent" action="{! c.onPhaseManagementEvent }"/>
+
+    <div class="{! join(' ', 'location-form',
+            v.location.isEditLocationMode ? '' : 'location-form_hidden',
+            'slds-nubbin_' + v.nubbinPosition) }"
+         style="{!v.style}"
+         aura:id="locationForm">
+        <aura:if isTrue="{! v.isFormRendered }">
+            <form onsubmit="{! c.submitLocationForm }">
+            <lightning:layout class="{! join(' ', 'location-form__header slds-p-around--small slds-wrap',
+                    v.location.isIdAndNameUsed ? '' : 'slds-hide') }">
+
+                <lightning:layoutItem size="6" padding="horizontal-small" class="slds-grid">
+                    <!-- Location Icon -->
+                    <div class="slds-p-right_medium location-form_icon">
+                        <lightning:icon iconName="utility:checkin" alternativeText="Location"/>
+                    </div>
+
+                    <!-- Location ID -->
+                    <lightning:input type="text"
+                                     label="Location ID"
+                                     pattern="^[A-Za-z0-9]*$"
+                                     class="slds-grow"
+                                     required="{! v.location.locationIdInput.isRequired }"
+                                     messageWhenPatternMismatch="Location ID must contain only digits and letters"
+                                     value="{! v.location.locationIdInput.value }"
+                                     onblur="{! c.validateLocationMatcherIdInput }"
+                                     onchange="{! c.onInputChange }"
+                                     aura:id="input"
+                    />
+                </lightning:layoutItem>
+
+                <!-- Location Name -->
+                <lightning:layoutItem size="6" padding="horizontal-small">
+                    <lightning:input type="text"
+                                     label="Location Name"
+                                     required="{! v.location.locationNameInput.isRequired }"
+                                     value="{! v.location.locationNameInput.value }"
+                                     onblur="{! c.validateLocationMatcherIdInput }"
+                                     onchange="{! c.onInputChange }"
+                                     aura:id="input"/>
+                </lightning:layoutItem>
+
+                <div class="slds-has-error slds-form-element__help slds-hide location-form_duplicateErrorMsg">
+                    Such combination of Location Id and Location Name already exists
+                </div>
+
+            </lightning:layout>
+
+            <div class="location-form__body slds-p-around--small">
+                <lightning:layout>
+
+                    <!-- Country -->
+                    <lightning:layoutItem padding="horizontal-small">
+                        <lightning:input type="text"
+                                         label="Country"
+                                         value="{! v.location.countryInput.value }"
+                                         onchange="{! c.onInputChange }"
+                                         aura:id="input"/>
+                    </lightning:layoutItem>
+
+                    <!-- City -->
+                    <lightning:layoutItem padding="horizontal-small">
+                        <lightning:input type="text"
+                                         label="City"
+                                         value="{! v.location.cityInput.value }"
+                                         onchange="{! c.onInputChange }"
+                                         aura:id="input"/>
+                    </lightning:layoutItem>
+
+                    <!-- State -->
+                    <lightning:layoutItem padding="horizontal-small"
+                                          class="location-form__state">
+                        <lightning:input type="text"
+                                         label="State"
+                                         value="{! v.location.stateInput.value }"
+                                         onchange="{! c.onInputChange }"
+                                         aura:id="input"/>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-vertical--small">
+
+                    <!-- Address Line -->
+                    <lightning:layoutItem size="8" padding="horizontal-small">
+                        <lightning:input type="text"
+                                         label="Address Line"
+                                         value="{! v.location.adressLineInput.value }"
+                                         onchange="{! c.onInputChange }"
+                                         aura:id="input"/>
+                    </lightning:layoutItem>
+
+                    <!-- Postal Code -->
+                    <lightning:layoutItem size="4" padding="horizontal-small">
+                        <lightning:input type="text"
+                                         label="Postal Code"
+                                         value="{! v.location.postalCodeInput.value }"
+                                         onchange="{! c.onInputChange }"
+                                         aura:id="input"/>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+
+                <div class="{! join( ' ', v.isDefaultLocationForm ? '' : 'slds-hide', 'link_right' ) }">
+                    <span>
+                        <a href="javascript:void(0)" onclick="{! c.copyDefaultAddressFromAccount }">
+                            Copy from Account
+                        </a>
+                    </span>
+                </div>
+
+                <!-- Validation Message -->
+                <lightning:layout class="{! join(' ', 'slds-p-bottom--small slds-has-error',
+                        v.location.validation.message ? '' : 'slds-hide') }">
+
+                    <lightning:layoutItem padding="horizontal-small">
+
+                        <!-- Message -->
+                        <div class="slds-form-element__help slds-m-top--none">
+                            <aura:text value="{! v.location.validation.message }"/>
+                        </div>
+
+                        <!-- Details -->
+                        <div class="{! join(' ', '', v.location.validation.details ? '' : 'slds-hide') }">
+                            <a href="javascript:void(0)"
+                               onclick="{! c.toggleIsDetailsShown }"
+                               class="{! v.location.validation.isDetailsShown ? 'slds-hide' : '' }">
+                                Show more
+                            </a>
+                            <div class="{! join(' ', 'slds-form-element__help',
+                                    v.location.validation.isDetailsShown ? '' : 'slds-hide') }">
+                                <aura:text value="{! v.location.validation.details }"/>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+            </div>
+
+            <footer class="slds-modal__footer slds-modal__footer_directional">
+                <lightning:button type="button" label="Cancel" onclick="{! c.cancelLocationForm }"/>
+
+                <span>
+                    <span class="{! join(' ', 'validation-block',
+                            v.location.isAnyAddressInputPopulated ? '' : 'slds-hide' )}">
+                        <span class="{! join(' ', 'slds-m-right_medium',
+                                !v.location.validation.isInProgress ? '' : 'slds-hide') }">
+                            {! v.location.validation.isValid ? 'Address Valid' : '' }
+                            <span class="{! join(' ', '', v.location.validation.isValid ? 'slds-hide' : '') }">
+                                <a href="javascript:void(0)" onclick="{! c.onValidateLocation }">Validate address</a>
+                            </span>
+                            <lightning:dynamicIcon type="score"
+                                                   option="{! v.location.validation.isValid ? 'positive' : 'negative' }"/>
+                        </span>
+
+                        <span class="{! v.location.validation.isInProgress ? '' : 'slds-hide' }">
+                            Validating...
+                            <lightning:spinner  class="slds-is-relative location__spinner slds-m-left_x-small"
+                                                alternativeText="Loading"
+                                                size="small" />
+                        </span>
+                    </span>
+
+                    <lightning:button type="submit"
+                                      label="Apply"
+                                      variant="brand"
+                                      disabled="{! !v.location.isAnyInputFieldPopulated }"/>
+                </span>
+            </footer>
+        </form>
+        </aura:if>
+    </div>
+    <div class="{! join(' ', 'slds-backdrop',
+            v.location.isEditLocationMode ? '' : 'slds-hide') }"></div>
+</aura:component>

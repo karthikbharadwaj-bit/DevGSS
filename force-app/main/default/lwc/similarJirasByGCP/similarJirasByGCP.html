@@ -1,0 +1,162 @@
+<template>
+    <template if:false={isVisible}>
+        <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header">
+            <div class="toggle-label" onclick={toggleContent}>
+                Show
+                <lightning-icon icon-name="utility:chevrondown" size="x-small" class="chevron-icon"></lightning-icon>
+            </div>
+            <div class="powered-by">
+                Powered by <strong>AI</strong> ✨
+            </div>
+        </div>
+    </template>
+
+    <template if:true={isVisible}>
+        <div>
+            <template lwc:if={isLoading}>
+                <p class="slds-text-color_weak slds-p-horizontal_small">Loading...</p>
+            </template>
+
+            <template lwc:elseif={isError}>
+                <p class="slds-text-color_error slds-p-horizontal_small">{rawResponse}</p>
+            </template>
+
+            <template lwc:else>
+                <template lwc:if={showNoProductNotice}>
+                    <p class="slds-text-color_error slds-p-horizontal_small">No product is tagged to this case.</p>
+                </template>
+                <template if:true={hasJiraResults}>
+                    <ul class="stripes slds-p-horizontal_small">
+                        <template for:each={formattedResponse} for:item="jiraItem" for:index="index">
+                            <li key={jiraItem.jira_key} class="stripe-item">
+                                <div class="stripe-row">
+                                    <div class="stripe-bar" style={jiraItem.barStyle}></div>
+                                    <div class="jira-icon-wrap">
+                                        <img src={jiraIconUrl} class="jira-icon-img" alt="Jira" />
+                                    </div>
+                                    <div class="body">
+                                        <div class="card-meta">
+                                            <div class="card-meta__case">
+                                                <template lwc:if={jiraItem.jiraUrl}>
+                                                    <a href={jiraItem.jiraUrl} target="_blank"><strong>{jiraItem.jira_key}</strong></a>
+                                                </template>
+                                                <template lwc:else>
+                                                    <strong>{jiraItem.jira_key}</strong>
+                                                </template>
+                                                <template lwc:if={jiraItem.status}>
+                                                    &nbsp;· {jiraItem.status}
+                                                </template>
+                                                <template lwc:if={jiraItem.priority}>
+                                                    <span class={jiraItem.priorityClass}>{jiraItem.priority}</span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                        <p class="subject">{jiraItem.summary}</p>
+
+                                        <div class="summary-section">
+                                            <lightning-button
+                                                variant="brand"
+                                                label={jiraItem.summaryButtonLabel}
+                                                data-idx={index}
+                                                onclick={onGenerateSummary}
+                                                disabled={jiraItem.isSummaryLoading}
+                                                class="btn-summary">
+                                            </lightning-button>
+                                            <template lwc:if={jiraItem.isSummaryLoading}>
+                                                <lightning-spinner alternative-text="Loading summary" size="small" class="summary-spinner"></lightning-spinner>
+                                            </template>
+                                        </div>
+
+                                    </div>
+                                    <div class="actions-right">
+                                        <div class="inline-actions">
+                                            <lightning-button-icon-stateful icon-name="utility:like"
+                                                selected-icon-name="utility:like" alternative-text="Like"
+                                                data-idx={index} onclick={onLike} selected={jiraItem.isLiked}
+                                                variant={jiraItem.likeVariant} disabled={jiraItem.actionBusy}>
+                                            </lightning-button-icon-stateful>
+                                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                                selected-icon-name="utility:dislike" alternative-text="Dislike"
+                                                data-idx={index} onclick={onDislike} selected={jiraItem.isDisliked}
+                                                variant={jiraItem.dislikeVariant} disabled={jiraItem.actionBusy}>
+                                            </lightning-button-icon-stateful>
+                                        </div>
+
+                                        <template if:true={jiraItem.reviewed}>
+                                            <span class="thanks-badge">Thanks for the review</span>
+                                        </template>
+
+                                        <div class="feedback-right">
+                                            <template if:false={jiraItem.showFeedback}>
+                                                <template if:false={jiraItem.reviewed}>
+                                                    <a href="javascript:void(0);" data-idx={index}
+                                                        onclick={toggleFeedback}>Give Feedback</a>
+                                                </template>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <template lwc:if={jiraItem.showSummary}>
+                                    <div class="summary-block">
+                                        <template lwc:if={jiraItem.hasSummaryList}>
+                                            <ul class="jira-summary-list">
+                                                <template for:each={jiraItem.summaryItems} for:item="sumRow">
+                                                    <li key={sumRow.id} class="jira-summary-li">
+                                                        <lightning-formatted-rich-text value={sumRow.text}></lightning-formatted-rich-text>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </template>
+                                        <template lwc:else>
+                                            <lightning-formatted-rich-text
+                                                class="jira-summary-paragraph"
+                                                value={jiraItem.summaryParagraph}>
+                                            </lightning-formatted-rich-text>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <template if:true={jiraItem.showFeedback}>
+                                    <div class="feedback-row">
+                                        <textarea class={jiraItem.feedbackClass} rows="2"
+                                            placeholder="Share a quick note…" data-idx={index}
+                                            oninput={onFeedbackChange}
+                                            onkeydown={onFeedbackKeydown}>{jiraItem.feedback}</textarea>
+                                        <div class="feedback-actions">
+                                            <lightning-button class="btn-compact" variant="brand" label="Send"
+                                                data-idx={index} onclick={onSendFeedback}
+                                                disabled={jiraItem.sendDisabled}>
+                                            </lightning-button>
+                                            <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                                data-idx={index} onclick={onCancelFeedback}>
+                                            </lightning-button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+
+                <template lwc:if={showNoJiraResults}>
+                    <p class="slds-text-color_error slds-p-horizontal_small">No related Jira tickets were found for this case.</p>
+                </template>
+
+                <template lwc:if={rawResponse}>
+                    <p class="slds-p-horizontal_small">{rawResponse}</p>
+                </template>
+            </template>
+        </div>
+
+        <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header bottom-toggle">
+            <div class="toggle-label" onclick={toggleContent}>
+                Hide
+                <lightning-icon icon-name="utility:chevronup" size="x-small" class="chevron-icon"></lightning-icon>
+            </div>
+            <div class="slds-text-color_weak" style="font-size: 0.8rem;">
+                Powered by <strong>AI</strong> ✨
+            </div>
+        </div>
+    </template>
+</template>

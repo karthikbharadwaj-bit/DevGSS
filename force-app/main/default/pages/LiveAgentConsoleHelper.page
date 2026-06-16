@@ -1,0 +1,49 @@
+<apex:page showHeader="true" sidebar="true">
+	<apex:includeScript value="/support/console/38.0/integration.js"/>
+	<script type="text/javascript">
+	console.log('Console helper init');
+	// Set the name of the hidden property and the change event for visibility
+	var hidden,
+		visibilityChange;
+	if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+		hidden = "hidden";
+		visibilityChange = "visibilitychange";
+	} else if (typeof document.msHidden !== "undefined") {
+		hidden = "msHidden";
+		visibilityChange = "msvisibilitychange";
+	} else if (typeof document.webkitHidden !== "undefined") {
+		hidden = "webkitHidden";
+		visibilityChange = "webkitvisibilitychange";
+	}
+	var isTitleShown = false;
+	var newMessageTitle = '*** New Message ***';
+
+	/* Add event listener on chat start */
+	sforce.console.chat.onChatStarted(chatStarted);
+	function chatStarted(result){
+		if (result.success === true) {
+			sforce.console.chat.onNewMessage(result.chatKey, newMessageHandler);
+		}
+	}
+
+	/* If browser tab is not visible on new message change browser tab title */
+	function newMessageHandler(result){
+		if (result.success === true && result.type === 'Chasitor' && document[hidden] && !isTitleShown) {
+			isTitleShown = true;
+			sforce.console.addToBrowserTitleQueue(newMessageTitle);
+		}
+	}
+
+	/* If browser tab is visible restore title */
+	function visibilityChangeHandler() {
+		if (!document[hidden]) {
+			sforce.console.removeFromBrowserTitleQueue(newMessageTitle);
+			isTitleShown = false;
+		}
+	}
+	if (typeof document.addEventListener !== "undefined" || typeof document[hidden] !== "undefined") {
+		// Handle page visibility change
+		document.addEventListener(visibilityChange, visibilityChangeHandler, false);
+	}
+	</script>
+</apex:page>

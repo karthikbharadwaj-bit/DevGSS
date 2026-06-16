@@ -1,0 +1,27 @@
+<apex:page standardController="Account"
+            extensions="StarsRatingController"
+            sidebar="false" showHeader="false"
+            standardStylesheets="false" >
+    <apex:includeLightning />
+    <style>
+        #starApp {
+            width: 94%;
+        }
+    </style>
+
+    <div id="starApp"></div>
+
+    <script>
+        $Lightning.use("c:StarRatingApp", () => {
+            $Lightning.createComponent("c:StarRating",
+                {
+                    isLightning: '{!isLightning}',
+                    modifiedDate: '{!modifiedDate}',
+                    numberFields: '{!numberFields}',
+                    recordId: '{!recordId}'
+                },
+                "starApp",
+                cmp => {});
+        });
+    </script>
+</apex:page>

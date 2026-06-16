@@ -1,0 +1,422 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" access="global" extends="c:Quote_BaseComponent" controller="Quote_PartnerQuoteUtil">
+	<aura:attribute name="objAccountChecklist" type="Account_Change_Request__c" default="{'sobjectType':'Account_Change_Request__c'}"/>
+  	<aura:attribute name="paymentListDisplayed" type="List" /><!--BZS - 7041 BOB -->
+    <aura:attribute name="showChangeRequestCMP" type="Boolean"/>
+    <aura:attribute name="paymentMethod" type="Boolean" default="false"/>
+    <aura:attribute name="isReadOnly" type="Boolean" default="false"/>
+     <aura:attribute name="showSpinner" type="Boolean" default="false"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="isFromInternal" type="Boolean" default="false"/>
+    <!-- COUNTRY STATE ATTRIBUTES -->
+    <aura:attribute name="mapCountryKeys" type="object" />
+    <aura:attribute name="mapCountryValueKeys" type="String[]" />
+    <aura:attribute name="mapShappingCountryValueKeys" type="String[]" />
+    <aura:attribute name="mapData" type="Map"/>
+    
+    <!-- Added for ALE -->
+    <aura:attribute name="partnerCommunity" type="String"/>
+    <aura:attribute name="ShowContractChangeReason" type="Boolean" default="false"/>
+    
+    <aura:attribute name="translationsMap" type="Map" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:if isTrue="{!v.showSpinner}">
+        <c:SpinnerComponent />
+    </aura:if>
+    
+   <aura:if isTrue="{!v.showChangeRequestCMP}">
+    <div class="slds-m-around_xx-large">
+       <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.Change_Request}</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                       <pre style="font-size: .8125rem;font-weight: normal;">
+                           <h3 style="background-color: #d3d3d3" class="slds-section-title--divider">{!v.translationsMap.Change_Account_Request}</h3>
+                           <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                                <div class="slds-size--1-of-1 slds-grid">
+                            		<div class="slds-size--6-of-12 slds-grid">
+                                       <div class="slds-form-element">
+                                           <!-- Added If condition for ALE -->
+                                           <aura:if isTrue="{!v.partnerCommunity=='Rainbow Office'}">
+                                               <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Current_Payment_Method}</label>
+                                           </aura:if>
+                                           <aura:if isTrue="{!v.partnerCommunity!='Rainbow Office'}">
+                                               <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Payment_method}</label>
+                                           </aura:if>
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    
+                                                    <lightning:select aura:id="paymentSelect" disabled="{!v.isReadOnly}" name="Payment__c" variant="label-hidden" class="label-hidden" onchange='{!c.paymentMethodChange}' value='{!v.objAccountChecklist.Payment_Method__c}'>
+                                                        <aura:iteration items="{!v.paymentListDisplayed}" var="payment" indexVar="index">
+                                                            <option value="{!payment}" selected="{!payment==v.objAccountChecklist.Payment_Method__c}">{!payment}</option>
+                                                        </aura:iteration>
+                                                    </lightning:select>
+                                                </div>
+											</div>
+                                       </div>
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-grid">
+                                        <!-- Added If condition for ALE -->
+                                        <aura:if isTrue="{!v.partnerCommunity!='Rainbow Office'}">  
+                                            <div class="slds-form-element">
+                                                <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Convert_POC_to_Paid_Account}</label>
+                                                <div class="slds-form-element__control">
+                                                    <div style="width:100%">  
+                                                        <div style="float:left">{!v.translationsMap.No}</div> 
+                                                        <div style="float:left"><lightning:input disabled="{!v.isReadOnly}" name="convertPOC" label="" type="toggle" checked="{!v.objAccountChecklist.Covert_POC_to_Paid_Account__c}"
+                                                            messageToggleActive="" messageToggleInactive=""/>
+                                                        </div>
+                                                        <div style="float:left">&nbsp;{!v.translationsMap.Yes}</div>
+                                                    </div> 
+                                                </div>
+                                            </div>
+                                       </aura:if>
+                                    </div>
+                               </div>
+                                  <br/>
+                             <!-- Legal Fields start-->       
+                            <aura:if isTrue="{!(v.objAccountChecklist.Payment_Method__c=='Invoice Billing')||(v.objAccountChecklist.Payment_Method__c=='Invoice-on-behalf')}">
+                            <!--Changes added legal fields 22-02-2020 -->
+                                
+                            <div class="slds-size--1-of-1 slds-grid">
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="">{!v.translationsMap.Accounts_Payable_email_address}</label>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                                {!v.objAccountChecklist.Accounts_Payable_email_address__c}
+                                            	<aura:set attribute="else">
+                                                	<lightning:input  variant="label-hidden" value="{!v.objAccountChecklist.Accounts_Payable_email_address__c}" type="text" />
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_Company_Name}</label>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_Company_Name__c}</div>
+                                            	<aura:set attribute="else">
+                                            		<lightning:input  variant="label-hidden" value="{!v.objAccountChecklist.Legal_Company_Name__c}" type="text" />
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="slds-size--1-of-1 slds-grid">
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_Physical_Address}</label>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_Physical_Address__c}</div>
+                                            	<aura:set attribute="else">
+                                        			<lightning:input  variant="label-hidden" value="{!v.objAccountChecklist.Legal_Physical_Address__c}" type="text" />
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_City}</label>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_City__c}</div>
+                                            	<aura:set attribute="else">
+                                        			<lightning:input  variant="label-hidden" value="{!v.objAccountChecklist.Legal_City__c}" type="text" />
+                                                </aura:set>
+                                            </aura:if>
+                                      </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                            <br/>
+                            <div class="slds-size--1-of-1 slds-grid">
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <aura:if isTrue="{!v.isReadOnly}">
+                                             <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_Country}</label>
+                                        </aura:if>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_Country__c}</div>
+                                            	<aura:set attribute="else">
+                                        			<lightning:select class="select-auto-width" label="Legal Country" value="{!v.objAccountChecklist.Legal_Country__c}" onchange="{!c.onchangeCountry}">
+                                                		<aura:iteration items="{!v.mapCountryKeys}"  var="mapKey" indexVar="key" >  
+                                                    		<option value="{!mapKey.key}" selected="{!mapKey.key == v.objAccountChecklist.Legal_Country__c}">{!mapKey.key}</option>
+                                                		</aura:iteration>
+													</lightning:select>
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <aura:if isTrue="{!v.isReadOnly}">
+                                             <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_State}</label>
+                                        </aura:if>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_State__c}</div>
+                                            	<aura:set attribute="else">
+                                        			<lightning:select aura:id="selectedState" class="select-auto-width" label="Legal State" name="select2"  value="{!v.objAccountChecklist.Legal_State__c}">
+                                                    	<aura:iteration items="{!v.mapCountryValueKeys}"  var="mapKey" >
+                                							<option value="{!mapKey}" selected="{!mapKey == v.objAccountChecklist.Legal_State__c}">{!mapKey}</option>
+                            							</aura:iteration>
+                                                	</lightning:select>
+                                                </aura:set>
+                                            </aura:if>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                            <div class="slds-size--1-of-1 slds-grid">
+                                <div class="slds-size--6-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label" for="">{!v.translationsMap.Legal_Zip_Code}</label>
+                                        <div class="slds-form-element__control">
+                                            <aura:if isTrue="{!v.isReadOnly}">
+                                            	<div>{!v.objAccountChecklist.Legal_Zip_Code__c}</div>
+                                            	<aura:set attribute="else">
+                                        			<lightning:input  variant="label-hidden" value="{!v.objAccountChecklist.Legal_Zip_Code__c}" type="text" />
+                                                </aura:set>
+                                            </aura:if>
+                                       </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br/>
+                        </aura:if>
+                               <br/>
+                               <div class="slds-size--1-of-1 slds-grid">
+                            		<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Cost_Center_Changes}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Cost_Center__c}</div>
+                                                    <aura:set attribute="else">
+                                                        <lightning:input variant="label-hidden" value="{!v.objAccountChecklist.Cost_Center__c}" id="inputNameSample1"  type="text"  />
+                                            		</aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                                   	<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Tax_Exemption_Location_changes}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Tax_Exemption_Location_changes__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Tax_Exemption_Location_changes__c}"  type="text" />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                               </div>
+                               <br/>
+                               <div class="slds-size--1-of-1 slds-grid">
+                            		<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1"> {!v.translationsMap.Refund_Request_Amount}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Refund_Request_Amount__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Refund_Request_Amount__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                        <div>&nbsp;&nbsp;</div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1"> {!v.translationsMap.Refund_Request_Reason}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Refund_Request_Reason__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Refund_Request_Reason__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                                   	<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Account_Cancellation_Reason}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Account_Cancellation_Reason__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1"  value="{!v.objAccountChecklist.Account_Cancellation_Reason__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                        <div>&nbsp;&nbsp;</div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Account_Cancellation_Date_Requested}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Account_Cancellation_Date__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1"  value="{!v.objAccountChecklist.Account_Cancellation_Date__c}"  type="Date"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                               </div>
+                               <br/>                               
+                               <div class="slds-size--1-of-1 slds-grid">
+                            		<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Update_Billing_Address_Company_Details}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Company_Details__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Company_Details__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                    </div>
+                                   	<div class="slds-size--6-of-12 slds-grid">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Add_Primary_Contacts_Name}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Primary_Contact_First_Name__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Primary_Contact_First_Name__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>
+                                        <div>&nbsp;&nbsp;</div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Add_Primary_Contacts_Last_Name}</label>
+                                            <div class="slds-form-element__control">
+                                                <aura:if isTrue="{!v.isReadOnly}">
+                                                    <div>{!v.objAccountChecklist.Primary_Contact_Last_Name__c}</div>
+                                                    <aura:set attribute="else">
+                                                		<lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Primary_Contact_Last_Name__c}"  type="text"  />
+                                                    </aura:set>
+                                                </aura:if>
+                                            </div>
+                                        </div>                                                                               
+                                    </div>
+                               </div> 
+                               <!-- Added for ALE - start--> 
+                               <br/>
+                               <div class="slds-size--1-of-1 slds-grid">
+                                   <div class="slds-size--6-of-12 slds-grid">                                       
+                                       <aura:if isTrue="{!v.partnerCommunity=='Rainbow Office'}">
+                                           <div class="slds-form-element__control">
+                                               <aura:if isTrue="{!v.isReadOnly}">
+                                                   <label class="slds-form-element__label" for="inputNameSample1"> {!v.translationsMap.Contract_Status_Change_To}</label>
+                                                   <div>{!v.objAccountChecklist.Contract_Status_Change_To__c}</div>
+                                                   <aura:set attribute="else">
+                                                       <lightning:select aura:id="contractStatus" label="{!v.translationsMap.Contract_Status_Change_To}" onchange="{!c.contractStatusChange}" value="{!v.objAccountChecklist.Contract_Status_Change_To__c}">                                                           
+                                                            <option value="N/A">N/A</option>
+                                                           <option value="Inactive">Inactive</option>
+                                                           <option value="Trash Bin">Trash Bin</option>
+                                                           <option value="Remove Contract Auto Renew - Not at Risk">{!v.translationsMap.Remove_Contract_Auto_Renew_Not_at_Risk}</option>
+                                                           <option value="Contract Auto Renew - At Risk">{!v.translationsMap.Contract_Auto_Renew_At_Risk}</option>                                                            
+                                                       </lightning:select>
+                                                   </aura:set>
+                                               </aura:if>                                               
+                                           </div>
+                                       </aura:if>
+                                   </div>
+                                   <div class="slds-size--6-of-12 slds-grid">
+                                       <div class="slds-form-element">
+                                           <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Add_Primary_Contacts_Email}</label>
+                                           <div class="slds-form-element__control">
+                                               <aura:if isTrue="{!v.isReadOnly}">
+                                                   <div>{!v.objAccountChecklist.Primary_Contact_Email__c}</div>
+                                                   <aura:set attribute="else">
+                                                       <lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Primary_Contact_Email__c}"  type="email"  />
+                                                   </aura:set>
+                                               </aura:if>
+                                           </div>
+                                       </div> 
+                                       <aura:if isTrue="{!v.partnerCommunity=='Rainbow Office'}">                                           
+                                           <div>&nbsp;&nbsp;</div>
+                                           <div class="slds-form-element">
+                                               <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Add_Primary_Contacts_Phone}</label>
+                                               <div class="slds-form-element__control">
+                                                   <aura:if isTrue="{!v.isReadOnly}">
+                                                       <div>{!v.objAccountChecklist.Primary_Contact_Phone__c}</div>
+                                                       <aura:set attribute="else">
+                                                           <lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Primary_Contact_Phone__c}"  type="text"  />
+                                                       </aura:set>
+                                                   </aura:if>
+                                               </div>
+                                           </div>
+                                       </aura:if>
+                                   </div>
+                               </div>                               
+                               <aura:if isTrue="{!v.partnerCommunity=='Rainbow Office'}">
+                                   <br/>
+                                   <div class="slds-size--1-of-1 slds-grid">
+                                       <div class="slds-size--6-of-12 slds-grid"> 
+                                           <aura:if isTrue="{!v.ShowContractChangeReason}">
+                                               <div class="slds-form-element">                                               
+                                                   <label class="slds-form-element__label" for="inputNameSample1">{!v.translationsMap.Contract_Status_Request_Reason_Justifica}</label>
+                                                   <div class="slds-form-element__control">
+                                                       <aura:if isTrue="{!v.isReadOnly}">
+                                                           <div>{!v.objAccountChecklist.Contract_Status_Request_Reason__c}</div>
+                                                           <aura:set attribute="else">
+                                                               <lightning:textarea maxlength="10000" required="true" variant="label-hidden" id="inputNameSample1" value="{!v.objAccountChecklist.Contract_Status_Request_Reason__c}"  type="email"  />
+                                                           </aura:set>
+                                                       </aura:if>
+                                                   </div>
+                                               </div>
+                                           </aura:if>
+                                       </div>
+                                   </div>
+                               </aura:if>
+                               <!-- Added for ALE - end-->
+                           </div>
+                        </pre>
+                     </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="{!v.translationsMap.Cancel}"
+                                          title="{!v.translationsMap.Cancel}"
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button disabled="{!v.isReadOnly}" variant="brand"
+                                          label="{!v.translationsMap.Submit}"
+                                          title="{!v.translationsMap.Submit}"
+                                          onclick="{!c.submitDetails}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+       
+    </div>
+   </aura:if>
+</aura:component>

@@ -1,0 +1,117 @@
+<apex:page id="ContractVersion" extensions="ContractVersionController" standardController="Account" lightningStyleSheets="true">
+
+    <script>
+        function check(event) {
+            event.target.checked = !event.target.checked;
+        }
+    </script>
+
+    <apex:slds />
+
+    <style type="text/css">
+        th div, .cellItem { text-align: center; }
+        th, td {padding: 0.3rem 0.6rem !important ;}
+    </style>
+
+    <apex:form >
+            <apex:pageBlock id="pb" title="Contract Information">
+                <apex:outputPanel layout="block" style="overflow-x:auto;" >
+                    <apex:pageBlockTable value="{!contractVersions}" var="c" id="pt">
+                        <apex:column >
+                            <apex:facet name="header">
+                                Name
+                            </apex:facet>
+                            <div style="padding-left: 0.2rem;">{!c.Name}</div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Version
+                            </apex:facet>
+                            <div class="cellItem">{!c.VersionNumber__c}</div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Qty
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:outputText value="{!IF(containKey,quantityMap[accountId], '')}" /><br/>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Status
+                            </apex:facet>
+                            <div class="cellItem">{!c.Status__c}</div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Created
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                    <apex:param value="{!c.CreatedDate}"/>
+                                </apex:outputText>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Last update
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                    <apex:param value="{!c.LastModifiedDate}"/>
+                                </apex:outputText>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Start Date
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                    <apex:param value="{!c.StartDate__c}"/>
+                                </apex:outputText>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Initial Term
+                            </apex:facet>
+                            <div class="cellItem">{!c.InitialTerm__c}</div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                End Date
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                    <apex:param value="{!c.EndDate__c}"/>
+                                </apex:outputText>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Auto Renewal
+                            </apex:facet>
+                            <div class="cellItem">
+                                <apex:inputCheckbox onchange="check(event)" value="{!c.AutoRenewal__c}"/>
+                            </div>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                Renewal Term
+                            </apex:facet>
+                            <div class="cellItem">{!IF(c.AutoRenewal__c,c.RenewalTerm__c,'-')}</div>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel>
+                <div class="slds-m-top_medium slds-m-bottom_small slds-align-middle">
+                    <apex:commandButton value="First" action="{!fstbtn}" disabled="{!prv}" reRender="pt,pb" styleClass="slds-button slds-button--brand"/>
+                    <apex:commandButton value="Previous" action="{!prvbtn}" disabled="{!prv}" reRender="pt,pb" styleClass="slds-button slds-button--brand"/>
+                    <apex:commandButton value="Next" action="{!nextbtn}" disabled="{!nxt}" reRender="pt,pb" styleClass="slds-button slds-button--brand"/>
+                    <apex:commandButton value="End" action="{!endbtn}" disabled="{!nxt}" reRender="pt,pb" styleClass="slds-button slds-button--brand"/>
+                </div>
+            </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

@@ -1,0 +1,66 @@
+<apex:page standardController="Approval__c" tabStyle="Approval__c" showHeader="false" lightningStylesheets="true">
+
+  <apex:slds />
+  <div id="toast" class="slds-scope slds-hide" style="height:4rem">
+      <div class="slds-notify_container slds-is-relative">
+          <div id="theme" class="slds-notify slds-notify_toast slds-theme_error" role="status">
+              <span class="slds-assistive-text">success</span>
+              <span class="slds-icon_container slds-icon-utility-success slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+                  <svg class="slds-icon slds-icon_small" aria-hidden="true">
+                      <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Asset.SLDS, 'assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                  </svg>
+              </span>
+              <div class="slds-notify__content">
+                  <h2 class="slds-text-heading_small" id="heading_small"></h2>
+              </div>
+              <div class="slds-notify__close">
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <apex:includeLightning />
+  
+  <div id="financeApproval"></div> 
+    
+  <script type="text/javascript">
+    function closeWindow(message, type){
+      if (type) {
+        showToast(message, type);
+      } else {
+        window.close();
+      }
+    }
+
+    function showToast(message, type) {
+      var duration = 5000;
+      document.getElementById('theme').classList.remove('slds-theme_error');
+      document.getElementById('theme').classList.remove('slds-theme_success');
+      document.getElementById('theme').classList.add('slds-theme_'+ type);
+        
+      document.getElementById('heading_small').innerHTML = message;
+      document.getElementById('toast').classList.remove('slds-hide');
+      document.getElementById('toast').scrollIntoView();
+      document.getElementById('toast').classList.add('slds-show');
+      setInterval(function(){closeToast()},duration);
+    }
+
+    function closeToast(){
+      document.getElementById('toast').classList.add('slds-hide');
+      document.getElementById('toast').classList.remove('slds-show');
+      window.close();
+    }
+
+    $Lightning.use("c:FinanceRevenueApprovalApp", function() {
+      $Lightning.createComponent("c:Finance_Revenue_Approval",
+        { 
+          recordId : '{!$CurrentPage.parameters.Id}',
+          vfCloseWindow : closeWindow,
+          isVFpage : true
+ 	      },
+      "financeApproval",
+      function(component) {}
+      );
+    });
+ </script>
+</apex:page>

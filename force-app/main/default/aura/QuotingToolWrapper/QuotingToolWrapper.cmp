@@ -1,0 +1,359 @@
+<aura:component controller="QuotingToolQuoteApexController" extends="c:QuotingToolHelper">
+    <!-- Documentation: https://aquiva.atlassian.net/wiki/spaces/RC/pages/114098234/Quoting+Wizard -->
+
+    <!-- resources -->
+    <ltng:require scripts="{! join(',',
+            $Resource.QuotingToolDependencies + '/QW.js',
+            $Resource.RCHelper + '/RC.js',
+            $Resource.underscoreJs + '/underscore-min.js') }"
+                  afterScriptsLoaded="{!c.qwHelperLoaded}"/>
+
+    <!-- Attributes initialized on Wizard init -->
+    <aura:attribute name="config" type="Map" />
+    <aura:attribute name="isProserv" type="Boolean" />
+    <aura:attribute name="isCC" type="Boolean" />
+    <aura:attribute name="currentOpportunity" type="Opportunity" />
+    <aura:attribute name="opportunityId" type="String" />
+    <aura:attribute name="legalApprovalId" type="String" />
+    <aura:attribute name="currencyIsoCode" type="String" />
+    <aura:attribute name="servicePlan" type="String" />
+    <aura:attribute name="rcTier" type="String" />
+    <aura:attribute name="rcUserId" type="String" />
+    <aura:attribute name="paymentPlan" type="String" />
+    <aura:attribute name="numberDLs" type="String" description="Number of Digital Lines on Account"/>
+    <aura:attribute name="contractDays" type="Integer" />
+    <aura:attribute name="recordTypeName" type="String" description="Opportunity record type"/>
+    <aura:attribute name="effectiveNoOfEmployeesRange" type="String" />
+    <aura:attribute name="defaultUpsellStatus" type="String" />
+    <aura:attribute name="tiers" type="List" description="All Service Plans available on Opportunity"/>
+    <aura:attribute name="user" type="User" />
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="quoteTypeValues" type="String[]" />
+    <aura:attribute name="initialTermMonthsValues" type="String[]" />
+    <aura:attribute name="specialTermsValues" type="String[]" />
+    <aura:attribute name="termMonthsValues" type="String[]" />
+    <aura:attribute name="statusValues" type="String[]" />
+    <aura:attribute name="proServStatusValues" type="String[]" />
+    <aura:attribute name="proServForecastCategoryValues" type="String[]" />
+    <aura:attribute name="proServOfferTypeValues" type="String[]" />
+    <aura:attribute name="proServProjectComplexityValues" type="String[]" />
+    <aura:attribute name="proServSOWTypeValues" type="String[]" />
+    <aura:attribute name="ASAOwnerValues" type="String[]" />
+    <aura:attribute name="PSSegmentValues" type="String[]" />
+    <aura:attribute name="TEValues" type="String[]" />
+    <aura:attribute name="stageName" type="String" />
+    <aura:attribute name="accountId" type="String" />
+
+    <!-- Modal -->
+    <aura:attribute name="modalParams" type="Map" />
+    <aura:attribute name="modalText" type="String" />
+    <aura:attribute name="modalSource" type="String" />
+    <aura:attribute name="modalAction" type="String" />
+
+    <!-- Shared Attributes -->
+    <aura:attribute name="state" type="Map" default="{}" description="Contain common checks for use by components"/>
+    <aura:attribute name="quote" type="Quote" description="Current Quote Object"/>
+    <aura:attribute name="currentCartItems" type="List" description="Current items in Cart"/>
+    <aura:attribute name="cartItems" type="List" description="Products in Cart"/>
+    <aura:attribute name="areaCodeItems" type="List" description="Saved area code items"/>
+    <aura:attribute name="unmatchedCartItems" type="List" description="Unmatched products in Cart"/>
+    <aura:attribute name="products" type="List" description="Products"/>
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="selectedPriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) selected by user)"/>
+    <aura:attribute name="entitlements" type="List" />
+    <aura:attribute name="quotes" type="Quote[]" description="All quotes on opportunity"/>
+    <aura:attribute name="quoteRecordTypeName" type="String" description="Quote RecordType Name considering old quotes with null record type"/>
+    <aura:attribute name="proServQuote" type="Quote" description="Quote with ProServ RecordType on Opportunity"/>
+    <aura:attribute name="ccProServQuote" type="Quote" description="Quote with CC ProServ RecordType on Opportunity"/>
+    <aura:attribute name="primaryQuote" type="Quote" description="Quote with primary flag on Opportunity"/>
+    <aura:attribute name="isUpgradeClicked" type="Boolean" description="User Clicked Upgrade Button" default="false"/>
+    <aura:attribute name="upsellStatus" type="String" description="Upsell Status considering quote, account and upgrade button"/>
+    <aura:attribute name="addingToCartProds" type="Set" description="Products which are in the process of adding to cart"/>
+    <aura:attribute name="isSummaryChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in summary"/>
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="isExpDateValid" type="Boolean" default="false" description="Indicates that new expiration date is valid"/>
+    <aura:attribute name="InitialPayment" type="Integer" description="Initial payment cart total"/>
+    <aura:attribute name="addingToCartProdsUpdated" type="Integer" />
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="serviceCartItem" type="Object" />
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="wizardMessage" type="String" />
+    <aura:attribute name="accountServicePlanEnt" type="Object" description="Active Service Plan on Account Entitlement record"/>
+    <aura:attribute name="accountServicePlanPbe" type="Object" description="Active Service Plan on Account PriceBookEntry record"/>
+    <aura:attribute name="migrateBackdropStyle" type="String" default="" description="Backdrop positioning for migrating Account"/>
+    <aura:attribute name="invalidQuoteInfo" type="String" default="" description="Information for Invalid Status on Quote"/>
+    <aura:attribute name="criticalNotifications" type="String[]" default="[]" />
+
+    <!-- servicePlanDeactivated Picklists values -->
+    <aura:attribute name="addOnsValues" type="String[]" />
+    <aura:attribute name="accomodationValues" type="String[]" />
+    <aura:attribute name="featureAddOnsValues" type="String[]" />
+    <aura:attribute name="legalEngagementTypeValues" type="String[]" />
+    <aura:attribute name="changeOrderTypeValues" type="String[]" />
+
+    <!-- Event Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:QuotingToolModalRequestEvent" action="{!c.showModal}" />
+    <aura:handler event="c:QuotingToolQuoteSaveCompleteEvent" action="{!c.updateOpportunity}" />
+    <aura:handler event="c:QuotingToolTierUpgradeEvent" action="{!c.upgradeClicked}" />
+    <aura:handler event="c:QuotingToolGetQuoteEvent" action="{!c.getQuote}"/>
+    <aura:handler event="c:QuotingToolNewQuoteEvent" action="{!c.newQuote}"/>
+    <aura:handler event="c:ModalResponseEvent" action="{!c.onModalResponseEvent}"/>
+    <aura:handler event="c:QuotingToolModalResponseEvent" action="{!c.onQuotingToolModalResponseEvent}"/>
+
+    <!-- Component Event Handlers -->
+    <aura:handler name="docuSignEnvelopeListRefresh" event="c:ComponentEvent" action="{! c.onDocuSignEnvelopeListRefresh }"/>
+
+    <!-- Attribute Change Handlers -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.products}" action="{!c.productsChanged}" />
+    <aura:handler name="change" value="{!v.cartItems}" action="{!c.cartItemsChanged}" />
+    <aura:handler name="change" value="{!v.user}" action="{!c.userChanged}" />
+    <aura:handler name="change" value="{!v.quotes}" action="{!c.quotesChanged}"/>
+    <aura:handler name="change" value="{!v.isUpgradeClicked}" action="{!c.isUpgradeClickedChanged}"/>
+    <aura:handler name="change" value="{!v.selectedPriceBookEntry}" action="{!c.selectedPriceBookEntryChanged}" />
+    <aura:handler name="change" value="{!v.addingToCartProdsUpdated}" action="{!c.addingToCartProdsChanged}"/>
+    <aura:handler name="change" value="{!v.upsellStatus}" action="{!c.upsellStatusChanged}"/>
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}"/>
+    <aura:handler name="change" value="{!v.entitlements}" action="{!c.entitlementsChanged}"/>
+    <aura:handler name="change" value="{!v.accountServicePlanEnt}" action="{!c.accountServicePlanEntChanged}"/>
+
+    <!-- Registered events -->
+    <aura:registerEvent type="c:QuotingToolOpportunityInitEvent" name="initApp" />
+    <aura:registerEvent type="c:QuotingToolModalResponseEvent" name="responseModal" />
+    <aura:registerEvent type="c:QuotingToolPropagateUserEvent" name="propagateUser" />
+
+    <!-- Modal -->
+    <div aura:id="modal" id="modal" class="slds-modal slds-hide" aria-hidden="false" role="dialog">
+        <div class="slds-modal__container">
+            <div class="slds-modal__header">
+                <aura:unescapedHtml value="{!v.modalText}" />
+            </div>
+            <div class="slds-modal__footer slds-text-align--center">
+                <button class="slds-button slds-button--neutral" onclick="{!c.acceptModal}">Ok</button>
+                <button class="slds-button slds-button--neutral" onclick="{!c.denyModal}">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div aura:id="modalBg" class="slds-backdrop" onclick="{!c.denyModal}"></div>
+
+    <!-- Pricing Changes Banner -->
+    <div class="slds-notify_container pricingChanges slds-hide" aura:id="pricingChanges">
+        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <h2>Due to recent product and pricing changes, you must create a BRAND NEW quote and make it Primary in order to enter the funnel</h2>
+        </div>
+    </div>
+    <!-- Service Plan is deactivated -->
+    <div class="slds-notify_container pricingChanges slds-hide" aura:id="servicePlanDeactivated">
+        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <h2>Due to recent product and pricing changes, you must create a BRAND NEW quote to upgrade this customer. The selected Service Plan was deactivated.</h2>
+        </div>
+    </div>
+    <!-- Quote is invalid -->
+    <div class="slds-notify_container pricingChanges slds-hide" aura:id="quoteIsInvalid">
+        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <h2>{!v.invalidQuoteInfo}</h2>
+        </div>
+    </div>
+    <!-- Signup is not allow  -->
+    <div class="slds-notify_container pricingChanges slds-hide" aura:id="critical-notifications">
+        <div class="slds-notify slds-notify--alert slds-theme--error slds-theme--alert-texture" role="alert">
+            <span class="slds-assistive-text">Error</span>
+            <aura:iteration items="{!v.criticalNotifications}" var="item">
+                <h2>{!item}</h2>
+            </aura:iteration>
+        </div>
+    </div>
+
+    <!-- Wizard -->
+    <div class="{!v.wizardMessage ? 'slds-hide' : 'wizard'}">
+        <div class="wizard-head">
+            <!-- Selector -->
+            <c:QuotingToolQuoteSelector config="{!v.config}"
+                                        isProserv="{!v.isProserv}"
+                                        isCC="{!v.isCC}"
+                                        settings="{!v.settings}"
+                                        state="{!v.state}"
+                                        cartItems="{!v.cartItems}"
+                                        addOnsValues="{!v.addOnsValues}"
+                                        accomodationValues="{!v.accomodationValues}"
+                                        featureAddOnsValues="{!v.featureAddOnsValues}"
+                                        legalEngagementTypeValues="{!v.legalEngagementTypeValues}"
+                                        changeOrderTypeValues="{!v.changeOrderTypeValues}"
+                                        quotes="{!v.quotes}"
+                                        quote="{!v.quote}"
+                                        legalApprovalId="{!v.legalApprovalId}"
+                                        proServQuote="{!v.proServQuote}"
+                                        ccProServQuote="{!v.ccProServQuote}"
+                                        isSummaryChanged="{!v.isSummaryChanged}"
+                                        isCartChanged="{! v.isCartChanged }"
+                                        primaryQuote="{!v.primaryQuote}"
+                                        Wizard="{! v.Wizard }" />
+            <!-- Status -->
+            <ul class="slds-grid slds-page-header__detail-row info-row slds-m-around--none slds-p-vertical--none slds-p-horizontal--small">
+                <c:QuotingToolQuoteStatus proServQuote="{!v.proServQuote}"
+                                          ccProServQuote="{!v.ccProServQuote}"
+                                          quote="{!v.quote}"
+                                          state="{!v.state}"
+                                          numberDLs="{!v.numberDLs}"
+                                          settings = "{!v.settings}"
+                                          upsellStatus="{!v.upsellStatus}"
+                                          wizard="{!v.Wizard }" />
+                <aura:if isTrue="{! not(v.Wizard.opportunity.isClosed) }">
+                    <c:QuotingToolNotifications quote="{!v.quote}"
+                                                cartItems="{!v.cartItems}"
+                                                settings = "{!v.settings}"
+                                                state="{!v.state}"
+                                                numberDLs="{!v.numberDLs}"
+                                                Wizard="{! v.Wizard }"
+                                                Tabs="{! v.Tabs }"
+                    />
+                </aura:if>
+            </ul>
+            <!-- Navigation -->
+            <c:QuotingToolPipeline currentCartItems="{!v.currentCartItems}"
+                                   Wizard="{! v.Wizard }"
+                                   Tabs="{! v.Tabs }" />
+        </div>
+
+        <div class="container wizard-body">
+            <!-- Tabs -->
+            <c:QuotingToolTierList  aura:id="QuotingToolTierList"
+                                    state="{!v.state}"
+                                    settings="{!v.settings}"
+                                    activePriceBookEntry="{!v.activePriceBookEntry}"
+                                    selectedPriceBookEntry="{!v.selectedPriceBookEntry}"
+                                    isCC="{!v.isCC}"
+                                    rcTier="{!v.rcTier}"
+                                    tiers="{!v.tiers}"
+                                    recordTypeName="{!v.recordTypeName}"
+                                    accountId="{!v.accountId}"
+                                    rcUserId="{!v.rcUserId}"
+                                    accountLines="{!v.numberDLs}"
+                                    accountPlan="{!v.paymentPlan}"
+                                    opportunityPlan="{!v.servicePlan}"
+                                    upsellStatus="{!v.upsellStatus}"
+                                    quote="{!v.quote}"
+                                    opportunityId="{!v.opportunityId}"
+                                    entitlements="{!v.entitlements}"
+                                    Wizard="{! v.Wizard }"
+                                    isCartChanged="{! v.isCartChanged }"
+                                    Tabs="{! v.Tabs }"
+                                    accountServicePlanPbe="{! v.accountServicePlanPbe }"/>
+
+            <aura:if isTrue="{! not(empty( v.Wizard.currentQuote )) }">
+                <c:QuotingToolProductList aura:id="QuotingToolProductList"
+                                          products="{!v.products}"
+                                          recordTypeName="{!v.recordTypeName}"
+                                          cartItems="{!v.cartItems}"
+                                          addingToCartProds="{!v.addingToCartProds}"
+                                          activePriceBookEntry="{!v.activePriceBookEntry}"
+                                          quoteRecordTypeName="{!v.quoteRecordTypeName}"
+                                          Wizard="{! v.Wizard }"
+                                          settings="{!v.settings}"
+                                          serviceCartItem="{! v.serviceCartItem }"
+                                          isCommonPhoneIsAddingToCart="{! v.state.isCommonPhoneIsAddingToCart }"
+                                          isCcEEsProductIsAddingToCart="{! v.state.isCcEEsProductIsAddingToCart }"
+                                          isIvinexUnifiedUserExperienceProductAddedToCart="{! v.state.isIvinexUnifiedUserExperienceProductAddedToCart }"
+                                          Tabs="{! v.Tabs }" />
+            </aura:if>
+
+            <c:QuotingToolCartList  aura:id="QuotingToolCartList"
+                                    quote="{!v.quote}"
+                                    currentCartItems="{!v.currentCartItems}"
+                                    cartItems="{!v.cartItems}"
+                                    unmatchedCartItems="{!v.unmatchedCartItems}"
+                                    settings="{!v.settings}"
+                                    state="{!v.state}"
+                                    activePriceBookEntry="{!v.activePriceBookEntry}"
+                                    entitlements="{!v.entitlements}"
+                                    accountLines="{!v.numberDLs}"
+                                    addingToCartProds="{!v.addingToCartProds}"
+                                    quoteRecordTypeName="{!v.quoteRecordTypeName}"
+                                    addingToCartProdsUpdated="{!v.addingToCartProdsUpdated}"
+                                    isCartChanged="{! v.isCartChanged }"
+                                    Wizard="{! v.Wizard }"
+                                    serviceCartItem="{!v.serviceCartItem}"
+                                    products="{! v.products }"
+                                    areaCodeItems="{! v.areaCodeItems }"
+                                    Tabs="{! v.Tabs }" />
+
+                <aura:if isTrue="{! v.Wizard.currentQuote.isPhaseManagementEnabled }">
+                    <c:QuotingToolPhaseManagement aura:id="QuotingToolPhaseManagement"
+                                                  cartItems="{! v.cartItems }"
+                                                  opportunityId="{! v.quote.OpportunityId }"
+                                                  isPhasesChanged="{! v.isPhasesChanged }"
+                                                  Wizard="{! v.Wizard }"
+                                                  Tabs="{! v.Tabs }" />
+                </aura:if>
+
+            <aura:if isTrue="{! and(v.Wizard.currentQuote, not(v.isCC)) }">
+                <c:QuotingToolQuoteSummary  aura:id="QuotingToolQuoteSummary"
+                                            state="{!v.state}"
+                                            quote="{!v.quote}"
+                                            activePriceBookEntry="{!v.activePriceBookEntry}"
+                                            settings="{!v.settings}"
+                                            isSummaryChanged="{!v.isSummaryChanged}"
+                                            isExpDateValid="{! v.isExpDateValid }"
+                                            Wizard="{! v.Wizard }"
+                                            areaCodeItems="{! v.areaCodeItems }"
+                                            ASAOwnerValues="{! v.ASAOwnerValues}"
+                                            PSSegmentValues="{! v.PSSegmentValues}"
+                                            quoteTypeValues = "{! v.quoteTypeValues }"
+                                            initialTermMonthsValues = "{! v.initialTermMonthsValues }"
+                                            specialTermsValues = "{! v.specialTermsValues }"
+                                            termMonthsValues = "{! v.termMonthsValues }"
+                                            statusValues = "{! v.statusValues }"
+                                            proServStatusValues = "{! v.proServStatusValues }"
+                                            proServForecastCategoryValues = "{! v.proServForecastCategoryValues }"
+                                            proServOfferTypeValues = "{! v.proServOfferTypeValues }"
+                                            proServProjectComplexityValues = "{! v.proServProjectComplexityValues }"
+                                            proServSOWTypeValues = "{! v.proServSOWTypeValues }"
+                                            TEValues = "{! v.TEValues}"
+                                            Tabs="{! v.Tabs }" />
+            </aura:if>
+
+            <c:QuotingToolSelectedTierInfo  selectedPriceBookEntry="{!v.selectedPriceBookEntry}"
+                                            quote="{!v.quote}"
+                                            state="{!v.state}"
+                                            entitlements="{!v.entitlements}"
+                                            cartItems="{!v.cartItems}"
+                                            addingToCartProds="{!v.addingToCartProds}"
+                                            tiers="{!v.tiers}"
+                                            Wizard="{! v.Wizard }"
+                                            settings="{!v.settings}"
+                                            Tabs="{! v.Tabs }" />
+        </div>
+
+        <!-- Footer | Buttons -->
+        <div class="wizard-footer">
+            <c:QuotingToolNavButtonGroup state="{!v.state}"
+                                         selectedPriceBookEntry="{!v.selectedPriceBookEntry}"
+                                         upsellStatus="{!v.upsellStatus}"
+                                         settings="{!v.settings}"
+                                         isCC="{!v.isCC}"
+                                         quote="{!v.quote}"
+                                         user="{! v.user }"
+                                         isSummaryChanged="{! v.isSummaryChanged }"
+                                         isPhasesChanged="{! v.isPhasesChanged }"
+                                         isCartChanged="{! v.isCartChanged }"
+                                         isExpDateValid="{! v.isExpDateValid }"
+                                         Wizard="{! v.Wizard }"
+                                         Tabs="{! v.Tabs }" />
+        </div>
+
+        <div class="slds-backdrop" aura:id="backdrop" style="{! v.migrateBackdropStyle }"></div>
+
+    </div>
+
+    <div class="{!v.wizardMessage ? 'wizard' : 'slds-hide'}">
+        <div class="slds-align_absolute-center">
+            <p class="slds-text-title_caps slds-text-align_center italic">{!v.wizardMessage}</p>
+        </div>
+    </div>
+</aura:component>

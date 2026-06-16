@@ -1,0 +1,137 @@
+<aura:component controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="Editions" type="List" />
+    <aura:attribute name="templateMap" type="map" />
+    <aura:attribute name="selectedEditionId" type="string" />
+    <aura:attribute name="NoOfSeats" type="Integer"/>
+    <aura:attribute name="PricingYearly" type="Boolean" />
+    <aura:attribute name="isContract" type="Boolean" default="true"/>
+    <aura:attribute name="Step" type="String" />
+    <aura:attribute name="BrandName" type="string" />
+    <!--Added for GO Pricing- start -->
+    <aura:attribute name="Currencycode" type="string" />
+    <aura:attribute name="NormalEditions" type="List" />
+    <aura:attribute name="GlobalEditions" type="List" />
+    <aura:attribute name="activateGlobal" type="Boolean"/>
+    <aura:attribute name="showOnlyRc" type="Boolean"/>
+    <aura:attribute name="showUnlimitedPackages" type="Boolean" />
+    <!--Added for GO Pricing - end-->
+	
+	<aura:attribute name="translationsMap" type="Map" />
+	
+    <!--EDU Package-->
+    <aura:attribute name="isEDUOptionEnabled" type="Boolean" />
+    <aura:attribute name="showEDUToggle" type="Boolean" />
+    <aura:attribute name="EDUPackages" type="List" />
+    <aura:attribute name="accountSector" type="string" />
+
+	<aura:handler name="init" value="{!this}" action="{!c.loadPlansAndPricing}"/>
+    <!--<aura:handler name="change" value="{!v.Quote}" action="{!c.loadPlansAndPricing}"/>-->
+    <aura:handler name="change" value="{!v.NoOfSeats}" action="{!c.NoOfSeatsChange}"/>
+    <aura:handler name="change" value="{!v.PricingYearly}" action="{!c.NoOfSeatsChange}"/>
+    <aura:handler name="change" value="{!v.isContract}" action="{!c.NoOfSeatsChange}"/>
+    <div>
+    <h2>
+        {!v.translationsMap.Select_Your_Pricing_Preferences_PI}
+    </h2>
+    <c:Quote_PricingPreferences BrandName="{!v.BrandName}" isContract="{!v.isContract}" Quote="{!v.Quote}" NoOfSeats="{!v.NoOfSeats}" PricingYearly="{!v.PricingYearly}" />    
+    <div class="selectpackagewrap">
+        <!-- JIRA 5042 change begins -->
+        <aura:if isTrue="{!v.Quote.CurrencyIsoCode == 'EUR'}" >
+            <aura:if isTrue="{!v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office'}" >
+                <div class="tileheader slds-text-align_left">
+                    <b>{!v.translationsMap.Package_includes_users_in_the_following} </b>Austria, Belgium, France, Denmark, Germany, Ireland, Finland, Netherlands, Norway, Portgual, Spain, Sweden, Switzerland, United Kingdom, Italy and Luxembourg
+                    <br /><b>{!v.translationsMap.Included_minutes_cover_the_user_countrie}</b>South Africa, Croatia, Czech Republic, Hungary, Israel, Poland, Romania, Slovakia
+                    <br />
+                </div>                
+            </aura:if>
+            <aura:if isTrue="{!v.Quote.Opportunity__r.Brand_Name__c != 'Unify Office'}" >
+                <div class="tileheader slds-text-align_left">
+                    <b>{!v.translationsMap.Package_includes_users_in_the_following} </b>Austria, Belgium, France, Denmark, Germany, Ireland, Netherlands, Norway, Portgual, Spain, Sweden, Switzerland, United Kingdom, Italy and Luxembourg                
+                    <br /><b>{!v.translationsMap.Included_minutes_cover_the_user_countrie} </b>South Africa, Croatia, Czech Republic, Finland, Hungary, Israel, Poland, Romania, Slovakia            
+                    <br />
+                </div>
+            </aura:if>
+        </aura:if>
+        <br /><br />
+        <!-- JIRA 5042 change ends -->
+        <!--Added for GO Pricing- start-->
+        <div class="slds-grid slds-gutters_x-large"><!--EDU Package-->
+            <aura:if isTrue="{!and(!v.showOnlyRc, v.showUnlimitedPackages)}">
+                <div class="slds-col slds-grow-none font15">
+                    <h4>
+                        Add unlimited calling minutes:
+                        <lightning:helptext content="{!v.translationsMap.Unlimited_Outbound_Mintues_to_the_EMEA_C}"/>
+                    </h4>
+                    <div class="slds-grid togglewrap">
+                        <span>
+                            {!v.translationsMap.No}
+                        </span>
+                        <lightning:input name="Global" label="" disabled="{!!v.activateGlobal}" type="toggle" checked="{!v.Quote.is_Global_Unlimited__c}"
+                                        messageToggleActive="" messageToggleInactive="" onchange="{!c.addorremoveglobal}"/>
+                        <span>
+                            &nbsp;&nbsp;{!v.translationsMap.Yes}
+                        </span>                    
+                    </div>
+                    <br/>
+
+                </div>
+            </aura:if><!--EDU Package-->
+
+            <aura:if isTrue="{!v.showEDUToggle}">
+                <div class="slds-col slds-grow-none durationtoggle">
+                  <h4>Show Education Packages</h4>
+                  <div class="slds-grid togglewrap">
+                    <span>No</span>
+                    <lightning:input type="toggle" name="isEDUOptionEnabled" checked="{!v.isEDUOptionEnabled}" onchange="{!c.onEDUOptionChange}" messageToggleActive="" messageToggleInactive="" />
+                    <span>&nbsp;&nbsp;Yes</span>
+                  </div>
+                  <br />
+                </div>
+            </aura:if>
+        </div><!--EDU Package-->
+              <aura:if isTrue="{!and(!v.showOnlyRc, v.showUnlimitedPackages)}">
+                    <div class="info font15">
+                        <lightning:icon class="iconstyle" iconName="utility:info" size="x-small"/>
+                        Unlimited packages can only be selected when the # of Licenses is 20 or greater.
+                    </div>
+                </aura:if>
+            <!--</div>
+        </aura:if>-->
+        <!--Added for GO Pricing- end -->
+        <h2>
+        {!v.translationsMap.Please_Select_Package_PI}
+        <!-- JIRA 5042 change begins -->
+            <lightning:helptext content="This dropdown will list your favourite quote combinations and enable auto-population of the quote saving you time after you click the heart on the final step of a quote (beside submit order)."/>
+        </h2>
+        <aura:if isTrue="{!v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office'}" >
+            <b>
+                <lightning:formattedUrl value="https://atos.net/en/lp/unifyoffice/pricing-and-packaging" label="Click here to see more information on Unify Office packages"/>
+            </b>
+        </aura:if>
+        <!-- JIRA 5042 change ends -->
+    <div>
+    <br></br>
+        <!--Added for GO Pricing -start-->
+        <aura:if isTrue="{!v.Quote.is_Global_Unlimited__c}">
+            <ul class="slds-grid slds-gutters_direct selectpackages">
+                <aura:iteration items="{!v.GlobalEditions}" var="eachEdition">
+                    <c:Quote_ProductEdition editionDescription = "{!eachEdition.editionDescription}" templateMap = "{!eachEdition.listOfPickValue}" isSelected="{!if(v.selectedEditionId == eachEdition.editionRec.Id, true, false)}" isPartnerQuoteCreated="{!if(v.selectedEditionId != null,true,false)}" ProductEdition="{!eachEdition.editionRec}" NoOfSeats="{!v.NoOfSeats}" 
+                                            PricingYearly="{!v.PricingYearly}" Step="{!v.Step}" Quote="{!v.Quote}"/>
+                </aura:iteration>
+            </ul>
+            <aura:set attribute="else">
+                <ul class="slds-grid slds-gutters_direct selectpackages">
+                    <aura:iteration items="{! v.isEDUOptionEnabled? v.EDUPackages : v.NormalEditions}" var="eachEdition">
+                        <c:Quote_ProductEdition editionDescription = "{!eachEdition.editionDescription}" templateMap = "{!eachEdition.listOfPickValue}" isSelected="{!if(v.selectedEditionId == eachEdition.editionRec.Id, true, false)}" isPartnerQuoteCreated="{!if(v.selectedEditionId != null,true,false)}" ProductEdition="{!eachEdition.editionRec}" NoOfSeats="{!v.NoOfSeats}" 
+                                                PricingYearly="{!v.PricingYearly}" Step="{!v.Step}" Quote="{!v.Quote}"  ParentOrSubPackage="{!eachEdition.ParentOrSubPackage}" isContract="{!v.isContract}" selectedEditionId="{!v.selectedEditionId}"/>
+                    <!--Added attributes for wholesale-->
+                    </aura:iteration>
+                </ul>
+            </aura:set>
+        </aura:if>
+        <!--Added for GO Pricing -end-->
+    </div>
+        </div>
+        </div>
+</aura:component>

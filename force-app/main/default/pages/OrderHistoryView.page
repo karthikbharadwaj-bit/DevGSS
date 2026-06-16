@@ -1,0 +1,26 @@
+<apex:page standardController="Account" extensions="OrderHistoryViewController" showHeader="false" sidebar="false">
+
+	<apex:includeScript value="{!$Resource.underscoreJs + '/underscore-min.js'}" />
+	<apex:includeLightning />
+
+	<style type="text/css">
+		html, body,
+		#order-history-view {
+			height: 100%;
+		}
+	</style>
+
+	<div id="order-history-view" />
+
+	<script>
+		$Lightning.use("c:OrderHistoryViewApp", function() {
+			$Lightning.createComponent("c:OrderHistoryView",
+			{accId: '{!acc.Id}'},
+			"order-history-view",
+			function(cmp) {
+				// do some stuff
+			});
+		});
+	</script>
+
+</apex:page>

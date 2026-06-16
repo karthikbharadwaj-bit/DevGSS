@@ -1,0 +1,119 @@
+<aura:component>
+
+    <aura:attribute name="itemId" type="String"/>
+    <aura:attribute name="panelId" type="String"/>
+    <aura:attribute name="item" type="Map"/>
+    <aura:attribute name="multiple" type="Boolean"/>
+    <aura:attribute name="isShowOptions" type="Boolean" default="false"/>
+    <aura:attribute name="isEditable" type="Boolean" default="false"/>
+    <aura:attribute name="isWizardDataLoaded" type="Boolean" default="false"/>
+    <aura:attribute name="error" type="String" default=""/>
+    <aura:attribute name="display" type="String"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    <aura:handler event="c:OptionsPanelEvent" action="{!c.onOptionsPanelEvent}"/>
+
+    <aura:if isTrue="{!!empty(v.item.options)}">
+
+        <!-- LIST -->
+        <li class="list-item">
+
+            <!-- GROUP -->
+            <aura:if isTrue="{!v.display == 'group'}">
+                <aura:if isTrue="{!v.isWizardDataLoaded}">
+                    <aura:if isTrue="{!or(and(not(v.isEditable), v.item.checked), v.isEditable)}">
+                        <p onclick="{!c.showOptions}" class="expanding slds-grid slds-grid--vertical-align-center">
+                            <lightning:icon
+                                iconName="{!v.isShowOptions ? 'utility:down' : 'utility:right'}"
+                                size="xx-small"
+                                class="list-item-arrow" alternativeText="arrow"/>
+                            <span
+                                class="{!(v.item.checked ? 'checked' : '') + ' slds-text-color--weak'}">{!v.item.label}</span>
+                        </p>
+                    </aura:if>
+                    <aura:set attribute="else">
+                        <p onclick="{!c.showOptions}" class="expanding slds-grid slds-grid--vertical-align-center">
+                            <lightning:icon
+                                iconName="{!v.isShowOptions ? 'utility:down' : 'utility:right'}"
+                                size="xx-small"
+                                class="list-item-arrow" alternativeText="arrow"/>
+                            <span
+                                class="{!(v.item.checked ? 'checked' : '') + ' slds-text-color--weak'}">{!v.item.label}</span>
+                        </p>
+                    </aura:set>
+                </aura:if>
+            </aura:if>
+
+            <!-- SECTION -->
+            <aura:if isTrue="{!v.display == 'section'}">
+                <div class="section slds-text-heading--small">{!v.item.label}</div>
+            </aura:if>
+
+            <!-- ITERATION ITEMS -->
+            <aura:if isTrue="{!or(v.isShowOptions, v.display == 'section')}">
+                <ul class="{!v.display == 'group' ? 'slds-m-left--large' : '' }">
+                    <aura:iteration items="{!v.item.options}" var="option">
+                        <c:OptionsPanelItem
+                            panelId="{!v.panelId}"
+                            item="{!option}"
+                            multiple="{!v.multiple}"
+                            isEditable="{!v.isEditable}"
+                            isWizardDataLoaded="{!v.isWizardDataLoaded}"/>
+                    </aura:iteration>
+                </ul>
+            </aura:if>
+        </li>
+        <!-- end LIST -->
+
+        <aura:set attribute="else">
+
+            <!-- ELEMENT -->
+            <li class="">
+
+                <!-- RADIO/CHECKBOX -->
+                <div>
+                    <aura:if isTrue="{!v.isWizardDataLoaded}">
+                        <aura:if isTrue="{!or(and(not(v.isEditable), v.item.checked), v.isEditable)}">
+                            <lightning:input
+                                class=""
+                                type="{!and(v.multiple, v.multiple != 'false') ? 'checkbox' : 'radio'}"
+                                name="{!v.panelId}"
+                                label="{!v.item.label}"
+                                value="{!v.item.value}"
+                                checked="{!v.item.checked}"
+                                disabled="{!not(v.isEditable)}"
+                                onchange="{!c.onChange}"/>
+                        </aura:if>
+                        <aura:set attribute="else">
+                            <lightning:input
+                                class=""
+                                type="{!and(v.multiple, v.multiple != 'false') ? 'checkbox' : 'radio'}"
+                                name="{!v.panelId}"
+                                label="{!v.item.label}"
+                                value="{!v.item.value}"
+                                checked="{!v.item.checked}"
+                                disabled="{!not(v.isEditable)}"
+                                onchange="{!c.onChange}"/>
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <!-- end RADIO/CHECKBOX -->
+
+                <aura:if isTrue="{!and(v.item.checked, !empty(v.item.additionalOptions))}">
+                    <div class="slds-m-top--xx-small">
+                        <aura:iteration items="{!v.item.additionalOptions}" var="aOption">
+                            <c:OptionsPanelAdditionalItem
+                                item="{!aOption}"
+                                panelId="{!v.panelId}"
+                                itemId="{!v.itemId}"
+                                isEditable="{!v.isEditable}"/>
+                        </aura:iteration>
+                    </div>
+                </aura:if>
+
+            </li>
+            <!-- ELEMENT -->
+
+        </aura:set>
+    </aura:if>
+</aura:component>

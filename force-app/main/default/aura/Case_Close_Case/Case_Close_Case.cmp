@@ -1,0 +1,83 @@
+<!--
+* Created By     : Ranjani N
+* Created Date   : 11-05-2020
+* Description    : Component invoked when 'Close case' button is clicked on Case in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component implements="lightning:actionOverride,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller ='Case_Close_Case_JeopardyContrl' >
+    
+    <aura:attribute name="displayFormFlag" type="Boolean" default="false"/>
+    <aura:attribute name="submittopublicsol" type="Boolean"/>
+    <aura:attribute name="solTitle" type="String"/>
+    <aura:attribute name="solDetails" type="String"/>
+    <!-- Added for ITPMO-2515-->
+    <aura:attribute name="currentUser" type="User"/>
+    <force:recordData aura:id="recordLoader" recordId="{!$SObjectType.CurrentUser.Id}" fields="Profile.Name" targetFields="{!v.currentUser}"/>   
+ <aura:attribute name="isGSP_Escalation" type="Boolean"/>
+ <aura:attribute name="isATTPermissionPresent" type="Boolean"/>
+       <!-- Added for ITPMO-2515-->    
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <b><lightning:quickActionAPI aura:id="quickActionAPI" /></b>
+    
+    <div class="slds-is-relative">
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+        </div>
+    </div>
+    <br/>
+    <!-- Fields to be included in the form-->
+    <aura:if isTrue="{!v.displayFormFlag}">
+        <lightning:card title="Case Information">
+            <lightning:recordEditForm aura:id="closeCaseForm" recordId="{!v.recordId}" objectApiName="Case" onsubmit="{!c.handleSubmit}" onsuccess="{!c.navbacktoCase}">
+                <lightning:messages />
+                <lightning:inputField fieldName="Status" required="true"/>
+                <lightning:inputField fieldName="Contact_ID__c" />
+                <lightning:inputField fieldName="Reason" required="true"/>
+                <lightning:inputField fieldName="Comments" />
+                <lightning:inputField fieldName="CurrencyIsoCode" required="true"/>
+                <lightning:inputField fieldName="Application__c" />
+                <lightning:inputField fieldName="End_User__c" />
+                <lightning:inputField fieldName="Github__c" />
+                <lightning:inputField fieldName="Google_Drive__c" />
+                <lightning:inputField fieldName="Reason_Why_Open__c" />
+                <lightning:inputField fieldName="Partner_Lead__c" />
+                <lightning:inputField fieldName="Partner_Contact__c" />
+                <lightning:inputField fieldName="Next_Update__c" />
+                <!-- Added for ITPMO-2515-->
+                  <aura:if isTrue="{!or(v.currentUser.Profile.Name=='GSP Sales',v.isATTPermissionPresent)}">
+                 <aura:if isTrue="{!v.isGSP_Escalation}">
+                <lightning:inputField fieldName="Invalid_Escalation_Reason__c" />
+                </aura:if>
+                </aura:if>
+                 <!-- Added for ITPMO-2515-->
+                <br/>
+                <lightning:card title="Solution Information">
+                    <br/>
+                     <lightning:input type="checkbox" label="Submit to public solutions" name="publicsol" checked="{!v.submittopublicsol}" onchange="{!c.togglepublicsubmit}"/>
+                    <br/>
+                    <lightning:input name="title" label="Solution Title" value="{!v.solTitle}"/>
+                    <lightning:textarea name="details" label="Solution Details" value="{!v.solDetails}"/>
+                </lightning:card>
+                
+                <div>
+                    <lightning:button  variant="brand" type="submit" name="save" label="Save" />
+                </div>
+                
+            </lightning:recordEditForm>
+            <br/>
+            
+            
+            
+            
+        </lightning:card>
+    </aura:if>
+    
+</aura:component>

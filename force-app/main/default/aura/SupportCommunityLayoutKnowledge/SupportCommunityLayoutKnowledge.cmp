@@ -1,0 +1,28 @@
+<aura:component description="Support Community Layout Knowledge" implements="forceCommunity:layout" access="global" controller="SupportCommunityKnowledgeController">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="header" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="title" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="sidebar" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="main_block" type="Aura.Component[]" required="false"/>
+    <aura:attribute name="preloader" type="Boolean" default="false" />
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdateUser}"/>
+    <div class="sc-knowledge__body">
+        <aura:if isTrue="{!v.preloader}">
+            <div class="preloader">
+                <lightning:spinner alternativeText="Loading" size="large" />
+            </div>
+        </aura:if>
+        <div class="wrapper">
+            <div class="sc-knowledge__header">{!v.header}</div>
+            <div class="sc-knowledge__title">{!v.title}</div>
+            <div class="sc-knowledge__main">
+                <div class="sc-knowledge__sidebar">{!v.sidebar}</div>
+                <div class="sc-knowledge__article">
+                    <c:scBackToTop selector=".cSupportCommunityKnowledgeTitle"/>
+                    {!v.main_block}
+                </div>
+            </div>
+        </div>
+    </div>
+</aura:component>

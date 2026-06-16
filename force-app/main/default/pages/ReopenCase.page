@@ -1,0 +1,74 @@
+<apex:page standardController="Case" extensions="ReopenCaseController" lightningStylesheets="true" docType="html-5.0">
+    <apex:slds />
+    <div id="spinner" class="slds-spinner_container slds-is-fixed" style="display:none">
+        <div role="showSpinner" class="slds-spinner slds-spinner_medium">
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+    </div>
+    <div class="slds-grid slds-grid_vertical-align-center slds-grid_align-center" style="height: 60vh">
+        <apex:form style="width:40%; margin:auto">
+            <apex:outputPanel layout="block" id="cardPanel" styleClass="slds-card">
+                <apex:pageMessages ></apex:pageMessages>
+                <apex:outputPanel styleClass="slds-card__header slds-grid" rendered="{!IF(!hasBeenReopened, true, false)}">
+                    <h2 class="slds-card__header-title">Reopen case</h2>
+                </apex:outputPanel>
+                <apex:outputPanel styleClass="slds-card__body slds-card__body_inner" rendered="{!IF(!hasBeenReopened, true, false)}">
+                    <apex:outputPanel rendered="{!IF(isReopenable, true, false)}">
+                        <div class="slds-form-element" style="width:90%;margin:auto">
+                            <label class="slds-form-element__label" for="function-input">
+                                <abbr class="slds-required" title="required">* </abbr>Function
+                            </label>
+                            <div class="slds-form-element__control">
+                                <apex:selectList onchange="displayJustificationRequired(event)" id="function-input" label="function-input" value="{!function}" size="1" style="width: 100%">
+                                    <apex:selectOptions value="{!functionValues}"/>
+                                </apex:selectList>
+                            </div>
+                        </div>
+                        <div class="slds-form-element" style="width:90%;margin:auto">
+                            <label class="slds-form-element__label" for="justification-input">
+                                <abbr id="justificationRequired" class="slds-required" title="required" style="display:none">* </abbr>Justification
+                            </label>
+                            <div class="slds-form-element__control">
+                                <apex:inputTextarea value="{!justification}" id="justification-input" styleClass="slds-input" rows="5" style="resize: none"/>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(isReopenable, false, true)}" styleClass="slds-grid slds-grid_align-center">
+                        {!cannotBeReopenedReason}
+                    </apex:outputPanel>
+                </apex:outputPanel>  
+                <apex:outputPanel id="cardFooter" layout="block" styleClass="slds-card__footer slds-grid slds-grid_align-end">
+                    <apex:commandButton rendered="{!IF(isReopenable && !hasBeenReopened, true, false)}" 
+                        action="{!reopenCase}" 
+                        value="Submit" 
+                        id="reopenCase" 
+                        styleClass="slds-button slds-button_success"
+                        onclick="showSpinner(true);"
+                        oncomplete="showSpinner(false);"
+                        reRender="cardPanel, cardFooter"
+                    />
+                    <apex:commandButton action="{!cancel}"
+                        value="{!IF(hasBeenReopened, 'Back to case', 'Cancel')}"
+                        id="exit"
+                        styleClass="{!'slds-button slds-button_' + IF(hasBeenReopened, 'brand', 'destructive')}"
+                        />
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:form>
+    </div>
+
+    <script>
+        function showSpinner(show) {
+            const spinnerElement = document.getElementById('spinner');
+            spinnerElement.style.display = show ? 'block' : 'none';
+        }
+
+        function displayJustificationRequired(e) {
+            document.getElementById('justificationRequired').style.display = (e?.target?.value == 'Other reason') ? 
+                'inline' :
+                'none';
+        }
+    </script>
+</apex:page>

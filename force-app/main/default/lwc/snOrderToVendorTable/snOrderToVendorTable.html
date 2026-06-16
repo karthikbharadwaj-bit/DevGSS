@@ -1,0 +1,151 @@
+<template>
+    <div class="slds-m-vertical_small table-title">Order to Vendor</div>
+    <div class="slds-m-right_x-small">
+        <table class={tableStyle}>
+            <thead>
+                <tr class="slds-line-height_reset total text-style">
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">License Name</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">Change Action</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">Vendor SKU</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">{listPrice}</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">{priceToVendor}</div>
+                    </th>
+                    <th if:true={existing} class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">Existing Quantity</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">{quantityLabel}</div>
+                    </th>
+                    <th if:true={existing} class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style">New Quantity</div>
+                    </th>
+                    <th class="columns" scope="col">
+                        <div class="slds-truncate column-title text-style" data-ui-auto="total-price-currency">{totalPriceTitle}</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={page} for:item="row">
+                    <tr key={row.name} data-ui-auto={row.name}>
+                        <td class="first" data-label="licenseName Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span data-ui-auto={row.name}>{row.name}</span>
+                            </div>
+                        </td>
+                        <td data-label="action Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span data-ui-auto={row.changeAction}>{row.changeAction}</span>
+                            </div>
+                        </td>
+                        <td data-label="vendorSKU Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span data-ui-auto={row.vendorSKU}>{row.vendorSKU}</span>
+                            </div>
+                        </td>
+                        <td data-label="listPrice Column">
+                            <div class="slds-truncate row-value text-style">
+                                <lightning-input
+                                    type="number"
+                                    formatter="decimal"
+                                    step=".01"
+                                    value={row.listPrice}
+                                    variant="label-hidden"
+                                    data-ui-auto={row.listPrice}
+                                    read-only>
+                                </lightning-input>
+                            </div>
+                        </td>
+                        <td data-label="priceToVendor Column">
+                            <div class="slds-truncate input row-value text-style">
+                                <lightning-input
+                                    class="input-price"
+                                    type="number"
+                                    formatter="decimal"
+                                    step=".01"
+                                    variant="label-hidden"
+                                    value={row.priceToVendor}
+                                    label={row.name}
+                                    data-id={row.name}
+                                    disabled={disabledGeneralInfo}
+                                    onchange={handlePriceToVendorChange}>
+                                </lightning-input>
+                            </div>
+                        </td>
+                        <td if:true={existing} data-label="existingQuantity Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span data-ui-auto={row.existingQuantity}>{row.existingQuantity}</span>
+                            </div>
+                        </td>
+                        <td data-label="changeQuantity Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span if:true={existing} data-ui-auto={row.changeQuantity}>{row.changeQuantity}</span>
+                                <span if:false={existing} data-ui-auto={row.quantity}>{row.quantity}</span>
+                            </div>
+                        </td>
+                        <td if:true={existing} data-label="newQuantity Column">
+                            <div class="slds-truncate row-value text-style">
+                                <span data-ui-auto={row.newQuantity}>{row.newQuantity}</span>
+                            </div>
+                        </td>
+                        <td data-label="totalPrice Column">
+                            <div class="slds-truncate row-value text-style">
+                                <lightning-input
+                                    type="number"
+                                    formatter="decimal"
+                                    step=".01"
+                                    value={row.totalPrice}
+                                    data-ui-auto={row.totalPrice}
+                                    variant="label-hidden"
+                                    read-only>
+                                </lightning-input>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+            <tfoot>
+                <tr if:true={isLargeOrder} class="pagination-row">
+                    <td colspan={paginationCells}>
+                        <div class="pagination">
+                            <c-lwc-pagination
+                            page={currentPage}
+                            size={pagesQuantity}
+                            disabled={disabledGeneralInfo}
+                            onchangepage={handleChangePage}></c-lwc-pagination>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan={totalSumRowCells}>
+                        <div class="align-item">
+                            <span class="text-style">Today's Total</span>
+                            <lightning-helptext  disabled={disabledGeneralInfo} class="help-icon" content="Excluded taxes and fees"></lightning-helptext>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="slds-truncate row-value text-style">
+                            <lightning-input
+                                type="number"
+                                formatter="decimal"
+                                step=".01"
+                                value={sumOrderAmount}
+                                data-ui-auto="summary-order-amount"
+                                variant="label-hidden"
+                                read-only>
+                            </lightning-input>
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</template>

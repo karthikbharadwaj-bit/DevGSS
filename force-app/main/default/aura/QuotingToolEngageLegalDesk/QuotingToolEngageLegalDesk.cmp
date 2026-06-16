@@ -1,0 +1,62 @@
+<aura:component controller="QuotingToolQuoteApexController" extends="c:QuotingToolHelper">
+	<!-- Attributes -->
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="primaryQuote" type="Quote" description="Quote with primary flag on Opportunity"/>
+    <aura:attribute name="legalApprovalId" type="String" />
+    <aura:attribute name="opportunityId" type="String" />
+    <aura:attribute name="quotes" type="Quote[]" />
+    <aura:attribute name="enterpriseDealRequestButton" type="Map" default="{disabled:false,isBusy:false,forceDisabled:false}" />
+    <aura:attribute name="submitButton" type="Map" default="{disabled:false,isBusy:false}" />
+    <aura:attribute name="effectiveNoOfEmployeesRange" type="String" />
+    <aura:attribute name="stageName" type="String" />
+    <aura:attribute name="user" type="User"/>
+    <aura:attribute name="addOnsValues" type="String[]" />
+    <aura:attribute name="accomodationValues" type="String[]" />
+    <aura:attribute name="featureAddOnsValues" type="String[]" />
+    <aura:attribute name="legalEngagementTypeValues" type="String[]" />
+    <aura:attribute name="changeOrderTypeValues" type="String[]" />
+    <aura:attribute name="isBusy" type="Boolean"/>
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="engageLegalTooltip" type="String" />
+
+    <aura:attribute name="isChangeOrder" type="Boolean" default="false" />
+    <aura:attribute name="isEngageLegalButtonDisabled" type="Boolean" default="false" />
+    <aura:attribute name="state" type="Map" description="Contain common checks for use by components"/>
+    <!-- Events -->
+    <aura:registerEvent type="c:PopoverEvent" name="popover" />
+    <!-- Handlers -->
+    <aura:handler name="change" value="{!v.primaryQuote}" action="{!c.primaryQuoteChange}" />
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChange}" />
+    <aura:handler name="change" value="{!v.isBusy}" action="{!c.isBusyChange}" />
+    <aura:handler name="change" value="{!v.legalApprovalId}" action="{!c.quoteChange}" />
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChange}" />
+    <aura:handler event="c:QuoteingToolNewLegalApprovalEvent" action="{!c.newLegalApproval}"/>
+    <!-- Markup -->
+    <span class="slds-show_inline-flex">
+        <c:Button label="Engage Legal"
+                  disabled="{! v.isEngageLegalButtonDisabled }"
+                  isBusy="{! v.isBusy }"
+                  onclick="{! c.modalOpen }"
+                  tooltipText="{! v.engageLegalTooltip }"
+                  aura:id="engageLegalButton"/>
+
+        <span class="slds-m-left--xx-small" onmouseover="{!c.showLegalEngagementManagementTooltip}" onmouseout="{!c.hideTooltip}"
+              aura:id="legalEngagementManagementButtonContainer">
+            <button class="slds-button slds-button--neutral" onclick="{!c.redirectToLegalEngagement}"
+                    aura:id="legalEngagementManagementButton">
+                <lightning:spinner variant="brand" size="small" class="button-spinner" alternativeText="Engaging Legal"/>
+                Legal Engagement Management
+            </button>
+        </span>
+    </span>
+    <c:QuotingToolSpecialTermsOfServiceDesk quote="{!v.quote}"
+                                      quotes="{!v.quotes}"
+                                      isChangeOrder="{!v.isChangeOrder}"
+                                      addOnsValues="{!v.addOnsValues}"
+                                      accomodationValues="{!v.accomodationValues}"
+                                      featureAddOnsValues="{!v.featureAddOnsValues}"
+                                      legalEngagementTypeValues="{!v.legalEngagementTypeValues}"
+                                      changeOrderTypeValues="{!v.changeOrderTypeValues}"/>
+    <div class="slds-backdrop" aura:id="modalBg"></div>
+</aura:component>

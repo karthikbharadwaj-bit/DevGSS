@@ -1,0 +1,54 @@
+<template>
+    <div class={wrapperCls} ondragenter={dragEnter}>
+        <div class="sc-case-attach__header">
+            <span>{title}</span>
+            <button class="sc-button" onclick={openAttach} disabled={disabledAdd}>
+                <span>
+                    <lightning-icon
+                        icon-name="utility:add"
+                        alternative-text=""
+                        variant="inverse"
+                        size="x-small"
+                    ></lightning-icon>
+                    {labels.add}
+                </span>
+            </button>
+        </div>
+        <div class="sc-case-attach__body">
+            <ul class="sc-case-attach__list" data-empty={labels.emptyAttachments} if:false={loading}>
+                <template for:each={files} for:item="item">
+                    <li key={item.id} class="sc-case-attach__file" data-key={item.id}>
+                        <a href={item.url} target="_blank">
+                            <div class="sc-case-attach__icon">
+                                <img
+                                    src="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAAaCAQAAAAQlMSxAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfjAQ4VGDLRmjVNAAAAjElEQVQoz63RS45DIQxE0WP09hqWlKy2egBRt/QSYNCWwJZ8ofyp6AGCmtHw6glaz0hDzWgipIMLXu7W/8RXft99sKRLtSWiRGkLRo2TJZR5X9+A5/SPndx7LFuI0rJBguUI3h0eyNnLGXJ7rLGuKic1zcIP5GI3hIM5OV7LHvrPn+qRVfrDgu/86P0H04Mj0wQfF+QAAAAASUVORK5CYII="
+                                />
+                                <span>{item.ext}</span>
+                            </div>
+                            <div class="sc-case-attach__label" data-size={item.fileSize}>
+                                {item.label}
+                                <lightning-button-icon
+                                    icon-name="utility:close"
+                                    variant="border-filled"
+                                    alternative-text={labels.deleteAttachment}
+                                    value={item.id}
+                                    onclick={removeAttachment}
+                                ></lightning-button-icon>
+                            </div>
+                        </a>
+                    </li>
+                </template>
+            </ul>
+            <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+        </div>
+        <div class={uploadCls}>
+            <div class="slds-spinner_container">
+                <div role="status" class="slds-spinner slds-spinner_small slds-spinner_brand">
+                    <span class="slds-assistive-text">{labels.uploading}</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,190 @@
+<template>
+  <c-lwc-toasts></c-lwc-toasts>
+  <div class="slds-modal slds-fade-in-open modal-wrapper slds-grid slds-grid_vertical">
+
+    <header class="slds-modal__header">
+        <h2 class="slds-modal__title slds-hyphenate">{operationType}</h2>
+    </header>
+    <!-- operation success -->
+    <div if:true={scenario.isCompleted} class="slds-scoped-notification slds-media slds-media_center slds-scoped-notification_green slds-theme_success" role="status">
+        <div class="slds-media__figure">
+            <lightning-icon icon-name="utility:success" alternative-text="info" variant="inverse" size="small"></lightning-icon>
+        </div>
+        <div class="slds-media__body">
+            <p>Sync was completed successfully</p>
+        </div>
+    </div>
+
+    <div class="main slds-p-around_medium">
+        <lightning-spinner if:true={isShowSpinner} variant="brand" size="medium"></lightning-spinner>
+        <template if:true={isReady}>
+            <div class="slds-grid">
+                <!-- left -->
+                <div class="left">
+                    <div class="slds-progress slds-progress_vertical slds-align_absolute-center">
+                        <ol class="slds-progress__list">
+                            <template for:each={items} for:item="item" for:index="idx">
+
+                                <!-- synced (sync with success) -->
+                                <li if:true={item.isSync} key={item.name} class="slds-progress__item slds-is-completed">
+                                    <c-sn-change-partner-progress-item
+                                        item={item}
+                                        steps={steps}
+                                        idx={idx}
+                                        is-hide-label="true"
+                                        class="slds-progress__item"
+                                        onselected={onSelectedHandler}>
+                                    </c-sn-change-partner-progress-item>
+                                </li>
+
+                                <template if:false={item.isSync}>
+                                    <!-- active -->
+                                    <template if:true={item.isActive}>
+                                        <li key={item.name} class="slds-progress__item slds-is-active">
+                                            <c-sn-change-partner-progress-item
+                                                item={item}
+                                                steps={steps}
+                                                idx={idx}
+                                                is-hide-label="true"
+                                                class="slds-progress__item">
+                                            </c-sn-change-partner-progress-item>
+                                        </li>
+                                    </template>
+
+                                    <template if:false={item.isActive}>
+                                        <li key={item.name} class="slds-progress__item">
+                                            <c-sn-change-partner-progress-item
+                                                item={item}
+                                                steps={steps}
+                                                idx={idx}
+                                                is-hide-label="true"
+                                                class="slds-progress__item">
+                                            </c-sn-change-partner-progress-item>
+                                        </li>
+                                    </template>
+                                </template>
+
+                            </template>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- right -->
+                <div class="right">
+                    <ol>
+                        <template for:each={items} for:item="item" for:index="idx">
+                            <li key={item.name} class="slds-grid slds-grid--align-spread slds-p-horizontal_medium">
+                                    <!-- description item -->
+                                    <div class="slds-grid slds-grid_vertical description">
+                                        <h3 class="slds-text-heading_medium">{item.label}</h3>
+                                        <p class="description-text">{item.description}</p>
+                                    </div>
+
+                                    <!-- action item -->
+                                    <div class="slds-grid slds-grid_vertical buttons">
+
+                                        <lightning-button
+                                            if:false={item.isButton}
+                                            variant="base"
+                                            label={item.action}
+                                            icon-position="right"
+                                            data-action={item.action}
+                                            icon-name="utility:new_window"
+                                            disabled={item.isDisabled}
+                                            onclick={onActionClick}
+                                            class="slds-align_absolute-center">
+                                        </lightning-button>
+
+                                        <button
+                                            if:true={item.isButton}
+                                            class="slds-button slds-button--neutral step-button"
+                                            data-action={item.action}
+                                            disabled={item.isDisabled}
+                                            onclick={onActionClick}
+                                        >
+                                            <span class="slds-truncate">{item.action}</span>
+                                            <span if:true={item.isSync}>
+                                                <lightning-icon
+                                                    icon-name="utility:check"
+                                                    alternative-text="check"
+                                                    size="xx-small"
+                                                    class="check-lightning-icon">
+                                                </lightning-icon>
+                                            </span>
+                                            <span if:false={item.isSync}>
+                                                <lightning-icon if:false={item.isDisabled}
+                                                    icon-name="utility:new_window"
+                                                    alternative-text="new_window"
+                                                    size="xx-small"
+                                                    class="new_window-lightning-icon">
+                                                </lightning-icon>
+                                                <lightning-icon if:true={item.isDisabled}
+                                                    icon-name="utility:new_window"
+                                                    alternative-text="new_window"
+                                                    size="xx-small"
+                                                    class="new_window-lightning-icon disabled-icon">
+                                                </lightning-icon>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    <div if:true={item.isUnavailable} class="backdrop"></div>
+                            </li>
+                        </template>
+                    </ol>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <section if:true={isShowError} aria-describedby="dialog-body-id-2" aria-labelledby="dialog-heading-id-1" class="slds-popover slds-popover_error slds-popover_prompt_bottom-right slds-nubbin_bottom-right" role="dialog" >
+        <button class="slds-button slds-button_icon slds-float_right slds-popover__close slds-button_icon-inverse" onclick={onShowError} title="Close">
+            <lightning-icon icon-name="utility:close"
+                alternative-text="close"
+                variant="inverse"
+                size="x-small" ></lightning-icon>
+            <span class="slds-assistive-text">Close error dialog</span>
+        </button>
+        <header class="slds-popover__header">
+            <div class="slds-media slds-media_center slds-has-flexi-truncate ">
+                <div class="slds-media__figure">
+                    <lightning-icon
+                        icon-name="utility:error"
+                        alternative-text="Error"
+                        variant="inverse"
+                        size="x-small"
+                        class="error-lightning-icon">
+                    </lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-truncate slds-text-heading_medium" id="dialog-heading-id-1" title="We hit a snag">We hit a snag</h2>
+                </div>
+            </div>
+        </header>
+        <div class="slds-popover__body" id="dialog-body-id-2">
+            <p class="error_heading">Please review the following:</p>
+            <p class="error_description">{errorMessageDescription}</p>
+        </div>
+      </section>
+    <footer class="slds-modal__footer slds-theme_default slds-grid slds-grid_align-spread">
+        <div>
+            <button class="slds-button slds-button_neutral" onclick={onClose} disabled={isProcess}>Cancel</button>
+            <c-lwc-report-problem-modal if:true={isShowReportButton} account-id={accId}></c-lwc-report-problem-modal>
+        </div>
+
+        <div>
+            <button if:true={isShowErrorButton} class="slds-button error-button" aria-haspopup="false" onclick={onShowError} title="Error">
+                <lightning-icon
+                    icon-name="utility:error"
+                    alternative-text="Error"
+                    variant="error"
+                    size="small"
+                    class="error-lightning-icon">
+                </lightning-icon>
+            </button>
+            <button if:true={isShowNext} class="slds-button slds-button_brand" onclick={onNext} disabled={isProcess}>Next</button>
+            <button if:true={isCompleted} class="slds-button slds-button_brand" onclick={onClose}>Close the window</button>
+        </div>
+    </footer>
+
+  </div>
+</template>

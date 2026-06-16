@@ -1,0 +1,191 @@
+<aura:component controller="EntitlementsViewController">
+    <!-- Documentation: https://aquiva.atlassian.net/wiki/spaces/RC/pages/169738252/Entitlements+View -->
+
+    <!-- Resources -->
+    <ltng:require scripts="{! join(',',
+            $Resource.RCHelper + '/RC.js',
+            $Resource.underscoreJs + '/underscore-min.js',
+            $Resource.JavaScriptZip
+        ) }"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <!-- Attributes -->
+    <aura:attribute name="accId" type="String"/>
+    <aura:attribute name="account" type="Account"/>
+    <aura:attribute name="billingId" type="String"/>
+    <aura:attribute name="activeSalesAgreement" type="Quote" />
+    <aura:attribute name="fileName" type="String" default="Renewal_price_sheet.xlsx"/>
+    <aura:attribute name="currency" type="String" default="USD"/>
+
+    <aura:attribute name="entitlements" type="Map"/>
+    <aura:attribute name="assets" type="Map"/>
+    <aura:attribute name="fixedheader" type="Map"/>
+    <aura:attribute name="categories" type="Map[]"/>
+    <aura:attribute name="isLoadingEntitlements" type="Boolean" default="true"/>
+    <aura:attribute name="isLoadingAssets" type="Boolean" default="true"/>
+    <aura:attribute name="isLoadingAccount" type="Boolean" default="true"/>
+    <aura:attribute name="isInactiveEnts" type="Boolean" default="false"/>
+    <aura:attribute name="prompt" type="Map" default="{ text: '' }"/>
+    <aura:attribute name="hiddenNGBSLicenses" type="Map"/>
+
+    <!-- Handlers -->
+    <aura:handler event="aura:doneRendering" action="{!c.doneRendering}"/>
+
+    <div class="notifications">
+        <c:Toasts/>
+    </div>
+
+    <!-- Page Header -->
+    <div class="slds-page-header">
+        <div class="slds-media">
+            <div class="slds-media__figure">
+                <lightning:icon class="slds-page-header__icon"
+                                alternativeText="Account"
+                                iconName="standard:account"/>
+            </div>
+            <div class="slds-media__body">
+                <nav>
+                    <ol class="slds-breadcrumb slds-line-height_reset">
+                        <li class="slds-breadcrumb__item">
+                            <span>Entitlements View</span>
+                        </li>
+                    </ol>
+                </nav>
+
+                <c:LoadingPlaceholder type="line" isShown="{!v.isLoadingAccount}"/>
+
+                <h1 class="{! join(' ', 'slds-page-header__title slds-m-right_small slds-align-middle slds-truncate',
+                                        v.isLoadingAccount ? 'slds-hide' : '') }"
+                    title="{! v.account.Name }">
+                    <a href="{! '/' + v.account.Id }" class="slds-text-link_faux"> {! v.account.Name } </a>
+                </h1>
+            </div>
+            <div class="slds-media__figure slds-media__figure-reverse">
+                <div class="slds-button-group" role="group">
+                    <lightning:button
+                        variant="brand"
+                        label="Export"
+                        iconName="utility:download"
+                        onclick="{!c.handleExport}"
+                        disabled="{!v.isLoadingEntitlements || v.isLoadingAssets}"
+                        class="slds-m-left_x-small"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="entitlements-view slds-scrollable" aura:id="entitlementsView">
+
+        <!-- New -->
+        <aura:if isTrue="{! !empty(v.entitlements.active)
+                || !empty(v.entitlements.inactive)
+                || !empty(v.assets.active)
+                || !empty(v.assets.inactive)
+                || v.isLoadingEntitlements
+                || v.isLoadingAssets }">
+
+            <div aura:id="fixed-header" class="{! join(' ', 'fixed-header slds-text-title--caps slds-border_top slds-border_bottom',
+                                                            !empty(v.fixedheader) ? '' : 'slds-hide') }">
+                <div aura:id="name-fixed-header" class="slds-truncate" title="{! v.fixedheader.name }">{! v.fixedheader.name }</div>
+                <div aura:id="startDate-fixed-header" class="slds-truncate" title="{! v.fixedheader.startDate }">{! v.fixedheader.startDate }</div>
+                <div aura:id="endDate-fixed-header" class="slds-truncate" title="{! v.fixedheader.endDate }">{! v.fixedheader.endDate }</div>
+                <div aura:id="chargeTerm-fixed-header" class="slds-truncate" title="{! v.fixedheader.chargeTerm }">{! v.fixedheader.chargeTerm }</div>
+                <div aura:id="quantity-fixed-header" class="slds-truncate" title="{! v.fixedheader.quantity }">{! v.fixedheader.quantity }</div>
+                <div aura:id="listPrice-fixed-header" class="slds-truncate" title="{! v.fixedheader.listPrice }">{! v.fixedheader.listPrice }</div>
+                <div aura:id="discount-fixed-header" class="slds-truncate" title="{! v.fixedheader.discount }">{! v.fixedheader.discount }</div>
+                <div aura:id="yourPrice-fixed-header" class="slds-truncate" title="{! v.fixedheader.yourPrice }">{! v.fixedheader.yourPrice }</div>
+                <div aura:id="total-fixed-header" class="slds-truncate" title="{! v.fixedheader.total }">{! v.fixedheader.total }</div>
+            </div>
+
+            <!-- Table body -->
+            <table class="slds-table slds-table--bordered slds-table--cell-buffer table-body">
+                <aura:iteration items="{! v.categories }" var="category" indexVar="index">
+
+                    <aura:if isTrue="{! index != 0 }">
+                        <tr class="placeholder">
+                            <th colspan="9" class="slds-border_top"></th>
+                        </tr>
+                    </aura:if>
+
+                    <thead aura:id="section-thead">
+                        <tr aura:id="header-row" class="slds-text-title--caps header-row">
+                            <th aura:id="name-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.name }">{! category.header.name }</div>
+                            </th>
+                            <th aura:id="startDate-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.startDate }">{! category.header.startDate }</div>
+                            </th>
+                            <th aura:id="endDate-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.endDate }">{! category.header.endDate }</div>
+                            </th>
+                            <th aura:id="chargeTerm-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.chargeTerm }">{! category.header.chargeTerm }</div>
+                            </th>
+                            <th aura:id="quantity-header" class="slds-border_top" colspan="{! category.header.quantityColspan}">
+                                <div class="slds-truncate" title="{! category.header.quantity }">{! category.header.quantity }</div>
+                            </th>
+                            <aura:if isTrue="{! not(category.header.isListPriceHidden) }">
+                                <th aura:id="listPrice-header" class="slds-border_top">
+                                    <div class="slds-truncate" title="{! category.header.listPrice }">{! category.header.listPrice }</div>
+                                </th>
+                            </aura:if>
+                            <th aura:id="discount-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.discount }">{! category.header.discount }</div>
+                            </th>
+                            <th aura:id="yourPrice-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.yourPrice }">{! category.header.yourPrice }</div>
+                            </th>
+                            <th aura:id="total-header" class="slds-border_top">
+                                <div class="slds-truncate" title="{! category.header.total }">{! category.header.total }</div>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <c:EntitlementCategoriesList data="{! category.items }"/>
+
+                </aura:iteration>
+            </table>
+
+            <aura:if isTrue="{! v.isLoadingEntitlements || v.isLoadingAssets }">
+                <c:LoadingPlaceholder type="table" isShown="true"/>
+            </aura:if>
+        </aura:if>
+
+        <!-- No items -->
+        <aura:if
+                isTrue="{! empty(v.entitlements.active)
+                        &amp;&amp; empty(v.entitlements.inactive)
+                        &amp;&amp; empty(v.assets.active)
+                        &amp;&amp; empty(v.assets.inactive)
+                        &amp;&amp; !v.isLoadingEntitlements
+                        &amp;&amp; !v.isLoadingAssets }">
+            <div class="slds-grid slds-grid--vertical-align-center slds-grid--align-center message-block">
+                <p>No Entitlements found</p>
+            </div>
+        </aura:if>
+
+        <!-- error prompt -->
+        <div aura:id="modal" role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id"
+             aria-describedby="prompt-message-wrapper" class="slds-modal slds-modal--prompt slds-hide">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header slds-theme--error slds-theme--alert-texture">
+                    <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close"
+                            onclick="{!c.closePrompt}">
+                        <lightning:icon iconName="utility:close" variant="bare" size="small"
+                                        class="slds-button__icon slds-button__icon--large" alternativeText="Close"/>
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 class="slds-text-heading--medium" id="prompt-heading-id">Service Unavailable</h2>
+                </div>
+                <div class="slds-modal__content slds-p-around--medium">
+                    <p>{!v.prompt.text}</p>
+                </div>
+                <div class="slds-modal__footer slds-theme--default">
+                    <button class="slds-button slds-button--neutral" onclick="{!c.confirmPrompt}">Try again</button>
+                </div>
+            </div>
+        </div>
+        <div aura:id="modal-bg" class="slds-backdrop"></div>
+    </div>
+</aura:component>

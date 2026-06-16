@@ -1,0 +1,82 @@
+<aura:component>
+    <!--
+        TODO:
+        Input type as an attribute
+    -->
+
+    <!-- Shared Attributes -->
+    <aura:attribute name="variant" type="String" description="Input variant" default="label-stacked"/>
+    <aura:attribute name="inputValue" type="String" description="Value from input"/>
+    <aura:attribute name="recordValue" type="String" description="Value from record"/>
+    <aura:attribute name="label" type="String" description="Input label" default=""/>
+    <aura:attribute name="required" type="Boolean" description="Value is required" default="false"/>
+    <aura:attribute name="placeholder" type="String" description="Input placeholder"/>
+    <aura:attribute name="pattern" type="String" description="Input validation pattern"/>
+    <aura:attribute name="patternMismatchMessage" type="String" description="Message on pattern mismatch"/>
+    <aura:attribute name="isUserHasEditPermission" type="Boolean" description="Custom permission for field edit"/>
+    <aura:attribute name="isInputDisabled" type="Boolean" description="Checks whether the input is disabled"/>
+    <aura:attribute name="app" type="Object" />
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false"/>
+
+    <!-- Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+    <!-- Methods -->
+    <aura:method name="isValid" action="{! c.checkIsValid }" description="Checks input validity"/>
+    <aura:method name="showInput" action="{! c.showInput }" description="show edit input"/>
+    <aura:method name="hideInput" action="{! c.hideInput }" description="hide edit input"/>
+
+    <div class="slds-form-element slds-m-bottom_xx-top nolabel" aura:id="blockDisplay">
+        <label class="{! join(' ', 'slds-form-element__label', !v.label == '' ? 'slds-hide' : '', v.required ? 'slds-no-flex' : '') }">
+            <aura:if isTrue="{!v.required}">
+                <abbr title="required" class="slds-required">*</abbr>
+            </aura:if>
+            {! v.label }
+        </label>
+        <div class="slds-input slds-is-relative">
+            <a href="{! v.recordValue }"
+               class="link-input"
+               target="_blank">{! v.recordValue }</a>
+            <aura:if isTrue="{! and(v.isUserHasEditPermission, not(v.isInputDisabled)) }">
+                <span class="edit-icon">
+                    <a href="javascript:void(0);"
+                        onclick="{!c.showInput}"
+                        aura:id="editLink">
+                        <lightning:icon class="slds-form-element"
+                                        iconName="utility:edit"
+                                        size="xx-small"
+                                        title="Edit"
+                                        alternativeText="Edit"/>
+                    </a>
+                </span>
+            </aura:if>
+        </div>
+    </div>
+    <div class="slds-is-relative hidden" aura:id="inputDiv">
+        <div class="slds-form-element__control">
+            <!-- Onchange should be implemented in parent -->
+            <lightning:input type="text"
+                        placeholder="{! v.placeholder }"
+                        pattern="{! v.pattern }"
+                        messageWhenPatternMismatch="{! v.patternMismatchMessage }"
+                        label="{! v.label }"
+                        onblur="{!c.onInputChange}"
+                        value="{! v.inputValue }"
+                        variant="{! v.variant }"
+                        required="{!v.required}"
+                        aura:id="input"/>
+
+            <span class="cancel-icon">
+                <a href="javascript:void(0);"
+                    onclick="{!c.hideInput}"
+                    aura:id="cancelLink">
+                    <lightning:icon class="slds-form-element"
+                                    iconName="utility:close"
+                                    size="xx-small"
+                                    title="Cancel"
+                                    alternativeText="Cancel"/>
+                </a>
+            </span>
+        </div>
+    </div>
+</aura:component>

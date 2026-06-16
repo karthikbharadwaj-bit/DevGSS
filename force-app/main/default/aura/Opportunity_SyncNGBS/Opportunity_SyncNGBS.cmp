@@ -1,0 +1,32 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 10-06-2020
+* Description    : Component invoked when 'Sync with NGBS' button is clicked on Opportunity in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+<aura:component controller="SyncWithNGBS" implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId,force:hasSObjectName" access="public" >
+       
+
+    <!--<ltng:require scripts="{!join(',', $Resource.rcnotify_Helper,
+                           $Resource.oppsynctest + '/OpportunityButton/buttons.js')}" afterScriptsLoaded="{!c.setup}" />!-->
+    <ltng:require scripts="{!join(',', $Resource.rcnotify_Helper)}" afterScriptsLoaded="{!c.setup}" />
+    <aura:attribute name="isSuccess" type="boolean" default="false"></aura:attribute>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+     <div>Syncing with NGBS...</div>
+    <div class="slds-is-relative">
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner"  class="slds-hide" size="small"/>
+        </div>
+    </div>
+   <!-- <aura:if isTrue="{!v.isSuccess}">
+        <iframe src="{!'/apex/syncWithNGBS?id='+ !v.recordId}" width="100%" height="500px;" frameBorder="0"/>
+    </aura:if>!-->
+</aura:component>

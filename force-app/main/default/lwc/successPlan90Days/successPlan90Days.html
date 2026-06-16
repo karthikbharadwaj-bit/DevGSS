@@ -1,0 +1,46 @@
+<template>   
+    <template if:true={conditionLoaded}>
+        <template if:false={displayErrorWhenNoSuccessPlanRecordsForViewProfiles}>
+            <template if:false={hideGenerateButton}>        
+                <template if:true={generateSuccessPlan}>
+                    <lightning-button variant="brand" label="Generate Success Plan" title="Generate Success Plan" onclick={handleGenerateSuccessPlanClick} class="slds-align_absolute-center"></lightning-button>  
+                </template>
+                <template if:false={generateSuccessPlan}>
+                    <p style="color: rgba(255, 0, 0, 0.808);text-align: center;"><b>The account is not valid for a success plan record. Please reach out
+                    to your channel sales manager for further assistance.</b></p>
+                </template>
+            </template>
+        </template> 
+
+        <template if:true={displayErrorWhenNoSuccessPlanRecordsForViewProfiles}>
+            <p style="color: rgba(255, 0, 0, 0.808);text-align: center;"><b>The account is not valid for a success plan record. Please reach out
+                to your channel sales manager for further assistance.</b></p>
+        </template>
+       
+       
+        <template if:true={displayTable}>
+            <lightning-tabset active-tab-value="two">
+                <lightning-tab label="RBE NOTES" value="one">                  
+                    <c-rbe-notes-tips accid={recordId} sucessid={successPlanId} can-edit={canEdit}></c-rbe-notes-tips>               
+                </lightning-tab>
+                <lightning-tab label="Readiness Score" value="two">  
+                    <p style="font-size: larger;"><b>Current Readiness Score: {currentUserReadinessScoreWithComments}  </b></p>
+                    <lightning-textarea class="textAreaBody" value={rediScoreDefined} disabled="true" maxlength="36500" ></lightning-textarea >               
+                </lightning-tab>
+                <lightning-tab label="30 Days" value="three">
+                    <c-activity-tab-30-days record-id={recordId} can-edit={canEdit} success-plan-id={successPlanId} readiness-score-with-comments={currentUserReadinessScoreWithComments} onday30value={handle30ValueChange}>                                                    
+                    </c-activity-tab-30-days>   
+                </lightning-tab>
+                <lightning-tab label="60 Days" value="four">
+                    <c-activity-tab-60-days record-id={recordId} success-plan-id={successPlanId} readiness-score-with-comments={currentUserReadinessScoreWithComments} can-edit={canEdit} onday60value={handle60ValueChange}>                                                    
+                    </c-activity-tab-60-days>                    
+                </lightning-tab>
+                <lightning-tab label="90 Days" value="five">
+                    <c-activity-tab-90-days record-id={recordId} success-plan-id={successPlanId} readiness-score-with-comments={currentUserReadinessScoreWithComments} can-edit={canEdit} onday90value={handle90ValueChange}>                                                    
+                    </c-activity-tab-90-days>             
+                </lightning-tab>
+            </lightning-tabset>
+        
+        </template>       
+    </template> 
+</template>

@@ -1,0 +1,74 @@
+<aura:component controller="DQ_DealQualificationController">
+	<!--    <aura:attribute type="DQ_ApprovalEngine.ApproverWrapper[]" name="approverList" /> -->
+	<aura:attribute type="String" name="dqId" />
+	<aura:attribute type="List" name="approverHistoryList" />
+	<aura:attribute type="Map" name="approverHistoryRecord" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	<aura:if isTrue="{!v.approverHistoryRecord}">
+		<div class="">
+			 	<div class="slds-form" role="list">
+					<div class="slds-form__row">
+						<div class="slds-form__item" role="listitem">
+							<div
+								class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_horizontal slds-hint-parent">
+								<div class="">Initial Term</div>
+								<div class="">
+									{!v.approverHistoryRecord.Initial_Term__c}
+								</div>
+							</div>
+						</div>
+						<div class="slds-form__item" role="listitem">
+							<div
+								class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_horizontal slds-hint-parent">
+								<div class="">Overall Discount</div>
+								<div class="">
+									{!v.approverHistoryRecord.Overall_Discount__c}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+		</div>
+	</aura:if>
+
+	<aura:if isTrue="{!not(empty(v.approverHistoryList))}">
+		<table class="slds-table slds-table_bordered slds-table_cell-buffer slds-m-top_medium slds-border_left slds-border_right">
+			<thead>
+				<tr class="slds-text-title_caps">
+					<th scope="col" class="tablehead">
+						<div class="slds-truncate">PRODUCT PACKAGE </div>
+					</th>
+					<th scope="col" class="tablehead">
+						<div class="slds-truncate" title="PRODUCT CATEGORIES">PRODUCT CATEGORIES</div>
+					</th>
+					<th scope="col" class="tablehead">
+						<div class="slds-truncate" title="PRODUCT NAME">PRODUCT NAME</div>
+					</th>
+					<th scope="col" class="tablehead">
+						<div class="slds-truncate" title="QUANTITY">QUANTITY</div>
+					</th>
+					<th scope="col" class="tablehead">
+						<div class="slds-truncate" title="MAXIMUM DISCOUNT">MAXIMUM DISCOUNT</div>
+					</th>
+					<th scope="col" style="width:10%" class="tablehead"></th>
+
+				</tr>
+			</thead>
+			<tbody>
+				<aura:iteration items="{!v.approverHistoryList}" var="approverHistoryRec" indexVar="rowIndex">
+					<tr>
+						<td>{!approverHistoryRec.Product_Package__r.Name}</td>
+						<td>{!approverHistoryRec.Product_Category__c}</td>
+						<td>{!approverHistoryRec.Product__r.Name}</td>
+						<td>{!approverHistoryRec.Quantity__c}</td>
+						<td>{!approverHistoryRec.Discount__c}</td>
+					</tr>
+				</aura:iteration>
+			</tbody>
+		</table>
+		<aura:set attribute="else">
+			<br />
+			<span>There is no approval history found.</span>
+		</aura:set>
+	</aura:if>
+</aura:component>

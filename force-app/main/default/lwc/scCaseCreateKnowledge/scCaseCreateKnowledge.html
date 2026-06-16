@@ -1,0 +1,28 @@
+<template>
+    <div class="sc-case-knowledge__header">{title}</div>
+    <div class="sc-case-knowledge__body">
+        <template if:true={isEmpty}>
+            <div class="sc-case-knowledge__message">
+                <span>{emptyMessage}</span>
+            </div>
+        </template>
+        <template if:false={isEmpty}>
+            <ul class="sc-case-knowledge__results">
+                <template for:each={results} for:item="item">
+                    <li key={item.id} class="sc-case-knowledge__result-item">
+                        <a href={item.url} target="_blank">{item.title}</a>
+                        <div class="sc-case-knowledge__desc" title={item.summary}>{item.summary}</div>
+                        <div class="sc-case-knowledge__created">
+                            <span>
+                                <lightning-formatted-date-time
+                                    value={item.LastPublishedDate}
+                                    time-zone="UTC"
+                                ></lightning-formatted-date-time>
+                            </span>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </template>
+    </div>
+</template>

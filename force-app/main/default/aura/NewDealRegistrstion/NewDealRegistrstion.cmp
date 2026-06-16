@@ -1,0 +1,762 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" controller="NewDealRegistration_Controller">
+
+    <aura:attribute name="ShowOtherExistingSoln" type="boolean" default="false" />
+    <aura:attribute name="ShowOtherCompetitor" type="boolean" default="false" /> 
+    <aura:attribute name="ShowOtherPrompting" type="boolean" default="false" /> 
+    <aura:attribute name="ShowOtherDecision" type="boolean" default="false" />
+    <aura:attribute name="ShowSection" type="boolean" default="false"/>
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true"/>
+    <aura:attribute name="ShowErrorMesg" type="boolean" default="false" />
+    <aura:attribute name="ShowMesg" type="boolean" default="false" />
+    <aura:attribute name="toastMesg" type="String" />
+    <aura:attribute name="mesgType" type="String" />
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyATOS" type="boolean" default="false"/>
+    <aura:attribute name="selectedCountryValue" type="String" />
+    <aura:attribute name="numberOfEmployees" type="String" default="1-19"/>
+
+    <!-- Added for PBC-10695 -->
+    <aura:attribute name="ShowOnlyALE" type="boolean" default="false"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>    
+    <aura:handler name="cloudSpecialistValueEvent" event="c:Partner_CloudSpecialistSearchEvent" action="{!c.handleCloudSpecialistEvent}"/>
+    <aura:attribute name="cloudSpecialistContactId" type="String"/>
+    
+    <!-- COUNTRY STATE ATTRIBUTES -->
+    <aura:attribute name="countriesAvailable" type="String[]" />
+    <aura:attribute name="mapCountryKeys" type="object" />
+    <aura:attribute name="mapCountryValueKeys" type="String[]" />
+    <aura:attribute name="mapData" type="Map"/>
+    <aura:attribute name="mapDataBrand" type="Map"/>
+    
+    <!-- Added for multiple countries in ACO 3.0 -->
+    <aura:attribute name="partnerAvailableCountries" type="String[]" />
+    
+    <aura:attribute name="mapCompData" type="Map"/>
+    <aura:attribute name="mapCountryCompKeys" type="object" />
+    <aura:attribute name="mapCountryCompValKeys" type="List" />
+
+    <aura:attribute name="mapEmpData" type="Map" />
+    <aura:attribute name="mapEmpCompKeys" type="object" />
+    <aura:attribute name="mapEmpCompValKeys" type="List" />
+    
+    <aura:attribute name="brandName" type="String" default="RingCentral"/>
+    <aura:attribute name="selectedCompItems" type="List" default="[]"/>  
+    <!-- BZS-9016 -->
+    <aura:attribute name="countriesforBI" type="String[]" />
+    <aura:attribute name="isWholesalePartner" type="boolean" />
+    <aura:attribute name="BrandCountriesForBIMap" type="Map"/>
+    <aura:attribute name="BICountriesCSList" type="List"/>
+    <aura:attribute name="brandsListforBI" type="List"/>
+    
+    <aura:attribute name="partnerContactId" type="String"/>
+    <aura:attribute name="partnerContactName" type="String"/>
+    <aura:attribute name="partnerAccountName" type="String"/>
+    <aura:attribute name="partnerId" type="String"/>
+    <aura:attribute name="logdPartnrCntry" type="String" />
+    <aura:attribute name="editionListDisplayed" type="List"/>
+    <aura:attribute name="selectedStateValue" type="string" access="public"/>
+    <aura:attribute name="selectedEditionValue" type="string" access="public"/>
+    <aura:attribute name="selectedTierValue" type="string" access="public"/>
+	<aura:handler name="init" value="{!this}" action="{!c.myAction}" />	
+    
+    <aura:attribute name="isNationalPartnerAccount" type="boolean" default="false" />
+    <aura:attribute name="partnerClassification" type="String" /><!--PBC-9705 P2CSharing-->
+    <aura:attribute name="isNationalPartnerAccountNew" type="boolean" default="false" />
+    <aura:attribute name="portalUserList" type="List" />
+    <aura:attribute name="searchUser" type="String"/>    
+    <aura:attribute name="insideSalesRep" type="String"/>
+    
+    <aura:attribute name="tierNames" type="List" default="['Office']"/>
+    <aura:attribute name="RCMeetings" type="boolean" default="false"/>
+    <aura:attribute name="showMitelCustomerType" type="boolean" default="false"/> <!-- Added for PRM-145 -->
+    <aura:attribute name="selectedCountry" type="String"/><!-- Added for switzerland-->
+    <aura:attribute name="ShowMitelDataShare" type="boolean" default="false"/><!-- Added for Mitel-->
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>    
+    <aura:handler name="populatePartnerEvent" event="c:Partner_SearchContactEvent" action="{!c.handlePartnerComponentEvent}"/>
+    
+    <!-- PS MAP ATTRIBUTES -->  
+    <aura:handler name="change" value="{!v.psPartnerId}" action="{!c.getPickListValuesPS}"/>
+    <aura:attribute name="psPartnerId" type="String" />
+    <aura:attribute name="selectedProviderValue" type="string" access="public" default="--Please Select--"/>
+    <aura:attribute name="mapPSValueKeys" type="List" default="['--Please Select--']" />
+    <aura:attribute name="displayText" type="Boolean" default="false"/>
+    <aura:attribute name="defaultPSValue" type="String" default="--Please Select--"/>
+    <aura:attribute name="ShowISPField" type="Boolean" default="false"/>
+
+    <div class='pagewrap'>
+    
+    <lightning:card variant="Narrow" title="New Deal Registration"  iconName="standard:lead">   
+        <!-- DISPLAY SPINNER -->   
+        <aura:if isTrue="{!v.ShowSpinnerOpp}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                </div>
+            </div>
+        </aura:if>		       
+               
+        <!-- TOAST MESSAGES -->
+        <aura:if isTrue="{!v.ShowMesg}">
+            <div class="demo-only" style="height:4rem" >
+                <div class="slds-notify_container slds-is-relative">
+                    <div class="slds-notify slds-notify_toast slds-theme_success" role="status">
+                        <span class="slds-assistive-text">success</span>
+                        <lightning:icon iconName="utility:success" size="small" variant="inverse" alternativeText="Success : "  class="slds-m-right_small"/>
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small"> 
+                                {!v.toastMesg}
+                            </h2>
+                        </div>
+                        <div class="slds-notify__close">
+                            <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" iconName='utility:close'>
+                                <lightning:icon iconName="utility:close" size="small" variant="inverse" alternativeText="" onclick="{!c.goBackListView}"/>
+                                <span class="slds-assistive-text">Close</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        
+        <!-- LIGHTNING RECORD FORM -->
+        <aura:if isTrue="{!!v.ShowMesg}">
+            <lightning:recordEditForm aura:id="newRecordFormSection"
+                                      onsubmit="{!c.handleSubmitNew}"
+                                      onsuccess="{!c.handleSuccessNew}"
+                                      onerror="{!c.handleError}"  
+                                      objectApiName="Deal_Registration__c">
+                <div class="slds-grid slds-wrap editform">  
+                    
+                    <!-- BRAND SELECTION -->
+                    <aura:if isTrue="{!!v.ShowSection}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Brand Name:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div> 
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>                            
+                                <lightning:inputField fieldName="Brand_Name__c" variant="label-hidden" aura:id="brand" onchange="{!c.brandChange}" required="true"/>
+                            </span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_4-of-7">
+                            <span></span>
+                        </div>   
+                    </aura:if>
+                    
+                    <!-- REMAINING FIELDS -->
+                    <aura:if isTrue="{!v.ShowSection}">                        
+                        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">   
+                            <lightning:button variant="brand" name="Back" label="Back" iconName="utility:chevronleft" iconPosition="left" onclick="{!c.goBack}"/>    
+                        </div>
+                        <!--Added for QTC-943 starts-->
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>Partner Program:</span>
+                                    <abbr class="slds-required" >* </abbr>
+                                </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <lightning:inputField aura:id="PartnerProgram" fieldName="Partner_Program__c" variant="label-hidden" />
+                                </span>
+                                </div>
+                            <div class="slds-col slds-size_4-of-7">
+                            <span></span>
+                        </div>
+                        </aura:if>
+                        <!--Added for QTC-943 ends-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Brand Name</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>      
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>{!v.brandName}</span>
+                        </div> 
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Partner Contact:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>  
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span style="font-weight: bold;">
+                                {!v.partnerContactName}&nbsp;&nbsp;
+                                <lightning:buttonIcon iconName="utility:search" variant="bare"
+                                                      onclick="{!c.createLookup}"
+                                                      alternativeText="Please choose a Partner Contact" />
+                            </span>
+                        </div>
+                        
+                        <aura:if isTrue="{!v.ShowISPField}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Installation Service Provider:&nbsp;&nbsp;</span>
+                                <abbr class="slds-required" >* </abbr>
+                            </div> 
+                            
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist" onmouseover="{!c.toggledisplayTextON}" onmouseout="{!c.toggledisplayTextOFF}">
+                                <lightning:select name="Installation_Service_Provider__c" aura:id="selectedProvider" variant="label-hidden" class="label-hidden" value="{!v.selectedProviderValue}">
+                                    <aura:iteration items="{!v.mapPSValueKeys}" var="psPartner" >   
+                                        <option value="{!psPartner}" selected="{!psPartner.value==v.selectedProviderValue}">{!psPartner}</option>                                            
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            <aura:if isTrue="{!v.displayText}">                                   
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;RC Technical Onboarding Install&lt;/b&gt; deals under 100 seats with express setup."/>
+                                    </p>
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;Partner Install, Certified Delivery Partner&lt;/b&gt; lets partners lead, with or without ProServices."/>
+                                    </p>
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;Customer Self-Install&lt;/b&gt; means the customer sets up the RingEx product without assistance (UCaaS only)."/>
+                                    </p>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_3-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;RC ProServices Install&lt;/b&gt; for customers requiring white glove service, complex deployment I.e. RCX or RCCC, or customized integrations."/>
+                                    </p>
+                                    
+                                    <p>
+                                        <lightning:formattedRichText value="&lt;b&gt;Enroll in CDP for Partner Install&lt;/b&gt; allows partners to register for certification so they can lead the install."/>
+                                    </p>                                
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>First Name:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div> 
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="First_Name__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Last Name:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>  
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Last_Name__c" variant="label-hidden" required="true"/></span>
+                        </div>    
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Business Title:</span>
+                        </div>    
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Business_Title__c" variant="label-hidden"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Company Name:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>     
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Company_Name__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Email Address:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>      
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Email_Address__c" variant="label-hidden" aura:id="emailId" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Phone Number:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>    
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Phone_Number__c" variant="label-hidden" aura:id="phoneNumber" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Address:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>   
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Address__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>City:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="City__c" variant="label-hidden" required="true"/></span>
+                        </div>   
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>State/Province:</span>
+                            <abbr class="slds-required" >* </abbr>
+                        </div> 
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small customPicklist">                        
+                            <lightning:select name="State__c" aura:id="selectedState" variant="label-hidden" class="label-hidden" value="{!v.selectedStateValue}">
+                                <aura:iteration items="{!v.mapCountryValueKeys}"  var="state" >
+                                    <option value="{!state}" selected="{!state.value==v.selectedStateValue}">{!state}</option>
+                                </aura:iteration>
+                            </lightning:select>                        
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span>Postal Code:</span>
+                            <aura:if isTrue="{!v.ShowOnlyRC}">
+                            	<abbr class="slds-required" >* </abbr>
+                            </aura:if>
+                        </div>  
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Postal_Code__c" variant="label-hidden" required="true"/></span>                     
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Postal_Code__c" variant="label-hidden" /></span>                     
+                            </div>
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Country:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div> 
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>
+                                <lightning:select aura:id="selectedCountry" name="Country__c" onchange="{!c.onchangeCountry}" variant="label-hidden" class="label-hidden" value="{!v.selectedCountryValue}">
+                                    <aura:iteration items="{!v.isWholesalePartner? v.countriesforBI : v.countriesAvailable}"  var="mapKey" indexVar="key" >
+                                        <option value="{!mapKey}" selected="{!mapKey==v.selectedCountryValue}">{!mapKey}</option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Website:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>    
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Website__c" variant="label-hidden" required="true"/></span>
+                        </div> 
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>How did you acquire this lead?:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>         
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="How_did_you_acquire_this_Lead__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div> 
+                        
+                        <aura:if isTrue="{!v.RCMeetings}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Forecasted Video Users:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>   
+                            
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Forecasted_RingCentral_Video_Users__c" aura:id="userId" variant="label-hidden" required="true"/></span>
+                            </div> 
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Description:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>  
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Description__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        <aura:if isTrue="{!!v.RCMeetings}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Forecasted Users:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>   
+                            
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Forecasted_Users__c" aura:id="userId" variant="label-hidden" required="true"/></span>
+                            </div>
+                        </aura:if>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Number Of Employees:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>  
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <!--<span><lightning:inputField fieldName="Number_of_Employees__c" variant="label-hidden" required="true"/></span>-->
+                            <lightning:select name="Number_of_Employees__c" aura:id="selectedEmp" variant="label-hidden"
+                            class="label-hidden" value="{!v.numberOfEmployees}">
+                            <aura:iteration items="{!v.mapEmpCompValKeys}" var="mapEmpKey">
+                                <option value="{!mapEmpKey}">{!mapEmpKey}</option>
+                            </aura:iteration>
+                        </lightning:select>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Number Of Locations:</span>
+                        </div>    
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Number_of_Locations__c" variant="label-hidden"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Industry:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>   
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Industry__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Estimated Close Date:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>      
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Estimated_Close_Date__c" variant="label-hidden" required="true"/></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Tier Name:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>      
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <lightning:inputField aura:id="tierSelect"
+                          fieldName="Tier_Name__c"
+                          value="{!v.selectedTierValue}"
+                          variant="label-hidden"/>
+                        </div>
+                       
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Edition:</span>
+                                <abbr class="slds-required">* </abbr>
+                        </div>     
+                            
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <lightning:inputField aura:id="editionSelect"
+                                fieldName="Edition__c"
+                                value="{!v.selectedEditionValue}"
+                                variant="label-hidden"/> 
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7">
+                            <span></span>
+                        </div>
+                        <!-- Added for PBC-10695 -->
+                        <aura:if isTrue="{!v.ShowOnlyALE}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>ALE Opportunity Id:</span>   
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Partners_CRM_Opportunity_ID__c" variant="label-hidden" aura:id="oppid" /></span>
+                            </div>
+                            <c:Partner_CloudSpecialistSearch communityDetailsRecord="{!v.communityDetailsRecord}" SFBrandName="{!v.brandName}"/>      
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Existing Solution Provider:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>  
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Existing_Solution_Provider__c" aura:id="existing" onchange="{!c.existingChange}" variant="label-hidden" required="true"/></span>
+                        </div> 
+                        
+                        <aura:if isTrue="{!!v.ShowOtherExistingSoln}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>
+                        </aura:if>
+                        
+                        <aura:if isTrue="{!v.ShowOtherExistingSoln}">
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small" style="color:gray;">
+                            <span>Other Solution Provider:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span><lightning:inputField fieldName="Existing_Solution_Provider_Others__c" required="{!v.ShowOtherExistingSoln}"  variant="label-hidden"/></span>
+                        </div> 
+                    </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>Competitors:</span>
+                            <abbr class="slds-required">* </abbr>
+                        </div>             
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <lightning:dualListbox required="true" aura:id="competitor" name="Competitors"
+                                                   sourceLabel="Available"
+                                                   selectedLabel="Chosen"
+                                                   value=""
+                                                   options="{!v.mapCountryCompValKeys}"
+                                                   onchange="{! c.competitorChange }"
+                                                   disableReordering="true"
+                                                   size="4"
+                                                   min ="1"
+                                                   variant="label-hidden"/>
+                        </div>
+                        
+                        <aura:if isTrue="{!!v.ShowOtherCompetitor}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>
+                        </aura:if>
+                        
+                        <aura:if isTrue="{!v.ShowOtherCompetitor}">
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Other Competitor:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small" aura:id="comp">
+                                <span><lightning:inputField fieldName="Competitors_Other__c" required="{!v.ShowOtherCompetitor}"  variant="label-hidden"/></span>
+                            </div> 
+                        </aura:if>
+                        
+                        <div class="slds-col slds-size_1-of-7 alignright alignRight" style="color:gray;">
+                            <span>What's prompting change?:</span>
+                            <abbr class="slds-required" >* </abbr>
+                        </div>     
+                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small fieldWidth">
+                            <span><lightning:inputField fieldName="Whats_prompting_change__c" aura:id="prompting" onchange="{!c.promptingChange}" variant="label-hidden" required="true"/></span>
+                        </div> 
+                        
+                        <aura:if isTrue="{!!v.ShowOtherPrompting}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>                      
+                        </aura:if>
+                        
+                        <aura:if isTrue="{!v.ShowOtherPrompting}">
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Other Change:</span>
+                                <abbr class="slds-required">* </abbr>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-left_large">
+                                <span><lightning:inputField fieldName="What_s_prompting_change_Other__c" required="{!v.ShowOtherPrompting}"  variant="label-hidden"/></span>
+                            </div> 
+                        </aura:if>
+                        <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyATOS)}">
+                            <aura:if isTrue="{!!(empty(v.territoryAlignmentMap))}">
+                                <div aura:id="userPane" class="slds-form-element slds-lookup slds-is-close">
+                                    <div class='slds-grid align'>
+                                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                            <span>RC Strategic Partner Manager: </span>                                                                                          
+                                        </div>                        
+                                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small dropdownwrap">             
+                                            <div class="slds-form-element__control" >
+                                                <!--<div class="slds-text-color_error">Please <b>Click User</b> from the List displayed..</div>-->
+                                                <ui:inputText aura:id="usersearch"  placeholder="Search Users.."
+                                                              class="slds-lookup__search-input slds-input input-no-border" value="{!v.searchUser}" updateOn="keyup" keyup="{!c.onInputChange}" click="{!c.onSearchInputClick}" required="true" />
+                                            </div>
+                                            <div id="listbox-unique-id"  class="lookup-container cloudspecdropdown slds-p-horizontal_x-small" role="listbox" >
+                                                <ul class="slds-listbox slds-listbox_vertical slds-dropdown slds-dropdown_fluid slds-lookup__menu" aura:id="dropDownList" role="presentation">
+                                                    <aura:if isTrue="{!not(empty(v.portalUserList))}">
+                                                        <aura:iteration var="userRecord" items="{!v.portalUserList}" indexVar="index">
+                                                            <li role="presentation" class="slds-listbox__item" onclick="{!c.selectedUser}" data-username="{!userRecord.Strategic_Partner_Manager__r.Full_Name__c}" 
+                                                                data-userid="{!userRecord.Strategic_Partner_Manager__r.Id}" >
+                                                                <div id="listbox-option-unique-id-01" class="slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta" role="option">
+                                                                    <span class="slds-media__body">
+                                                                        <span class="slds-listbox__option-text slds-listbox__option-text_entity">{!userRecord.Strategic_Partner_Manager__r.Full_Name__c}</span>
+                                                                        <span class="slds-listbox__option-meta slds-listbox__option-meta_entity">{!userRecord.Strategic_Partner_Manager__r.Email}</span>
+                                                                    </span>
+                                                                </div>
+                                                            </li>
+                                                        </aura:iteration>
+                                                    </aura:if>
+                                                    <aura:if isTrue="{!(empty(v.portalUserList))}">
+                                                        <div class="nousers">No Users Found..</div>
+                                                    </aura:if>
+                                                </ul>
+                                            </div>                                    
+                                        </div>
+                                    </div>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>Forecasted Contact Center Users:</span>
+                            </div> 
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Forecasted_Contact_Center_Users__c" value="{!v.ForecastCCU}" variant="label-hidden"/></span>
+                            </div>
+                           <div class="slds-col slds-size_1-of-7">
+                                 <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                 <span></span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7">
+                                 <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>Partner Deal ID</span>
+                                </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span ><lightning:inputField fieldName="Partners_CRM_Opportunity_ID__c" aura:id="PartnerDealID" variant="label-hidden"/></span>
+                                </div>
+                             <div class="slds-col slds-size_1-of-7"></div>
+                    		<div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                            <span></span>
+                        	</div>    
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span></span>                             
+                        </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>Is this an existing Mitel Customer?</span>
+                                    <abbr class="slds-required" >* </abbr>
+                                </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span ><lightning:inputField fieldName="Mitel_Customer_or_Prospect__c" aura:id="isMitelProspect" variant="label-hidden" onchange="{!c.handleIsMitelProspect}"/></span>
+                                </div>
+                            <aura:if isTrue="{!v.showMitelCustomerType}">
+                            <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>What Type of Mitel Customer or Prospect?</span>
+                                    <abbr class="slds-required" >* </abbr>
+                                </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span ><lightning:inputField fieldName="Type_of_Customer_or_Prospect__c" aura:id="mitelCustomerType" variant="label-hidden" onchange="{!c.changeMitelType}"/></span>
+                                </div>
+                                <aura:if isTrue="{!v.ShowMitelDataShare}">
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;" >
+                                        <span>Allow sharing this deal data with Mitel?</span>
+                                        <lightning:icon iconName="utility:info" title="help" size="xx-small" onmouseover="{!c.showtooltip}" onmouseout="{!c.hidetooltip}"/>
+                                        <abbr class="slds-required" >* </abbr>
+                                        <div class="tooltipdiv slds-popover toggle" aura:id='tooltip'>
+                                            <span><lightning:formattedText value="By clicking yes, you consent to RingCentral sharing with Mitel Networks, Inc. (in its capacity as a RingCentral partner) account and opportunity data."/></span>
+                                        </div>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                        <span><lightning:inputField fieldName="Mitel_Data_Sharing__c" aura:id="mitelDataShare" variant="label-hidden" /></span>                             
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-7"></div>
+                                </aura:if>
+                                <aura:set attribute="else">
+                                    <div class="slds-col slds-size_4-of-7">
+                                        <span></span>
+                                    </div>
+                                </aura:set>
+                                </aura:if>
+                            </aura:if>                        
+                        </aura:if> 
+                </div>
+                
+                <!-- ERROR MESSAGES -->
+                <aura:if isTrue="{!v.ShowErrorMesg}">
+                    <div class="demo-only" style="height:4rem" >
+                        <div class="slds-notify_container slds-is-relative">
+                            <div class="slds-notify slds-notify_toast slds-theme_error" role="status">
+                                <span class="slds-assistive-text">error</span>
+                                <lightning:icon iconName="utility:error" size="small" variant="inverse" alternativeText="Error : "  class="slds-m-right_small"/>
+                                <div class="slds-notify__content">
+                                    <h2 class="slds-text-heading_small"> 
+                                        {!v.toastMesg}
+                                    </h2>
+                                </div>
+                                <div class="slds-notify__close">
+                                    <button class="slds-button slds-button_icon slds-button_icon-inverse" title="Close" iconName='utility:close'>
+                                        <lightning:icon iconName="utility:close" size="small" variant="inverse" alternativeText="" onclick="{!c.hideToast}"/>
+                                        <span class="slds-assistive-text">Close</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>
+                
+                <!-- SAVE AND CANCEL BUTTONS -->
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">                
+                    <aura:if isTrue="{!v.ShowSection}"><lightning:button variant="brand" label="Save" type="submit" iconName="utility:check" iconPosition="left"/></aura:if>
+                    <lightning:button variant="brand" type="cancel" name="Cancel" label="Cancel" iconName="action:close" iconPosition="left" onclick="{!c.goBackListView}"/>        
+                    <aura:if isTrue="{!!v.ShowSection}"><lightning:button variant="brand" name="Next" label="Next" iconName="utility:chevronright" iconPosition="right" onclick="{!c.nextNav}"/> </aura:if>
+                </div>                              
+                
+            </lightning:recordEditForm>
+        </aura:if>
+    </lightning:card>    
+    <div aura:id="lookupSearchDiv"></div>
+    </div>
+</aura:component>

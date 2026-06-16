@@ -1,0 +1,335 @@
+<apex:page showHeader="false" controller="RainbowOfficeLoginController">
+    <apex:form >
+        <style type="text/css">
+            
+            @font-face {
+            font-family: 'GothamFont';   
+            src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.eot')}");
+            src: url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.eot')}") format('embedded-opentype'),
+            url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.woff')}") format('woff'),
+            url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.ttf')}") format('truetype'),
+            url("{!URLFOR($Resource.AvayaCommunityFonts, '/fonts/gothamhtf-book-webfont.ttf.svg#gotham_htflight')}") format('svg');
+            }
+            
+            .loginpagewrap {
+            display: flex;
+            height: 100vh;
+            font-family: GothamFont;
+            }
+            .loginleftmainwrap .headingwrap {
+            text-align: center;
+            }
+            
+            .loginleftwrap h3 {
+            font-size: 26px;
+            font-weight: normal;
+            font-family: GothamFont;
+            margin-top: 4vh;
+            display: block;
+            }
+            
+            h2 {
+            font-size: 36px;
+            font-weight: normal;
+            font-family: GothamFont;
+            }
+            
+            <!-- .logo img {
+width: 162px;
+height: 48px;
+margin: 6vh auto 2vh;
+display:block;
+} -->
+            
+            .loginleftwrap {
+            width: 50vw;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            background: #573393;
+            position:relative;
+            }
+            .loginleftwrap::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            right: 0;
+            bottom: 0;
+            border-bottom: 50vh solid white;
+            border-left: 95px solid transparent;
+            }
+            
+            .greetingswrap {
+            font-size: 16px;
+            line-height: 24px;
+            display: flex;
+            flex-grow: 2;
+            align-items: center;
+            }
+            
+            .greetingswrap p {
+            margin: 25px 0;
+            }
+            
+            .greetingswrap label,
+            .loginrightform label {
+            display: block;
+            }
+            
+            .contactwrap {
+            font-size: 14px;
+            line-height: 20px;
+            padding: 0 95px 0 60px;
+            }
+            
+            .contactwrap h4 {
+            font-family: GothamFont;
+            font-weight: normal;
+            }
+            
+            .contactwrap ul {
+            padding: 0;
+            list-style-type: none;
+            margin: 12px 0 25px 0;
+            }
+            
+            .contactwrap li {
+            margin: 0!important;
+            }
+            
+            .contactwrap label::after {
+            content: ':';
+            margin: 0 5px;
+            }
+            
+            .copyrightwrap {
+            background-color: #141414;
+            padding: 0 95px 0 60px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            }
+            
+            .copyrightwrap p {
+            font-size: 14px;
+            margin: 0;
+            }
+            
+            .loginleftmainwrap {
+            flex-grow: 2;
+            padding: 0 95px 0 60px; 
+            display: flex;
+            flex-direction: column;
+            
+            }
+            
+            .loginrightwrap {
+            width: 50vw;
+            position:relative;
+            }
+            .loginrightwrap::before {
+            position: absolute;
+            content: '';
+            width: 0;
+            top: 0;
+            left: 0;
+            border-top: 50vh solid #573393;
+            border-right: 95px solid transparent;
+            }
+            .loginrightcontent {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 0 135px;
+            }
+            
+            .loginrightformwrap {
+            display: flex;
+            flex-grow: 2;
+            align-items: center;
+            justify-content: center;
+            }
+            
+            .loginrightform h3 {
+            text-align: center;
+            display: block;
+            color: #000;
+            font-size: 18px;
+            font-family: GothamFont;
+            font-weight: bold;
+            margin-bottom: 35px;
+            }
+            .usernamewrap {
+            margin-bottom: 25px;
+            }
+            .passwordwrap {
+            margin-bottom: 27px;
+            }        
+            .loginrightform label {
+            font-size: 15px;
+            color: #000;
+            font-weight: bold;
+            margin-bottom: 15px;
+            }
+            
+            .loginrightform {
+            width: 100%;
+            }
+            
+            .footerlinks {
+            display: flex;
+            justify-content: center;
+            height: 58px;
+            align-items: center;
+            }
+            
+            .footerlinks ul {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            }
+            .footerlinks li {    margin: 0!important;    
+            display: flex;
+            align-items: center;
+            }
+            .footerlinks li a {
+            font-size: 14px;
+            color: #000;
+            font-weight: bold;
+            transition:all .3s;
+            cursor:pointer;    
+            padding: 5px;
+            text-decoration:none;
+            }
+            .footerlinks li:not(:last-child)::after {
+            content: '';
+            display: block;
+            width: 2px;
+            height: 13px;
+            background: #747474;
+            }
+            .footerlinks li a:hover {
+            color: #573393;
+            text-decoration:none;
+            }
+            input:not(.forgotpasswordbtn) {
+            width:100%;
+            height:60px;
+            }
+            .forgotpasswordbtn {
+            background: transparent!important;
+            border: 0!important;
+            }
+            .forgotpasswordbtn:hover {
+            color: #573393!important;
+            }
+            .forgotpasswordwrap {
+            text-align:center;
+            }
+            input {
+            outline: 0;
+            font-size: 16px!important;
+            font-family: GothamFont!important;
+            color: #000!important;
+            }
+            .input {
+            border:1px solid #a8a8a8;
+            padding: 0 10px;
+            box-sizing: border-box;
+            
+            font-size: 16px!important;
+            }
+            .submitbtn {
+            background: #573393!important;
+            border: 1px solid #573393!important;
+            color: #fff!important;
+            font-weight: normal!important;
+            border-radius: 0!important;    
+            margin-bottom: 20px!important;
+            }
+            .submitbtn:hover {
+            background-color: #41266d!important;
+            }
+            .contactlabel
+            {
+            font-size:18px;
+            }
+            .message
+            {
+            margin: 0 0 10px 0;
+            }
+            .logo
+            {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5vh;
+            }
+            .alelogo
+            {
+				width: 230px;
+            }
+        </style>
+        <div class="loginpagewrap">
+            <div class="loginleftwrap">
+                <div class="loginleftmainwrap">
+                    <div class="headingwrap">
+                        <div class="logo">
+                            <apex:image styleClass="alelogo" url="{!$Resource.ALE_Rainbow_Logo}" />
+                        </div>
+                        <h3>Welcome to the Rainbow Office Portal</h3>
+                    </div>
+                    <div class="greetingswrap">
+                        <div class="greetingscontent">
+                            <label>Dear Partners,</label>
+                            <p>Thank you for joining us in empowering today's modern workforce. The Rainbow Office partner portal is here to help you succeed in selling the industry-leading cloud communications system.</p>
+                            <label>Best,</label>
+                            <label>Your Rainbow Office Team</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="footerleftwrap">
+                    <div class="contactwrap">
+                        <label class="contactlabel">Contact Us</label>
+                        <ul>
+                            <li><label>Phone</label><span>+33988293174</span></li>
+                            <li><label>Email</label><span>bss-rainbow-office@ale-salessupport.com</span></li>
+                            <li><label>Website</label><span>www.al-enterprise.com</span></li>
+                        </ul>
+                    </div>
+                    <div class="copyrightwrap">
+                        <p>© Copyright 2020 | ALE International</p>
+                    </div>
+                </div>
+            </div>
+            <div class="loginrightwrap">
+                <div class="loginrightcontent">
+                    <div class="loginrightformwrap">
+                        <div class="loginrightform">
+                            <apex:pageMessages id="showmsg"></apex:pageMessages>
+                            <h3>Login Now</h3>
+                            <div class="usernamewrap">
+                                <label>User Name</label>
+                                <apex:inputText styleClass="input" value="{!userName}" />
+                            </div>
+                            <div class="passwordwrap">
+                                <label>Password</label>
+                                <apex:inputSecret styleClass="input" value="{!password}"/>
+                            </div>
+                            <apex:commandButton styleClass="submitbtn" action="{!doLogin}" value="Submit" />
+                            <div class="forgotpasswordwrap"><apex:commandButton styleClass="forgotpasswordbtn" value="Forgot Password?" action="{!forgotPassword}"/></div>
+                        </div>
+                    </div>
+                    <div class="footerlinks">
+                        <ul>
+                            <li><a>Site Map</a></li>
+                            <li><a target="_blank" href='https://www.ringcentral.fr/legal/last-update-March-3-2021/privacy-notice.html'>Privacy Policy</a></li>
+                            <li><a>Terms of Use</a></li>
+                            <li><a>Feedback</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

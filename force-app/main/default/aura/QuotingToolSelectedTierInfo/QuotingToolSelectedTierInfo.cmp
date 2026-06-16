@@ -1,0 +1,49 @@
+<aura:component controller="QuotingToolQuoteApexController" extends="c:QuotingToolHelper">
+    <!-- handlers -->
+    <aura:handler event="c:QuotingToolRefreshQuoteEvent" action="{!c.refreshQuote}" />
+    <aura:handler event="c:QuotingToolGetQuoteEvent" action="{!c.changeQuote}"/>
+    <aura:handler event="c:QuotingToolNewQuoteEvent" action="{!c.newQuote}"/>
+    <aura:handler event="c:QuotingToolDeleteQuoteEvent" action="{!c.removeQuote}"/>
+    <aura:handler event="c:QuotingToolMonthlyContractDiscountEvent" action="{!c.updateMonthlyContract}"/>
+    <!-- registered events -->
+    <aura:registerEvent name="cartUpdate" type="c:QuotingToolUpdateCartEvent" />
+    <aura:registerEvent name="productUpdate" type="c:QuotingToolUpdateProductListEvent" />
+    <aura:registerEvent name="cartSaveComplete" type="c:QuotingToolCartSaveCompleteEvent" />
+    <aura:registerEvent name="quoteSaveComplete" type="c:QuotingToolQuoteSaveCompleteEvent" />
+    <aura:registerEvent name="refreshCart" type="c:QuotingToolRefreshCartEvent" />
+    <!-- attributes -->
+    <!-- Shared Attributes -->
+    <aura:attribute name="state" type="Map" default="{}" description="Contain common checks for use by components"/>
+    <aura:attribute name="selectedPriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) selected by user)"/>
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="entitlements" type="List" />
+    <aura:attribute name="upsellStatus" type="String" description="Upsell Status considering quote, account and upgrade button"/>
+    <aura:attribute name="addingToCartProds" type="Set" description="Products which are in the process of adding to cart"/>
+    <aura:attribute name="tiers" type="List" description="All Service Plans available on Opportunity"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="settings" type="Map" />
+    <!-- Component Attributes -->
+    <aura:attribute name="products" type="List" />
+    <aura:attribute name="cartItems" type="List" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="lines" type="Integer" />
+    <aura:attribute name="oldLines" type="Integer" />
+    <aura:attribute name="curStage" type="Integer" default="1"/>
+    <aura:attribute name="opportunity" type="String" />
+    <aura:attribute name="rcTier" type="String" />
+    <aura:attribute name="rcUserId" type="String" />
+    <aura:attribute name="paymentPlan" type="String" />
+    <aura:attribute name="currencyIsoCode" type="String" />
+    <aura:attribute name="servicePlan" type="String" />
+    <aura:attribute name="recordTypeName" type="String" />
+    <aura:attribute name="navigateToCart" type="Boolean" default="false"/>
+    <aura:attribute name="monthlyContractDiscount" type="Map"/>
+
+    <div class="slds-spinner_container hide" aura:id="save-spinner">
+        <div class="slds-spinner--brand slds-spinner slds-spinner--large" aria-hidden="false" role="alert">
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+    </div>
+</aura:component>

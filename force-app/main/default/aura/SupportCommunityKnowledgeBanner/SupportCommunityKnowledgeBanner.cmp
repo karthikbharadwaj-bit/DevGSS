@@ -1,0 +1,23 @@
+<aura:component description="Support Community Knowledge Banner" implements="forceCommunity:availableForAllPageTypes" controller="SupportCommunityImageController">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdate}"/>
+    <aura:attribute name="description" type="String" default="${link}" />
+    <aura:attribute name="link_title" type="String" default="RingCentral University" />
+    <aura:attribute name="link_url" type="String" default="#"/>
+    <aura:attribute name="image_url" type="String" default=""/>
+    <aura:attribute name="image_inx" type="Integer" default="1"/>
+    <aura:attribute name="description_before" type="String" default="" />
+    <aura:attribute name="description_after" type="String" default="" />
+    <aura:attribute name="targetAttr" type="String" default="Tab" />
+    <aura:attribute name="target" type="String" />
+    <div>
+        <div class="scBanner__logo" style="{! 'background-image:url('+v.image_url+')'}"></div>
+        <div class="scBanner__description">
+            {!v.description_before}
+            <br/>
+            <a href="{!v.link_url}" target="{!v.target}">{!v.link_title}</a>
+            {!v.description_after}
+        </div>
+    </div>
+</aura:component>

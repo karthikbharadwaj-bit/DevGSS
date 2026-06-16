@@ -1,0 +1,86 @@
+<aura:component >
+    <!--    <aura:attribute type="DQ_ApprovalEngine.ApproverWrapper[]" name="approverList" /> -->
+    <aura:attribute type="List" name="approverList" />
+    <aura:attribute type="Boolean" name="isCPQDQ" default="false"/>
+    <aura:attribute type="Integer" name="highestStepOrderNumber"/>
+    <aura:if isTrue="{!not(empty(v.approverList))}">
+	 <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-border_left slds-border_right"> 
+        <thead>
+            <tr class="slds-text-title_caps">
+                <th scope="col" class="tablehead">
+                    <div class="slds-truncate">Step </div>
+                </th>
+                <th scope="col" class="tablehead">
+                    <div class="slds-truncate" title="Approval Reason">Approval Reason</div>
+                </th>
+                <th scope="col" class="tablehead">
+                    <div class="slds-truncate" title="Approver Type">Approver Type</div>
+                </th>
+                <th scope="col" class="tablehead">
+                    <div class="slds-truncate" title="Approver Name">Approver Name</div>
+                </th>
+                <th scope="col" style="width:10%" class="tablehead"></th>
+                
+            </tr>
+        </thead>   
+        <tbody>
+            <aura:iteration items="{!v.approverList}" var="approverRec" indexVar="rowIndex">
+                    <aura:iteration items="{!approverRec.listOfStepApprover}" var="approver" indexVar="childRowIndex">
+                    <tr >
+                        <td>
+                            <aura:if isTrue="{!childRowIndex == 0}">
+                            	{!approverRec.approvalStepRecord.Name}
+                            </aura:if>
+                        </td>
+						<td>
+							<c:DQ_FormatLongText approvalStepId="{!approver.DQ_Approval_Step__c}" multiReason="{!approverRec.listOfApprovalStepTypeWithReason}" description="{!approverRec.approvalReason}"></c:DQ_FormatLongText> 
+                        </td>
+                        <td>
+							<aura:if isTrue="{!approver.Name}">
+								{!approver.Name}
+								<aura:set attribute="else">
+									Direct Manager
+								</aura:set>
+							</aura:if>
+						</td>
+                        <td>
+							<div>
+								<aura:if isTrue="{!approver.Owner.Name}">
+									{!approver.Owner.Name}
+									<c:DQ_QueueMemberTooltip queueId="{!approver.OwnerId}" />
+									<aura:set attribute="else">
+										{!approverRec.managerDetail.FirstName}
+									</aura:set>
+								</aura:if>
+								
+                            </div>
+                        </td>
+                        <td>
+                            <aura:if isTrue="{!!v.isCPQDQ}">
+                                <aura:if isTrue="{!approver.Approval_Type__c == 'Notification'}">
+                                    <div style="background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;[Notification Only]</div></div>
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!v.isCPQDQ}">
+                                <aura:if isTrue="{!approverRec.approvalStepRecord.Step_Order__c == v.highestStepOrderNumber}">
+                                    <aura:if isTrue="{!approver.Approval_Type__c == 'Notification'}">
+                                        <div style="background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;[Notification Only]</div></div>
+                                    </aura:if>
+                                </aura:if>
+                                <aura:if isTrue="{!!(approverRec.approvalStepRecord.Step_Order__c == v.highestStepOrderNumber)}">
+                                    <div style="background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;[Notification Only]</div></div>
+                                </aura:if>
+                            </aura:if>
+                        </td>
+                    </tr>
+                    </aura:iteration>
+                </aura:iteration>
+                
+         </tbody>
+    </table>
+         <aura:set attribute="else">
+             <br/>
+             <span>No Approver Required</span>
+         </aura:set>	
+    </aura:if>
+</aura:component>

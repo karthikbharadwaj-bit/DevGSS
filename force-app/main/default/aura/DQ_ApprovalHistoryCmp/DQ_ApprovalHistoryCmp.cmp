@@ -1,0 +1,18 @@
+<aura:component controller="DQ_DealQualificationController">
+ 	<aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap" />
+	<aura:attribute type="Boolean" name="isChangeApprovalUser" Default="false" />
+	<aura:attribute type="List" name="DQApproverList" />
+	<aura:attribute name="oppId" type="String" required="true" />
+	<aura:method name="refreshApproverList" action="{!c.doInit}" access="public" />
+	
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+	 
+	<aura:if isTrue="{!v.DQApproverList}">
+		<c:DQ_ApprovalCycle parent="{!THIS}" isChangeApprovalUser="{!v.isChangeApprovalUser}"
+			objDealQualificationWrap="{!v.objDealQualificationWrap}" DQApproverList="{!v.DQApproverList}" />
+
+		<aura:set attribute="else">
+			No Approved History Found
+		</aura:set>
+	</aura:if>
+</aura:component>

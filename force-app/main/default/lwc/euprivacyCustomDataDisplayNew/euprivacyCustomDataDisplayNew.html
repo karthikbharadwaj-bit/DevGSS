@@ -1,0 +1,69 @@
+<template>
+    <c-lwc-spinner></c-lwc-spinner>
+    <!-- <template if:true={isLoading}>
+        <div class="slds-p-around_x-large">
+            <lightning-spinner alternative-text="Loading" size="small" variant="brand"></lightning-spinner>
+        </div>
+    </template> -->
+    <div class="slds-card__body slds-card__body_inner">
+        <lightning-card icon-name="standard:account_info" title={strTitle}>
+            <template if:true={showComponent}>
+                <lightning-button label="Edit" title="Update the data" onclick={toggleEdit} class="slds-p-right_medium" slot="actions"></lightning-button>
+                <lightning-layout multiple-rows="true" class="slds-p-around_x-small">
+                    <template for:each={fieldDataFinal} for:item="flditem"> <!-- CRM - 5859 - CHANGED VARIABLE NAME-->
+                        <lightning-layout-item key={flditem.Id} size={layoutSizeLarge} class="slds-p-around_small">
+                            <div class="header_column">
+                                <p class="field-title" title={flditem.fieldLabel}>{flditem.fieldLabel} : </p>
+                                <p>
+                                   <template if:true={flditem.isHTMLFormatted}>
+                                    		<lightning-formatted-rich-text value={flditem.fieldValue}></lightning-formatted-rich-text>
+																		</template>
+																		<template if:false={flditem.isHTMLFormatted}>
+                                                                            <!-- CRM - 5859 - START-->
+                                                                            <template if:false={flditem.phoneField}><lightning-formatted-text value={flditem.fieldValue}></lightning-formatted-text></template>
+                                                                            <template if:true={flditem.phoneField}><lightning-click-to-dial value={flditem.fieldValue} record-id={recordId}></lightning-click-to-dial></template>
+                                                                            <!-- CRM - 5859 - END-->
+																		</template>
+                                </p>
+                            </div>
+                        </lightning-layout-item>
+                    </template>
+                </lightning-layout>
+            </template>
+    
+            <template if:true={showEdit}>
+                <lightning-button label="Cancel" title="Cancel record Update" onclick={handleCancel} class="slds-p-right_xx-small" slot="actions"></lightning-button>
+                <lightning-button label="Save" variant="brand" title="Save record change" onclick={handleSave} class="slds-p-right_medium" slot="actions"></lightning-button>
+                <lightning-layout multiple-rows="true" class="slds-p-around_x-small">
+                    <template for:each={fieldDataFinal} for:item="flditem"> <!-- CRM - 5859 - CHANGED VARIABLE NAME-->
+                        <lightning-layout-item key={flditem.Id} size={layoutSizeLarge} class="slds-p-around_small">
+                             <template if:true={flditem.isHTMLFormatted}>
+															<template if:true={flditem.isEditable}>
+																<lightning-input-rich-text type={flditem.fieldType} label={flditem.fieldLabel} name={flditem.fieldAPIName} value={flditem.fieldValue} onchange={handleFieldChange}></lightning-input-rich-text>
+															</template>
+															<template if:false={flditem.isEditable}>
+																<lightning-input-rich-text type={flditem.fieldType} label={flditem.fieldLabel} name={flditem.fieldAPIName} value={flditem.fieldValue} readonly="true"></lightning-input-rich-text>
+															</template>
+														</template>
+														<template if:false={flditem.isHTMLFormatted}>
+															<template if:true={flditem.isEditable}>
+																<lightning-input type={flditem.fieldType} label={flditem.fieldLabel} name={flditem.fieldAPIName} value={flditem.fieldValue} onchange={handleFieldChange}></lightning-input>
+															</template>
+															<template if:false={flditem.isEditable}>
+																<lightning-input type={flditem.fieldType} label={flditem.fieldLabel} name={flditem.fieldAPIName} value={flditem.fieldValue} readonly="true"></lightning-input>
+															</template>
+														</template>
+                        </lightning-layout-item>
+                    </template>
+                </lightning-layout>
+            </template>
+    
+            <template if:true={showNoData}>
+                <div class="slds-align_absolute-center">
+                    No data to display
+                </div>
+            </template>
+        </lightning-card>
+    </div>
+    
+</template>

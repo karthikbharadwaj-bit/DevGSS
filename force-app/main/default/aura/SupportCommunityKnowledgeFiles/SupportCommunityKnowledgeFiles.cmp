@@ -1,0 +1,24 @@
+<aura:component description="Support Community Knowledge Files" implements="forceCommunity:availableForAllPageTypes" controller="SupportCommunityKnowledgeController">
+    <aura:attribute name="label" type="String" default="Additional Files" />
+    <aura:attribute name="files" type="List" default="[]" />
+    <aura:attribute name="files_show" type="Boolean" default="false" />
+    <aura:handler event="c:SupportCommunityUserEvent" action="{!c.handleUpdate}"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <div>
+        <aura:if isTrue="{!v.files_show}">
+        <div class="files__label">
+            <span>{!v.label}</span>
+        </div>
+        <div class="files__list">
+            <aura:iteration items="{!v.files}" var="item">
+            <div class="file">
+                <div data-ext="{!item.Ext}" class="{!'file__icon' + item.Class}"></div>
+                <div class="file__name">
+                    <a href="{!item.Link}" class="file__link">{!item.Name}</a>
+                </div>
+            </div>
+            </aura:iteration>
+        </div>
+        </aura:if>
+    </div>
+</aura:component>

@@ -1,0 +1,48 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="Support Community Carousel" controller="SupportCommunityImageController">
+    <aura:attribute name="dots" type="List" default="[1]"/>
+    <aura:attribute name="active_dot" type="Integer" default="0"/>
+    <aura:attribute name="carouselItems" type="SupportCommunityImagelnk__c[]"/>
+    <aura:attribute name="first_init" type="Boolean" default="true"/>
+
+    <aura:attribute name="param_anim" type="Boolean" default="false"/>
+    <aura:attribute name="param_pInterval" type="Integer" default="5000"/>
+    <aura:attribute name="param_speed" type="Integer" default="500"/>
+    <aura:attribute name="param_mpDesktop" type="Decimal" default="15"/>
+    <aura:attribute name="param_mpTablet" type="Decimal" default="12.75"/>
+    <aura:attribute name="param_mpMobile" type="Decimal" default="9.25"/>
+
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdate}"/>
+    <div class="carousel_place">
+        <div class="loader">
+            <lightning:spinner alternativeText="Loading" size="medium" />
+        </div>
+        <div class="carousel">
+            <div class="carousel_control carousel__left" onclick="{!c.arrowClick}" data-dir="left">
+                <c:SupportCommunityIcon Id="arrow_left" alternativeText="&#8249;" />
+            </div>
+            <div class="carousel_control carousel__right" onclick="{!c.arrowClick}" data-dir="right">
+                <c:SupportCommunityIcon Id="arrow_right" alternativeText="&#8250;" />
+            </div>
+            <div class="carousel__view">
+                <div class="carousel__items">
+                    <aura:iteration items="{!v.carouselItems}" var="carouselItem" indexVar="inx">
+                        <div class="carousel__item" data-id="{!inx+1}" data-origin="true" data-link="{!carouselItem.Link__c}" data-order="{!inx+1}">
+                            <a class="item__block" href="{!carouselItem.Link__c}">
+                                <div><img class="image" src="{!carouselItem.Image__c}" alt="{!carouselItem.Name}"/></div>
+                                <div class="title">{!carouselItem.Name}</div>
+                            </a>
+                        </div>
+                    </aura:iteration>
+                </div>
+            </div>
+        </div>
+        <div class="dots" aura:id="container">
+            <aura:iteration items="{!v.dots}" var="item" indexVar="inx">
+                <div class="{!'dots__item ' + ((inx == v.active_dot)?'active':'')}" onclick="{!c.dotClick}" data-page="{!inx}"></div>
+            </aura:iteration>
+        </div>
+
+    </div>
+</aura:component>

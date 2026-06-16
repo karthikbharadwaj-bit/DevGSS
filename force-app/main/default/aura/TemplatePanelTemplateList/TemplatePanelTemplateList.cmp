@@ -1,0 +1,48 @@
+<aura:component >
+    <!-- Shared Attributes -->
+    <aura:attribute name="templates" type="RC_Quote_Template__c[]"/>
+    <aura:attribute name="sections" type="TemplateSections__c[]"/>
+    <aura:attribute name="selectedSection" type="TemplateSections__c"/>
+    <aura:attribute name="selectedTemplate" type="RC_Quote_Template__c"/>
+    <!-- Component Attributes -->
+    <!-- Registered Events -->
+    <aura:registerEvent type="c:TemplatePanelEvent" name="TemplatePanelEvent" />
+    <!-- Markup -->
+    <lightning:layout >
+        <lightning:layoutItem class="slds-p-horizontal--x-small" size="12" mediumDeviceSize="6">
+            <div class="slds-section slds-is-open templates-list">
+                <h2 class="slds-section__title slds-theme_shade slds-p-horizontal--small">
+                    <span title="Template List">Template List</span>
+                </h2>
+                <div aria-hidden="false" class="slds-section__content">
+                    <ul class="slds-has-dividers_bottom slds-has-block-links_space">
+                        <aura:iteration items="{! v.templates }" var="template">
+                            <li class="slds-item">
+                                <h3 class="slds-text-heading_small">
+                                    <a href="javascript:void(0);"
+                                       onclick="{! c.openTemplateView }"
+                                       data-templateid="{! template.Id }">
+                                            {! template.Name }
+                                    </a>
+                                </h3>
+                                <ul class="slds-is-nested slds-has-dividers_top slds-has-block-links_space">
+                                    <aura:iteration items="{! template.TemplateSectionJunction__r }"
+                                                    var="section">
+                                        <li class="slds-item">
+                                            <a  href="javascript:void(0);"
+                                                onclick="{! c.openSectionBuilder }"
+                                                data-sectionid="{! section.Template_Section__r.Id }"
+                                                data-templateid="{! template.Id }">
+                                                    {! section.Template_Section__r.Name }
+                                            </a>
+                                        </li>
+                                    </aura:iteration>
+                                </ul>
+                            </li>
+                        </aura:iteration>
+                    </ul>
+                </div>
+            </div>
+        </lightning:layoutItem>
+    </lightning:layout>
+</aura:component>

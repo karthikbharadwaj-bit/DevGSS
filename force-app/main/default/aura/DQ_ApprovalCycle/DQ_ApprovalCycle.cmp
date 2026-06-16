@@ -1,0 +1,162 @@
+<aura:component controller="DQ_DealQualificationController">
+    <aura:attribute type="List" name="DQApproverList" />
+    <aura:attribute type="Boolean" name="isChangeApprovalUser" Default="false" />
+    <aura:attribute type="Boolean" name="showApprovalAction"/>
+    <aura:attribute type="Boolean" name="enabledApprove"/>
+    <aura:attribute type="Boolean" name="isUserHavePermission"/>
+    <aura:attribute type="Boolean" name="refreshScreen" default="true"/>
+	<aura:attribute type="string" name="approvalRecordId"/>
+    <aura:attribute type="Boolean" name="Spinner" Default="false"/>
+    <aura:attribute name="parent" type="Aura.Component" required="true"/>
+    <aura:attribute type="string" name="currentStatus" />
+    <aura:attribute type="Boolean" name="isCPQDQ" default="false"/>
+    <aura:attribute type="Boolean" name="isAlreadyApprovedOrReject" default="false" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute type="DQ_ApprovalEngine1.ApproverWrapper[]" name="approverList" />
+    <aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap"/>
+    <aura:attribute type="string" name="opportunityId"/>
+    
+    <aura:if isTrue="{!not(empty(v.DQApproverList))}">
+        <aura:if isTrue="{!v.refreshScreen}">
+            <table class="slds-table slds-table_bordered slds-table_cell-buffer table-hover"> 
+                <thead>
+                    <tr class="slds-text-title_caps">
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate">Action </div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Date">Submitted Date</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Status">Status</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Assigned To">Assigned To</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Actual Approver">Actual Approver</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Date">Approve/Reject Date</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="SLA">SLA (HRS)</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Approver Reason">Approver Reason</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Comments">Comments</div>
+                        </th>
+                        <th scope="col" class="tablehead">
+                            <div class="slds-truncate" title="Overall Status">Overall Status</div>
+                        </th>
+                    </tr>
+                </thead>   
+                <tbody>
+                    <aura:iteration items="{!v.DQApproverList}" var="approvalStatus" indexVar="outerIndex">
+                        <tr style="background:#d8e9fa;color:#1b1d1f;">
+                            <td scope="col" colspan="9" style="color:#1b1d1f;font-weight:bold;">Step {!approvalStatus.stepNumber}</td>
+                            <td>
+                                <aura:if isTrue="{!outerIndex == 0}">
+                                    <div><div>&nbsp;&nbsp;{!v.objDealQualificationWrap.DQRec.Status__c}</div></div>
+                                </aura:if>
+                            </td>
+                        </tr>
+                        <aura:iteration items="{!approvalStatus.SLAWrapperList}" var="approver" indexVar="index">
+                            <tr>
+                                <td>
+                                    <aura:if isTrue="{!approver.approverRec.Status__c == 'Pending'}">
+                                        <a href="javascript:void(0)" class="{!approver.approverRec.Id}" onclick="{!c.ApproveDQ}">
+                                            Approve
+                                        </a>
+                                        &nbsp;|&nbsp;
+                                        <a href="javascript:void(0)" class="{!approver.approverRec.Id}" onclick="{!c.RejectDQ}">
+                                            Reject
+                                        </a>
+                                    </aura:if>
+                                </td>
+                                <td>
+                                    <lightning:formattedDateTime value="{!approver.approverRec.Submitted_Date__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+                                 minute="2-digit"  hour12="true"/>
+                                    <!--<ui:outputDate value="{!approver.approverRec.Submitted_Date__c}"/>-->
+                                </td>
+                                <td class="{!if(approver.approverRec.Status__c == 'Approved','textBold','')}">{!approver.approverRec.Status__c}</td>
+                                <td>
+									<aura:if isTrue="{!approver.approverRec.Owner.Name}">
+										{!approver.approverRec.Owner.Name} 
+										<c:DQ_QueueMemberTooltip queueId="{!approver.approverRec.OwnerId}" />
+										<aura:set attribute="else">
+											Direct Manager
+										</aura:set>
+									</aura:if>
+                                    <aura:if isTrue="{!v.isChangeApprovalUser}">
+                                        <aura:if isTrue="{!or(approver.approverRec.Status__c == 'Pending', approver.approverRec.Status__c == 'Inactive')}">
+                                            <c:DQ_editApproverAssignment approverRec="{!approver.approverRec}" parent="{!v.parent}"/>
+                                        </aura:if>
+                                    </aura:if>
+                                </td>
+                                <td>{!approver.approverRec.Approved_By__r.Name}</td>
+                                <td>
+                                    <lightning:formattedDateTime value="{!approver.approverRec.Approve_Reject_Date__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+                                 minute="2-digit"  hour12="true"/>
+                                    <!--<ui:outputDate value="{!approver.approverRec.Approve_Reject_Date__c}"/>
+									--></td>
+                                <td>
+                                    <aura:if isTrue="{!approver.approverRec.Approval_Step_Approver__r.Approval_Type__c != 'Notification'}">
+                                    {!approver.noofDays}
+                                    </aura:if>
+                                </td>
+                                <td style="white-space:normal;">{!approver.approverRec.Approval_Reason__c}</td>
+                                <td style="word-wrap:break-word;width:50px;white-space:normal;">{!approver.approverRec.Comments__c}</td>
+                                <td>
+                                    <aura:if isTrue="{!!v.isCPQDQ}">
+                                        <aura:if isTrue="{!approver.approverRec.Approval_Step_Approver__r.Approval_Type__c == 'Notification'}">
+                                            <div style="background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;[Notification Only]</div></div>
+                                        </aura:if>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.isCPQDQ}">
+                                        <aura:if isTrue="{!approver.approverRec.Status__c == 'Notification'}">
+                                            <div style="background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;[Notification Only]</div></div>
+                                        </aura:if>
+                                    </aura:if>
+									                                
+                                </td>
+                            </tr>
+                        </aura:iteration>
+                        <aura:if isTrue="{!approvalStatus.showSubmittedDetail}">
+                            <tr style="background:#d8e9fa;color:#1b1d1f;">
+                                <td scope="col" colspan="9" style="color:#1b1d1f;font-weight:bold;">Approval Requested Submitted</td>
+                                <td>
+                                    <!--<aura:if isTrue="{!outerIndex == 0}">
+                         <div style="width:90%;background:yellow;color:black;font-weight:bold;"><div>&nbsp;&nbsp;{!v.objDealQualificationWrap.DQRec.Status__c}</div></div>
+                       </aura:if>-->
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <lightning:formattedDateTime value="{!approvalStatus.submittedDetails.Submitted_Date__c}" year="numeric" month="numeric" day="numeric" hour="2-digit"
+                                 minute="2-digit"  hour12="true"/>
+                                    <!--<ui:outputDate value="{!approvalStatus.submittedDetails.Submitted_Date__c}"/> -->
+                                </td>
+                                <td>Submitted</td>
+                               <td colSpan="6"> {!approvalStatus.submittedDetails.CreatedBy.Name}</td>
+                            </tr>
+                        </aura:if>
+                    </aura:iteration>
+                </tbody>
+            </table>
+        </aura:if>
+        <aura:set attribute="else">
+            <br/>
+            <span>No approvals submitted</span>
+        </aura:set>	
+    </aura:if>
+    <aura:if isTrue="{!v.showApprovalAction}">
+    	<c:DQ_ApproverAction currentStatus="{!v.currentStatus}" isAlreadyApprovedOrReject="{!v.isAlreadyApprovedOrReject}"  parent="{!v.parent}" isUserHavePermission="{!v.isUserHavePermission}" refreshScreen="{!v.refreshScreen}" DQApproverList="{!v.DQApproverList}" objDealQualificationWrap="{!v.objDealQualificationWrap}" approvalRecordId="{!v.approvalRecordId}"  showApprovalAction="{!v.showApprovalAction}" enabledApprove="{!v.enabledApprove}" opportunityId="{!v.opportunityId}"/>
+    </aura:if>
+    <aura:if isTrue="{!v.Spinner}">
+            <c:SpinnerComponent/>
+    </aura:if>
+</aura:component>

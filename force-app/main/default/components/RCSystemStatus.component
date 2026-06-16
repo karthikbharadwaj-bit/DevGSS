@@ -1,0 +1,234 @@
+<apex:component controller="RCSupportPortalSystemStatusController" >
+    <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/readmore.js')}"></script>
+     <style>
+        .overflowClass{
+            overflow-y:scroll !important; 
+            overflow-x: scroll!important;
+        }
+        .status {
+            background-position:2px -609px;
+        }
+        
+        .readmore-js-section {
+            color: #666666;
+        }
+        .status-area .call-support {
+            float: none; 
+            }
+        .status {
+            float: none;
+            background: #ffffff;
+            width: 956px;
+            z-index: 9995;
+            position: absolute;
+            border-radius: 5px;
+            border: 1px solid #E5E5E5;
+            margin-top: 10px;
+          }
+        
+        .status .status-bg-left1 {
+            display: inline-block;
+            padding-left: 0px;
+            font-weight: 300;
+            font-family: 'Lato', Helvetica, Arial, sans-serif;
+            font-size: 15px;
+            color: #5d6067;
+            float: left;
+            padding: 4px;
+        }
+        
+        .system-msg1 {
+            display: block;
+            width: 84%;
+            position: relative;
+            top: 0px;
+            left: 0px;
+            float: right;
+            line-height: 20px;
+            padding-top: 8px;
+            padding-right: 2px;
+            margin-right: 5px;
+        }
+        
+        .systemstatus{
+            float: right;
+            line-height: 27px;
+            padding-left: 10px;
+        }
+        
+        .readmore-js-toggle {
+            margin-left: 85%;
+            color: #0058FF;
+            width: 13%;
+        }
+        
+        .readmore-js-expanded {
+            max-height: 550px !important;
+            padding-bottom: 5px;
+            
+        }
+        
+        .status-bg-right-red1{
+            border-radius: 20px;
+        }
+        .status-bg-right-orange1{
+            border-radius: 20px;
+        }
+        
+        .status-bg-right-green1{
+            border-radius: 20px;
+        }
+     </style>
+    <style>
+        .status-area {
+            height: 100px;
+            margin: 30px 0 30px 0px;
+        }
+        
+        .flag-area{
+            margin-top: 85px;
+            clear:both;
+        } 
+        .readmore-js-toggle {
+            position: absolte;
+            top:0px;
+        }
+    </style>
+    <apex:attribute type="String" required="true" name="Text" description="text"/>
+    <apex:attribute type="String" required="false" name="Subtitle" description="subtitle"/>
+    <apex:attribute type="String" required="false" name="iconcode" description="text"/>
+    <apex:attribute type="String" required="false" name="src" description="text"/>
+    <apex:variable var="hometext" value="Customer Care Center" />
+    
+    <apex:outputpanel rendered="{!IF(Text == '' || Text == hometext, 'false', 'true')}">
+        <div style="margin-top:10px;">
+            <a href="{!$Site.CurrentSiteUrl}?ln=all" style="color:#0066AA;text-decoration:none;">{!hometext}</a>
+            <apex:outputpanel rendered="{!IF(ISBLANK(srcURL), 'false', 'true')}">
+                <a href="{!$Site.CurrentSiteUrl}{!srcURL}" style="color:#0066AA;text-decoration:none;"> 
+                    &gt; 
+                    {!targetURL}
+                </a>
+            </apex:outputpanel> 
+                &gt; 
+                {!IF(ISBLANK(Subtitle),Text,Subtitle)}
+            </div>
+    
+    </apex:outputpanel>
+    <div class="status-area">
+        <div class="call-support">
+            <i class="{!iconcode}"></i>
+            {!Text}
+        </div>
+        <div >
+          <div class="status" id="status">
+            <div class="status-bg-left1">
+                <i class="{!iconShade}"></i>
+               <span class="systemstatus">Service Status</span>
+            </div>
+            
+             <div class="system-msg1" id="system-msg1" style="width:80%;">
+              <article class="slide readmore-js-section">
+            
+                 <div class="read-more-text">                 
+                    <apex:variable var="countOpen" value="{!0}"/>
+                   <apex:outputText rendered="{!if(isPublicDescFound && openDescriptionLst.size > 0,true,false)}" escape="false">
+                        <h4 style="width:auto;">Current Issues:</h4>
+                        <apex:repeat var="descStr" value="{!openDescriptionLst}">
+                            <apex:variable var="countOpen" value="{!countOpen + 1}"/>
+                            <p style="white-space: pre-wrap; width:100%;" class="test">{!descStr}</p>
+                            <apex:outputPanel rendered="{!if(countOpen == openDescriptionLst.size,false,true)}"  layout="none">
+                                <p>-----------------------------------------</p>
+                            </apex:outputPanel>
+                        </apex:repeat>
+                     <br/>    
+                    </apex:outputText>
+                   <apex:variable var="count" value="{!0}"/>
+                    <apex:outputText rendered="{!if(isPublicDescFound && resolveDescriptionLst.size >0,true,false)}" escape="false">
+                        <h4 style="width:auto;">Resolved Issues:</h4>
+                        <apex:repeat var="descStr" value="{!resolveDescriptionLst}">
+                        <apex:variable var="count" value="{!count + 1}"/>
+                            <p style="white-space:pre-wrap; width:100%;" class="test">{!descStr}</p>
+                            <apex:outputPanel rendered="{!if(count == resolveDescriptionLst.size,false,true)}" layout="none">
+                                 <p>-------------------------------------------------------------------------------------------------------------------------------------------------------------------</p> 
+                                <p>-----------------------------------------</p>
+                            </apex:outputPanel>
+                        </apex:repeat>
+                    </apex:outputText> 
+                        <apex:outputText rendered="{!if(isPublicDescFound,true,false)}" escape="false">
+                        <p class="imp" style="color: #666666;" >To see if your account may be affected, go to the <a href="https://servicestatus.ringcentral.com/" target="_blank" style="color: blue; text-decoration: underline;"> Service Status site</a>. </p>
+                    </apex:outputText>
+                   <apex:outputText rendered="{!!isPublicDescFound}"  escape="false">
+                       <p>No Known Issues</p>
+                       <p>For more information, go to the <a href="https://servicestatus.ringcentral.com/" target="_blank" style="color: #666666; text-decoration: underline;"> Service Status site</a>.</p>
+                    </apex:outputText>
+                </div>
+            </article> 
+          </div> 
+        </div>   
+        
+
+       <!-- Case 04733947 - HTTPS and the "Contact Support" button for US and CAD -->
+       <!-- Check Page Name instead of Page URL --> 
+       <!-- <apex:outputText value="{!$CurrentPage.URL}"/> -->
+     
+       <!-- <apex:outputpanel rendered="{!IF(        
+                                        (
+                                            $CurrentPage.URL=='https://success.ringcentral.com/apex/RCSupportPortalHome'||$CurrentPage.URL=='http://success.ringcentral.com/apex/RCSupportPortalHome' ||
+                                            $CurrentPage.URL=='https://success.ringcentral.com/apex/RCSupportPortalHome?ln=all'||$CurrentPage.URL=='http://success.ringcentral.com/apex/RCSupportPortalHome?ln=all' ||
+                                            $CurrentPage.URL=='https://success.ringcentral.ca/apex/RCSupportPortalHome'||$CurrentPage.URL=='http://success.ringcentral.ca/apex/RCSupportPortalHome' ||
+                                            $CurrentPage.URL=='https://success.ringcentral.ca/apex/RCSupportPortalHome?ln=all'||$CurrentPage.URL=='http://success.ringcentral.ca/apex/RCSupportPortalHome?ln=all'
+                                        )
+                                        ||
+                                        (
+                                            $CurrentPage.parameters.pg=='1'||
+                                            $CurrentPage.parameters.pg=='2'||
+                                            $CurrentPage.parameters.pg=='3'||
+                                            $CurrentPage.parameters.pg=='4'||
+                                            $CurrentPage.parameters.pg=='5'||
+                                            $CurrentPage.parameters.src=='6'
+                                        )
+                                        ,true, false)}" >                                        
+             <a rel="nofollow" href="{!$Site.CurrentSiteUrl}RCContactSupp?src={!src}" class="button-contact">Contact Support</a> 
+       </apex:outputpanel> -->
+
+       <apex:outputpanel rendered="{!IF(        
+                                    (
+                                        LOWER($CurrentPage.Name) == 'rcsupportportalhome' || 
+                                        $CurrentPage.parameters.pg=='1'||
+                                        $CurrentPage.parameters.pg=='2'||
+                                        $CurrentPage.parameters.pg=='3'||
+                                        $CurrentPage.parameters.pg=='4'||
+                                        $CurrentPage.parameters.pg=='5'||
+                                        $CurrentPage.parameters.src=='6'
+                                    ),true, false)}" >
+            <a rel="nofollow" href="{!$Site.CurrentSiteUrl}RCContactSupp?src={!src}" class="button-contact">Contact Support</a> 
+       </apex:outputpanel>
+
+    </div>
+</div>
+  <script>
+  
+    $('article').readmore();
+    
+      var alreadysystemClick = 0;      
+      $(document).click(function(e) {
+        if ($(e.target).is('.status,.status *')) {
+            if(alreadysystemClick == 0) {
+              alreadysystemClick = 1;
+              $('.system-msg').show();
+            } else if(alreadysystemClick == 1) {
+              var $target = $(e.target);
+              if ($target.is("a") ) {
+              } else {
+                  alreadysystemClick = 0;
+                  $('.system-msg').hide();   
+              } 
+            } 
+        } else {
+            alreadysystemClick = 0;
+            $('.system-msg').hide();   
+        }
+      });
+  </script>
+  
+</apex:component>

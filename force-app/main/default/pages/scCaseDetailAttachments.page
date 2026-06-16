@@ -1,0 +1,273 @@
+<apex:page id="scCaseDetailAttachments"
+    lightningstylesheets="true"
+    standardController="Case"
+    extensions="SCCaseAttachmentsController"
+    showheader="false"
+    standardstylesheets="false"
+    sidebar="false"
+    doctype="html-5.0"
+>
+    <apex:slds />
+    <apex:includescript value="{! $Resource.jquery172 }"></apex:includescript>
+    <style>
+        * { box-sizing: border-box;}
+        body {
+            background-color: #fff;
+            padding: 16px;
+        }
+        html, body {
+            overflow: hidden;
+            min-height: 100%;
+            height: 100%;
+        }
+        .sc-case-attach__wrapper {
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-orient: vertical;
+            -webkit-box-direction: normal;
+            -webkit-flex-direction: column;
+            -ms-flex-direction: column;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            flex: 1;
+            position: relative;
+        }
+        .slds-icon {
+            margin-bottom: 20px;
+        }
+        #approval {
+            fill: #00c6b7;
+        }
+        #close {
+            fill: #ef6e64;
+        }
+        .sc-case-attach__body {
+            overflow: hidden;
+            flex: 1;
+            width: 100%;
+        }
+        form[name="scCaseDetailAttachments:uploadFile"] {
+            display: flex;
+            overflow: hidden;
+            max-width: 100%;
+            align-items: center;
+            height: 100%;
+        }
+        .sc-case-attach__input {
+            position: absolute;
+            top: -1000px;
+        }
+        .sc-case-attach__upload {
+            display: none;
+        }
+        .sc-button {
+            background-color: #0684bd;
+            padding: 7px 21px;
+            outline: 0;
+            cursor: pointer;
+            border: none;
+            line-height: 16px !important;
+            color: #fff !important;
+            border-radius: 3px;
+            font-size: 14px !important;
+            font-family: "proximalight", sans-serif !important;
+            text-decoration: none !important;
+            margin: 0 10px !important;
+        }
+        .sc-button lightning-icon {
+            position: relative;
+            top: -3px;
+            left: -5px;
+        }
+        .sc-button:not(.disabled):hover {
+            background-color: #2098ce;
+        }
+        .sc-button.disabled {
+            cursor: default;
+            background-color: #9a9999;
+        }
+        .sc-button:not(.disabled):active {
+            background-color: #005684;
+        }
+
+        .sc-case-attach__loading {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        .sc-case-attach__buttons {
+            flex-basis: 30px;
+        }
+        .sc-case-attach__message {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .sc-case-attach__message span {
+            font-size: 18px;
+            color: #676767;
+        }
+        .sc-case-attach__loading.show {
+            display: block;
+        }
+        .sc-case-attach__line {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            flex-direction: column;
+            width: 100%;
+        }
+        .sc-case-attach__note {
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .sc-case-attach__filename {
+            flex: 1;
+            display: block;
+            font-size: 18px;
+            color: #676767;
+            padding: 10px 0;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .success div:not(#success) {
+            display: none;
+        }
+        .error div:not(#error) {
+            display: none;
+        }
+        .limitExceeded div:not(#limit) {
+            display: none;
+        }
+        .none {
+            display: none;
+        }
+    </style>
+
+    <script>
+        var caseId;
+        function createIcon(icon, title, selector) {
+            $(selector).empty().html('<svg aria-hidden="true" class="slds-icon" title="' + title + '">\n' +
+                '                <use xlink:href="/_slds/icons/action-sprite/svg/symbols.svg#' + icon + '"></use>\n' +
+                '            </svg>');
+        }
+        function loading(show) {
+            $(".sc-case-attach__loading").toggleClass("show", show);
+        }
+        function showError(text) {
+            console.warn(text);
+        }
+        function changeFile(evt) {
+            $(".sc-case-attach__upload").hide();
+            $(".sc-case-attach__filename").text('');
+            if (evt.files.length > 0) {
+                const file =  evt.files[0];
+                $(".sc-case-attach__filename").text(file.name).attr("title",file.name);
+                $(".sc-case-attach__upload").show();
+            }
+        }
+        function uploadAttach() {
+            upload();
+            loading(true);
+            return false;
+        }
+        function getJsonFromUrl(url) {
+            if(!url) url = location.search;
+            var query = url.substr(1);
+            var result = {};
+            query.split("&").forEach(function(part) {
+                var item = part.split("=");
+                result[item[0]] = decodeURIComponent(item[1]);
+            });
+            return result;
+        }
+
+        function init() {
+            var params = this.getJsonFromUrl();
+            try {
+                caseId = params.id;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        $( document ).ready(function() {
+            init();
+        });
+    </script>
+    <div class="sc-case-attach__wrapper">
+        <div class="sc-case-attach__body">
+            <apex:form id="uploadFile">
+                <apex:outputPanel Id="panel" styleClass="sc-case-attach__line" rendered="{!uploadStatus == 'none'}">
+                    <div class="sc-case-attach__note">
+                        <p>You can upload a file up to {!attachmentSizeLimit} MB</p>
+                        <p> The total of your files size should not exceed {!attachmentStorageLimit} MB</p>
+                    </div>
+                    <span class="sc-case-attach__filename"></span>
+                    <div class="sc-case-attach__buttons">
+                        <apex:actionFunction action="{!attachFile}" name="upload"></apex:actionFunction>
+                        <label class="sc-case-attach__add sc-button">
+                            <span id="add">Choose a file</span>
+                                <apex:inputFile value="{!attachmentBody}"
+                                    styleclass="sc-case-attach__input"
+                                    filename="{!attachmentName}"
+                                    fileSize="{!attachmentSize}"
+                                    onChange="changeFile(this)"
+                                    id="file"
+                                />
+                        </label>
+                        <apex:commandButton value="Upload"
+                            styleclass="sc-button sc-case-attach__upload"
+                            onclick="uploadAttach();return false;"
+                            rerender="out"
+                        />
+                    </div>
+                </apex:outputPanel>
+            </apex:form>
+            <apex:outputPanel Id="out" styleClass="{!uploadStatus}">
+                <div id="success" class="sc-case-attach__message">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="approval" class="slds-icon slds-icon--large">
+                    <path d="M8.8 20.1l-7.6-7.6c-.3-.3-.3-.8 0-1.1l1-1c.2-.2.7-.2 1 0l5.7 5.8c.2.2.5.2.7 0L20.8 4.9c.3-.3.8-.3 1 0l1 1c.3.3.3.7 0 1l-13 13.2c-.3.3-.8.3-1 0z"></path>
+                </svg>
+                <span>File attached successfully</span>
+            </div>
+                <div id="error" class="sc-case-attach__message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="close">
+                        <path d="M14.6 11.9l6-6c.3-.3.3-.7 0-1l-.9-1c-.3-.3-.7-.3-1 0L12.6 10c-.1.2-.4.2-.6 0L6 3.9c-.3-.3-.7-.3-1 0l-1 .9c-.3.3-.3.7 0 1l6.1 6.1c.1.1.1.4 0 .6L4 18.6c-.3.3-.3.7 0 1l.9.9c.3.3.7.3 1 0l6.1-6c.2-.2.5-.2.6 0l6.1 6c.3.3.7.3 1 0l.9-.9c.3-.3.3-.7 0-1l-6-6c-.2-.2-.2-.5 0-.7z"></path>
+                    </svg>
+                    <span>Something went wrong!</span>
+                </div>
+                <div id="limit" class="sc-case-attach__message">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" id="close">
+                        <path d="M14.6 11.9l6-6c.3-.3.3-.7 0-1l-.9-1c-.3-.3-.7-.3-1 0L12.6 10c-.1.2-.4.2-.6 0L6 3.9c-.3-.3-.7-.3-1 0l-1 .9c-.3.3-.3.7 0 1l6.1 6.1c.1.1.1.4 0 .6L4 18.6c-.3.3-.3.7 0 1l.9.9c.3.3.7.3 1 0l6.1-6c.2-.2.5-.2.6 0l6.1 6c.3.3.7.3 1 0l.9-.9c.3-.3.3-.7 0-1l-6-6c-.2-.2-.2-.5 0-.7z"></path>
+                    </svg>
+                    <span>File too large!</span>
+                </div>
+            </apex:outputPanel>
+        </div>
+        <div class="sc-case-attach__loading">
+            <div class="slds-spinner_container">
+                <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                    <span class="slds-assistive-text"></span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</apex:page>

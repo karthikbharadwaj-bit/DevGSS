@@ -1,0 +1,868 @@
+<apex:page standardController="Legal_Requests__c" extensions="FossTicket">
+	<style>
+		.mainHeadingTd {
+			font-weight: bold;
+			font-size: 14px;
+			text-align: center;
+		}
+		
+		.sectionTable {
+			width: 100%
+		}
+		
+		.sectionContainer {    
+			border: 1px solid gray;
+			margin-top: 15px;
+			width: 1000px;
+		}
+		
+		.sectionTable td{
+			padding: 5px;
+			width: 100%;
+		}
+		
+		/*.sectionTable hr{
+			width: 96%;
+		}*/
+		
+		div.line {
+			width: 96%;
+			height: 1px;
+			background: grey;
+		}
+		
+		.sectionTable div{
+			float: left;
+		}
+		
+		.sectionTable input[type=text] {
+			padding: 2px;			
+		}
+		
+		.sectionTable textarea {
+			padding: 2px;
+			width: 96%;
+		}
+		
+		.sectionHeading {
+			font-weight: bold;
+			float: none;			
+		}
+		
+		.innerDiv{
+			width: 100%;
+		}
+		
+		.innerDiv div:nth-child(1){
+			width: 27%;
+		}
+		
+		.innerDiv div:nth-child(2){
+			width: 26%;
+		}
+		
+		.innerDiv div:nth-child(3){
+			width: 27%;
+		}
+		
+		.actionBtn {
+			width: auto;
+			height: 30px;
+			padding: 8px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: black;
+		}
+		
+		.commentBtn {
+			width: auto;
+			height: 30px;
+			padding: 5px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: black;
+		}
+		
+		#commentOverlay,#watcherOverlay,#attachOverlay {
+			background: no-repeat scroll top center rgb(10, 9, 9);	
+			border: 0px solid #000000;
+			bottom: 0;
+			left: 0;
+			opacity: 0.90;
+			position: absolute;
+			top: 0;
+			visibility: hidden;
+			width: 100%;
+			z-index: 9999;
+			zIndex: 9999;
+			height: 100%;
+		}
+		
+		#commentOverlay div:nth-child(1),#watcherOverlay div:nth-child(1),#attachOverlay div:nth-child(1) {
+			width: 500px;
+			margin: 100px auto;
+			background-color: #fff;
+			border: 1px solid #000;
+			padding: 15px;
+			border-radius: 10px;
+		}	
+		
+		.commentDiv{
+			width:100%;
+			text-align: center;
+			padding: 10px;
+		}
+		
+		.dateFormat{
+   			visibility:hidden;
+		}
+		
+		.commentClass{
+			width:85%;
+			height:100px;
+		}
+		
+		.errorCls{
+			display:none;
+			margin: 10px;
+			width: 224px;
+			text-align: center;
+			margin-left: 60px;
+			border: none;
+			font-weight: bold;
+			font-size: initial;			
+		}	
+		.isEmbeded {
+			display: none;
+		}	
+		
+		.errorM3{
+			border-color: #c00;
+		}
+		
+		.message {
+			background-color: #ffc;
+			border-style: solid;
+			border-width: 1px;
+			color: #000;
+			padding: 6px 8px 6px 6px;
+			margin: 4px 20px;
+			/*display: none;*/
+		}
+		
+		.message .messageText {
+			margin-left: 8px;
+		}
+		
+		.msgIcon, .errorMedium {
+			background-image: url(/img/msg_icons/error24.png);
+			background-position: 0 0;
+			width: 24px;
+			height: 24px;
+		}
+		
+		.submitBtn {
+			width: auto;
+			height: 30px;
+			padding: 8px;
+			border-radius: 9px;
+			background: none repeat scroll 0 0 lightgray;
+			color: white;
+			background-color: black;
+			margin: 10px;
+		}
+	</style>	
+	
+	<apex:composition template="ITPortalTemplate1">		
+		<apex:define name="content">
+			<apex:form >
+				<div id="attachOverlay">
+					<div id="attachDiv">
+						<apex:actionRegion >
+							<div id="attachErrorDiv" class="errorCls" style="margin: 10px; width: 315px; margin-left: 60px; border: none;">
+								<font color="red">Error: </font> Please select file.
+							</div>
+							<table width="100%">
+								<tr>
+									<td style="vertical-align: top;">
+										<b><font size="3">1.</font></b>
+									</td>
+									<td>
+										<b><font size="3">Select the File</font> </b><br />
+										<font size="2">Type the path of the file or click the Browse button to find the file.</font><br /> <br /> 
+										<apex:inputFile value="{!attachObj.body}" filename="{!attachObj.Name}" id="attachId"/><br/><br/>
+									</td>
+								</tr>
+								<tr>
+									<td style="vertical-align: top;">
+										<b><font size="3">2.</font></b>
+									</td>
+									<td>
+										<b><font size="3">Click the "Attach File" button to upload.</font> </b><br />
+										<apex:commandbutton value="Attach File" styleClass="actionBtn" action="{!uploadFile}"/>
+										<button Class="actionBtn" style="margin-left: 10px;" type="button" onclick="FOSS.hideAttachDiv();">Cancel</button>
+									</td>
+								</tr>							
+							</table>
+						</apex:actionRegion>
+					</div>
+				</div>
+			</apex:form>
+			
+			<apex:form id="mainForm" styleclass="CaseForm1Cls">
+				<c:AutoCompleteSearch autocomplete_textbox="{!$Component.lookup}" selectedvalue_textbox="{!$Component.hiddenId}" />	
+				<apex:actionStatus id="OverlayStatus" onStart="FOSS.showOverlay();" onStop="FOSS.hideOverlay();"/>
+				
+				
+				<div id="watcherOverlay">
+					<div id="watcherDiv">
+						<div id="watcherErrorDiv" class="errorCls" style="margin: 10px; width: 315px; margin-left: 60px; border: none;">
+							<font color="red">Error: </font> Please select Inventor.
+						</div>
+						<apex:outputLabel value="Inventor: " style="padding:15px;" />
+						<apex:inputField value="{!watcherObj.Advisor_Name__c}" style="padding:2px;" styleClass="advisorClass" /><br /> <br />
+						<apex:outputLabel value="Role: " style="padding:41px;" />
+						<apex:outputLabel value="Inventor" style="padding:2px; margin-left: -28px;" styleClass="roleClass" /><br />
+						<apex:outputLabel value="Department: " style="padding:0px;" />
+						<apex:inputField value="{!watcherObj.Department__c}" style="padding:2px; margin-left: 12px; margin-top: 8px; margin-bottom: 8px;"/><br />
+						<apex:outputLabel value="Location: " style="padding:15px;" />
+						<apex:inputField value="{!watcherObj.Location__c}" style="padding:2px; margin-left: 3px; margin-top: 12px; margin-bottom: 6px;" /><br />
+
+						<apex:actionFunction action="{!saveWatcher}" name="actionSaveWatcher" reRender="childList,mainForm" status="OverlayStatus" />
+						<apex:actionStatus startText=" (Saving...)" id="st1" style="text-color:red;" onstop="Invention.hideWatcherDiv();" />
+
+						<div class="commentDiv">
+							<button Class="commentBtn" onClick="FOSS.saveWatcher();" type="button">Save</button>
+							<button Class="commentBtn" style="margin-left: 10px;" type="button" onclick="FOSS.hideWatcherDiv();">Cancel</button>
+						</div>
+					</div>
+				</div>
+				
+				<div>						
+					<p class="mainHeadingTd">RingCentral Free or Open Source
+						Software Authorization Request Form</p>
+					<br />
+					<p style="text-align: justify;">
+						If you discover free or open source software (“FOSS”) that may be
+						useful in developing code for your project, please provide the
+						information requested below and submit this form to <a
+							href="mailto:opensource@ringcentral.com" style="color: blue;">opensource@ringcentral.com</a>
+						before you start working with the FOSS. If you have already
+						started to use the FOSS, please submit this form immediately.
+						Reviewing this information ahead of time will allow us to protect
+						RingCentral’s intellectual property rights and ensure that we do
+						not violate the rights of others.
+					</p>
+					<br style="clear: both;" />					
+					
+					<apex:pageMessages />
+					
+					<div class="message errorM3" style="display:none">
+					    <table border="0" cellpadding="0" cellspacing="0" class="messageTable" style="padding:0px;margin:0px;">
+					        <tbody>
+					            <tr valign="top">
+					                <td>
+										<img alt="ERROR" class="msgIcon" src="/s.gif" title="ERROR"/>
+									</td>
+									<td class="messageCell">
+										<div class="messageText">											
+										</div>
+									</td>
+								</tr>
+								<tr>
+									<td></td>
+									<td></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					
+					<div style="text-align: center; margin-top: 10px;">
+						<!-- <apex:outputPanel rendered="{!isDraft}"> -->
+						<apex:outputPanel rendered="{!isEdit}">
+							<!-- <apex:commandButton action="{!saveData}" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/> -->
+							<apex:actionFunction action="{!saveData}" name="saveAction" reRender="mainForm" status="OverlayStatus" /> 							
+							<apex:commandButton onClick="FOSS.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!cancelButton}" value="Cancel" rendered="{!IsFossId}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!editData}" value="Edit" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>							
+							<!-- <apex:commandButton onClick="FOSS.watcherOverlay('200px'); return false;" value="Add Inventor" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/> -->
+							<apex:commandButton onClick="FOSS.attachOverlay('200px'); return false;" value="Add Attachment" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+						</apex:outputPanel>
+					</div>						
+					
+					<div class="sectionContainer">
+						<table class="sectionTable">
+						
+							<!-- <tr>
+								<td>
+									<div class="sectionHeading">Your Information</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>
+									<div class="innerDiv">	
+										<apex:outputLabel value="{!fossObjectMap['Name']} : "/>								
+										<apex:inputField rendered="{!isEdit}" value="{!fossObj.Name}"/>
+										<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Name}"/>
+									</div>									
+								</td>																						
+							</tr> -->
+							<tr>
+								<td>
+									<div class="sectionHeading">About the FOSS</div>
+									<div class="line"></div>
+								</td>
+							</tr>
+							<tr>	
+								<td>
+									<div class="innerDiv">
+										<div style="width:10%">
+											<apex:outputLabel value="{!fossObjectMap['FOSS_Name__c']} : " />
+										</div>
+										<div style="width:26%">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.FOSS_Name__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.FOSS_Name__c}"/>
+										</div>
+										<div style="width:12%">
+											<apex:outputLabel value="{!fossObjectMap['FOSS_Version__c']} : "/>
+										</div>
+										<div style="width:24%">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.FOSS_Version__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.FOSS_Version__c}"/>
+										</div>
+										<div style="width:12%">
+											<apex:outputLabel value="{!fossObjectMap['Status__c']} : "/>
+										</div>
+										<div>
+											<apex:outputText value="{!fossObj.Status__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 36%" id="fossNameFieldDiv">
+											<apex:outputPanel id="namePanel">
+												<apex:outputLabel value="{!fossObjectMap['FOSS_Submitter__c']} : " />
+												<apex:inputText rendered="{!isEdit}" id="lookup" value="{!fossObj.FOSS_Submitter__c}"/>
+												<apex:inputHidden value="{!fossObj.FOSS_Submitter_Lookup__c}" id="hiddenId"/>	
+  												<apex:outPutText rendered="{!!isEdit}" value="{!fossObj.FOSS_Submitter__c}"/>
+											</apex:outputPanel>
+										</div>
+										<div style="width: 36%">
+											<apex:outputLabel value="{!fossObjectMap['Location__c']} : " style="padding-right:60px;"/>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Location__c}" style="width:30%"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Location__c}" />
+										</div>
+										<div style="width: 28%">
+											<apex:outputLabel value="{!fossObjectMap['Department__c']} : " style="padding-right:40px;"/>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Department__c}" style="width:50%"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Department__c}" />
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>
+									<div class="innerDiv">
+										<div style="width: 36%">
+											<apex:outputLabel value="{!fossObjectMap['RingCentral_Product_where_used__c']} : " />
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.RingCentral_Product_where_used__c}"/>
+										</div>
+										<div style="width: 36%">
+											<apex:outputLabel rendered="{!isEdit}" value="Product Major Release Version : "/>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Major_RingCentral_Product_Version__c}"/>
+										</div>
+										<div style="width: 28%">
+											<apex:outputLabel rendered="{!isEdit}" value="Product Minor Release Version : "/>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Minor_RingCentral_Product_Version__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Is_FOSS_currently_being_used__c']} : "/>
+										</div>
+										<div>
+											<!-- <apex:inputField rendered="{!isEdit}" value="{!fossObj.Is_FOSS_currently_being_used__c}"/>
+											<apex:outputField rendered="{!!isEdit}" value="{!fossObj.Is_FOSS_currently_being_used__c}"/> -->
+											<apex:inputCheckbox onClick="FOSS.showCurrentFOSSDiv();" value="{!fossObj.Is_FOSS_currently_being_used__c}" disabled="{!!isEdit}" id="fossUsedId"/>
+										</div>
+										<div style="display: none;" class="currentFOSSDivCls">
+											<apex:outputLabel value="{!fossObjectMap['When_did_FOSS_start_being_used__c']} : "/>
+										</div>
+										<div style="display: none;" class="currentFOSSDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.When_did_FOSS_start_being_used__c}" id="fossStartId"/>											
+											<apex:outputText rendered="{!!isEdit}" value="{0,date,MM'/'dd'/'yyyy}">
+												<apex:param value="{!fossObj.When_did_FOSS_start_being_used__c}" />
+											</apex:outputText>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Applicable_License__c']} : " style="padding-right: 30%;"/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Applicable_License__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Applicable_License__c}"/>
+										</div>
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['License_URL__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.License_URL__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.License_URL__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>		
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Is_attribution_required_for_use__c']} : "/>
+										</div>
+										<div>
+											<!-- <apex:inputField rendered="{!isEdit}" value="{!fossObj.Is_attribution_required_for_use__c}"/>
+											<apex:outputField rendered="{!!isEdit}" value="{!fossObj.Is_attribution_required_for_use__c}"/> -->
+											<apex:inputCheckbox onClick="FOSS.showIncludeAttrDiv();" value="{!fossObj.Is_attribution_required_for_use__c}" disabled="{!!isEdit}" id="attrRequireId"/>
+										</div>
+										<div style="display: none;" class="includeAttrDivCls">
+											<apex:outputLabel value="{!fossObjectMap['Include_attribution__c']} : "/>
+										</div>
+										<div style="display: none;" class="includeAttrDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Include_attribution__c}" id="includeAttrId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Include_attribution__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Why_do_you_want_to_incorporate_the_FOSS__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Why_do_you_want_to_incorporate_the_FOSS__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Why_do_you_want_to_incorporate_the_FOSS__c}"/>
+										</div>
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Date_for_RC_Product_Integration__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.Date_for_RC_Product_Integration__c}" id="rcProductDateId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{0,date,MM'/'dd'/'yyyy}">
+												<apex:param value="{!fossObj.Date_for_RC_Product_Integration__c}" />
+											</apex:outputText>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Will_FOSS_be_modified__c']} : " style="padding-right: 28%;"/>
+										</div>
+										<div>
+											<!-- <apex:inputField rendered="{!isEdit}" value="{!fossObj.Will_FOSS_be_modified__c}"/>
+											<apex:outputField rendered="{!!isEdit}" value="{!fossObj.Will_FOSS_be_modified__c}"/> -->
+											<apex:inputCheckbox onClick="FOSS.showFOSSModifyDiv();" value="{!fossObj.Will_FOSS_be_modified__c}" disabled="{!!isEdit}" id="fossModifyId"/>
+										</div>
+										<div style="display: none;" class="fossModifyDivCls">
+											<apex:outputLabel value="{!fossObjectMap['How_will_FOSS_be_modified__c']} : "/>
+										</div>
+							 			<div style="display: none;" class="fossModifyDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.How_will_FOSS_be_modified__c}" id="yesFossModifyId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.How_will_FOSS_be_modified__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="FOSS be embedded in external RingCentral Products : "/>
+										</div>
+										<div>
+											<apex:inputCheckbox onClick="FOSS.fnIsEmbeded();" value="{!fossObj.FOSS_be_embeded_in_external_RC_Products__c}" disabled="{!!isEdit}" id="isEmbededField" />
+										</div>
+										<div class="isEmbeded">
+											<apex:outputLabel value="{!fossObjectMap['In_what_form_will_FOSS_be_redistributed__c']} : "/>
+										</div>
+										<div class="isEmbeded">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.In_what_form_will_FOSS_be_redistributed__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.In_what_form_will_FOSS_be_redistributed__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">	
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Will_you_link_to_FOSS__c']} : "/>
+										</div>
+										<div style="width:8%">
+											<apex:inputCheckbox onclick="FOSS.showFossLinkDiv();" value="{!fossObj.Will_you_link_to_FOSS__c}" disabled="{!!isEdit}" id="fossLinkCheckboxInp" />
+											<!-- <apex:inputField onclick="FOSS.showFossLinkDiv();" rendered="{!isEdit}" value="{!fossObj.Will_you_link_to_FOSS__c}" id="fossLinkCheckboxInp"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.Will_you_link_to_FOSS__c}" id="fossLinkCheckboxOut"/> -->
+										</div>																			
+										<div style="width:18%;display: none;" class="FossLinkDivCls">
+											<apex:outputLabel value="{!fossObjectMap['How_will_you_link_to_FOSS__c']} : "/>
+										</div>
+										<div style="width:18%;display: none;" class="FossLinkDivCls">
+											<apex:inputField onclick="FOSS.showOtherDiv();" rendered="{!isEdit}" value="{!fossObj.How_will_you_link_to_FOSS__c}" id="fossLinkIdInp"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.How_will_you_link_to_FOSS__c}" id="fossLinkIdOut"/>
+										</div>
+										<div style="display: none;" class="otherDivCls">
+											<apex:outputLabel value="{!fossObjectMap['If_Other_explain__c']} : "/>
+										</div>
+										<div style="display: none;" class="otherDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.If_Other_explain__c}" id="otherExplainId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.If_Other_explain__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['How_widely_is_this_FOSS_used_externally__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.How_widely_is_this_FOSS_used_externally__c}"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.How_widely_is_this_FOSS_used_externally__c}"/>
+										</div>
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['FOSS_introduced_to_the_marketplace__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.FOSS_introduced_to_the_marketplace__c}" id="fossIntroDateId"/>
+											<!-- <apex:outputText rendered="{!!isEdit}" value="{!fossObj.FOSS_introduced_to_the_marketplace__c}"/> -->
+											<apex:outputText rendered="{!!isEdit}" value="{0,date,MM'/'dd'/'yyyy}">
+												<apex:param value="{!fossObj.FOSS_introduced_to_the_marketplace__c}" />
+											</apex:outputText>
+										</div>
+									</div>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<div class="innerDiv">										
+										<div>
+											<apex:outputLabel value="{!fossObjectMap['Are_alternatives_to_the_FOSS_available__c']} : "/>
+										</div>
+										<div>
+											<apex:inputField onclick="FOSS.showAlternateFOSSDiv();" rendered="{!isEdit}" value="{!fossObj.Are_alternatives_to_the_FOSS_available__c}" id="alternateFossInp"/>
+											<apex:outputField rendered="{!!isEdit}" value="{!fossObj.Are_alternatives_to_the_FOSS_available__c}" id="alternateFossOut"/>
+										</div>
+										<div style="display: none;" class="alternateFossYesDivCls">
+											<apex:outputLabel value="{!fossObjectMap['If_yes_what_are_they__c']} : "/>
+										</div>
+										<div style="display: none;" class="alternateFossYesDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.If_yes_what_are_they__c}" id="alternateFossYesId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.If_yes_what_are_they__c}"/>
+										</div>
+										<div style="display: none;width:27%" class="alternateFossNoDivCls">
+											<apex:outputLabel value="{!fossObjectMap['If_no_how_important_is_the_FOSS_to_RC__c']} : "/>
+										</div>
+										<div style="display: none;" class="alternateFossNoDivCls">
+											<apex:inputField rendered="{!isEdit}" value="{!fossObj.If_no_how_important_is_the_FOSS_to_RC__c}" id="alternateFossNoId"/>
+											<apex:outputText rendered="{!!isEdit}" value="{!fossObj.If_no_how_important_is_the_FOSS_to_RC__c}"/>
+										</div>
+									</div>
+								</td>
+							</tr>							
+						</table>
+					</div>
+					
+					<div style="text-align: center; margin-top: 10px;">
+						<apex:outputPanel rendered="{!isDraft}">
+							<apex:actionFunction action="{!saveData}" name="saveAction" reRender="mainForm" status="OverlayStatus" /> 							
+							<apex:commandButton onClick="FOSS.validate();return false;" value="Save" rendered="{!isEdit}" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!cancelButton}" value="Cancel" rendered="{!IsFossId}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>
+							<apex:commandButton action="{!editData}" value="Edit" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/>														
+							<!-- <apex:commandButton onClick="FOSS.watcherOverlay('300px'); return false;" value="Add Inventor" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/> -->
+							<apex:commandButton onClick="FOSS.attachOverlay('300px'); return false;" value="Add Attachment" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="actionBtn" status="OverlayStatus"/><br/>
+							<apex:commandButton action="{!submitCase}" value="Submit Request" rendered="{!!isEdit}" style="margin-left:10px;" reRender="mainForm" styleClass="submitBtn" status="OverlayStatus" oncomplete="FOSS.hideActionLinks();"/>
+						</apex:outputPanel>
+					</div>		
+				</div>	
+			</apex:form>
+			
+			<apex:outputPanel layout="block" id="childList">
+				<!-- <apex:relatedList list="Legal_Requests_Watchers__r">
+					<apex:facet name="header">FOSS Inventor</apex:facet>
+				</apex:relatedList> -->
+				<apex:relatedList list="Legal_Requests_Comments__r">
+					<apex:facet name="header">Comments</apex:facet>
+				</apex:relatedList>
+				<apex:relatedList list="NotesAndAttachments">
+					<apex:facet name="header">Attachments</apex:facet>
+				</apex:relatedList>
+			</apex:outputPanel>
+
+		</apex:define>
+	</apex:composition>
+	
+	<apex:includeScript value="{!URLFOR($Resource.HelperResource, '/js/jquery.blockUI.js')}"/>
+	<script>
+		var FOSS = {
+			commentOverlay : function (topHeight) {			
+				$('#commentOverlay').css('visibility','visible');
+				$('#commentDiv').css('marginTop',topHeight);
+			},
+			watcherOverlay : function (topHeight) {
+				$('#watcherOverlay').css('visibility','visible');
+				$('#watcherDiv').css('marginTop',topHeight);
+			},	
+			attachOverlay : function(topHeight) {
+				$('#attachOverlay').css('visibility', 'visible');
+				$('#attachDiv').css('marginTop', topHeight);
+			},		
+			saveComment : function (){
+				var inpBox = $('.commentClass');
+				if(inpBox.val().length > 0){
+					actionSaveComment();
+				}else{
+					$('#commentErrorDiv').css("display","block");
+					return false;
+				}
+			},
+			saveWatcher : function (){
+				var advisorBox = $('.advisorClass');
+				if(advisorBox.val().length > 0){
+					actionSaveWatcher();
+				}else{
+					$('#watcherErrorDiv').css("display","block");
+					return false;
+				}
+			},			    
+	        hideCommentDiv : function () {            
+	            $('#commentOverlay').css('visibility','hidden');
+	            $('.commentClass').val('');                 
+	        },        
+	        hideWatcherDiv : function () {            
+	            $('#watcherOverlay').css('visibility','hidden');
+	            $('.advisorClass').val(''); 
+	            $('.roleClass').val('');          
+	        },
+	        hideAttachDiv : function() {
+				$('#attachOverlay').css('visibility', 'hidden');
+				$("[id$=attachId]").val('');
+			},
+	        showCurrentFOSSDiv : function(){
+	        	var valDisInp = $("[id$=fossUsedId]:checked").length;
+				if (valDisInp == 0) {
+					$(".currentFOSSDivCls").hide();
+					$("[id$=fossStartId]").val('');						
+				} else {
+					$(".currentFOSSDivCls").show();
+				}
+	        },
+	        showIncludeAttrDiv : function(){
+	        	var valDisInp = $("[id$=attrRequireId]:checked").length;
+				if (valDisInp == 0) {
+					$(".includeAttrDivCls").hide();
+					$("[id$=includeAttrId]").val('');						
+				} else {
+					$(".includeAttrDivCls").show();
+				}
+	        },
+	        showFOSSModifyDiv : function(){
+	        	var valDisInp = $("[id$=fossModifyId]:checked").length;
+				if (valDisInp == 0) {
+					$(".fossModifyDivCls").hide();
+					$("[id$=yesFossModifyId]").val('');						
+				} else {
+					$(".fossModifyDivCls").show();
+				}
+	        },
+	        showOtherDiv : function(){
+	        	var picklistValueInp = $("[id$=fossLinkIdInp]").val();
+				var picklistValueOut = $("[id$=fossLinkIdOut]").text();
+				if (picklistValueInp == 'Other' || picklistValueOut == 'Other'){  
+					$('.otherDivCls').show();
+				}else{
+					$('.otherDivCls').hide();
+					$("[id$=otherExplainId]").val('');		
+				}
+	        },
+	        showFossLinkDiv : function(){
+	        	var valInp = $("[id$=fossLinkCheckboxInp]:checked").length;
+				if (valInp == 0) {
+					$(".FossLinkDivCls").hide();
+					$("[id$=fossLinkCheckboxInp]").val('');						
+				} else {
+					$(".FossLinkDivCls").show();
+				}
+	        },
+	        showAlternateFOSSDiv : function(){
+	        	var picklistValueInp = $("[id$=alternateFossInp]").val();
+				var picklistValueOut = $("[id$=alternateFossOut]").text();
+				if (picklistValueInp == 'Yes' || picklistValueOut == 'Yes'){  
+					$('.alternateFossYesDivCls').show();
+					$('.alternateFossNoDivCls').hide();
+					$("[id$=alternateFossNoId]").val('');
+				}else if (picklistValueInp == 'No' || picklistValueOut == 'No') {
+					$('.alternateFossNoDivCls').show();
+					$('.alternateFossYesDivCls').hide();
+					$("[id$=alternateFossYesId]").val('');		
+				}else{				
+					$('.alternateFossYesDivCls').hide();
+					$('.alternateFossNoDivCls').hide();
+					$("[id$=alternateFossYesId]").val('');
+					$("[id$=alternateFossNoId]").val('');	
+				}
+	        },
+	        fnIsEmbeded : function() {
+				var checkBoxLenInp = $("[id$=isEmbededField]:checked").length;
+				if (checkBoxLenInp != 0) {
+					$('.isEmbeded').show();
+				} else {
+					$('.isEmbeded').hide();
+					$(".isEmbeded").val('');
+				}
+			},
+			showOverlay : function(){
+                $.blockUI({ css: { 
+                    border: 'none', 
+                    padding: '15px', 
+                    backgroundColor: '#000', 
+                    '-webkit-border-radius': '10px', 
+                    '-moz-border-radius': '10px', 
+                    opacity: .5, 
+                    color: '#fff' 
+                    }});
+            },
+            hideOverlay : function(){
+                $.unblockUI();
+            },
+            validate : function(){
+            	var errorArray = [false,false,false];
+            	/*var picklistValueInp = $("[id$=inputRCProduct]").val();   
+				if (picklistValueInp == 'Other' && $("[id$=otherRCProduct]").val().trim().length == 0){
+					$("[id$=otherRCProduct]").after('<span style="color:red;">*Field is Required</div>');
+					error = true;
+				}
+				var picklistValueInp = $("[id$=inputTechnicalField]").val();   
+				if (error == false && picklistValueInp == 'Other' && $("[id$=otherTechnicalField]").val().trim().length == 0){
+					$("[id$=otherTechnicalField]").after('<span style="color:red;">*Field is Required</div>');
+					error = true;
+				}*/
+				
+				if($("[id$=rcProductDateId]").val().trim().length != 0){
+					error = FOSS.validateDate($("[id$=rcProductDateId]"));
+					errorArray[0] = error;
+				}	
+				
+				if($("[id$=fossStartId]").val().trim().length != 0){
+					error = FOSS.validateDate($("[id$=fossStartId]"));
+					errorArray[1] = error;
+				}	
+				
+				if($("[id$=fossIntroDateId]").val().trim().length != 0){
+					error = FOSS.validateDate($("[id$=fossIntroDateId]"));
+					errorArray[2] = error;
+				}		
+				
+				var errorExists = false;
+				
+				for (i = 0; i < errorArray.length; i++) { 
+				    if(errorArray[i] == true){
+				    	errorExists =  true;
+				    	break;
+				    }
+				}
+				
+				if(errorExists == false){
+					saveAction();
+				}
+            },
+            validateDate : function (fieldId){
+            	if(fieldId.val().trim().length != 0){
+					var dateData = fieldId.val();
+					var error = !FOSS.checkDateFormat(dateData);
+					if(error == true){				
+						$('.message').css('display','block');
+						$('.messageText').html('<span style="color:#cc0000"><h4>Error:</h4></span>Please provide correct data.<br/>');
+						console.log(fieldId.next().text());
+						if(fieldId.next().text() != '*Invalid Date'){
+							fieldId.after('<span style="color:red;">*Invalid Date</span>');
+						}						
+						return true;
+					} else {
+						fieldId.next().remove();
+						return false;	
+					}									
+				}		
+            },
+            checkDateFormat : function(txtDate) {
+				var currVal = txtDate;
+				if (currVal == '') return false;
+			
+				//Declare Regex  
+				var rxDatePattern = /^(\d{1,2})(\/|-)(\d{1,2})(\/|-)(\d{4})$/;
+				var dtArray = currVal.match(rxDatePattern); // is format OK?
+			
+				if (dtArray == null) return false;
+			
+				//Checks for mm/dd/yyyy format.
+				dtMonth = dtArray[1];
+				dtDay = dtArray[3];
+				dtYear = dtArray[5];
+			
+				if (dtMonth < 1 || dtMonth > 12) return false;
+				else if (dtDay < 1 || dtDay > 31) return false;
+				else if ((dtMonth == 4 || dtMonth == 6 || dtMonth == 9 || dtMonth == 11) && dtDay == 31) return false;
+				else if (dtMonth == 2) {
+					var isleap = (dtYear % 4 == 0 && (dtYear % 100 != 0 || dtYear % 400 == 0));
+					if (dtDay > 29 || (dtDay == 29 && !isleap)) return false;
+				}
+				return true;
+			},
+			hideActionLinks : function(){
+				$('.actionColumn').remove();
+			}
+        };
+        
+        $(document).ready(function(){
+			FOSS.showCurrentFOSSDiv();
+			FOSS.showIncludeAttrDiv();
+			FOSS.showFOSSModifyDiv();
+			FOSS.showOtherDiv();
+			FOSS.showAlternateFOSSDiv();
+			FOSS.fnIsEmbeded();
+			FOSS.showFossLinkDiv();
+			if('{!fossObj.Status__c}' == 'Submitted'){
+				FOSS.hideActionLinks();
+			}		
+		}); 
+	</script>	
+</apex:page>

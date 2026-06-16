@@ -1,0 +1,35 @@
+<aura:component controller="QuotePlanAndPricingController"  extends="c:Quote_BaseComponent">
+    <aura:attribute name="ProductEdition" type="Product_Package__c" />
+    <aura:attribute name="FinalSelectedSubCategories" type="List" />
+    <aura:attribute name="selectedCategory" type="String" />
+    <aura:attribute name="selectedSubCategories" type="String[]" />
+    <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+    <aura:attribute name="ProductCategories" type="QuotePlanAndPricingController.AdditionalProductWrapper[]" />
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="PricingYearly" type="Boolean" />
+    <aura:handler name="init" value="{!this}" action="{!c.loadCategories}"/>
+    <div class="slds-size--1-of-1 slds-grid slds-wrap">
+        <div class="slds-size--4-of-6 slds-text-heading_medium">
+            <br/>
+        </div>
+        <div class="slds-size--2-of-6">
+        </div>
+        
+        <div class="slds-size--4-of-6">
+            <div class="slds-grid slds-wrap">
+                <aura:iteration items="{!v.ProductCategories}" var="eachCategory">
+                    <c:Quote_AdditionalProductCategory ProductCategory="{!eachCategory}" 
+                                                       selectedCategory="{!v.selectedCategory}" 
+                                                       FinalSelectedSubCategories="{!v.FinalSelectedSubCategories}"/>
+                </aura:iteration>
+            </div>
+        </div>
+        <div class="slds-size--2-of-6">
+            <c:Quote_EditionProductsSummary ProductEdition="{!v.ProductEdition}" 
+                                            Step="{!v.Step}"
+                                            Quote="{!v.Quote}"
+                                            SelectedProductList="{!v.SelectedProductList}"
+                                            PricingYearly="{!v.PricingYearly}"/>
+        </div>
+    </div>
+</aura:component>

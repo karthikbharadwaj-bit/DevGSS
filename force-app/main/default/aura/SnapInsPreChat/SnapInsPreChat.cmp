@@ -1,0 +1,475 @@
+<aura:component implements="lightningsnapin:prechatUI" controller="SnapInsController">
+    <!-- Handler for when this component is initialized. -->
+    <aura:handler name="init" value="{!this}" action="{!c.onInit}" />
+    <!-- Contains methods for getting prechat fields, starting a chat, and validating fields. -->
+    <lightningsnapin:prechatAPI aura:id="prechatAPI" />
+    <!-- Prechat field components to render. -->
+    <aura:attribute name="prechatFields" type="List" description="An array of objects representing the prechat fields specified in prechat setup."/>
+    <!-- Attributes -->
+    <aura:attribute name="name" type="string" access="private" />
+    <aura:attribute name="company" type="string" access="private" />
+    <aura:attribute name="screen" type="string" access="private" />
+    <aura:attribute name="employeepkl" type="Object" access="private" />
+
+    <!-- form attributes -->
+    <aura:attribute name="inputFirstName" type="string" access="private" />
+    <aura:attribute name="inputLastName" type="string" access="private" />
+    <aura:attribute name="inputEmail" type="string" access="private" />
+    <aura:attribute name="inputPhone" type="string" access="private" />
+    <aura:attribute name="inputEmployeeNumber" type="string" access="private" default=""/>
+    <aura:attribute name="inputCompany" type="string" access="private" />
+    <aura:attribute name="typeService" type="string" access="private" />
+
+    <aura:attribute name="sales" type="string" access="private" />
+    <aura:attribute name="support" type="string" access="private" />
+    <aura:attribute name="isFreeRCMeetingCustomer" type="string" access="private" />
+
+    <!-- url KA from Custom Setting SnapInsSettings__c -->
+    <aura:attribute name="urlWhyRequired" type="String"  access="private" />
+    <aura:attribute name="urlHowToUpgrade" type="String"  access="private" />
+
+    <!-- routing for GW Sales fax or pro agents -->
+    <aura:attribute name="pageType" type="String" access="private" default="none"/>
+
+    <!-- routing for GW and SW to agents and Support and Success to bot -->
+    <aura:attribute name="supportRouting" type="String" access="private" default="agent"/>
+    <!-- feature toggle omnichannel -->
+    <aura:attribute name="liveChatType" type="String" access="private" default="liveAgent"/>
+
+    <form onsubmit="{! c.onFormSubmit }" class="pre-chat">
+        <!-- Sales and Support For SW and Community (not Sales or Support for GW)-->
+        <aura:if isTrue="{! and(v.typeService != 'sales', v.typeService != 'support')}">
+            <!-- Auth screen -->
+            <aura:if isTrue="{! v.screen == 'auth' }">
+                <div id="SaS_auth" class="container">
+                    <div class="pre-chat__form form">
+                        <div class="form__name-row">
+                            <!-- First Name -->
+                            <lightning:input name="snapinsFirstname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInFirstName}"
+                                             required="true"
+                                             class="input input_first-name"
+                                             value="{! v.inputFirstName }"
+                                             maxlength="40"
+                                             tabindex="0"
+                                             aura:id="inputAuthForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+
+                            <!-- Last Name -->
+                            <lightning:input name="snapinsLastname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInLastName}"
+                                             required="true"
+                                             class="input input_last-name"
+                                             value="{! v.inputLastName }"
+                                             maxlength="80"
+                                             aura:id="inputAuthForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+                        </div>
+                        <!-- Email -->
+                        <lightning:input name="snapinsEmail"
+                                         type="email"
+                                         label="{! $Label.c.SnapInEmailAddress}"
+                                         required="true"
+                                         class="input"
+                                         value="{! v.inputEmail }"
+                                         maxlength="80"
+                                         aura:id="inputAuthForm"
+                                         pattern="^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
+                        />
+                        <!-- Phone -->
+                        <lightning:input name="snapinsPhone"
+                                         type="tel"
+                                         label="{! $Label.c.SnapInRingCentralPhoneorContactPhone}"
+                                         class="input"
+                                         value="{! v.inputPhone }"
+                                         maxlength="15"
+                                         placeholder="XXXXXXXXXX"
+                                         aura:id="inputAuthForm"
+                                         pattern="[0-9]{3,15}"
+                        />
+                    </div>
+                    <p class="coveo-labels tooltip information_required">
+                <span> {! $Label.c.SnapInInformationRequired}<br/>
+                    <a href="{! v.urlWhyRequired }" class="info_link" target="_blank">
+                       {! $Label.c.SnapInPrivacyNotice}
+                    </a>.
+                </span>
+                        {! $Label.c.SnapInWhyIsThisTnformationRequired}
+                    </p>
+                    <div class="pre-chat__buttons" id="snap-in__next">
+                        <lightning:button type="submit" label="{! $Label.c.SnapInNext}" class="pre-chat__button pre-chat__button__dark" aura:id="submitButton" onclick="{! c.onSalesAndSupportLogic }"/>
+                    </div>
+                </div>
+            </aura:if>
+
+            <!-- Not Found Screen -->
+            <aura:if isTrue="{! v.screen == 'authnf' }">
+                <div id="SaS_authnf" class="container">
+                    <p class="pre-chat__message">{! $Label.c.SnapInICantFindYourAccount}</p>
+                    <p class="pre-chat__message">{! $Label.c.SnapInAreYouCurrentlyaRingCentralCustomer}</p>
+                    <div class="pre-chat__buttons">
+                        <lightning:button onclick="{! c.onRetryClick }"
+                                          label="{! $Label.c.SnapInLetMeTryAnotherNumber }"
+                                          class="pre-chat__button pre-chat__button__light" />
+                        <lightning:button onclick="{! c.onAdditionalInfoClick }"
+                                          label="{! $Label.c.SnapInNotYetIWanttolearnMore }"
+                                          class="pre-chat__button pre-chat__button__dark" />
+                    </div>
+                </div>
+            </aura:if>
+
+            <!-- Additional Information Screen -->
+            <aura:if isTrue="{! v.screen == 'authai' }">
+                <div id="SaS_authai" class="container">
+                    <div class="pre-chat__form form">
+                        <!-- Company Name -->
+                        <lightning:input name="snapinsCompany"
+                                         type="text"
+                                         label="{! $Label.c.SnapInWhatCompanyAreYouWith }"
+                                         required="true"
+                                         class="input input_company"
+                                         value="{! v.inputCompany }"
+                                         maxlength="128"
+                                         aura:id="inputSaSAuthaiForm"
+                                         pattern="^.*\S+.*$"
+                                         messageWhenPatternMismatch="Enter not empty value"
+                        />
+
+                        <!-- Employees Number -->
+                        <lightning:select name="selectItem"
+                                          label="{! $Label.c.SnapInHowManyEmployeesDoYouHave }"
+                                          class="input"
+                                          required="true"
+                                          value="{! v.inputEmployeeNumber }"
+                                          aura:id="inputSaSAuthaiForm">
+                            <option value="" text="{!$Label.c.SnapInNoneEmployeeNumber}" disabled="disabled"></option>
+                            <aura:iteration items="{!v.employeepkl}" var="enumber">
+                                <option value="{!enumber}" text="{!enumber}"></option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <p class="coveo-labels tooltip information_required">
+                <span> {! $Label.c.SnapInInformationRequired}<br/>
+                    <a href="{! v.urlWhyRequired }" class="info_link" target="_blank">
+                       {! $Label.c.SnapInPrivacyNotice}
+                    </a>.
+                </span>
+                        {! $Label.c.SnapInWhyIsThisTnformationRequired}
+                    </p>
+                    <div class="pre-chat__buttons">
+                        <lightning:button type="submit" label="{! $Label.c.SnapInNext}" class="pre-chat__button pre-chat__button__dark" aura:id="submitButton" onclick="{! c.onSalesUnknownUserChatClick }"/>
+                    </div>
+                </div>
+            </aura:if>
+
+            <!-- Greeting Screen -->
+            <aura:if isTrue="{! v.screen == 'greeting' }">
+                <div id="SaS_greeting" class="container">
+                    <div class="pre-chat__greeting">
+                        <p class="pre-chat__hello-text">{! $Label.c.SnapInGreeting + ' ' + v.name}!</p>
+                        <!-- <aura:if isTrue="{! not(empty(v.company)) }">
+                            <div class="pre-chat__from-text">{! $Label.c.snapinFrom + ' ' + v.company}</div>
+                        </aura:if> -->
+                    </div>
+                    <div class="pre-chat__message">
+                        <p>{! $Label.c.SnapInHelpYou }?</p>
+                    </div>
+                    <div class="pre-chat__buttons">
+                        <div class="pre-chat__question">
+                            <p>{! $Label.c.SnapInIHaveAQuestionAboutMyRingCentralProductsOrServices }</p>
+                            <lightning:button onclick="{! c.onSupportChatButtonClick }"
+                                              label="{! $Label.c.SnapInSupport }"
+                                              class="pre-chat__button pre-chat__button__dark" />
+
+                            <p>{! $Label.c.SnapInIAmInterestedInPurchasingRingCentralProductsOrServices }</p>
+                            <lightning:button onclick="{! c.onSalesChatClick }"
+                                              label="{! $Label.c.SnapInSales }"
+                                              class="pre-chat__button pre-chat__button__light" />
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+            <!-- Search Screen -->
+            <aura:if isTrue="{! v.screen == 'search' }">
+                <div id="SaS_search" class="container">
+                    <div class="coveo_search_result">
+                        <c:SnapInsCoveoSearch/>
+                    </div>
+                    <div class="coveo-labels">
+                        <p>{! $Label.c.SnapInDidntFindWhatYoureLookingFor }</p>
+                        <aura:if isTrue="{! v.isFreeRCMeetingCustomer == 'not free' }">
+                            <a onclick="{! c.onSupportChatClick }" class="info_link">{! $Label.c.SnapInAskLiveAgent }</a>
+                        </aura:if>
+                        <aura:if isTrue="{! v.isFreeRCMeetingCustomer == 'free' }">
+                            <p>{! $Label.c.SnapInUpgradeToRC}&nbsp;<a href="{! v.urlHowToUpgrade }" class="info_link" target="_blank">{! $Label.c.SnapInHowToUpgrade}</a></p>
+                        </aura:if>
+
+                    </div>
+                </div>
+            </aura:if>
+
+        </aura:if>
+
+        <!-- Sales For GW -->
+        <aura:if isTrue="{! v.typeService == 'sales' }">
+
+            <!-- Auth screen -->
+            <aura:if isTrue="{! v.screen == 'auth' }">
+                <div id="sales_auth" class="container">
+                    <div class="pre-chat__form form">
+                        <p class="pre-chat__title">{! $Label.c.SnapInTitleGW}</p>
+                        <div class="form__name-row">
+                            <!-- First Name -->
+                            <lightning:input name="snapinsFirstname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInFirstName}"
+                                             required="true"
+                                             class="input input_first-name"
+                                             value="{! v.inputFirstName }"
+                                             maxlength="40"
+                                             aura:id="inputSalesForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+
+                            <!-- Last Name -->
+                            <lightning:input name="snapinsLastname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInLastName}"
+                                             required="true"
+                                             class="input input_last-name"
+                                             value="{! v.inputLastName }"
+                                             maxlength="80"
+                                             aura:id="inputSalesForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+                        </div>
+                        <!-- Email -->
+                        <lightning:input name="snapinsEmail"
+                                         type="email"
+                                         label="{! $Label.c.SnapInEmailAddress}"
+                                         required="true"
+                                         class="input"
+                                         value="{! v.inputEmail }"
+                                         maxlength="80"
+                                         aura:id="inputSalesForm"
+                                         pattern="^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
+                        />
+                        <!-- Phone -->
+                        <lightning:input name="snapinsPhone"
+                                         type="tel"
+                                         label="{! $Label.c.SnapInRingCentralPhoneGW}"
+                                         required="true"
+                                         class="input"
+                                         value="{! v.inputPhone }"
+                                         maxlength="15"
+                                         placeholder="XXXXXXXXXX"
+                                         aura:id="inputSalesForm"
+                                         pattern="[0-9]{3,15}"
+                        />
+                        <!-- Employees Number -->
+                        <lightning:input name="snapinsCompany"
+                                         type="text"
+                                         label="{! $Label.c.SnapInCompanyGW }"
+                                         required="true"
+                                         class="input input_company"
+                                         value="{! v.inputCompany }"
+                                         maxlength="128"
+                                         placeholder="{!$Label.c.SnapInPlaceholderCompanyGW}"
+                                         aura:id="inputSalesForm"
+                                         pattern="^.*\S+.*$"
+                                         messageWhenPatternMismatch="Enter not empty value"
+                        />
+
+                        <lightning:select name="selectItem"
+                                          label="{! $Label.c.SnapInHowManyEmployeesDoYouHaveGW }"
+                                          required="true"
+                                          class="input"
+                                          value="{! v.inputEmployeeNumber }"
+                                          aura:id="inputSalesForm">
+                            <option value="" text="{!$Label.c.SnapInNoneEmployeeNumber}" disabled="disabled"></option>
+                            <aura:iteration items="{!v.employeepkl}" var="enumber">
+                                <option value="{!enumber}" text="{!enumber}"></option>
+                            </aura:iteration>
+                        </lightning:select>
+                        <!-- Company Name -->
+
+                    </div>
+                    <p class="coveo-labels tooltip information_required">
+                <span> {! $Label.c.SnapInInformationRequired}<br/>
+                    <a href="{! v.urlWhyRequired }" class="info_link" target="_blank">
+                       {! $Label.c.SnapInPrivacyNotice}
+                    </a>.
+                </span>
+                        {! $Label.c.SnapInWhyIsThisTnformationRequired}
+                    </p>
+                    <div class="pre-chat__buttons" id="snap-in__next">
+                        <lightning:button type="submit" label="{! $Label.c.SnapInNextGW}" class="pre-chat__button pre-chat__button__dark" aura:id="submitButton" onclick="{! c.onSalesLogic }"/>
+                    </div>
+                </div>
+            </aura:if>
+
+        </aura:if>
+
+        <!-- Support For GW -->
+        <aura:if isTrue="{! v.typeService == 'support'}">
+
+            <!-- Auth screen -->
+            <aura:if isTrue="{! v.screen == 'auth' }">
+                <div id="support_auth" class="container">
+                    <!--analytics-->
+                    <div class="pre-chat__form form">
+                        <div class="form__name-row">
+                            <!-- First Name -->
+                            <lightning:input name="snapinsFirstname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInFirstName}"
+                                             required="true"
+                                             class="input input_first-name"
+                                             value="{! v.inputFirstName }"
+                                             maxlength="40"
+                                             aura:id="inputSupportForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+
+                            <!-- Last Name -->
+                            <lightning:input name="snapinsLastname"
+                                             type="text"
+                                             label="{! $Label.c.SnapInLastName}"
+                                             required="true"
+                                             class="input input_last-name"
+                                             value="{! v.inputLastName }"
+                                             maxlength="80"
+                                             aura:id="inputSupportForm"
+                                             pattern="^.*\S+.*$"
+                                             messageWhenPatternMismatch="Enter not empty value"
+                            />
+                        </div>
+                        <!-- Email -->
+                        <lightning:input name="snapinsEmail"
+                                         type="email"
+                                         label="{! $Label.c.SnapInEmailAddress}"
+                                         required="true"
+                                         class="input"
+                                         value="{! v.inputEmail }"
+                                         maxlength="80"
+                                         aura:id="inputSupportForm"
+                                         pattern="^\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$"
+                        />
+                        <!-- Phone -->
+                        <lightning:input name="snapinsPhone"
+                                         type="tel"
+                                         label="{! $Label.c.SnapInRingCentralPhoneorContactPhone}"
+                                         required="true"
+                                         class="input"
+                                         value="{! v.inputPhone }"
+                                         maxlength="15"
+                                         placeholder="XXXXXXXXXX"
+                                         aura:id="inputSupportForm"
+                                         pattern="[0-9]{3,15}"
+                        />
+                    </div>
+                    <p class="coveo-labels tooltip information_required">
+                <span> {! $Label.c.SnapInInformationRequired}<br/>
+                    <a href="{! v.urlWhyRequired }" class="info_link" target="_blank">
+                       {! $Label.c.SnapInPrivacyNotice}
+                    </a>.
+                </span>
+                        {! $Label.c.SnapInWhyIsThisTnformationRequired}
+                    </p>
+                    <div class="pre-chat__buttons" id="snap-in__next">
+                        <lightning:button type="submit" label="{! $Label.c.SnapInNext}" class="pre-chat__button pre-chat__button__dark" aura:id="submitButton"  onclick="{! c.onSupportLogic }"/>
+                    </div>
+                </div>
+            </aura:if>
+
+            <!-- Not Found Screen -->
+            <aura:if isTrue="{! v.screen == 'authnf' }">
+                <div id="support_authnf" class="container">
+                    <p class="pre-chat__message">{! $Label.c.SnapInICantFindYourAccount}</p>
+                    <p class="pre-chat__message">{! $Label.c.SnapInAreYouCurrentlyaRingCentralCustomer}</p>
+                    <div class="pre-chat__buttons">
+                        <lightning:button onclick="{! c.onRetryClick }"
+                                          label="{! $Label.c.SnapInLetMeTryAnotherNumber }"
+                                          class="pre-chat__button pre-chat__button__light" />
+                        <lightning:button onclick="{! c.onAdditionalInfoClick }"
+                                          label="{! $Label.c.SnapInNotYetIWanttolearnMore }"
+                                          class="pre-chat__button pre-chat__button__dark" />
+                    </div>
+                </div>
+            </aura:if>
+
+            <!-- Additional Information Screen -->
+            <aura:if isTrue="{! v.screen == 'authai' }">
+                <div id="support_authai" class="container">
+                    <div class="pre-chat__form form">
+                        <!-- Comapany Name -->
+                        <lightning:input name="snapinsCompany"
+                                         type="text"
+                                         label="{! $Label.c.SnapInWhatCompanyAreYouWith }"
+                                         required="true"
+                                         class="input input_company"
+                                         value="{! v.inputCompany }"
+                                         maxlength="128"
+                                         aura:id="inputSupportAuthaiForm"
+                                         pattern="^.*\S+.*$"
+                                         messageWhenPatternMismatch="Enter not empty value"
+                        />
+
+                        <!-- Employees Number -->
+                        <lightning:select name="selectItem"
+                                          label="{! $Label.c.SnapInHowManyEmployeesDoYouHave }"
+                                          required="true"
+                                          class="input"
+                                          value="{! v.inputEmployeeNumber }"
+                                          aura:id="inputSupportAuthaiForm">
+                            <option value="" text="{!$Label.c.SnapInNoneEmployeeNumber}" disabled="disabled"></option>
+                            <aura:iteration items="{!v.employeepkl}" var="enumber">
+                                <option value="{!enumber}" text="{!enumber}"></option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                    <p class="coveo-labels tooltip information_required">
+                <span> {! $Label.c.SnapInInformationRequired}<br/>
+                    <a href="{! v.urlWhyRequired }" class="info_link" target="_blank">
+                       {! $Label.c.SnapInPrivacyNotice}
+                    </a>.
+                </span>
+                        {! $Label.c.SnapInWhyIsThisTnformationRequired}
+                    </p>
+                    <!--lightning:button onclick="{! c.onSalesUnknownUserChatClick }"
+                                        label="{! $Label.c.SnapInNext }"
+                                        class="pre-chat__button pre-chat__button__dark" /-->
+                    <div class="pre-chat__buttons">
+                        <lightning:button type="submit" label="{! $Label.c.SnapInNext}" class="pre-chat__button pre-chat__button__dark" aura:id="submitButton" onclick="{! c.onSupportUnknownUserChatClick }"/>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{! v.screen == 'greeting' }">
+                <div id="support_greeting" class="container">
+                    <!-- Greeting is a Search Screen -->
+                    <div class="coveo_search_result"><c:SnapInsCoveoSearch /></div>
+                    <div class="coveo-labels">
+                        <p>{! $Label.c.SnapInDidntFindWhatYoureLookingFor }</p>
+                        <aura:if isTrue="{! v.isFreeRCMeetingCustomer == 'not free' }">
+                            <a onclick="{! c.onSupportChatClick }" class="info_link">{! $Label.c.SnapInAskLiveAgent }</a>
+                        </aura:if>
+                        <aura:if isTrue="{! v.isFreeRCMeetingCustomer == 'free' }">
+                            <p>{! $Label.c.SnapInUpgradeToRC}&nbsp;<a href="{! v.urlHowToUpgrade }" class="info_link" target="_blank">{! $Label.c.SnapInHowToUpgrade}</a></p>
+                        </aura:if>
+                    </div>
+                </div>
+            </aura:if>
+
+        </aura:if>
+    </form>
+</aura:component>

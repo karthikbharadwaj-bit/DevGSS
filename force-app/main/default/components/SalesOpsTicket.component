@@ -1,0 +1,120 @@
+<apex:component allowDML="true" controller="SalesOpsTicketController" id="sopsComp">
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script> 
+    <script>
+
+    
+    
+        function btnClick2() { 
+        
+            var cSub2 = document.getElementById('helpdeskPage:salesopsDIV:sopsComp:helpdeskForm:helpdeskBlock:CSubject2').value;
+            var cCat2 = document.getElementById('helpdeskPage:salesopsDIV:sopsComp:helpdeskForm:helpdeskBlock:CCateg2').value;
+            var cTyp2 = document.getElementById('helpdeskPage:salesopsDIV:sopsComp:helpdeskForm:helpdeskBlock:CType2').value;
+            var cSev2 = document.getElementById('helpdeskPage:salesopsDIV:sopsComp:helpdeskForm:helpdeskBlock:CSever2').value;
+            var cDes2 = document.getElementById('helpdeskPage:salesopsDIV:sopsComp:helpdeskForm:helpdeskBlock:CDescr2').value;
+            
+            
+            if (cSub2.trim().length <= 0 || cCat2.trim().length <= 0 || cTyp2.trim().length <= 0 || cSev2.trim().length <= 0 || cDes2.trim().length <= 0){
+                alert("Please fill up all fields");
+                return false ;
+            }else{
+                btnComplete();
+                afCreateNewCase2();
+            }
+
+        }
+        
+        function btnComplete(){
+            var $ = jQuery.noConflict();
+            $('input[id*="cancelBtn"]').attr('disabled',true);  
+            $('input[id*="submitBtn"]').attr('disabled',true);       
+            
+        }
+    </script>
+
+    <apex:form id="helpdeskForm">
+        <apex:pageblock id="helpdeskBlock" >
+        <style type="text/css">
+        .btn-primary{
+            color: #fff;
+        }
+        .HDmodaltitle{
+            padding: 6px 10px;
+            text-align: right;
+        }
+        .HDticketstyle{
+
+        }
+        </style>
+        <apex:outputPanel id="newhdticket" styleClass="HDticketstyle">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="helpdeskTicketLabel">New Sales Ops Case</h4>
+                    </div>
+                    <apex:pageMessages ></apex:pageMessages>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-xs-12">Please fill out the form below in order to create a Sales Ops Case</div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle">Subject:</div>
+                            <div class="col-xs-10"><apex:inputText id="CSubject2" styleClass="form-control" value="{!newCaseSubject}"/></div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle">Applications:</div>
+                            <div class="col-xs-10">
+                                <apex:selectList id="CSever2" styleClass="form-control" value="{!selectedSeverity}" multiselect="false" size="1">
+                                    <apex:selectOptions value="{!ApplicationOptions}"/>
+                                </apex:selectList>
+                            </div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle">Case Category:</div>
+                            <div class="col-xs-10">
+                                <apex:selectList id="CCateg2" styleClass="form-control" value="{!selectedCategory}" multiselect="false" size="1">
+                                    <apex:actionSupport event="onchange" rerender="CType2" action="{!updateDropdownType}"/>
+                                    <apex:selectOptions value="{!CategoryOptions}"/>
+                                </apex:selectList>
+                            </div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle">Type:</div>
+                            <div class="col-xs-10">
+                                <apex:selectList id="CType2" styleClass="form-control" value="{!selectedType}" multiselect="false" size="1">
+                                    <apex:selectOptions value="{!TypeOptions}"/>
+                                </apex:selectList>
+                                
+                            </div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle">Description:</div>
+                            <div class="col-xs-10"><apex:inputTextarea id="CDescr2" styleClass="form-control" value="{!newCaseDescription}" style="Height:200px;"/></div>
+                        </div>
+                        <p/>
+                        <div class="row">
+                            <div class="col-xs-2 HDmodaltitle"></div>
+                            <div class="col-xs-10"><apex:outputText value="Note: Screenshots and attachments can be added to the case after hitting Submit." style="color:orange; size:5px"/></div>
+                        </div>
+                    </div>
+                    
+
+                    <div class="modal-footer">                         
+                         <apex:actionFunction name="afCreateNewCase2" action="{!createNewCase2}"/>
+                         <apex:commandButton id="cancelBtn" action="{!Close}" value="Cancel" immediate="true"  styleClass="btn btn-primary" />
+                         <apex:commandButton id="submitBtn" value="Submit" onclick="btnClick2();" oncomplete="" styleClass="btn btn-primary"/>                
+                    </div>
+
+                    
+                </div>
+            </div>
+        </apex:outputPanel>
+        </apex:pageblock>
+    </apex:form>
+</apex:component>

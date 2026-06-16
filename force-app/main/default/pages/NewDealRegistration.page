@@ -1,0 +1,117 @@
+<apex:page sidebar="false" title="New Deal Registration" standardController="Deal_Registration__c" >
+    <apex:includeScript value="{!$Resource.ConvertLeadDependencies + '/CLPage.js'}"/>
+    <apex:includeScript value="{!$Resource.ConvertLeadDependencies + '/CL.js'}"/>
+    <apex:includeLightning />
+    <!--<div id="LightningComponentid" />  -->
+    
+    <style type="text/css">
+        .noSidebarCell, .bodyDiv .outerNoSidebar {
+        padding: 0;
+        }
+        
+        .noTableFooter {
+        margin-left: 0;
+        }
+        
+        #lightning {
+        min-height: calc(100vh - 165px);
+        }
+        
+        #auraErrorMessage {
+        display: none;
+        }
+        
+        .console-view .bPageHeader,
+        .console-view .bPageFooter {
+        display: none;
+        }
+        
+        .console-view .brdPalette {
+        border: none;
+        }
+        
+        .console-view {
+        background: #1797c0;
+        }
+        
+        .console-view body {
+        margin: 0;
+        box-shadow: 0 8px 10px hsla(0, 0%, 0%, .25);
+        position: relative;
+        }
+
+        
+        .slds-popover__body,.slds-popover__footer,.slds-popover__header {
+        position: relative;
+        padding: .5rem .75rem;
+        word-wrap: break-word;
+        }
+        .slds-popover {
+        position: relative;
+        border-radius: .25rem;
+        width: 20rem;
+        min-height: 2rem;
+        z-index: 10000;
+        background-color: #fff;
+        display: inline-block;
+        box-shadow: 0 2px 3px 0 rgba(0, 0, 0, .16);
+        border: 1px solid #d9dbdd
+        }
+        .slds-popover--tooltip,
+        .slds-popover_tooltip {
+        width: auto;
+        max-width: 20rem;
+        background: #16325c;
+        border: 0
+        }
+        .slds-popover--tooltip .slds-popover__body,
+        .slds-popover_tooltip .slds-popover__body {
+        font-size: .75rem;
+        color: #fff
+        }
+        .slds-popover :last-child {
+        margin-bottom: 0
+        }
+        
+        .slds-rise-from-ground {
+        visibility: visible;
+        opacity: 1;
+        transform: translate(0%, 0%);
+        transition: opacity 0.1s linear, visibility 0.1s linear, transform 0.1s linear;
+        will-change: transform;
+        }
+        .slds-fall-into-ground {
+        visibility: hidden;
+        opacity: 0;
+        transform: translate(0%, 0%);
+        transition: opacity 0.1s linear, visibility 0.1s linear, transform 0.1s linear;
+        will-change: transform;
+        }
+
+    </style>
+    <div id="lightning">
+    <!-- spinner -->
+        <div class="slds-scope" id="spinner">
+            <div class="slds-spinner_container wizard-loader">
+                <div class="slds-spinner slds-spinner--medium wizard-loader__spinner" aria-hidden="false" role="alert">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+    
+    $Lightning.use("c:NewDealRegistrstionApp", function() {
+        $Lightning.createComponent("c:NewDealRegistrstion",
+                                   {},
+                                   "lightning",
+                                   function(cmp) {
+                                       console.log('Display Lightning component in visualforce page');
+                                       const spinner = document.querySelector('#spinner');
+                                       spinner.parentNode.removeChild(spinner);                                       
+                                   });        
+    });
+    </script>
+    
+</apex:page>

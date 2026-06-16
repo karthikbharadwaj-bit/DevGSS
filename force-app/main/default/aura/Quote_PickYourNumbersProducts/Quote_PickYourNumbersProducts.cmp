@@ -1,0 +1,41 @@
+<aura:component controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+	<aura:attribute name="ProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+    <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" default="[]"/>
+    <aura:attribute name="Type" type="String" default="Parent" />
+    <aura:attribute name="NoOfSeats" type="Integer" />
+    <aura:attribute name="isProductSelectedFROMPYNTab" type="Boolean" />
+    <aura:attribute name="ReloadDataOnLineDelete" type="Boolean" />
+    <aura:attribute name="Spinner" type="Boolean" />
+    <aura:registerEvent name="evtSelectProduct" type="c:Quote_SelectProduct" />
+    <aura:iteration items="{!v.ProductList}" var="eachProduct" indexVar="index">
+        <aura:if isTrue="{!eachProduct.rowType == 'Rule Header'}">
+            <tr class="tableheading">
+                <td>
+                    {!eachProduct.productCategory}
+                </td>
+            </tr>
+        </aura:if>
+        <aura:if isTrue="{!eachProduct.rowType == 'Record'}">
+            <tr class="brdr">
+                <td style="width:575px;">
+                    <div class="slds-grid">
+                        <div class="">
+                            <div class="slds-grid slds-has-flexi-truncate" style="width:400px;">
+                                <p class="slds-truncate" title="{!eachProduct.objCatalogue.Display_Name__c}">
+                                    <aura:unescapedHtml value="{!eachProduct.leftSpace}"/> 
+                                    
+                                    {!eachProduct.objCatalogue.Display_Name__c}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td class="slds-text-align_right">
+                    <button class="slds-button slds-button_brand" onclick="{!c.addToCart}" disabled="{!eachProduct.isDisabled}" id="{!index}" title="{!eachProduct.buttonTip}">
+                        {!eachProduct.buttonText}
+                    </button>
+                </td>
+            </tr>
+        </aura:if>
+    </aura:iteration>
+</aura:component>

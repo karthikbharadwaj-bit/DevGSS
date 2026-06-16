@@ -1,0 +1,110 @@
+<apex:page standardController="Account_Hierarchy__c" 
+            extensions="CompanyRelatedListsExt" 
+            showHeader="false" 
+            sidebar="false">
+    <style>
+        .links{
+            padding: 0.4em;
+        }
+        .spacing{
+            padding: 0.3em;
+        }
+    </style>
+    <script>
+        function deleteItem(value, sobject) {
+            event.preventDefault();
+            var text = 'Are you sure?';
+            if(confirm(text)) {
+                deleteRecord(value, sobject);
+                window.opener.location.reload();
+            }
+            return false;
+        }
+        function openLink(value) {
+            window.open('/' + value, '_parent');
+        }
+    </script>
+    <apex:form >
+        <apex:outputPanel id="errorMessage">
+            <apex:pageMessages />
+        </apex:outputPanel>
+        <apex:actionFunction name="deleteRecord"
+                                immediate="true" 
+                                action="{!deleteItem}" 
+                                rerender="redirectScript,errorMessage">
+            <apex:param name="cId" value="" />
+            <apex:param name="sobj" value="" />
+        </apex:actionFunction>
+        <apex:pageBlock title="Campaigns" mode="detail" id="campBlock">
+            <apex:outputPanel id="redirectScript" >
+                <apex:outputText rendered="{!redirect}">
+                    <script type="text/javascript">
+                        window.top.location.href = '{!redirectUrl}';
+                    </script>
+                </apex:outputText>
+            </apex:outputPanel>
+            <apex:pageBlockTable value="{!Campaigns}" 
+                                    var="camp" 
+                                    rendered="{!showFullTable}">
+                <apex:column styleClass="actionColumn">
+                    <apex:facet name="header">
+                        Action
+                    </apex:facet>
+                    <apex:commandLink action="{!editItem}" 
+                                        value="Edit" 
+                                        styleClass="actionLink" 
+                                        rerender="redirectScript">
+                        <apex:param name="cId" value="{!camp.Id}"/>
+                    </apex:commandLink>&nbsp;|&nbsp;
+                    <apex:commandLink value="Del" 
+                                        onclick="deleteItem('{!camp.Id}', 'Campaign');" 
+                                        styleClass="actionLink" 
+                                        reRender="false" />
+                </apex:column>
+                <apex:column headerValue="Campaign Name">
+                    <apex:outputLink value="{!URLFOR($Action.Campaign.View,camp.Id)}" target="_parent">
+                        {!camp.Name}
+                    </apex:outputLink>
+                </apex:column>
+                <apex:column value="{!camp.StartDate}"/>
+                <apex:column value="{!camp.Type}"/>
+                <apex:column value="{!camp.Status}"/>
+            </apex:pageBlockTable>
+            <apex:pageBlockTable value="{!Campaigns}" 
+                                    var="camp" 
+                                    rows="5"
+                                    rendered="{!IF(AND(Campaigns.size > 0, !showFullTable), true, false)}">
+                <apex:column styleClass="actionColumn">
+                    <apex:facet name="header">
+                        Action
+                    </apex:facet>
+                    <apex:commandLink action="{!editItem}" 
+                                        value="Edit" 
+                                        styleClass="actionLink" 
+                                        rerender="redirectScript">
+                        <apex:param name="cId" value="{!camp.Id}"/>
+                    </apex:commandLink>&nbsp;|&nbsp;
+                    <apex:commandLink value="Del" 
+                                        onclick="deleteItem('{!camp.Id}', 'Campaign');" 
+                                        styleClass="actionLink" 
+                                        reRender="false" />
+                </apex:column>
+                <apex:column headerValue="Campaign Name">
+                    <apex:outputLink value="{!URLFOR($Action.Campaign.View,camp.Id)}" target="_parent">
+                        {!camp.Name}
+                    </apex:outputLink>
+                </apex:column>
+                <apex:column value="{!camp.StartDate}"/>
+                <apex:column value="{!camp.Type}"/>
+                <apex:column value="{!camp.Status}"/>
+            </apex:pageBlockTable>
+            <apex:outputPanel layout="block" styleClass="spacing"/>
+            <apex:commandLink action="{!showAllRecords}" 
+                                value="Show all ({!Campaigns.size}) records »" 
+                                rendered="{!IF(AND(Campaigns.size > 5, !showFullTable), true, false)}" 
+                                reRender="campBlock"
+                                styleClass="links"/>
+            <apex:outputLabel value="No records to display" rendered="{!Campaigns.size == 0}"/>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

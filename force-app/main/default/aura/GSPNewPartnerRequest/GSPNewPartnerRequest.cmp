@@ -1,0 +1,193 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,force:appHostable" access="global" controller="GSPGuestLoginController">
+    <aura:attribute name='guestEmail' type='string' />
+    <aura:attribute name='showEmailField' type='boolean' default='true'/>
+    <aura:attribute name='showContactFields' type='boolean' default='false'/>
+    <aura:attribute name='showSuccessMsg' type='boolean' default='false'/>
+    <aura:attribute name="PartnerReltoDomain" type="Account" />
+    <aura:attribute name="GeneratedCode" type="String" />
+    <aura:attribute name="enteredCode" type="String" />
+    <aura:attribute name="disableVerify" type="boolean" default="true" />    
+    <aura:attribute name="verifyEmail" type="boolean" default="false" />
+    <!--<aura:handler name="init" value="{!this}" action="{!c.doInit}" />-->
+	<aura:attribute name="newcontact" type="Contact"
+                    default="{
+                             'SObjectType': 'Contact',
+                             'FirstName': '',
+                             'LastName': '',
+                             'Email': '',
+                             'Phone': '',
+                             'Partner_Portal_View__c': 'Limited'
+                             }">            
+    </aura:attribute>
+    <lightning:notificationsLibrary aura:id="notifLib"/>
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <!--User Request Confirmation Modal-->
+    <aura:attribute name="showConfirmRequestModal" type="boolean" default="false"/>
+     <aura:attribute name="ShowSpinnerOpp" type="boolean" default="false"/>
+    
+    <aura:if isTrue="{!v.ShowSpinnerOpp}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+            </div>
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.showEmailField}">
+        <lightning:card title="Request Partner User" iconName="standard:user">
+            <div class="slds-grid slds-wrap"> 
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <span>Email:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-top_medium slds-p-bottom_large slds-p-horizontal_x-small">
+                    <!--<lightning:input aura:id='requestPartnerEmail' type="email" value="{!v.guestEmail}"/>-->
+                    <lightning:input aura:id='requestPartnerEmail' class='emailinput mar20' type="email" name="guestemail" required="true" variant="label-hidden" value="{!v.guestEmail}" />
+                </div>
+                <div class="slds-col slds-size_2-of-6"></div>
+            </div>
+                    <div class='buttonwrap'>
+                        <lightning:button variant="brand" label="Validate" title="Validate" onclick="{!c.validateEmail}" />
+                        <lightning:button variant="brand-outline" label="Go Back" title="Go Back" onclick="{!c.goToLogin}" />
+                    </div>
+                    <div class='help'>Need help? Please email <span class='helpemail'>adrian.adulta@ringcentral.com</span></div>
+        </lightning:card>
+    </aura:if>
+    <aura:if isTrue="{!v.verifyEmail}" >
+        <lightning:card title="Request Partner User" iconName="standard:user">
+            <div class="slds-grid slds-wrap"> 
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <span>Email:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <span>{!v.guestEmail}</span>
+                    
+                </div>
+                <div class="slds-col slds-size_2-of-6"></div>
+                
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                    <abbr class="slds-required slds-float_right">* </abbr>
+                    <span>Verification code:</span>
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <lightning:input aura:id='VerificationCode' class='emailinput' type="text" name="verificationcode" required="true" variant="label-hidden"
+                                     value="{!v.enteredCode}" onchange="{!c.enableVerify}"/>
+                </div>
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <lightning:button variant="brand" label="Send Code" name="SendCode" type="button" onclick="{!c.sendEmail}" />
+                </div>
+                
+            </div>
+            <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                <lightning:button variant="brand" label="Verify" name="Verify" type="button" onclick="{!c.verifyEmail}" disabled="{!v.disableVerify}" />   
+                <lightning:button variant="brand-outline" label="Go Back" title="Brand action" onclick="{! c.goToValidateEmail }" />
+            </div>
+        </lightning:card>
+    </aura:if>
+    <aura:if isTrue="{!v.showContactFields}">
+    <lightning:card title="New Contact Creation" iconName="standard:user">
+            <lightning:recordEditForm
+                                      aura:id="newContactFormSection"
+                                      objectApiName="Contact">
+                <div class="slds-grid slds-wrap"> 
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Email:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span>{!v.guestEmail}</span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <span>First Name:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="FirstName" value="{!v.newcontact.FirstName}" variant="label-hidden"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Last Name:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="LastName" value="{!v.newcontact.LastName}" variant="label-hidden" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                        <abbr class="slds-required slds-float_right">* </abbr>
+                        <span>Phone:</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                        <span><lightning:inputField fieldName="Phone" value="{!v.newcontact.Phone}" variant="label-hidden" aura:id="phoneNumberforContact" required="true"/></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-6"></div>
+                    <div class="slds-col slds-size_1-of-6"></div>
+                </div>
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                    <lightning:button variant="brand" label="Submit" name="Submit" type="button" iconName="action:check" iconPosition="left" onclick="{!c.createContact}"/>
+                    <lightning:button variant="brand" type="cancel" name="Cancel" label="Cancel" iconName="action:close" iconPosition="left" onclick="{!c.goToValidateEmail}"/>            
+                </div>
+            </lightning:recordEditForm>
+        </lightning:card>
+    </aura:if>
+   <aura:if isTrue="{!v.showSuccessMsg}">
+        <div class="successMessageDiv">
+            <div class="slds-is-relative successMessageDiv">
+                <div class="slds-notify slds-notify_toast slds-theme_success " role="alert">
+                    <div class="slds-notify__content successMsg">
+                        <h3 class="slds-text-heading_small">Request for User Activation has been sent to RC</h3>
+                    </div>
+                </div>
+            </div>  
+            <lightning:button class='gobacktologinbtn' variant="brand-outline" label="Go Back to Login Page" title="Go Back to Login Page" onclick="{!c.goToLogin}" />
+        </div>
+    </aura:if>
+    
+    <aura:if isTrue="{!v.showConfirmRequestModal}">
+        <div class="slds-m-around--xx-large">    
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Request for User Access</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-form-element">
+                                <div class="slds-form-element__control">
+                                    <b><p><span>Partner Contact exists! Please click 'Request for Partner User Access' button for User Activation.</span> </p></b>
+                                </div>
+                            </div>
+                        </div>
+                        <br/>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button variant="brand"
+                                          label="Request for Partner User Access"
+                                          title="Request for Partner User Access"
+                                          onclick="{!c.requestForUserAccess}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop--open"></div>            
+        </div>
+    </aura:if>
+</aura:component>

@@ -1,0 +1,908 @@
+<!-- 
+Change History
+********************************************************************************************************************
+SCRUM/Jira              ModifiedBy      Date        Description                                             Tag
+Partner Contract        Namitha         11/27/2019  Added logic to include partner contract details         T1      
+********************************************************************************************************************
+-->
+<apex:page controller="Quote_QuotePDFController" renderAs="pdf" applyBodyTag="false" standardStylesheets="false"
+           readOnly="true" contentType="application/pdf#{!objPartnerQuotePDF.quoteRec.Name__c}.pdf">
+    <head>
+        
+        <style>
+            .watermark {
+                    background-repeat: repeat;
+                    background-image: url("{!URLFOR($Resource.BudgetaryWaterMark)}");
+                    background-size: 300px 100px;
+            }
+            
+            div.footer {
+                display: block;
+                padding: 5px;
+                position: running(footer);
+            }
+            
+            div.subfooter {
+                display: inline-block;
+            }
+            
+            div.right {
+                float: right;
+            }
+            
+            #quoteTb {
+              border-collapse: collapse;
+              width: 100%;
+            }
+            
+            #quoteTb td, #quoteTb th {
+              border: 1px solid #ddd;
+              padding: 8px;
+            }
+            
+            body { 
+            font-family: 'SansSerif'; 
+            font-size:9pt;
+            }
+            .smallText{
+            font-size:12pt;
+            }
+            .page-break {
+            display:block;
+            page-break-after:always;
+            }
+            .header{
+            font-weight:bold;
+            /*background-color:#B8B8B8;*/
+            }
+            .subHeader{
+            font-weight:bold;
+            background-color:#E6E6E6;
+            }
+            .fontCourier{
+            font-family: 'Courier';
+            }
+            
+            div.footer {
+                display: block;
+                padding: 5px;
+                position: running(footer);
+            }
+            div.footerpageCount {
+                display: block;
+                padding: 5px;
+                position: running(footerpageCount);
+            }
+            
+            .pagenumber:before {
+                content: counter(page);
+            }
+            .pagecount:before {
+                content: counter(pages);
+            }
+            
+            .avaya {
+                color:red;
+            }
+            .atos {
+                color:rgb(0, 102, 161);
+            }
+            .rainbowoffice {
+                color:#573393;
+            }
+            /* Longform quotes chages - starts */
+            .longformbody { 
+            font-family: 'SansSerif'; 
+            font-size:10pt;
+            text-align: justify;
+            line-height:1.3;
+            }
+            .longformRedHeader { 
+            font-family: 'SansSerif'; 
+            font-size:16pt;
+            text-align: left;
+            color:red;
+            line-height:1.3;
+            }
+            .longformBlackHeader { 
+            font-family: 'SansSerif'; 
+            font-size:16pt;
+            text-align: left;
+            color:black;
+            }
+            .longformBlue { 
+            font-family: 'SansSerif';
+            text-align: left;
+            color:blue;
+            }
+            /* Longform quotes chages - end */
+        </style>
+        <apex:variable var="test1" value="test1" rendered="{!and(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c != 'Avaya Cloud Office',
+                                                           objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c != 'Rainbow Office')}">
+                <style>
+                    @page
+                    {
+                    background-repeat: repeat;
+                    background-image: url("{!URLFOR($Resource.BudgetaryWaterMark)}");
+                    background-size: 300px 100px;
+                    size: A4 potrait;
+                    margin-bottom: 4cm;
+                    @top-left {
+                    content : element(header);
+                    }
+                    @bottom-left {
+                    content: element(footer);
+                    }
+                    }
+                </style>
+            </apex:variable>
+            <apex:variable var="test2" value="test2" rendered="{!and(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office',
+                                                               objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office')}">
+                <style>
+                    @page
+                {
+                size: A4 potrait;
+                margin-bottom: 4cm;
+                @top-left {
+                content : element(header);
+                }
+                @bottom-left {
+                content: element(footer);
+                }
+                }                
+                div.header {
+                padding: 10px;
+                position: running(header);
+                }
+                div.footer {
+                display: block;
+                padding: 5px;
+                position: running(footer);
+                }
+                </style>   
+            </apex:variable>
+        
+    </head>
+    <!-- Longform quotes chages - starts -->
+    <div style="{!If((objPartnerQuotePDF.isLongForm == 'Y'),'display:block', 'display:none')}">
+        <div class="header">
+            <font class="longformbody" style="text-align: left;color:#D0D0D0;font-size:12px;">
+            Avaya Cloud Office | Sales Proposal
+            </font>
+            <br />
+            <br />
+        </div> 
+        <div class="footer">            
+            <br />
+            <apex:image width="30%" height="60px" url="{!$Resource.Avaya_RC_Logo}"/>         
+        </div>
+        <br />
+        <br />
+        <font class="longformRedHeader" style="font-Weight:bold;font-size:30px;">
+            <apex:outputText value="Avaya Cloud Office" escape="false"/> 
+        </font>
+        <font class="longformRedHeader" style="font-Weight:bold;font-size:16px;vertical-align:top">
+            <apex:outputText value="TM By Ringcentral" escape="false"/> 
+        </font>
+        <br />
+        <font class="longformRedHeader" style="font-Weight:bold;font-size:28px;">
+            <apex:outputText value="Sales Proposal" escape="false"/> 
+        </font>
+        <br />
+        <br />
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;color:gray;font-size:16px;">
+            Quote Prepared for : {!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Name}
+        </font>
+        <br />
+        <br />
+        <br />
+        <font class="longformbody" style="text-align: left;color:#D0D0D0">
+            <table>
+                <tr>
+                    <td width = "400px">
+                        <apex:outputText value="Prepared By:" style="font-Weight:bold;color:#D0D0D0;font-size:16px;" escape="false"/> 
+                    </td>
+                    <td width = "400px">
+                        <apex:outputText value="Phone|Text|Fax" style="font-Weight:bold;color:#D0D0D0;font-size:16px;" escape="false"/> 
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <apex:outputText value="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Partner_Contact__r.Name}" style="color:#D0D0D0;font-size:16px;" escape="false"/> 
+                    </td>
+                    <td>
+                        <apex:outputText value="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Partner_Contact__r.Email}" style="color:#D0D0D0;font-size:16px;" escape="false"/>
+                        <br />
+                        <apex:outputText value="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Partner_Contact__r.Phone}" style="color:#D0D0D0;font-size:16px;" escape="false"/> 
+                    </td>
+                </tr>
+            </table>
+        </font> 
+        <br />
+        <br />
+        <br />
+        <apex:image url="{!$Resource.LongformQuotePic1}" width="120%" height="450px" style="float: center;padding: 10px;"></apex:image>
+        <br />
+        <br />
+        <br />
+        <br />
+        <font class="longformRedHeader">
+            <apex:outputText value="Make communications simple and effortless for everyone." escape="false"/>
+        </font>
+        <br />
+        <br />
+        <font class="longformbody">
+            Driving revenue, delighting your customers, ensuring your people are productive. Keeping all the plates spinning is challenging enough without the headaches of poor communications. Avaya Cloud Office can fundamentally enhance the way your business communicates with customers, partners and across your organization by simplifying the way you call, chat, meet and collaborate.
+            <br />
+            Avaya Cloud Office places you, and all your users, in control of their communications, and delivers a unified communications experience that’s intuitive to use and accessible from a phone, a browser or any mobile device. From a single interface you’ll chat with colleagues, make and receive calls, plan and join meetings, collaborate with screen sharing and video and keep your teams on-task with file sharing, task management and virtual team rooms that let everyone share and stay up-to-date. 
+            <br />
+            If all those capabilities sound like a lot to manage, don’t worry—we take care of that for you. This public cloud solution from Avaya makes it easy. We keep your solution updated and secure with the latest releases – you don’t need to lift a finger. And Avaya Cloud Office’s flexibility makes it easy to expand as your business grows – in people or locations.        
+        </font>
+        <br />
+        <br />
+        <apex:image url="{!$Resource.LongformQuotePic2}" width="90%" height="350px" style="float: center;padding: 10px;"></apex:image>
+        <br />
+        <br />
+        <font class="longformBlackHeader">
+            Bring your Communications into the 21st Century
+        </font>
+        <br />
+        <br />    
+        <font class="longformbody">
+            Voice is no longer the only way, or even the preferred way to stay in touch with customers and colleagues. Instead, chat/Instant Messaging (IM), often begins an interaction that may escalate into an audio, video, or content sharing session. The reality is your employees and customers expect more - they want a seamless and intuitive communications experience that fits into how they work instead of changing the way they work, helping them stay in touch on their device of choice as they move throughout their day.
+            <br />
+            Avaya Cloud Office creates a portal for communications, allowing your people to quickly transition to the mode that’s exactly right for them at any moment. One click is all it takes to start a call, join a meeting, contribute to a team chat or share content.
+        </font>
+        <br />
+        <br />        
+        <font class="longformbody" style="font-Weight:bold;">
+            Integrated Meetings Keep it Simple and Reduce your Costs
+        </font>
+        <br />
+        <font class="longformbody" >
+            With Avaya Cloud Office, there’s no need to pay for separate meeting services. You’ll enjoy unlimited audio and video conferencing with hundreds of audio or video conference participants. Share your screen and files with colleagues, integrate with your existing conference room systems and create impactful webinar experiences for large audiences. 
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            Texting for Business 
+        </font>
+        <font class="longformbody" >
+            (*Available in US and Canada only)
+            <br />
+            Texting (SMS) may be the most common way today to engage with someone else. But texting from your personal account may not be appropriate or optimal. It requires sharing your personal number with business contacts and makes it difficult to keep all your business communications in one stream. With Avaya Cloud Office, you get the same experience you’re used to, but all from within your Avaya solution. No mixing up contacts or worrying about personal verses business communications – each kind of contact stays within its domain. And Avaya Cloud Office supports Multimedia Messaging Service (MMS) allowing you to send and receive images, videos and other multimedia content.            
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            One Number Does it All 
+        </font>
+        <br />
+        <font class="longformbody" >            
+            With Avaya Cloud Office, one number does it all; voice and FAX all come to your single number – easy to manage, easy to control, and easy to see at a glance. You’ll always know what’s going on even if you can’t pick up, through instant notifications for voice and FAX messages via email or the Avaya Cloud Office app. 
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            Secure, Reliable Communications for your Critical Business Needs
+        </font>
+        <br />
+        <font class="longformbody" >            
+            The Avaya Cloud Office’s platform ensures you receive the security, reliability and coverage you need to move your business forward. Enterprise-grade capabilities like multiple, globally distributed data centers, enterprise single sign-on, and flexible role and permissions for administrators ensure your critical business communications remain secure and available when you need them.
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            Integrations that Make Sense for the Way you Work
+        </font>
+        <br />
+        <font class="longformbody" >            
+            You rely on a variety of different tools to get your work done every day: desktop apps, workflow automation, and customer relationship management from such vendors as Google, Salesforce, Oracle and Microsoft. With Avaya Cloud Office, you can integrate those apps with your communications, creating a seamless experience that eliminates the need to switch between applications. Simple, intuitive and fast. It lets you get more done. 
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            Leverage Analytics to Understand your Communications and your Business
+        </font>
+        <br />
+        <font class="longformbody" >            
+            Take the guess work out of understanding how communications work at your business. Avaya Cloud Office comes complete with an up-to-the-hour advanced call management system and analytics. Use the built-in reports or create your own dashboards with over 30 Key Performance Indicators (KPIs). You’ll understand such metrics as your utilization, missed calls, time to answer, refused calls, meeting frequency, and system Quality of Service (QoS). 
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-Weight:bold;">
+            Go Beyond 
+        </font>
+        <font class="longformbody" >
+            <br />
+            With Avaya Cloud Office, you’ll go beyond voice communications to a world where multi-media collaboration brings unprecedented productivity to your users and unprecedented responsiveness to your customers. Flexible, easy to use, feature rich, mobile friendly and backed by Avaya’s award-winning support, Avaya Cloud Office is available today to simplify your communications so you can focus on driving your business forward.
+        </font>
+        <br />
+        <br />
+        <br />
+        <table>
+            <tr>
+                <td width="10%" style="vertical-align:top;">
+                    <apex:image url="{!$Resource.LongformQuotePic3}" style="float: left;"></apex:image>
+                </td>
+                <td>
+                    <font class="longformBlue" style="font-size:12pt;">            
+                        All-inclusive cloud communications and collaboration system
+                    </font>
+                    <br />
+                    <br />
+                    <font class="longformbody">
+                        •   Integrated voice, fax, conferencing, video meetings, messaging, and team collaboration for every employee – also enabling a single business identity
+                        <br />
+                        •   Unifies the way employees, customers, and partners communicate with one another
+                        <br />
+                        •   Industry-leading reporting and analytics
+                        <br />
+                        •   Enterprise-grade reliability, carrier grade availability, guaranteed quality of service, and security with best-in-cIass encryption standards
+                        <br />                        
+                        •   Simple per-user pricing; no separate maintenance and support contracts 
+                        <br />
+                        •   Low Total Cost of Ownership (TCO) and savings on Capital Expenditure (CAPEX)
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <table>
+            <tr>
+                <td width="10%" style="vertical-align:top;">
+                    <apex:image url="{!$Resource.LongformQuotePic4}"  style="float: left;"></apex:image>
+                </td>
+                <td>
+                    <font class="longformBlue" style="font-size:12pt;">            
+                        Ease of management
+                    </font>
+                    <br />
+                    <br />
+                    <font class="longformbody">
+                        •   Manage all offices and users from anywhere with a single easy-to-use, mobile-enabled interface
+                        <br />
+                        •   Enjoy complete administrative control, self-service capabilities for users, and reduced dependence on service providers
+                        <br />
+                        •   Get quick, simple, streamlined system setup and user activation 
+                        <br />
+                        •   Easily scale as your business grows by adding offices, in-office or remote workers in just minutes
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <table>
+            <tr>
+                <td width="10%" style="vertical-align:top;">
+                    <apex:image url="{!$Resource.LongformQuotePic5}" style="float: left;"></apex:image>
+                </td>
+                <td>
+                    <font class="longformBlue" style="font-size:12pt;">            
+                        Open platform
+                    </font>
+                    <br />
+                    <br />
+                    <font class="longformbody">
+                        Over 100 ready-to-use integrations with business cloud apps, including Microsoft Office 365™, Salesforce®, ServiceNow®, Zendesk®, Google G Suite. For latest refer - https://www.ringcentral.com/apps/avaya-cloud-office/
+                        <br />
+                        Developer platform with open APIs and SDKs to enhance business workflows with custom integrations
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <br />
+        <apex:image url="{!$Resource.LongformQuotePic6}" width="70%" style="text-align: center;padding: 5px;"></apex:image>
+        <br />
+        <br />
+        <font class="longformRedHeader">
+            Wherever you are, we’re there for you
+        </font>
+        <br />
+        <br />
+        <br />
+        <table>
+            <tr>
+                <td width="10%" style="vertical-align:top;">
+                    <apex:image url="{!$Resource.LongformQuotePic7}" style="float: left;"></apex:image>
+                </td>
+                <td>
+                    <font class="longformBlue" style="font-size:12pt;">            
+                        Global availability
+                    </font>
+                    <br />
+                    <br />
+                    <font class="longformbody">
+                        •   Available in the US, Australia, Canada, UK, Ireland, France, Netherlands, Germany, Italy, Belgium, Spain, Austria and Portugal.
+                        <br />
+                        •   Deploy and manage a single solution globally 
+                        <br />
+                        •   Instantly provision and activate employees in countries with local capabilities
+                        <br />
+                        •   Number availability in over 100 countries for local business presence
+                    </font>
+                </td>
+            </tr>
+        </table>
+        <br />
+        <br /> 
+        <br />
+        <font class="longformRedHeader">
+            Our customers            
+        </font>
+        <br />
+        <font class="longformbody" style="font-size:12pt;">            
+            Avaya is a global leader in solutions to enhance and simplify communications and collaboration, and is the trusted provider for countless enterprises.
+            <br />            
+            •   More than 90% of the U.S.'s largest companies are Avaya customers
+            <br />
+            •   5m+ Contact Center Seats and over 100M UC lines
+            <br />
+            •   Customers in 175+ countries
+            <br />
+            Find out more about Avaya. <br />
+            <apex:outputLink value="https://www.avaya.com/en/about-avaya/">https://www.avaya.com/en/about-avaya/</apex:outputLink>
+        </font>
+        <br />
+        <br />
+        <br />
+        <br />
+        <font class="longformRedHeader">
+            Awards and industry recognition            
+        </font>
+        <br />        
+        <font class="longformbody" style="font-size:12pt;">
+            Avaya is a leader in cloud-based business communications and collaboration solutions. See our 
+            <apex:outputLink value="https://www.avaya.com/en/awards/">full list of awards.</apex:outputLink>
+            <br />
+            <br />
+            <apex:image url="{!$Resource.LongformQuotePic8}" width="10%" style="float: left;vertical-align:center;padding: 5px;"></apex:image>&nbsp;            
+            Avaya Cloud Office received <b>2020 Unified Communications Product of the Year Award</b>
+            <br />
+            <br />
+            Aragon Research Globe for Unified Communications and Collaboration, 2020
+            <br />
+            Frost &amp; Sullivan Customer Value Leadership Award
+            <br />
+            IDC MarketScape Worldwide Unified Communications and Collaboration 2019 Vendor Assessment.
+            <br />
+            Gartner Peer Insights Customers’ Choice
+            <br />
+            CRN 5 Star Rating
+        </font>
+        <br />
+        <br />
+        <br />
+        <font class="longformRedHeader">
+            Resources
+        </font>
+        <br />
+        <font class="longformbody" style="font-size:12pt;">
+            More info about Avaya Cloud Office - 
+            <apex:outputLink value="https://www.avaya.com/en/products/unified-communications/cloud-office/">https://www.avaya.com/en/products/unified-communications/cloud-office/</apex:outputLink>
+            <br />
+            Online training and educational resources - 
+            <apex:outputLink value="https://support.avaya.com/">https://support.avaya.com/</apex:outputLink>
+        </font>
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <br />
+        <font class="longformRedHeader">
+            Devices
+        </font>
+        <br />
+        <br />
+        <font class="longformbody" style="font-size:12pt;">
+            Ask about our phone rental options.
+        </font>
+        <br />
+        <br />
+        <br />
+        <br />
+        <font class="longformbody" >
+            <table style="border-collapse: collapse;border: 1px solid black;">
+                <tr>
+                    <td width="50%" style="background-color:red;border: 1px solid black;color:white;">
+                        <b>J139</b>
+                    </td>
+                    <td width="50%" style="background-color:red;border: 1px solid black;color:white;">
+                        <b>J159</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;">
+                        <apex:image url="{!$Resource.LongformQuotePic9}" width="50%" height="110px" style="float: left;vertical-align:top;"></apex:image>
+                    </td>
+                    <td style="border: 1px solid black;">
+                        <apex:image url="{!$Resource.LongformQuotePic10}" width="50%" height="110px" style="float: left;vertical-align:top;"></apex:image>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;padding: 3px;">
+                        The Avaya IP Phone J139 provides a modern, connected, personalized experience for customers and addresses the need for secure, reliable voice communications for users within large enterprises and small and medium-sized companies. It is well suited for users that need only the most commonly used voice features. It provides a new level of simplicity in using features such as:
+                        <br />
+                        <br />
+                        &nbsp;• Hold<br />
+                        &nbsp;• Transfer<br />
+                        &nbsp;• Conference<br />
+                        &nbsp;• Forward<br />
+                        &nbsp;• Call Park / UnPark
+                    </td>
+                    <td style="border: 1px solid black;padding: 3px;">
+                        The Avaya J159 IP Phone is an IP phone that is targeted to users who desire a small form factor on their desk, packed with lots of feature buttons and meets the everyday voice communications needs of its users. This competitively priced, high-performing IP Phone features:
+                        <br />
+                        <br />
+                        &nbsp;• Primary and secondary color displays<br />
+                        &nbsp;• Four softkeys<br />
+                        &nbsp;• High definition audio quality<br />
+                        &nbsp;• Integrated Gigabit Ethernet interface<br />
+                        &nbsp;• Headset support
+                    </td>
+                </tr>
+            </table>
+            <br />
+            <br />
+            <div  style="padding-bottom:100px;">
+            </div>
+            <table width="50%" style="border-collapse: collapse;border: 1px solid black;">
+                <tr>
+                    <td  style="background-color:red;border: 1px solid black;color:white;">
+                        <b>J179</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;">
+                        <apex:image url="{!$Resource.LongformQuotePic11}" width="50%" height="110px" style="float: left;vertical-align:top;"></apex:image>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;padding: 5px;">
+                        The Avaya IP Phone J179 leverages your enterprise IP network to deliver sophisticated voice communications from headquarters, remote locations, or home offices. Give your power users enhanced communication capabilities with these high-performing phone features:
+                        <br />
+                        <br />
+                        &nbsp;• Color display<br />
+                        &nbsp;• 4 softkeys<br />
+                        &nbsp;• High definition audio quality<br />
+                        &nbsp;• Integrated Gigabit Ethernet interface<br />
+                        &nbsp;• Headset support
+                    </td>
+                </tr>
+            </table>
+            <table width="50%">
+                
+            </table>
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <table style="border-collapse: collapse;border: 1px solid black;">
+                <tr>
+                    <td width="50%" style="background-color:red;border: 1px solid black;color:white;">
+                        <b>JEM24 (J100s) Expansion Modules</b>
+                    </td>
+                    <td width="50%" style="background-color:red;border: 1px solid black;color:white;">
+                        <b>B199</b>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;">
+                        <apex:image url="{!$Resource.LongformQuotePic12}" width="50%" height="110px" style="float: left;vertical-align:top;"></apex:image>
+                    </td>
+                    <td style="border: 1px solid black;">
+                        <apex:image url="{!$Resource.LongformQuotePic13}" width="50%" height="110px" style="float: left;vertical-align:top;"></apex:image>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid black;padding: 5px;">
+                        The Avaya J100 Expansion Module extends the number of call appearances and feature buttons on the Avaya IP Phone J169 &amp; Avaya IP Phone J179. Each expansion module provides 24 additional buttons for incoming/outgoing calls, for features such as autodial, for dialing contacts, or for other applications.
+                        <br />
+                        <br />
+                        &nbsp;• 4.3 inches<br />
+                        &nbsp;• 272 x 480 pixel color display that reverts to grayscale when connected to J169 IP Phone<br />
+                        &nbsp;• Avaya IP Phone J169 &amp; Avaya IP Phone J169 support up to 3 button modules and each button module can take both Stand and Wall mount positions together with the phone<br />
+                        &nbsp;• The J100 Expansion Module provides access to up to 24 buttons and lamps with ability to display 3 pages when a single expansion module is used<br />
+                        &nbsp;• Each feature/line button has a red/green indicator<br />
+                        &nbsp;• Pre-configured background or screensavers are available to match the base phone
+                    </td>
+                    <td style="border: 1px solid black;padding: 5px;">
+                        Avaya Conference Phone B199 delivers state-of-the-art technology to any size conference room to significantly improve the conferencing experience for all meeting participants. 
+                        <br />
+                        <br />
+                        OmniSound audio technology guarantees clear transmission during meetings, so you and your team don’t miss any part of the discussion. 
+                        <br />
+                        <br />
+                        &nbsp;• Full duplex transmits and receives sound simultaneously to prevent audio clipping<br />
+                        &nbsp;• 360-degree surround sound <br />
+                        &nbsp;• Powerful speakers optimize audio pick-up and broadcasting<br />
+                        &nbsp;• Noise suppression filters cut static background noise <br />
+                        &nbsp;• Equalizer lets you adjust pitch to suit your preference<br />
+                    </td>
+                </tr>
+            </table>
+        </font>
+        <div  style="padding-bottom:200px;">
+    </div>
+        <font class="longformRedHeader">
+            Your Avaya Quote
+        </font>
+        <br />        
+    </div>
+    <!-- Longform quotes chages - ends -->
+    <!-- Added if condition for Long form quote -->
+    <div style="{!If((objPartnerQuotePDF.isLongForm != 'Y'),'display:block', 'display:none')}">
+        <div class="header" style="height:60px">
+            <div >
+                <!--<apex:outputText rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office'}">-->
+                
+                <apex:variable var="test3" value="test3" rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c != 'Rainbow Office'}">
+                    <apex:image width="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','40%',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','225','40%'))}" 
+                                url="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office',$Resource.Avaya_RC_Logo,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office',$Resource.Atos_Logo_v2,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'RingCentral',$Resource.InternalRC_Logo,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'RingCentral Canada',$Resource.InternalRC_Logo,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'RingCentral UK',$Resource.InternalRC_Logo,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'RingCentral EU',$Resource.InternalRC_Logo,If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'RingCentral AU',$Resource.InternalRC_Logo,'')))))))}"
+                                />
+                </apex:variable>
+            
+                <apex:variable var="test4" value="test4" rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office'}">
+                    <apex:image width="200" url="{!$Resource.ALE_Rainbow_Logo}" />
+                </apex:variable>
+            
+                <!--</apex:outputText>
+                <apex:outputText rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office'}">
+                <apex:image width="40%" url="{!$Resource.Atos_Logo}"/>
+                </apex:outputText>-->
+            </div>
+        </div>
+    </div>
+    <body>
+        <!-- Added if condition for Long form quote -->
+        <div style="{!If((objPartnerQuotePDF.isLongForm != 'Y'),'display:block', 'display:none')}">
+            <div  style=" height:60px; line-height: 20px;font-Weight:bold;font-size:22px;width:100%;">
+                <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.headerTitle1}" escape="false"/> 
+                <font class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','avaya')))}" style="font-size:15px"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.headerTitle2}" escape="false"/></font>
+            </div>
+            <div class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','avaya')))}" style="font-size:15px"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.subHeader1}" escape="false"/></div>
+        </div>
+        <br/>
+        <table id="quoteTb">
+            <tr>
+                <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn1}" escape="false"/></td>
+                <td>{!objPartnerQuotePDF.quoteRec.Name} 
+                    &nbsp;
+                    {!if(objPartnerQuotePDF.quoteRec.Name__c != null, '-' + objPartnerQuotePDF.quoteRec.Name__c, '')}
+                </td>
+                <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn8}" escape="false"/></td>
+            </tr>
+            <tr>
+                <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn2}" escape="false"/></td>
+                <td>
+                    <apex:outputText value="{0, date, MMMM d',' yyyy}"> 
+                        <apex:param value="{!objPartnerQuotePDF.quoteRec.Expiration_Date__c}" /> 
+                    </apex:outputText> 
+                </td>
+                <td rowspan="6" style="vertical-align:top;">
+                    <span>
+                        {!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Name}<br/>
+                        {!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Most_Recent_Implementation_Contact__r.name}<br/>
+                        {!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Most_Recent_Implementation_Contact__r.Email}<br/>
+                        {!objPartnerQuotePDF.quoteRec.Opportunity__r.Account.Phone}
+                    </span>
+                </td>
+            </tr>
+            <apex:outputText rendered="{!objPartnerQuotePDF.quoteRec.Contract__c}">
+                <tr>
+                    <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn3}" escape="false"/></td>
+                    <td style="text-align:left;">
+                        <apex:outputText value="{0, date, MMMM d',' yyyy}"> 
+                            <apex:param value="{!objPartnerQuotePDF.quoteRec.Start_Date__c}" /> 
+                        </apex:outputText>
+                    </td>
+                    
+                </tr>
+                
+                    <tr>
+                        <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn4}" escape="false"/></td>
+                        <td style="text-align:left;">
+                            {!objPartnerQuotePDF.quoteRec.Initial_Term__c}
+                        </td>
+                        
+                    </tr>
+            
+                <tr>
+                    <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn5}" escape="false"/></td>
+                    <td style="text-align:left;">
+                        {!objPartnerQuotePDF.quoteRec.Renewal_Term__c}
+                    </td>
+                    
+                </tr>
+            </apex:outputText>   
+            <tr>
+                <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn6}" escape="false"/></td>
+                <td>{!objPartnerQuotePDF.quoteRec.CurrencyIsoCode}</td>
+                
+            </tr>
+            <tr>
+                <td style="background-color: #f5f5f5;font-weight:bold;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.HeaderTableColumn7}" escape="false"/></td>
+                <td>{!objPartnerQuotePDF.quoteRec.Payment_Term__c}</td>
+                
+            </tr>
+        </table>
+        <table style="border:solid 0px gray;font-family:'SansSerif';width:100%;font-size:9pt;" cellpadding="5" cellspacing="0" >
+            <tr>
+                
+            </tr>
+           
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <apex:outputText rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office'}">
+                        <div class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','avaya')))}" style="font-size:16px"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.subHeader2}" escape="false"/></div>
+                    </apex:outputText>
+                    <apex:outputText rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office'}">
+                        <div class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','avaya')))}" style="font-size:16px"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.subHeader2}" escape="false"/></div>
+                    </apex:outputText>
+                    <apex:variable var="test5" value="test5" rendered="{!objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office'}">
+                        <div class="rainbowoffice" style="font-size:16px"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.subHeader2}" escape="false"/></div>
+                    </apex:variable>
+                </td>
+            </tr>
+                        
+            
+            <tr>
+                <td colspan="4">&nbsp;</td>
+            </tr>
+            
+            <tr>
+                <td colspan="4">
+                    <table border="1" cellspacing="1" cellpadding="5" style="font-size:9pt;;text-align:left;border-collapse:collapse;width:100%;">
+                        <tr class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','avaya')))}" style="background-color:#f5f5f5;font-weight:bold;">
+                            <th style="width:45%;">
+                                
+                            </th>
+                            <th style="width:15%;text-align:left;">
+                               <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn1}" escape="false"/>
+                            </th>
+                            <th style="width:10%;text-align:right;">
+                                <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn2}" escape="false"/>
+                            </th>
+                            <th style="width:15%;text-align:right;">
+                                <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn3}" escape="false"/>
+                            </th>
+                            <th style="width:15%;text-align:right;">
+                                <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn4}" escape="false"/>
+                            </th>
+                        </tr>
+                        <apex:repeat value="{!objPartnerQuotePDF.quoteLineList}" var="eachLine">
+                                <tr>
+                                    <td>
+                                        {!eachLine.objQuoteLine.Product_Catalogue__r.Display_Name__c}
+                                    </td>
+                                    
+                                    <td style="text-align:left;">
+                                        <apex:outputText rendered="{!not(eachLine.isHeaderProduct)}">
+                                            {!IF(eachLine.objQuoteLine.Product_Catalogue__r.Plan__c == 'One - Time', 'One - Time' , eachLine.objQuoteLine.Charge_Term__c)}
+                                        </apex:outputText>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <apex:outputText rendered="{!not(eachLine.isHeaderProduct)}">
+                                            {!eachLine.objQuoteLine.Quantity__c}
+                                        </apex:outputText>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <!--<apex:outputField value="{!eachLine.objQuoteLine.List_Price__c}"/>-->
+
+                                        <apex:outputText value="{0, number, ###,###,##0.00}" rendered="{!not(eachLine.isHeaderProduct)}">
+                                            {!objPartnerQuotePDF.quoteRec.CurrencyIsoCode}
+                                            <apex:param value="{!eachLine.objQuoteLine.List_Price__c}" />
+                                       </apex:outputText>    
+                                    </td>
+                                   <td style="text-align:right;">
+                                        <apex:outputText value="{0,number, ###,###,##0.00}" rendered="{!not(eachLine.isHeaderProduct)}">
+                                            {!objPartnerQuotePDF.quoteRec.CurrencyIsoCode}
+                                            <apex:param value="{!eachLine.objQuoteLine.Total_Price__c}" />
+                                        </apex:outputText>      
+                                    </td>
+                                </tr>
+                        </apex:repeat>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td colspan="2" class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','')))}" 
+                                style="text-align:right;background-color: #f5f5f5;" ><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn5}" escape="false"/></td>
+                            <td style="text-align:right;background-color: #f5f5f5;"> 
+                                 <apex:outputText value="{0, number, ###,###,##0.00}">
+                                     {!objPartnerQuotePDF.quoteRec.CurrencyIsoCode}
+                                    <apex:param value="{!objPartnerQuotePDF.oneTimeTotal}" />
+                                 </apex:outputText>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td colspan="2" class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','')))}"
+                                style="text-align:right;background-color: #f5f5f5;"><apex:outputText value="{!objPartnerQuotePDF.pdfDetails.bodyTableColumn6}" escape="false"/></td>
+                            <td style="text-align:right;background-color: #f5f5f5;"> 
+                                 <apex:outputText value="{0, number, ###,###,##0.00}">
+                                     {!objPartnerQuotePDF.quoteRec.CurrencyIsoCode}
+                                    <apex:param value="{!objPartnerQuotePDF.reccuringTotal}" />
+                                 </apex:outputText>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','')))}"
+                                style="text-align:left;">
+                               <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.disclaimer}" escape="false"/>
+                            </td>
+                            <td colspan="2" style="background-color: #f5f5f5;"></td>
+                            <td  style="background-color: #f5f5f5;"></td>
+                        </tr>
+                     </table>
+                    <br/>
+                    <apex:outputPanel rendered="{!objPartnerQuotePDF.outputDisplayName != null}">
+                        <table border="1" cellspacing="1" cellpadding="5" style="font-size:9pt;;text-align:left;border-collapse:collapse;width:100%;">
+                            <tr class="{!If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Avaya Cloud Office','avaya',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Unify Office','atos',If(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c == 'Rainbow Office','rainbowoffice','')))}"
+                                style="background-color:#f5f5f5;font-weight:bold;">
+                                <th style="width:15%;text-align:left;">
+                                    Implementation
+                                </th>
+                            </tr>
+                                <tr>
+                                    <td>
+                                        {!objPartnerQuotePDF.outputDisplayName}
+                                    </td>
+                                </tr>
+                        </table>
+                    </apex:outputPanel>
+                </td>
+            </tr>
+             <apex:outputPanel rendered="{!IF((contains(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c,'RingCentral') && objPartnerQuotePDF.quoteRec.Opportunity__r.Tier_Name__c=='Office'), 'true', 'false')}" >            
+                         <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.officetoMvPNotify}" rendered="true" /> 
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!IF((contains(objPartnerQuotePDF.quoteRec.Opportunity__r.Brand_Name__c,'RingCentral') && objPartnerQuotePDF.quoteRec.Opportunity__r.Tier_Name__c=='RC Meetings'), 'true', 'false')}" >            
+                         <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.gliptovideoNotify}" rendered="true" /> 
+            </apex:outputPanel>
+            <tr>
+                <td>
+                    <apex:outputText value="{!objPartnerQuotePDF.pdfDetails.footerContent}" escape="false"/>
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size: 11px ">
+                    <apex:outputPanel rendered="{!objPartnerQuotePDF.isClosedApprovedDiscountReq}">
+                        {!$Label.Quote_PromoCodeOutputText}
+                    </apex:outputPanel>
+                </td>            
+            </tr>
+          </table>
+       </body>
+    <!--
+         <div class="footer">
+             <div class="subfooter">
+                 438560452 &nbsp;&nbsp; {!MONTH(TODAY())}/{!YEAR(TODAY())}
+             </div>
+             <div class="subfooter right" style="width:500px;">
+                 © 2020 Avaya Inc. All Rights Reserved. Avaya and the Avaya Logo are trademarks of Avaya Inc. and are registered in the
+                 United States and other countries. All trademarks identified by ®, ™, or SM are registered marks, trademarks, and service
+                 marks, of their respective owners.<br/>
+                 © 2020 RingCentral, Inc. All rights reserved. RingCentral and the RingCentral logo are trademarks of RingCentral, Inc.
+             </div>
+         </div>
+    -->
+</apex:page>

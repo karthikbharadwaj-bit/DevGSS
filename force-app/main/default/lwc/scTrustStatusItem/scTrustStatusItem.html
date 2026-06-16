@@ -1,0 +1,29 @@
+<template>
+    <div class="sc-trust-item" if:true={loaded}>
+        <template if:true={hasSub}>
+            <div class={headerCls} onclick={doMinimize}>
+                <div class="sc-trust-item__min-icon"></div>
+                <span>{title}</span>
+                <div class="sc-trust-item__status-icon"><span class={summaryStatus}></span></div>
+            </div>
+            <ul class="sc-trust-item__list">
+                <template for:each={subStatuses} for:item="subItem">
+                    <li key={subItem.apiName}>
+                        <c-sc-trust-status-item
+                            status={subItem.status}
+                            title={subItem.title}
+                            childrens={subItem.children}
+                            side={side}
+                        ></c-sc-trust-status-item>
+                    </li>
+                </template>
+            </ul>
+        </template>
+        <template if:false={hasSub}>
+            <span>
+                <span>{title}</span>
+            </span>
+            <div class="sc-trust-item__status-icon"><span class={status}></span></div>
+        </template>
+    </div>
+</template>

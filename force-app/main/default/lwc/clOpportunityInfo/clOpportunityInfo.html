@@ -1,0 +1,187 @@
+<template>
+    <li if:true={showNewOpportunityCheckbox}
+        class="slds-card slds-p-horizontal_medium slds-p-vertical_x-small new-opportunity-card slds-m-top_medium slds-show_inline-block">
+        <!-- Create New Opportunity -->
+        <lightning-input type="checkbox" name="isCreateNewOpportunity"
+                         label="Create New Opportunity"
+                         disabled={isNotLoaded}
+                         checked={isCreateNewOpportunity}
+                         onchange={onIsCreateNewOpportunityChange}></lightning-input>
+    </li>
+
+    <li class={containerClasses}>
+        <div class="disable-overlay" if:false={isCreateNewOpportunity}>
+            <div class="slds-theme_shade slds-theme_alert-texture disable-overlay__backdrop"></div>
+            <div class="disable-overlay__message">
+                New Opportunity will not be created. &nbsp;
+                <template if:true={showNoOpportunityNewAccountMessage}>
+                    Lead will be converted into new Account and Contact.
+                </template>
+                <template if:true={showNoOpportunityExistingAccountMessage}>
+                    Lead will be converted as a Contact under existing Account.
+                </template>
+            </div>
+        </div>
+        <article class="slds-setup-assistant__step">
+            <div class="slds-setup-assistant__step-summary">
+                <div class="slds-media">
+                    <div class="slds-setup-assistant__step-summary-content slds-media__body">
+                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                            <template if:true={isExpandedView}>Enter&nbsp;</template>
+                            Opportunity Info
+                        </h3>
+
+                        <c-placeholder-loading type='line'
+                                               width="20rem"
+                                               if:true={isLoading}></c-placeholder-loading>
+
+                        <!-- Collapsed Preview -->
+                        <div class="slds-page-header__row" if:true={isCollapsedView}>
+                            <!-- Opportunity Name -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    Opportunity Name
+                                </p>
+                                <h3 class="slds-text-heading_small">
+                                    <span if:true={opportunityName}>{opportunityName}</span>
+                                    <span if:false={opportunityName}>--None--</span>
+                                </h3>
+                            </div>
+
+                            <!-- Selected Brand -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    Brand
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedBrand}>{selectedBrand}</template>
+                                    <template if:false={selectedBrand}>--None--</template>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+
+                            <!-- Selected Service Plan -->
+                            <div class="slds-m-right_large" if:true={showSelectedServicePlan}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    Selected Service Plan
+                                </p>
+                                <template if:false={isPreselectLoading}>
+                                    <h3 class="slds-text-heading_small">
+                                        {selectedServiceName}
+                                    </h3>
+                                    <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right"
+                                        if:true={selectedServiceId}>
+                                        <li class="slds-item">
+                                            <template if:true={selectedServiceChargeTerm}>
+                                                {selectedServiceChargeTerm}
+                                            </template>
+                                            <template if:false={selectedServiceChargeTerm}>
+                                                --None--
+                                            </template>
+                                        </li>
+                                        <li class="slds-item" if:true={selectedServicePrice}>
+                                            <lightning-formatted-number value={selectedServicePrice}
+                                                                        format-style="currency"
+                                                                        currency-display-as="code"
+                                                                        currency-code={selectedServicePriceCurrencyCode}>
+                                            </lightning-formatted-number>
+
+                                        </li>
+                                        <li class="slds-item" if:true={selectedServiceId}>Billing System:
+                                            <template if:true={selectedServiceIsLegacy}> Legacy</template>
+                                            <template if:false={selectedServiceIsLegacy}> NGBS</template>
+                                        </li>
+                                    </ul>
+                                </template>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="13rem">
+                                </c-placeholder-loading>
+                            </div>
+
+                            <!-- Selected default area code -->
+                            <div class="slds-m-right_large" if:true={selectedAreaCodeRequired}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    Default Area Code
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedAreaCode}>
+                                        ({selectedAreaCode.areaCode})
+                                        <span if:true={selectedAreaCode.city}> {selectedAreaCode.city}</span>
+                                    </template>
+                                    <template if:false={selectedAreaCode}>--None--</template>
+                                    <ul if:true={selectedAreaCode} class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                                        <li class="slds-item" if:true={selectedAreaCode.country}>{selectedAreaCode.country}</li>
+                                        <li class="slds-item" if:true={selectedAreaCode.state}>{selectedAreaCode.state}</li>
+                                    </ul>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Edit Button -->
+                    <div class="slds-media__figure slds-media__figure_reverse" if:true={isCollapsedView}>
+                        <lightning-button onclick={toggleIsExpanded} label="Edit"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Block -->
+            <div class="slds-summary-detail__content">
+                <lightning-layout class="slds-gutters slds-m-bottom_medium" if:true={isExpandedView}>
+                    <!-- Opportunity Name -->
+                    <lightning-layout-item size="3" padding="horizontal-small">
+                        <lightning-input type="text" name="opportunityName"
+                                         label="Opportunity Name"
+                                         value={opportunityName}
+                                         required
+                                         onchange={onOpportunityNameChange}></lightning-input>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <c-cl-service-plan-selector is-shown={isExpandedView}></c-cl-service-plan-selector>
+
+                <!-- Toggle Expand -->
+                <div class="slds-clearfix slds-m-top_small" if:true={isExpandedView}>
+                    <div class="slds-float_right">
+                        <lightning-button onclick={toggleIsExpanded} label="Apply"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Container -->
+            <ul class="slds-list_dotted slds-media__body slds-text-color_error slds-m-top_small">
+                <li if:true={showIsOpportunityNameMissingError}>
+                    <b>Opportunity name is required</b><br>
+                    Please specify an opportunity name
+                </li>
+                <li if:true={showIsServicePlanMissingError}>
+                    <b>Service Plan is required</b><br>
+                    Please select Service Plan
+                </li>
+                <li if:true={showIsNgbsChargeTermMissingError}>
+                    <b>Charge Term is required</b><br>
+                    Please select Charge Term
+                </li>
+                <li if:true={showIsNgbsDefaultAreaCodeMissingError}>
+                    <b>Default Area Code is required</b><br>
+                    Please select Default Area Code
+                </li>
+                <li if:true={isCloseDateMissing}>
+                    <b>{label.CloseDateIsRequired}</b><br>
+                    {label.SelectCloseDate}
+                </li>
+            </ul>
+        </article>
+    </li>
+
+
+</template>

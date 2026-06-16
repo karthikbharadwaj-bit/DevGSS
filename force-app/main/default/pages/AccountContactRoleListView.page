@@ -1,0 +1,37 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 27-08-2020
+* Description    : Visualforce page displayed when user clicks on View All Account ContactRole in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+
+
+<apex:page sidebar="false" showHeader="false" >
+ <apex:includeLightning />
+    
+     <div id="lightning" />
+
+    <script>
+    	var accountId = "{!$CurrentPage.parameters.accId}";
+        var accountName = "{!$CurrentPage.parameters.accName}";
+    
+        $Lightning.use("c:AccountContactRolesListView", function() {
+          $Lightning.createComponent("c:Account_ContactRolesListView",
+              { "accountId" :  accountId,
+              	"accountName" : accountName},
+              "lightning",
+              function(cmp) {
+                console.log("Component created");
+              }
+          );
+        });
+    </script>
+
+</apex:page>

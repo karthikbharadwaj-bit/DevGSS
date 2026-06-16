@@ -1,0 +1,247 @@
+<template>
+    <c-lwc-toasts></c-lwc-toasts>
+    <!-- Workaround for populating recordId -->
+    <div class="slds-hide">{opportunityRecordId}</div>
+
+    <div class="slds-modal slds-fade-in-open modal-wrapper" data-id="modal-window">
+        <header class="slds-modal__header">
+            <h2 class="slds-modal__title slds-hyphenate">Process Order</h2>
+        </header>
+
+        <!-- Process Order body content -->
+        <div class={modalWindowStyle}>
+            <c-modal-window-notification-bar
+                messages={messages}
+                onremovemessages={clearNotifications}>
+            </c-modal-window-notification-bar>
+
+            <!-- Quote Select -->
+            <div class="modal-wrapper">
+                <section for:each={services} for:item="service" key={service.tierLabel}>
+                    <section class={service.segment} data-ui-auto={service.tier}>
+
+                        <!-- Collapsed section header -->
+                        <c-sn-tier-option
+                            tier={service.tier}
+                            status={service.status}
+                            is-existing-business={service.isExistingBusiness}
+                            is-sync-completed={service.isSyncCompleted}
+                            has-multiple-quote-types={service.hasMultipleQuoteTypes}
+                            has-single-quote-type={service.hasSingleQuoteType}
+                            single-quote-type-message={service.singleQuoteTypeMessage}
+                            quote-selection-options={service.quoteSelectionOptions}
+                            selected-quote-type={service.selectedQuoteType}
+                            is-quote-type-disabled={service.isQuoteTypeDisabledForService}
+                            onclick={clickTierOption}
+                            onquotetypechange={handleQuoteTypeChange}
+                            data-id={service.tierLabel}
+                            opened={service.isExpanded}>
+                        </c-sn-tier-option>
+
+                        <!-- Collapsed section Existing Business content -->
+                        <template if:true={service.isExistingBusiness}>
+                            <template if:false={service.isSyncedToICB}>
+                                <template if:false={service.isProvisioningCompleted}>
+
+                                    <!-- Old UI signup stepper -->
+                                    <c-sn-sign-up-stepper if:false={service.isUILessProcessOrderEnabled}
+                                        expanded={service.isExpanded}
+                                        step={service.currentStep}>
+                                    </c-sn-sign-up-stepper>
+
+                                    <!-- Contact center new UI existing buisness -->
+                                    <c-sn-sign-up-contact-center if:true={service.isUILessProcessOrderEnabled}
+                                        status={service.status}
+                                        expanded={service.isExpanded}
+                                        step={service.currentStep}
+                                        onsendsubmitdata={handleSubmitDataUpdate}
+                                        opportunity-id={service.oppId}
+                                        show-address-validation={isShowAddressValidation}
+                                        existing
+                                        rccc-parameters={rcccParameters}
+                                        is-ready-for-get-order-to-vendor-catalog={isReadyForGetOrderToVendorCatalog}
+                                        slds-modal-el={sldsModalEl}>
+                                    </c-sn-sign-up-contact-center>
+                                </template>
+
+                                <!-- Error message for Existing Business CC when isProvisioningCompleted = true and isSyncedToICB = false -->
+                                <div if:true={service.isProvisioningCompleted} class="slds-align_absolute-center expandable" style={temporaryWindowStyle}>
+                                    Error during Sync with NGBS and now it is not possible to complete this due to timeout.
+                                </div>
+                            </template>
+
+                            <template if:true={service.isSyncedToICB}>
+                                <!-- Notification message for Existing Business CC when isProvisioningCompleted = false and isSyncedToICB = true  -->
+                                <div if:false={service.isProvisioningCompleted} class="slds-align_absolute-center expandable" style={temporaryWindowStyle}>
+                                    Case is being provisioned in Nice.
+                                </div>
+
+                                <!-- Sync with NGBS stepper -->
+                                <c-sn-main if:true={service.isProvisioningCompleted}
+                                    is-simplified-lbo-downsell-enabled={isSimplifiedLboDownsellEnabled}
+                                    tier={service.tierLabel}
+                                    ongetsyncdata={handleSyncEvent}
+                                    expanded={service.isExpanded}
+                                    opportunity-id={service.oppId}
+                                    quote-id={service.quoteId}
+                                    data-quote-id={service.quoteId}
+                                    is-process-order-spinner-shown={isShowSpinner}
+                                    post-validation-action-available={service.isNotUILessEngage}>
+                                </c-sn-main>
+                            </template>
+                            
+                        </template>
+
+                        <!-- Collapsed section New Business content -->
+                        <template if:false={service.isExistingBusiness}>
+
+                            <!-- Old UI signup stepper -->
+                            <c-sn-sign-up-stepper if:false={service.isUILessProcessOrderEnabled}
+                                expanded={service.isExpanded}
+                                step={service.currentStep}>
+                            </c-sn-sign-up-stepper>
+
+                            <!-- new UI signup modals -->
+                            <template if:true={service.isUILessProcessOrderEnabled}>
+                                <div class={expandableContentClass}>
+                                    <!-- Office/Meetings Service new UI-->
+                                    <c-sn-mvp-sign-up if:true={service.isServiceMvpOrMeetings}
+                                        status={service.status}
+                                        is-signed={isServiceSigned}
+                                        is-in-process={isServiceSignUpInProcess}
+                                        is-active-account={isNGBSAccountActive}
+                                        package-id={service.packageId}
+                                        package-version={service.packageVersion}
+                                        expanded={service.isExpanded}
+                                        step={service.currentStep}
+                                        tier={service.tier}
+                                        has-admin-preview-permission={hasAdminPreviewPermission}
+                                        signup-json-formatted={signupJsonFormatted}
+                                        onmvptimezonechanged={handleServiceTimezoneChange}
+                                        onselectedsignuptab={handleSelectedSignUpTab}
+                                        slds-modal-el={sldsModalEl}>
+                                    </c-sn-mvp-sign-up>
+
+                                <!-- Engage Service new UI -->
+                                <c-sn-sign-up-engage if:true={service.isEngage}
+                                    tier={service.tier}
+                                    step={service.currentStep}
+                                    expanded={service.isExpanded}
+                                    status={service.status}
+                                    brand-name={opptyBrandName}
+                                    currency-iso-code={opptyCurrencyIsoCode}
+                                    show-address-validation={isShowAddressValidation}
+                                    engage-error={engageError}
+                                    suggested-address={service.address}
+                                    enable-validate-button={service.enableValidateButton}
+                                    onsendsubmitdata={handleSubmitDataUpdate}
+                                    retention-duration-data={service.dataRetentionDuration}
+                                    slds-modal-el={sldsModalEl}>
+                                </c-sn-sign-up-engage>
+
+                                <!-- Contact Center new UI -->
+                                <c-sn-sign-up-contact-center if:true={service.isCC}
+                                    status={service.status}
+                                    expanded={service.isExpanded}
+                                    step={service.currentStep}
+                                    rccc-parameters={rcccParameters}
+                                    show-address-validation={isShowAddressValidation}
+                                    suggested-address={service.address}
+                                    enable-validate-button={service.enableValidateButton}
+                                    onsendsubmitdata={handleSubmitDataUpdate}
+                                    opportunity-id={service.oppId}
+                                    is-ready-for-get-order-to-vendor-catalog={isReadyForGetOrderToVendorCatalog}
+                                    slds-modal-el={sldsModalEl}>
+                                </c-sn-sign-up-contact-center>
+
+                                <!-- ProServ new UI-->
+                                <c-sn-pro-serv-sign-up if:true={service.isProServ}
+                                    status={service.status}
+                                    expanded={service.isExpanded}
+                                    is-signed={isServiceSigned}
+                                    is-in-process={isServiceSignUpInProcess}
+                                    step={service.currentStep}
+                                    tier={service.tier}>
+                                </c-sn-pro-serv-sign-up>
+
+                                    <c-sn-sign-up-events if:true={service.isRCEvent}
+                                        status={service.status}
+                                        is-signed={isServiceSigned}
+                                        is-in-process={isServiceSignUpInProcess}
+                                        is-active-account={isNGBSAccountActive}
+                                        package-id={service.packageId}
+                                        package-version={service.packageVersion}
+                                        expanded={service.isExpanded}
+                                        step={service.currentStep}
+                                        tier={service.tier}
+                                        is-multi-prod={isSeveralServices}
+                                        oneventstimezonechanged={handleRCEventTimezoneChange}
+                                        onselectedsignuptab={handleSelectedSignUpTab}
+                                        slds-modal-el={sldsModalEl}>
+                                    </c-sn-sign-up-events>
+                                </div>
+                            </template>
+                        </template>
+                    </section>
+                </section>
+            </div>
+        </div>
+
+        <!-- Process order footer content -->
+        <div class="modal-footer">
+            <!-- Place for modal windows inside modal window -->
+            <footer class="slds-p-right_large slds-modal__footer slds-grid slds-grid_align-spread">
+
+                <!-- Navigate to a new case page -->
+                <lightning-button
+                    variant="neutral"
+                    label="Create a Case"
+                    title="Create a Case"
+                    onclick={navigateToNewCasePage}
+                    class="slds-m-left_x-small">
+                </lightning-button>
+
+                <!-- Loading spinner -->
+                <c-lwc-spinner if:true={isShowSpinner}
+                    is-shown={isShowSpinner}
+                    spinner-style="slds-spinner_brand"
+                    theme="signup-modal"
+                    text={spinnerText}>
+                </c-lwc-spinner>
+
+                <!-- Address validation modal window -->
+                <c-sn-address-validation-window
+                    entered-address={currentAddress}
+                    suggested-address-options={suggestedBillingAddresses}
+                    is-modal-open={openSelectAddressWindow}
+                    is-invalid-modal-open={openInvalidAddressWindow}
+                    onvalidatedaddress={handleValidatedAddress}
+                    oncloseaddressvalidation={closeAddressValidationWindow}>
+                </c-sn-address-validation-window>
+
+                <!-- Buttons -->
+                <div class="slds-grid slds-grid_align-end">
+                    <button class="slds-button slds-button_neutral" data-ui-auto="close-button" onclick={onClose} disabled={isProcess}>Close</button>
+                    <button if:true={showContinueButton} class="slds-button slds-button_brand" data-ui-auto="continue-button" onclick={handleContinueClick}>Continue</button>
+                    <button if:true={isCompleted} class="slds-button slds-button_brand" data-ui-auto="open-funnel-button" onclick={callSignUp} disabled={isProcess}>Open Funnel in a new tab</button>
+
+                    <template if:false={hideAllSignUpButtons}>
+                        <button if:true={showCopyJsonButton} class="slds-button slds-button_neutral" data-ui-auto="copy-json-button" onclick={clickCopyJSON}>{copyJsonButtonText}</button>
+                        <button if:true={showSignUpButton} class="slds-button slds-button_brand" data-ui-auto="signup-service-button" disabled={disableSignUp} onclick={clickSignUp}>{signUpButtonText}</button>
+                        <button if:true={showProcessButton} class="slds-button slds-button_brand" data-ui-auto="process-service-button" disabled={disableProcessButton} onclick={clickProcess}>{processButtonText}</button>
+                        <button if:true={showOldSignUpButton} class="slds-button slds-button_brand" data-ui-auto="old-signup-service-button" disabled={disableOldSignUp} onclick={clickProcess}>{signUpButtonText}</button>
+                    </template>
+
+                    <!--<button if:true={showExistingBusinessSyncButton} class="slds-button slds-button_brand" data-ui-auto="existing-business-sync-button" disabled={disableExistingBusinessSync} onclick={clickExistingBusinessSync}>{existingBusinessSyncButtonText}</button>-->
+                  
+
+                    <button if:true={showStatusButton} class="slds-button slds-button_brand" data-ui-auto="signup-service-button" disabled={isProcessOrError} onclick={checkServiceStatus}>{checkButtonLabel}</button>
+                    <template if:true={showSyncButtons}>
+                        <button if:true={isShowSkip} class="slds-button slds-button_brand" data-ui-auto="sync-skip-button" disabled={isSyncInProcess} onclick={onSkipSync}>Skip</button>
+                        <button if:true={isShowNext} class="slds-button slds-button_brand" data-ui-auto="sync-next-button" disabled={isSyncInProcess} onclick={onNextSync}>{nextButtonLabel}</button>
+                    </template>
+                </div>
+            </footer>
+        </div>
+    </div>
+</template>

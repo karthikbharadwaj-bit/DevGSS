@@ -1,0 +1,90 @@
+<aura:component  extends="c:Quote_BaseComponent">
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="templateMap" type="list" />
+    <aura:attribute name="selectedTemplateId" type="Id" />
+	<aura:attribute name="ProductEdition" type="Product_Package__c" />
+    <aura:attribute name="isSelected" type="Boolean" />
+    <aura:attribute name="isPartnerQuoteCreated" type="Boolean" />
+    <aura:attribute name="NoOfSeats" type="Integer"/>
+    <aura:attribute name="PricingYearly" type="Boolean" />
+    <aura:attribute name="Spinner" type="Boolean" default="false"/>
+    <aura:attribute name="Step" type="String" />
+    <aura:attribute name="editionDescription" type="string"/>
+    <!--Added for Wholesale ends-->
+    <aura:attribute name="ParentOrSubPackage" type="String" />
+    <aura:attribute name="showSubPackages" type="Boolean" default="false" />
+    <aura:attribute name="subPackages" type="List" />
+    <aura:attribute name="isContract" type="Boolean" default="true" />
+    <aura:attribute name="selectedEditionId" type="string" />
+    <aura:attribute name="parentPackageId" type="string"/>
+    <!--Added for Wholesale ends-->
+    <aura:registerEvent name="evtSelectEdition" type="c:Quote_SelectEdition" />
+    <aura:if isTrue="{!v.Spinner}">
+        <c:SpinnerComponent/>
+    </aura:if>
+    <li class="slds-col slds-size_1-of-4">
+        <article class="slds-tile slds-tile_board slds-border_top slds-border_bottom slds-border_left slds-border_right">
+            <div class="slds-tile__detail slds-grid slds-grid_vertical">
+                <div class="tileheader slds-text-align_center">
+                    <h3>{!v.ProductEdition.Name}</h3>
+                    <lightning:formattedNumber value="{!v.ProductEdition.Price__c}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                </div>   
+                <lightning:select name="lstTemplate" label="Select template" value="{!v.selectedTemplateId}">
+                    <aura:if isTrue="{!not(empty(v.templateMap)) &amp;&amp; not(v.isPartnerQuoteCreated)}">
+                        <option value="none">None</option>
+                        <aura:iteration items="{!v.templateMap}" var="eachtemplate">
+                            <option value="{!eachtemplate.templateId}">{!eachtemplate.label}</option>
+                        </aura:iteration>
+                        <aura:set attribute="else">
+                            <option value="none">Not available</option>    
+                        </aura:set>
+                    </aura:if>    
+                </lightning:select>                    
+                <div class="selectbtnwrap">
+                    <aura:if isTrue="{!v.ParentOrSubPackage == 'Parent Package'}"><!--Added for Wholesale-->
+                        <button class="slds-button slds-button_brand selectBtn" onclick="{!c.displaySubPackages}"
+                            >{!if(v.isSelected,'Selected','Select')}
+                            <lightning:icon iconName="utility:forward" variant="utility" alternativeText="" />
+                        </button>
+                        <aura:set attribute="else">
+                            <button class="slds-button slds-button_brand selectBtn" onclick="{!c.selectEdition}"
+                                disabled="{!v.isSelected}">{!if(v.isSelected,'Selected','Select')}
+                                <lightning:icon iconName="utility:forward" variant="utility" alternativeText="" />
+                            </button>
+                        </aura:set>
+                    </aura:if>
+                </div>
+                <p title="Edition Details" class="slds-col slds-text-longform">
+                    <!--<aura:unescapedHtml value="{!v.ProductEdition.Description__c}"/>-->
+                    <aura:unescapedHtml value="{!v.editionDescription}"/>
+                </p>
+            </div>
+        </article>
+    </li>
+    <aura:if isTrue="{!v.showSubPackages}">
+    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container modalContainer">
+            <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                    <span class="slds-assistive-text">Close</span>
+                <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Please select wholesale package</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                <aura:iteration items="{!v.subPackages}" var="eachEdition">
+                        <c:Quote_ProductEdition editionDescription = "{!eachEdition.editionDescription}" templateMap = "{!eachEdition.listOfPickValue}" isSelected="{!if(v.selectedEditionId == eachEdition.editionRec.Id, true, false)}" isPartnerQuoteCreated="{!if(v.selectedEditionId != null,true,false)}" ProductEdition="{!eachEdition.editionRec}" NoOfSeats="{!v.NoOfSeats}" 
+                                                PricingYearly="{!v.PricingYearly}" Step="{!v.Step}" Quote="{!v.Quote}" ParentOrSubPackage="{!eachEdition.ParentOrSubPackage}" parentPackageId ="{!v.parentPackageId}"/>
+                    </aura:iteration>
+            </div>
+            <!--<footer class="slds-modal__footer">
+                <button class="slds-button slds-button_neutral">Cancel</button>
+                <button class="slds-button slds-button_brand">Save</button>
+            </footer>-->
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop--open"></div> 
+    </aura:if>
+</aura:component>

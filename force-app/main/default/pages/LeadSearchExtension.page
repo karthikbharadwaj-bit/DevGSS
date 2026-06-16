@@ -1,0 +1,13 @@
+<apex:page StandardController="Lead" showHeader="true" applyBodyTag="false" title="New Sales Lead" extensions="LeadSearchExtension" tabStyle="Lead" action="{!redirectPartnerUser}" lightningStylesheets="true">
+    <apex:includeLightning />
+<script>
+    window.onload = fnCheck;
+    function fnCheck(e) {
+        const params = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+        $Lightning.use("c:SmartSearchContainer", function() {
+            $Lightning.createComponent("c:smartSearchLwcContainer",{"paramsFromVFPage" : params},"lightningSmartSearch", function() {});
+        });
+    }
+</script>
+<div id="lightningSmartSearch"></div>
+</apex:page>

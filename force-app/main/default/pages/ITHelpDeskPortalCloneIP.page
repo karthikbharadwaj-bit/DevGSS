@@ -1,0 +1,82 @@
+<apex:page controller="ITHelpDeskPortalNew"
+            sidebar="false"
+            showHeader="false"
+            standardStylesheets="false"
+            docType="html-5.0"
+            cache="false">
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/jquery.js')}"></script>
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/jquery.validate.js')}"></script>
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/bootstrap.js')}"></script>
+    <script src="{!URLFor($Resource.HelpDeskStyles, '/styles/readmore.js')}"></script>
+    
+    <head>
+        <title>Intellectual Property</title>
+        <apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/styles/bootstrap.css')}" ></apex:stylesheet>
+        <apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/style.css')}" ></apex:stylesheet>
+        <apex:stylesheet value="{!URLFor($Resource.HelpDeskStyles, '/styles/HDstyles.css')}" ></apex:stylesheet>
+        <meta name="viewport" content="width=device-width, initial-scale=1"></meta>
+    </head>
+    <style type="text/css">
+        #HDstatusicon{
+            color: {!systemStatusColor};
+        }
+        .HDhrmenuitem{
+            display: {!IF(isUserHR, '', 'none')};
+        }
+        .HDsprite{
+            background-image: url( {!$Resource.IP_Icon} );
+        }
+        h6{
+            font-size: 13px;
+        }
+        footer {
+            width: 100%;
+            bottom: 0;
+            position: fixed;
+            float: right;
+        }
+    </style>
+    <body id="HDpage">
+        <apex:form >
+            <div class="container">
+                <div class="row" id="HDheader">
+                    <div class="col-md-4 col-xs-6"><apex:image url="{!$Resource.IP_Icon}" styleClass="imageStyle"/></div> 
+                    <div class="col-md-4 hidden-xs"></div>
+                    <div class="col-md-4 col-xs-6 hidden-lg hidden-md hidden-sm" id="HDbuttonsmall">
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="container" id="HDstatus">
+                <apex:outputPanel rendered="{!!isUserHR}">
+                    <div class="row hidden-xs" id="HDbuttongroup">
+                        <div class="col-lg-3 col-sm-0" id="HDbuttonblock">
+                            
+                        </div>
+                        <div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+                            <a href="{!$Site.BaseUrl}/../helpdesk/apex/inventionticket?action=edit" type="button" class="btn btn-default btn-block" id="HDbutton" target="_blank">
+                                <div class="row HDnomargins">
+                                    <div class="col-sm-3" id="HDiconpadding"><i class="glyphicon glyphicon-list-alt" id="HDbuttons"></i></div>
+                                    <div class="col-sm-9" id="HDbuttonfont">New Invention Disclosure</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-sm-6" id="HDbuttonblock">
+                            <a href="{!$Site.BaseUrl}/../helpdesk/apex/fossticket?action=edit" type="button" class="btn btn-default btn-block" id="HDbutton" target="_blank">
+                                <div class="row HDnomargins">
+                                    <div class="col-sm-3" id="HDiconpadding"><i class="glyphicon glyphicon-equalizer" id="HDbuttons"></i></div>
+                                    <div class="col-sm-9" id="HDbuttonfont">New Free/Open-Source</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-sm-0" id="HDbuttonblock">
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>    
+        </apex:form>
+        <footer align="right">
+            <apex:image url="{!$Resource.RC_Logo}" styleClass="imageStyle"/>
+        </footer>
+    </body>
+</apex:page>

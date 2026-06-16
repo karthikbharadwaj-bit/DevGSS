@@ -1,0 +1,59 @@
+<template>
+    <!-- Modal Header -->
+    <header class="slds-modal__header">
+        <h2 class="slds-modal__title slds-hyphenate">Link Existing Jira</h2>
+    </header>
+
+    <!-- Modal Body -->
+    <div class="slds-modal__content slds-p-around_medium">
+        <template if:true={errorMessage}>
+            <div class="slds-notify slds-notify_alert slds-theme_error slds-m-bottom_medium" role="alert">
+                <span class="slds-assistive-text">Error</span>
+                <span class="slds-icon_container slds-icon-utility-error slds-m-right_x-small">
+                    <lightning-icon icon-name="utility:error" size="x-small"></lightning-icon>
+                </span>
+                <h2>{errorMessage}</h2>
+            </div>
+        </template>
+
+        <div class="slds-form-element slds-m-bottom_medium">
+            <label class="slds-form-element__label" for="jiraNumberInput">
+                Please enter the Jira number you want to link to this case.
+            </label>
+            <div class="slds-form-element__control">
+                <input type="text" id="jiraNumberInput" class="slds-input" 
+                       placeholder="e.g., RCV-1234" value={jiraNumber} 
+                       oninput={handleJiraNumberChange}
+                       onkeyup={handleJiraNumberChange}
+                       disabled={isAccessDenied}/>
+            </div>
+        </div>
+
+        <!-- Loading Message -->
+        <template if:true={isLoading}>
+            <div class="slds-align_absolute-center">
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <div class="slds-spinner slds-spinner_medium slds-spinner_brand" role="alert">
+                        <span class="slds-assistive-text">Loading</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                    <div class="slds-text-body_regular slds-m-top_small">
+                        {loadingMessage}
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <footer class="slds-modal__footer">
+        <lightning-button label="Cancel" onclick={handleCancel} variant="neutral" disabled={isLoading}></lightning-button>
+        <lightning-button
+        label="Submit"
+        onclick={handleSubmit}
+        variant="brand"
+        class="slds-m-left_small"
+        disabled={isDisabled}>
+        </lightning-button>
+    </footer>
+</template>

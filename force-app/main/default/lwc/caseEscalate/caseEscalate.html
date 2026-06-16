@@ -1,0 +1,42 @@
+<!-- sldsValidatorIgnore -->
+<template>
+    <lightning-quick-action-panel header="Escalate case" >
+        <div class="slds-p-around_medium lgc-bg">
+            <template if:true={loading}>
+                <div style="height: 100px;position: relative;">
+                    <lightning-spinner alternative-text="Loading" size="large"></lightning-spinner>
+                </div>
+            </template>
+            <template if:false={loading}>
+            <template if:true={_isEscalatable}>
+                <div class={textareaStyle}>
+                    <label class="slds-form-element__label" for="textarea-id-01">
+                        <abbr class="slds-required" title="required">* </abbr>Justification (Business impact)</label>
+                    <div class="slds-form-element__control">
+                        <textarea 
+                            minlength="50" 
+                            maxlength="2000" 
+                            required="" 
+                            onchange={justificationChange} 
+                            aria-describedby="error-01" 
+                            class="slds-textarea"
+                            rows="6"
+                            style="resize: none;"
+                        ></textarea>
+                    </div>
+                    <div if:true={isJustificationInvalid} class="slds-form-element__help">{justificationErrorMessage}</div>
+                </div>
+            </template>
+            <template if:false={_isEscalatable}>
+                <div class="slds-grid slds-grid_align-center slds-text-heading_medium">
+                    {cannotBeEscalatedReason}
+                </div>
+            </template>
+        </template>
+        </div>
+        <div slot="footer">
+            <lightning-button if:true={_isEscalatable} label="Submit" onclick={handleSubmit} disabled={loading}></lightning-button>
+            <lightning-button label="Cancel" onclick={closeModal} disabled={loading}></lightning-button>
+        </div>
+    </lightning-quick-action-panel>
+</template>

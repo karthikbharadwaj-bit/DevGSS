@@ -1,0 +1,27 @@
+<template>
+    <div class="sc-trust-timeline__title">{title}</div>
+    <div class="sc-trust-timeline__body">
+        <div class={reloadCSS}>
+            <div class="sc-trust-timeline__header">
+                <span>{labels.filterBy}</span>
+                <lightning-combobox
+                    name="filter"
+                    label=""
+                    value={activeFilterValue}
+                    options={filterOptions}
+                    disabled={loading}
+                    onchange={doActive}></lightning-combobox>
+            </div>
+            <div class="sc-trust-timeline__cases" onscroll={scroll}>
+                <c-sc-trust-cases filters={filter} cases={cases}></c-sc-trust-cases>
+            </div>
+            <span class="sc-trust-timeline__reload-icon"></span>
+        </div>
+        <div class="sc-trust-timeline__right">
+            <div class="sc-trust-timeline__filters-wrapper">
+                <button class="sc-button" onclick={handleOpen}>{labels.openCasePortal}</button>
+                <button class="sc-button" onclick={handleNew}>{labels.newCaseTitle}</button>
+            </div>
+        </div>
+    </div>
+</template>

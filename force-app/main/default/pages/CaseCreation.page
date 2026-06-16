@@ -1,0 +1,194 @@
+<apex:page tabStyle="Case"
+        title="Case Edit: New Case"
+        standardController="Case"
+        extensions="CaseCreationController"
+        lightningStylesheets="true"
+        action="{! checkAccess }" >
+    <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+    <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}" />
+    <apex:includeLightning />
+    <apex:variable var="uiTheme" value="lightningDesktop" 
+        rendered="{!$User.UIThemeDisplayed == 'Theme4d'}">
+        <style>
+            .buttonclass.pbButton 
+            {
+               text-align:left; 
+                padding-left: 15%!important;
+
+
+            }  
+        </style>
+    </apex:variable>
+    
+    <style>
+        .section_2-columns .detailList th.labelCol{
+            width: 35%;
+        }
+
+        .section_2-columns .detailList td.data2Col {
+            width: 65%;
+        }
+
+        .form-button[disabled] {
+            color: #CCC;
+            cursor: default;
+        }
+    </style>
+
+    <apex:actionStatus id="actionStatus" onstart="rcnotify.showSpinner();" onstop="rcnotify.hideSpinner();" />
+
+    <apex:sectionHeader title="Case Edit" subtitle="New Case" />
+    <apex:pageMessages escape="false" />
+    <apex:form id="newCaseForm">
+        <apex:pageBlock title="Case Edit" mode="edit">
+
+            <!-- Action Function -->
+            <apex:actionFunction name="save" action="{!save}" />
+
+            <!-- Buttons -->
+                
+            <apex:pageBlockButtons location="both" styleClass="buttonclass">
+                <apex:commandButton action="save()"
+                                    value="Save"
+                                    html-data-label="Save"
+                                    styleClass="form-button form-button_save"/>
+                <apex:commandButton onClick="cancel()"
+                                    value="Cancel"
+                                    html-data-label="Cancel"
+                                    styleClass="form-button form-button_cancel"/>
+            </apex:pageBlockButtons>
+
+            <apex:repeat value="{! layout.sections }" var="section">
+                <!-- Sections -->
+                <apex:pageBlockSection title="{! section.sectionMetadata.label }"
+                                       columns="{! section.columns.size }"
+                                       html-class="section {! IF(section.columns.size == 2, 'section_2-columns', '') }">
+                    <apex:repeat value="{! section.columns }" var="column">
+                        <apex:pageBlockSection columns="1"
+                                               showHeader="false"
+                                               html-class="column">
+                        <apex:repeat value="{! column.items }" var="item">
+
+                            <!-- Editable Field -->
+                            <!-- Special processing for Case Status field -->
+                            <apex:pageBlockSectionItem rendered="{! item.isCaseStatus }">
+                                <apex:outputLabel value="{! $ObjectType.Case.Fields.Status.Label }"></apex:outputLabel>
+                                <apex:outputPanel >
+                                    <div class="requiredInput">
+                                        <div class="requiredBlock"></div>
+                                        <apex:selectList value="{! caseObj.Status }" multiselect="false" size="1" required="true">
+                                            <apex:selectOptions value="{! CaseStatuses }" />
+                                        </apex:selectList>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:pageBlockSectionItem>
+
+                            <apex:inputField value="{! caseObj[item.layoutItem.field] }"
+                                             rendered="{! item.isEditable && !item.isCaseComment && !item.isCaseStatus }"
+                                             required="{! item.isRequired }"/>
+                            <apex:inputField value="{! caseCommentObj.CommentBody }"
+                                             rendered="{! item.isCaseComment }"
+                                             required="{! item.isRequired }"/>
+
+                            <!-- Read Only Field -->
+                            <apex:outputField value="{! caseObj[item.layoutItem.field] }"
+                                              rendered="{! item.isReadOnly }"/>
+
+                            <!-- Lightning app -->
+                            <apex:outputPanel rendered="{! NOT(ISNULL(item.layoutItem.page_x)) }" layout="none">
+                                <div id="{! item.layoutItem.page_x }"></div>
+                            </apex:outputPanel>
+
+                        </apex:repeat>
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:repeat>
+
+        </apex:pageBlock>
+
+        <!-- Case Tagging Tool -->
+        <apex:repeat value="{! caseTaggingToolFields }" var="field">
+            <apex:inputHidden value="{! caseObj[field] }" html-data-ctt_input="{! field }"/>
+        </apex:repeat>
+    </apex:form>
+
+    <script type="text/javascript">
+
+        var caseTaggingToolPageName = '{! caseTaggingToolPageName }';
+        var caseTaggingToolContainer = document.getElementById(caseTaggingToolPageName);
+        var form = document.getElementById('{! $Component.newCaseForm }');
+        var cancelButton = document.getElementsByClassName('form-button_cancel');
+
+        function updateCaseCaggingToolValues(record) {
+            var inputs = document.querySelectorAll('[data-ctt_input]');
+            Array.from(inputs).forEach(function (input) {
+                input.value = record[input.dataset.ctt_input] || '';
+            });
+        }
+
+        window.addEventListener("CaseTaggingTool.valuesChanged", function(event){
+            updateCaseCaggingToolValues(event.detail.record);
+        });
+
+        form.addEventListener('submit', function(event){
+            event.preventDefault();
+            toggleButtonDisable(true, 'Saving...');
+            window.dispatchEvent(new CustomEvent("CaseCreationPage.saveRequest"));
+        });
+
+        window.addEventListener("CaseTaggingTool.saveResponse", function(event){
+            console.log(JSON.parse(JSON.stringify(event.detail.record)));
+            updateCaseCaggingToolValues(event.detail.record);
+
+            if (event.detail.isValid) {
+                save();
+            } else {
+                toggleButtonDisable(false);
+            }
+        });
+
+        function getValuesForCaseTaggingTool(){
+            var inputs = document.querySelectorAll('[data-ctt_input]');
+            var record = {};
+            Array.from(inputs).forEach(function (input) {
+                if (input.value)
+                    record[input.dataset.ctt_input] = input.value;
+            });
+            return record;
+        }
+
+        function toggleButtonDisable(isDisabled, label){
+            Array.from(document.getElementsByClassName('form-button')).forEach(function (button) {
+                button.disabled = isDisabled;
+                if (label) {
+                    button.value = label;
+                } else {
+                    button.value = button.dataset.label;
+                }
+
+            });
+        }
+
+        function cancel() {
+            var retURL = new URL(window.location).searchParams.get("retURL");
+            retURL
+                    ? window.open(retURL, '_parent')
+                    : history.back();
+        }
+
+        // Fix visualforce mess with button types
+        Array.from(cancelButton).forEach(function(button){
+            button.type = 'button';
+        });
+
+        if (caseTaggingToolContainer) {
+            $Lightning.use("c:CaseTaggingTool", function () {
+                $Lightning.createComponent("c:CaseTaggingToolWrapper", {
+                    isEmbeddedToLayoutBuilder: true,
+                    caseObj: getValuesForCaseTaggingTool()
+                }, caseTaggingToolPageName);
+            });
+        }
+    </script>
+</apex:page>

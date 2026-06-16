@@ -1,0 +1,132 @@
+<aura:component>
+    <!-- Shared Attributes-->
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="user" type="User"/>
+    <aura:attribute name="quote" type="Quote"/>
+    <aura:attribute name="cartItems" type="List"/>
+    <aura:attribute name="selectedPriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) selected by user)"/>
+    <aura:attribute name="isCC" type="Boolean" description="Indicates, if Contact Center tab is opened"/>
+    <aura:attribute name="isSummaryChanged" type="Boolean" default="false" description="Indicates that there is unsaved chages in summary"/>
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false" description="Indicates that there is unsaved chages in phases"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="isExpDateValid" type="Boolean" description="Indicates that new expiration date is valid"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <!-- buttons -->
+    <aura:attribute name="upgradeButton" type="Map" default="{disabled:false,forceDisabled:false}"/>
+    <aura:attribute name="cancelUpgradeButton" type="Map" default="{disabled:false}"/>
+    <aura:attribute name="getTaxesButton" type="Map" default="{disabled:false}"/>
+    <aura:attribute name="removeTaxesButton" type="Map" default="{disabled:false}"/>
+    <aura:attribute name="upsellStatus" type="String" description="Upsell Status considering quote, account and upgrade button"/>
+
+    <!-- Attribute Change handlers  -->
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.selectedPriceBookEntry}" action="{!c.selectedPriceBookEntryChanged}" />
+    <aura:handler name="change" value="{!v.upsellStatus}" action="{!c.upsellStatusChanged}" />
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChanged}" />
+    <aura:handler name="change" value="{!v.isPhasesChanged}" action="{! c.isPhasesChangedChanged }" />
+    <aura:handler name="change" value="{!v.isCartChanged}" action="{! c.isCartChangedChanged }" />
+    <aura:handler name="change" value="{!v.Tabs}" action="{! c.tabsChanged }" />
+
+
+    <!-- registered events -->
+    <aura:registerEvent name="saveCart" type="c:QuotingToolCartSaveEvent" />
+    <aura:registerEvent name="discardCart" type="c:QuotingToolDiscardCardEvent" />
+    <aura:registerEvent name="discardQuote" type="c:QuotingToolDiscardQuoteEvent" />
+    <aura:registerEvent name="getTaxesToCart" type="c:QuotingToolGetTaxesEvent" />
+    <aura:registerEvent name="button" type="c:QuotingToolButtonEvent" />
+
+    <div class="slds">
+        <div class="btnss slds-p-top--small">
+
+            <!-- Service Plans Tab -->
+            <button class="slds-button slds-button--neutral slds-hide slds-m-left--xx-small"
+                    onclick="{!c.tierUpgrade}"
+                    aura:id="tierUpgradeButton"
+                    disabled="{!v.upgradeButton.disabled || v.upgradeButton.forceDisabled}">Upgrade / Downgrade</button>
+            <button class="slds-button slds-button--neutral slds-hide slds-m-left--xx-small"
+                    onclick="{!c.cancelUpgrade}"
+                    aura:id="cancelUpgradeButton"
+                    disabled="{!v.cancelUpgradeButton.disabled}">Cancel Upgrade / Downgrade</button>
+            <lightning:button variant="neutral"
+                              label="Discard"
+                              onclick="{!c.discardServicePlan}"
+                              class="slds-m-left--xx-small"
+                              aura:id="discardServicePlanButton"/>
+            <lightning:button variant="neutral"
+                              label="{! v.quote ? 'Change Service Plan' : 'Save &amp; Next' }"
+                              onclick="{!c.saveServicePlan}"
+                              class="slds-m-left--xx-small"
+                              aura:id="saveServicePlanButton"/>
+
+            <!-- Cart Tab -->
+            <span class="slds-m-left--xx-small" aura:id="discardCartButtonWrapper">
+                <lightning:button label="Discard"
+                                  aura:id="discardCartButton"
+                                  onclick="{! c.discardCart }"
+                />
+            </span>
+            <span class="slds-m-left--xx-small" aura:id="saveCartButtonWrapper">
+                <lightning:button label="Save"
+                              aura:id="saveCartButton"
+                              onclick="{! c.saveCart }"
+                />
+            </span>
+
+            <button class="slds-button slds-button--neutral hidden slds-m-left--xx-small"
+                    onclick="{!c.getTaxes}"
+                    aura:id="getTaxesButton"
+                    disabled="{!v.getTaxesButton.disabled}">
+
+                    Add Taxes
+            </button>
+            <button class="slds-button slds-button--neutral hidden slds-m-left--xx-small"
+                    onclick="{!c.removeTaxes}"
+                    aura:id="removeTaxesButton"
+                    disabled="{!v.removeTaxesButton.disabled}">
+
+                    Remove Taxes
+            </button>
+
+            <!-- Phases Tab -->
+            <span class="slds-m-left--xx-small" aura:id="discardPhasesButtonWrapper">
+                <lightning:button label="Discard"
+                                  aura:id="discardPhasesButton"
+                                  onclick="{! c.onButtonClick }"
+                />
+            </span>
+            <span class="slds-m-left--xx-small" aura:id="savePhasesButtonWrapper">
+                <lightning:button label="Save"
+                                  aura:id="savePhasesButton"
+                                  onclick="{! c.onButtonClick }"
+                />
+            </span>
+
+            <!-- Summary Tab -->
+            <span class="slds-m-left--xx-small" aura:id="discardQuoteButtonWrapper">
+                <button class="slds-button slds-button--neutral"
+                        onclick="{!c.discardQuote}"
+                        aura:id="discardQuoteButton"
+                        id="saveButton"
+                        disabled="{! !v.isSummaryChanged }">Discard</button>
+            </span>
+            <span class="slds-m-left--xx-small" aura:id="saveButtonWrapper">
+                <button class="slds-button slds-button--neutral"
+                        onclick="{!c.saveQuote}"
+                        aura:id="saveButton"
+                        id="saveButton"
+                        disabled="{! !and(v.isSummaryChanged, v.isExpDateValid) }">Save</button>
+            </span>
+
+            <c:QuotingToolGeneratePdf aura:id="QuotingToolGeneratePdf"
+                                      state="{!v.state}"
+                                      quote="{!v.quote}"
+                                      user="{!v.user}"
+                                      opportunityId="{!v.opportunityId}"
+                                      settings="{!v.settings}"
+                                      isExpDateValid="{! v.isExpDateValid }"
+                                      isSummaryChanged="{!v.isSummaryChanged}"/>
+        </div>
+    </div>
+</aura:component>

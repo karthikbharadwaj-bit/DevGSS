@@ -1,0 +1,440 @@
+<aura:component controller="DQ_DealQualificationController">
+	<aura:attribute type="Boolean" name="isFromQuoteWizard" Default="false" />
+	<aura:attribute type="Map" name="regionPicklistMap" />
+	<aura:attribute type="Map" name="segmentPicklistMap" />
+	<aura:attribute type="Map" name="brandPicklistMap" />
+	<aura:attribute type="Map" name="dealTypePicklistMap" />
+	<aura:attribute type="boolean" name="isReadOnly" default="false" />
+	<aura:attribute type="boolean" name="isValid" default="false" />
+	<aura:attribute type="DQ_Deal_Qualification__c" name="objDealQualification" />
+	<aura:attribute type="Map" name="specialTermsPicklistMap" />
+    <aura:attribute type="Map" name="freeShippingTermsPicklistMap" />
+	<aura:attribute type="List" name="DQTrueUpDateList" />
+	<aura:attribute type="Integer" name="minPotentailLimit" default="0"/>
+    <aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap" />
+    <aura:method name='validateElaFields' action="{!c.validateFieldsForELA}" />
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+	<div class="slds-form-element__row slds-grid ">
+		<div class="slds-form-element slds-size_3-of-12"></div>
+		<div class="slds-form-element slds-size_3-of-12"></div>
+		<div class="slds-form-element slds-size_3-of-12"></div>
+		<div class="slds-form-element slds-size_3-of-12">
+			<div class="slds-badge status slds-float_right">
+				Approval Status : {!v.objDealQualificationWrap.DQRec.Status__c}
+			</div>
+		</div>
+		<aura:if isTrue="false">
+			<div class="slds-form-element slds-size_3-of-12">
+				<label class="slds-form-element__label">Band</label>
+				<div class="slds-form-element__control input">
+					<div style="width:100px; height:35px; background-color: #48960061;"></div>
+				</div>
+			</div>
+		</aura:if>
+	</div>
+	<br />
+	<!--<lightning:card class="subHeader" iconName="action:new_opportunity" title="Opportunity Details">
+        </lightning:card> -->
+	<aura:if isTrue="false">
+		<aura:if isTrue="{!not(v.isFromQuoteWizard)}">
+			<article class="slds-card">
+				<div class="slds-card__header slds-grid">
+					<header class="slds-media slds-media_center slds-has-flexi-truncate">
+						<div class="slds-media__figure">
+							<span class="slds-icon_container">
+								<lightning:icon slot="media" iconName="custom:custom83" size="medium"></lightning:icon>
+
+							</span>
+						</div>
+						<div class="slds-media__body">
+							<h2 class="slds-card__header-title">
+								<span> Opportunity Details </span>
+							</h2>
+						</div>
+					</header>
+				</div>
+			</article>
+
+			<br />
+		</aura:if>
+	</aura:if>
+	<fieldset class="slds-form--compound quotedetailsform">
+		<aura:if isTrue="false">
+			<aura:if isTrue="{!not(v.isFromQuoteWizard)}">
+				<div class="slds-grid slds-wrap slds-gutters">
+					<div class="slds-form-element slds-col slds-size_3-of-12">
+						<lightning:select aura:id="region" value="{!v.objDealQualificationWrap.DQRec.Region__c}"
+							name="productCategoriesList" label="Region">
+							<option value="">--None--</option>
+							<aura:iteration items="{!v.regionPicklistMap}" var="regionPickVal" indexVar="key">
+								<option text="{!regionPickVal.key}" value="{!regionPickVal.value}"
+									selected="{!regionPickVal.value==v.objDealQualificationWrap.DQRec.Region__c}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="slds-form-element slds-col slds-size_3-of-12">
+						<lightning:select aura:id="region" value="{!v.objDealQualificationWrap.DQRec.Segment__c}"
+							name="productCategoriesList" label="Segments">
+							<option value="">--None--</option>
+							<aura:iteration items="{!v.segmentPicklistMap}" var="segPickVal" indexVar="key">
+								<option text="{!segPickVal.key}" value="{!segPickVal.value}"
+									selected="{!segPickVal.value==v.objDealQualificationWrap.DQRec.Segment__c}" />
+							</aura:iteration>
+						</lightning:select>
+                    </div>
+
+					<div class="slds-form-element slds-col slds-size_3-of-12"></div>
+					<div class="slds-form-element slds-col slds-size_3-of-12"></div>
+
+                    <div class="slds-form-element slds-col slds-size_3-of-12">
+						<lightning:select aura:id="DealType" value="{!v.objDealQualificationWrap.DQRec.Deal_Type__c}"
+							name="productCategoriesList" label="Deal Type">
+							<option value="">--None--</option>
+							<aura:iteration items="{!v.dealTypePicklistMap}" var="dealTypePickVal" indexVar="key">
+								<option text="{!dealTypePickVal.key}" value="{!dealTypePickVal.value}"
+									selected="{!dealTypePickVal.value==v.objDealQualificationWrap.DQRec.Deal_Type__c}" />
+							</aura:iteration>
+						</lightning:select>
+                    </div>
+
+					<div class="slds-form-element slds-col slds-size_3-of-12">
+						<lightning:select aura:id="Brand" value="{!v.objDealQualificationWrap.DQRec.Brand__c}"
+							name="productCategoriesList" label="Brand">
+							<option value="">--None--</option>
+							<aura:iteration items="{!v.brandPicklistMap}" var="brandPickVal" indexVar="key">
+								<option text="{!brandPickVal.key}" value="{!brandPickVal.value}"
+									selected="{!brandPickVal.value==v.objDealQualificationWrap.DQRec.Brand__c}" />
+							</aura:iteration>
+						</lightning:select>
+                    </div>
+
+					<div class="slds-form-element slds-col slds-size_3-of-12"></div>
+					<div class="slds-form-element slds-col slds-size_3-of-12"></div>
+				</div>
+
+				<br />
+				<br />
+			</aura:if>
+		</aura:if>
+		<!-- <legend class="slds-text-title_bold">Quote Requirements</legend> -->
+
+		<!-- <lightning:card title="Quote Requirements" iconName="action:new_case">
+        </lightning:card>-->
+		<article class="slds-card">
+			<div class="slds-card__header slds-grid">
+				<header class="slds-media slds-media_center slds-has-flexi-truncate">
+					<div class="slds-media__body">
+						<h2 class="slds-card__header-title">
+							<span> Quote Requirement </span>
+						</h2>
+					</div>
+				</header>
+			</div>
+		</article>
+
+		<br />
+		<div class="slds-grid slds-wrap slds-gutters">
+			<aura:if isTrue="false">
+				<div class="slds-form-element slds-col slds-size_3-of-12">
+					<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Charge_Term__c}"
+						disabled="{!v.isReadOnly}"   name="charge" label="Charge Term">
+						<option value="Monthly">Monthly</option>
+						<option value="Yearly">Yearly</option>
+					</lightning:select>
+				</div>
+			</aura:if>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Initial_Term__c}"
+					disabled="{!v.isReadOnly}" name="initial" label="Minimum Initial Term">
+					<option value="12">12</option>
+					<option value="24">24</option>
+					<option value="36">36</option>
+					<option value="48">48</option>
+					<option value="60">60</option>
+				</lightning:select>
+			</div>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Renewal_Term__c}"
+					disabled="{!v.isReadOnly}" name="renewal" label="Minimum Renewal Term">
+					<option value="12">12</option>
+					<option value="24">24</option>
+					<option value="36">36</option>
+					<option value="48">48</option>
+					<option value="60">60</option>
+				</lightning:select>
+			</div>
+
+
+			<aura:if isTrue="false">
+				<div class="slds-form-element slds-col slds-size_3-of-12">
+					<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Minimum_Package_s__c}"
+						disabled="{!v.isReadOnly}" name="minpackage" label="Package">
+						<option value="Standard">Standard</option>
+						<option value="Essential">Essential</option>
+						<option value="Premium">Premium</option>
+						<option value="Ultimate">Ultimate</option>
+					</lightning:select>
+				</div>
+			</aura:if>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<div class="slds-form-element__control input">
+					<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Special_Terms__c}"
+						disabled="{!v.isReadOnly}" name="charge" label="Special Terms">
+						<option value="">--None--</option>
+						<aura:iteration items="{!v.specialTermsPicklistMap}" var="specialTermPickVal" indexVar="key">
+							<option text="{!specialTermPickVal.key}" value="{!specialTermPickVal.value}"
+								selected="{!specialTermPickVal.value==v.objDealQualificationWrap.DQRec.Special_Terms__c}" />
+						</aura:iteration>
+					</lightning:select>
+				</div>
+			</div>
+			<!--<div class="slds-form-element slds-col">
+                    <label class="slds-form-element__label">Promo Code</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input class="customWidth" type="text"
+                                         name="input1" variant="label-hidden" />
+                    </div>
+                </div> -->
+
+			<!--<div class="slds-form-element slds-col slds-size_3-of-12">
+				<label class="slds-form-element__label">Total TCV</label>
+				<div class="slds-form-element__control input">
+					<lightning:input type="text" value="{!v.objDealQualificationWrap.DQRec.Deal_Size__c}" name="input1"
+						disabled="{!v.isReadOnly}" variant="label-hidden" />
+				</div>
+			</div>-->
+            <div class="slds-form-element slds-col slds-size_12-of-12">
+                <label class="slds-form-element__label">Justification and Description</label>
+                <div class="slds-form-element__control input">
+                    <lightning:textarea aura:id="justificationTextArea"
+                                        value="{!v.objDealQualificationWrap.DQRec.Justification_Description__c}" name="justification"
+                                        variant="label-hidden" onblur="{!c.checkForValid}" disabled="{!v.isReadOnly}" />
+                </div>
+            </div>
+            <aura:if isTrue="{!v.objDealQualificationWrap.DQRec.IsDQCreatedFromCPQOpp__c}">
+                <div class="slds-form-element slds-col slds-size_4-of-12">
+					<div class="slds-form-element__control input">
+						<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.CC_Special_Terms__c}"
+							disabled="{!v.isReadOnly}" name="charge" label="Contact Center Special Terms">
+							<option value="">--None--</option>
+							<aura:iteration items="{!v.specialTermsPicklistMap}" var="specialTermPickVal" indexVar="key">
+								<option text="{!specialTermPickVal.key}" value="{!specialTermPickVal.value}"
+									selected="{!specialTermPickVal.value==v.objDealQualificationWrap.DQRec.CC_Special_Terms__c}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+				</div>
+                <div class="slds-form-element slds-col slds-size_4-of-12">
+                    <label class="slds-form-element__label">Overall Discretion (One-Time)</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input type="currency"
+                            value="{!v.objDealQualificationWrap.DQRec.Overall_Discount_One_Time__c}" name="overall1"
+                            disabled="true" variant="label-hidden" />
+                    </div>
+                </div>
+                <div class="slds-form-element slds-col slds-size_4-of-12">
+                    <label class="slds-form-element__label">Overall Discretion (Recurring)</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input type="currency"
+                            value="{!v.objDealQualificationWrap.DQRec.Overall_Discount_Recurring__c}" name="overall2"
+                            disabled="true" variant="label-hidden" />
+                    </div>
+                </div>
+                <div class="slds-form-element slds-col slds-size_4-of-12">
+                    <label class="slds-form-element__label">Overall Discretion (Contact Center)</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input type="currency"
+                            value="{!v.objDealQualificationWrap.DQRec.Overall_Discount_Contact_Center__c}" name="overall3"
+                            disabled="true" variant="label-hidden" />
+                    </div>
+                </div>
+            </aura:if>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<label class="slds-form-element__label">Cost of One-Time items</label>
+				<div class="slds-form-element__control input">
+					<lightning:input type="currency"
+						value="{!v.objDealQualificationWrap.DQRec.Cost_of_One_Time_items__c}" name="input1"
+						disabled="true" variant="label-hidden" />
+				</div>
+			</div>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<label class="slds-form-element__label">New Annual Recurring Charges</label>
+				<div class="slds-form-element__control input">
+					<lightning:input type="currency"
+						value="{!v.objDealQualificationWrap.DQRec.New_Annual_Recurring_Charges__c}" name="input1"
+						disabled="true" variant="label-hidden" />
+				</div>
+				<!--<label class="slds-form-element__label">Maximum Overall Discount</label>
+				<div class="slds-form-element__control input">
+					<lightning:input type="text" value="{!v.objDealQualificationWrap.DQRec.Overall_Discount__c}"
+						name="input1" disabled="{!v.isReadOnly}" variant="label-hidden" />
+				</div>-->
+			</div>
+            <aura:if isTrue="{!!v.objDealQualificationWrap.DQRec.IsDQCreatedFromCPQOpp__c}">
+                <div class="slds-form-element slds-col slds-size_4-of-12">
+                    <div class="slds-form-element__control input">
+                        <lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Free_Shipping_Terms_Options__c}"
+                            disabled="true" name="freeshipping" label="Free Shipping Terms Options">
+                            <option value="">--None--</option>
+                            <aura:iteration items="{!v.freeShippingTermsPicklistMap}" var="freeShippingTermPickVal" indexVar="key">
+                                <option text="{!freeShippingTermPickVal.key}" value="{!freeShippingTermPickVal.value}"
+                                    selected="{!freeShippingTermPickVal.value==v.objDealQualificationWrap.DQRec.Free_Shipping_Terms_Options__c}" />
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+				</div>
+            </aura:if>
+			<div class="slds-form-element slds-col slds-size_4-of-12">
+				<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.Is_ELA__c}"
+                    aura:id='isEla'
+                    disabled="{!v.isReadOnly}" name="ela" label="Is ELA">
+					<option value="No">No</option>
+					<option value="Yes">Yes</option>
+				</lightning:select>
+			</div>
+			<!--<div class="slds-form-element slds-col slds-size_3-of-12">
+                <lightning:textarea aura:id="justificationInfo" onblur="{!c.checkForValid}"
+                            label="Justification/Description"
+                            value="{!v.objDealQualificationWrap.DQRec.Justification_Description__c}" name="justificationInfo"
+							disabled="true" />
+
+			</div> -->
+			<aura:if isTrue="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}">
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+                    <lightning:select
+                        aura:id="chargeTerm"
+                        class="input" value="{!v.objDealQualificationWrap.DQRec.Charge_Term__c}" onblur="{!c.checkForValid}"
+						required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}" onchange="{!c.handleValueChangeAction}" disabled="{!v.isReadOnly}"
+						name="initialBuy" label="Charge Term">
+						<option value="Annual">Annual</option>
+						<option value="Monthly">Monthly</option>
+					</lightning:select>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+                    <lightning:select
+                        aura:id="initialTerm" onblur="{!c.checkForValid}"
+                        class="input" value="{!v.objDealQualificationWrap.DQRec.ELA_Initial_Terms__c}"
+						required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}" onchange="{!c.handleValueChangeAction}" disabled="{!v.isReadOnly}"
+						name="renewal" label="Initial Terms">
+						<option value="12">12</option>
+						<option value="24">24</option>
+						<option value="36">36</option>
+						<option value="48">48</option>
+						<option value="60">60</option>
+					</lightning:select>
+					<!--<label class="slds-form-element__label">True Up Date</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input type="Date" value="{!v.objDealQualificationWrap.DQRec.True_Up_Date__c}"
+                            name="input1" disabled="{!v.isReadOnly}" variant="label-hidden" />
+                    </div> -->
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<div class="slds-form-element__control input">
+                        <lightning:input
+                            aura:id="startDate" onblur="{!c.checkForValid}" label="Start Date"
+                            type="Date" value="{!v.objDealQualificationWrap.DQRec.Start_Date__c}"
+							required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}" name="input1"
+							disabled="{!v.isReadOnly}" />
+					</div>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<div class="slds-form-element__control input">
+                        <lightning:input type="Number" min="500"
+                            aura:id="minimumBaseline" onblur="{!c.checkForValid}" label="Minimum Baseline"
+							required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}"
+							messageWhenRangeUnderflow="Please input a value of 500 seats (or greater) as the Minimum Baseline cannot be less than 500 seats"
+							value="{!v.objDealQualificationWrap.DQRec.Minimum_Baseline__c}" name="input1"
+							disabled="{!v.isReadOnly}" />
+					</div>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<div class="slds-form-element__control input">
+                        <lightning:input type="Number" min="{!v.minPotentailLimit}"
+                            aura:id="maximumPotential" onblur="{!c.checkForValid}" label="Maximum Potential"
+                            required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}"
+							value="{!v.objDealQualificationWrap.DQRec.Maximum_Potential__c}" name="input1"
+							messageWhenRangeUnderflow="Please input a value of 1000 seats (or greater) as the Maximium Baseline cannot be less than 1,000 seats"
+							disabled="{!v.isReadOnly}" />
+					</div>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<div class="slds-form-element__control input">
+                        <lightning:textarea aura:id="addInfo" onblur="{!c.checkForValid}"
+                            label="Additional Info"
+                            required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}"
+							value="{!v.objDealQualificationWrap.DQRec.Additional_Info__c}" name="addInfo"
+							disabled="{!v.isReadOnly}" />
+					</div>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<label class="slds-form-element__label">If Global office then provide location(s)</label>
+					<div class="slds-form-element__control input">
+						<lightning:input type="text"
+							value="{!v.objDealQualificationWrap.DQRec.Global_Office_Location__c}" name="input1"
+							disabled="{!v.isReadOnly}" variant="label-hidden" />
+					</div>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<lightning:select class="input" value="{!v.objDealQualificationWrap.DQRec.True_Up_Terms__c}"
+                                      	disabled="{!v.isReadOnly}" name="trueup" label="True Up Terms">
+                        				<option value=""> -- None -- </option>
+										<option value="Every 6 Months"> Every 6 Months</option>
+										<option value="Every 12 Months">Every 12 Months</option>
+									</lightning:select>
+				</div>
+				<div class="slds-form-element slds-col slds-size_4-of-12"></div>
+				<br />
+                <aura:if isTrue="false">
+				<div class="slds-form-element slds-col slds-size_4-of-12">
+					<table>
+						<tr>
+						</tr>
+                        <aura:iteration items="{!v.DQTrueUpDateList}" var="acc" indexVar="index">
+							<br />
+							<tr>
+								<td>
+									<aura:if isTrue="{!index == 0}">
+										True Up Terms
+									</aura:if>
+								</td>
+								<td>
+									<!--<lightning:select class="input" value="{!acc.True_Up_Date__c}"
+										required="{!v.objDealQualificationWrap.DQRec.Is_ELA__c == 'Yes'}"
+										disabled="{!v.isReadOnly}" name="trueup" label="Initial Buy"
+										variant="label-hidden">
+										<option value="Every 6 Months"> Every 6 Months</option>
+										<option value="Every 12 Months">Every 12 Months</option>
+									</lightning:select>-->
+
+									<lightning:input disabled="{!v.isReadOnly}" variant="label-hidden"
+										value="{!acc.True_Up_Date__c}" type="Date" />
+								</td>
+								<aura:if isTrue="{!index == 0}">
+									<td>&nbsp;
+										<lightning:buttonIcon disabled="{!v.isReadOnly}" iconName="utility:add"
+											size="medium" variant="bare" alternativeText="Add" onclick="{!c.addRow}" />
+									</td>
+								</aura:if>
+								<aura:if isTrue="{!index != 0}">
+									<td>
+										&nbsp;<a disabled="{!v.isReadOnly}" onclick="{!c.removeRow}"
+											data-record="{!index}">
+											<lightning:icon class="slds-icon--small" iconName="utility:delete"
+												size="x-small" alternativeText="Delete" />
+											<span class="slds-assistive-text">Delete</span>
+										</a>
+									</td>
+								</aura:if>
+							</tr>
+						</aura:iteration>
+					</table>
+				</div>
+                </aura:if>
+			</aura:if>
+		</div>
+	</fieldset>
+	<div style="color:#ffffff;">
+		{!v.objDealQualificationWrap.DQRec.Id}
+	</div>
+</aura:component>

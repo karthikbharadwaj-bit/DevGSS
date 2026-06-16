@@ -1,0 +1,71 @@
+<aura:component >
+    <!-- attributes -->
+    <aura:attribute name="servicePlanEntry" type="PricebookEntry"/>
+    <aura:attribute name="activePriceBookEntry" type="PricebookEntry"/>
+    <aura:attribute name="selectedPriceBookEntry" type="PricebookEntry"/>
+    <aura:attribute name="accountServicePlanPbe" type="Object" description="Active Service Plan on Account PriceBookEntry record"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <tr aura:id="entryBody" onclick="{!c.chooseTier}"
+        class="{! join(' ', 'service-plan',
+                !v.servicePlanEntry.Pricebook2.IsActive ? 'inactiveServicePlan' : '',
+                v.Wizard.currentQuote.record.Pricebook2Id == v.servicePlanEntry.Pricebook2Id ? 'active-plan' : '',
+                v.selectedPriceBookEntry.Id == v.servicePlanEntry.Id ? 'slds-is-selected' : '')}"
+                data-pb-id="{! v.servicePlanEntry.Id }">
+
+        <!-- Info Icons -->
+        <td class="cart-col--info">
+
+            <!-- Service Plan On Account -->
+            <aura:if isTrue="{! v.accountServicePlanPbe.Id == v.servicePlanEntry.Id  }">
+                <c:Tooltip iconCollection="standard" theme="account" text="Service Plan on Account" class="service-plan-icon"/>
+            </aura:if>
+
+            <!-- Service Plan On Quote -->
+            <aura:if isTrue="{! v.Wizard.currentQuote.record.Pricebook2Id == v.servicePlanEntry.Pricebook2Id  }">
+                <c:Tooltip iconCollection="standard" theme="quotes" text="Service Plan on Quote" class="service-plan-icon"/>
+            </aura:if>
+
+            <!-- Service Plan Inactive -->
+            <aura:if isTrue="{! !v.servicePlanEntry.Pricebook2.IsActive }">
+                <c:Tooltip iconCollection="utility" theme="error" text="Service Plan is Inactive" class="service-plan-icon"/>
+            </aura:if>
+
+        </td>
+
+        <!-- Name -->
+        <td class="cart-col--name">
+            <span onmouseover="{!c.showTierId}"
+                  onmouseout="{!c.hideTierId}">
+                   {# v.servicePlanEntry.Pricebook2.Name }
+            </span>
+        </td>
+
+        <!-- Service -->
+        <td>{# v.servicePlanEntry.Pricebook2.Service__c }</td>
+
+        <!-- Edition -->
+        <td>{# v.servicePlanEntry.Pricebook2.Edition__c }</td>
+
+        <!-- Line Range -->
+        <td>
+            <aura:if isTrue="{# v.servicePlanEntry.Pricebook2.Line_Range_Min__c == v.servicePlanEntry.Pricebook2.Line_Range_Max__c }">
+                {# v.servicePlanEntry.Pricebook2.Line_Range_Max__c }
+                <aura:set attribute="else">
+                    {# v.servicePlanEntry.Pricebook2.Line_Range_Min__c } - {# v.servicePlanEntry.Pricebook2.Line_Range_Max__c }
+                </aura:set>
+            </aura:if>
+        </td>
+
+        <!-- Charge Term -->
+        <td>{# v.servicePlanEntry.Product2.Charge_Term__c }</td>
+
+        <!-- Price -->
+        <td>
+            <c:outputCurrency value="{# v.servicePlanEntry.UnitPrice }"
+                              currencyCode="{# v.servicePlanEntry.CurrencyIsoCode }"/>
+        </td>
+    </tr>
+</aura:component>

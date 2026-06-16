@@ -1,0 +1,42 @@
+<aura:component description="TemplatePanelTemplateView">
+    <!-- Shared Attributes -->
+    <aura:attribute name="templates" type="RC_Quote_Template__c[]"/>
+    <aura:attribute name="sections" type="TemplateSections__c[]"/>
+    <aura:attribute name="selectedSection" type="TemplateSections__c"/>
+    <aura:attribute name="selectedTemplate" type="RC_Quote_Template__c"/>
+    <!-- Registered Events -->
+    <aura:registerEvent type="c:TemplatePanelEvent" name="TemplatePanelEvent" />
+    <!-- Markup -->
+    <div class="slds-page-header">
+        <div class="slds-grid">
+            <div class="slds-col slds-no-flex slds-p-right--medium slds-border--right">
+                <lightning:button label="Template List"
+                                  iconName="action:back"
+                                  onclick="{!c.openTemplateList}"/>
+            </div>
+            <div class="slds-col slds-has-flexi-truncate slds-p-left--medium">
+                <div class="slds-media slds-no-space slds-grow">
+                    <div class="slds-media__figure">
+                        <lightning:icon iconName="utility:layout"
+                                        alternativeText="Template"/>
+                    </div>
+                    <div class="slds-media__body">
+                        <p class="slds-text-title_caps slds-line-height_reset">Template</p>
+                        <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate">
+                            {! v.selectedTemplate.Name }
+                        </h1>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-col slds-no-flex slds-grid slds-align-top">
+                <lightning:button label="Save" variant="brand" class="slds-m-left--small" />
+                <lightning:buttonMenu iconName="utility:down"
+                                      alternativeText="Settings"
+                                      class="slds-m-left--small"
+                                      menuAlignment="right">
+                    <lightning:menuItem label="Delete" value="delete" />
+                </lightning:buttonMenu>
+            </div>
+        </div>
+    </div>
+</aura:component>

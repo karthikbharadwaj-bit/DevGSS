@@ -1,0 +1,53 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 17-06-2020
+* Description    : Component invoked when 'Reassign Case' button is clicked on Case in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId,force:hasSObjectName" access="public"
+                			controller="Case_Edit_Reassign_Controller">
+    <aura:html tag="style">
+        .cuf-content {
+        padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+        padding: 0rem !important;
+        }       
+        .slds-modal__content{
+        overflow-y:hidden !important;
+        height:unset !important;
+        max-height:unset !important;
+        }
+    </aura:html>  
+    <aura:attribute name="displayConfirmMessage" type="Boolean" default="false"/>
+ <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <header class="slds-modal__header">
+        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirmation</h2>
+    </header>
+    <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+            </div>
+        </div>
+        <div>                        
+            You are about to Reassign this Case . Are you sure?
+        </div>
+    </div>
+    <footer class="slds-modal__footer">
+        <aura:if isTrue="{!v.displayConfirmMessage}">
+            <div class="slds-float_left">
+                <lightning:button variant="neutral" label="Cancel" title="Cancel"  onclick="{!c.closeModal}"/>
+            </div>
+            <lightning:button variant="brand" label="Ok" title="Ok"  onclick="{!c.handleConfirmation}"/> 
+        </aura:if>
+    </footer>    
+</aura:component>

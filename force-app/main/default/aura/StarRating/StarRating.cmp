@@ -1,0 +1,137 @@
+<aura:component description="StarRating" implements="flexipage:availableForAllPageTypes" access="global">
+    <aura:attribute name="isLightning" type="Boolean"/>
+    <aura:attribute name="modifiedDate" type="String"/>
+    <aura:attribute name="numberFields" type="String"/>
+    <aura:attribute name="recordId" type="String"/>
+
+    
+    <ltng:require afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+    <div class="slds-grid slds-gutters">
+        <div class="slds-col slds-size_1-of-4">
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">
+                <div class="slds-col slds-size_2-of-4 slds-p-left_medium">
+                    <div class="slds-text-align_right slds-text-heading_small">
+                        <b>Total Upsell Score</b>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-m-left_small">
+                    <div aura:id="upsellScore" class="readonly c-rating"></div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">
+                <div class="slds-col slds-size_2-of-4 slds-p-left_none">
+                    <div class="slds-text-align_right ">
+                        Contact Center Expansion Score
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-m-left_small">
+                    <div aura:id="ccExpasionScore" class="readonly c-rating"></div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">
+                <div class="slds-col slds-size_2-of-4 ">
+                    <div class="slds-text-align_right ">
+                        Toll-Free Score
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-m-left_small">
+                    <div aura:id="freeScore" class="readonly c-rating"></div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">
+                <div class="slds-col slds-size_2-of-4">
+                    <div class="slds-text-align_right ">
+                        DL Expansion Score
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-m-left_small">
+                    <div aura:id="dlExpasionScore" class="readonly c-rating"></div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">
+                <div class="slds-col slds-size_2-of-4">
+                    <div class="slds-text-align_right ">
+                        RC Meetings Score
+                    </div>
+                </div>
+                <div class="slds-col slds-size_1-of-4 slds-m-left_small">
+                    <div aura:id="rCMeetingsScore" class="readonly c-rating"></div>
+                </div>
+            </div>
+            <div class="slds-grid slds-wrap slds-p-vertical_xxx-small">    
+                <div class="slds-col slds-size_2-of-4">
+                    <div class="slds-text-align_right">Last Modified</div>
+                </div>
+                <div class="slds-col slds-size_1_of_4 slds-m-left_small">
+                    <div class="slds-text-align_left">{!v.modifiedDate}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slds-col">
+            <div class="slds-grid">
+                <div class="slds-col_bump-right slds-m-right_large">
+                    <div class="slds-grid_vertical">
+                        <div class="slds-col_bump-left slds-wrap slds-float_right">
+                            <div class="slds-col">
+                                <c:StarRatingTable tableType="Contact center table" recordId="{!v.recordId}"/>
+                            </div>
+                            <div class="slds-col slds-wrap ">
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_x-large"></div>
+                                <div class="slds-col slds-p-around_x-large"></div>
+                                <div class="slds-col slds-p-around_x-small"></div>
+                                <div class="slds-col slds-p-around_x-small"></div>
+                                <div class="slds-col slds-p-around_x-small"></div>
+                                <div class="slds-col slds-p-around_x-small"></div>
+                                <div class="slds-col slds-p-around_xxx-small"></div>
+                                <div class="slds-col slds-p-around_xxx-small"></div>
+                            </div>
+                            <div class="slds-col_bump-left slds-size_2-of-6 slds-float_right ">
+                                <div class="slds-col_bump-left slds-m-top_small slds-shrink slds-float_right slds-p-top_x-small">
+                                    <c:StarRatingTable tableType="Toll free table" recordId="{!v.recordId}"/>
+                                </div>
+                            </div>
+                            <div class="slds-col slds-wrap ">
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_xx-large"></div>
+                                <div class="slds-col slds-p-around_x-small"></div>
+                            </div>
+                            <div class="slds-col_bump-left slds-size_2-of-6 slds-float_right ">
+                                <div class="slds-col_bump-left slds-m-top_small slds-shrink slds-float_right slds-p-top_x-small">
+                                    <c:StarRatingTable tableType="Meetings table" recordId="{!v.recordId}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-col_bump-left">
+            <div class="slds-grid_vertical-align-center">
+                <div class="slds-col">
+                    <c:StarRatingChart graphType='Billed Minutes' recordId="{!v.recordId}"/>
+                </div>
+                <div class="slds-col slds-p-around_x-large"></div>
+                <div class="slds-col slds-p-around_x-small"></div>
+                <div class="slds-col slds-p-around_small"></div>
+                <div class="slds-col">
+                    <c:StarRatingChart graphType='Agents' recordId="{!v.recordId}"/>
+                </div>
+                <div class="slds-col slds-p-around_x-large"></div>
+                <div class="slds-col slds-p-around_xxx-small"></div>
+                <div class="slds-col">
+                    <c:StarRatingChart graphType='Toll Free' recordId="{!v.recordId}"/>
+                </div>
+                <div class="slds-col slds-p-around_x-large"></div>
+                <div class="slds-col slds-p-around_xxx-small"></div>
+                <div class="slds-col">
+                    <c:StarRatingChart graphType='RC meetings' recordId="{!v.recordId}"/>
+                </div>
+            </div>
+        </div>
+    </div>
+</aura:component>

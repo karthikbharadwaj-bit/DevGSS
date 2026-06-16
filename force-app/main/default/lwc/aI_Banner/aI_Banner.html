@@ -1,0 +1,27 @@
+<template>
+   <template if:true={hasPermission}> 
+
+        <div if:true={showBanner} class="ai-banner" style={bannerBackgroundStyle}>
+            
+            <div class="ai-logo">
+                <img src={aiImageUrl} alt="AI" class="ai-image" />
+            </div>
+            
+            <div class="banner-content">
+                <div if:true={hasHeading} class="banner-heading">
+                    <h2>{bannerHeading}</h2>
+                </div>
+                <lightning-formatted-rich-text if:true={hasContent} value={bannerContent}></lightning-formatted-rich-text>
+            </div>
+
+            <button class="close-button" onclick={handleCloseBanner} title="Close banner">
+                <span class="close-icon">&times;</span>
+            </button>
+        
+        </div>
+        
+        <div if:true={error} class="error-message">
+            Unable to load banner settings
+        </div>
+    </template>
+</template>

@@ -1,0 +1,37 @@
+<apex:page showHeader="false" contentType="text/xml" readOnly="true" cache="false" controller="SupportPortalSitemapController">
+    <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+        <url>
+            <loc>
+            {!siteurl}/RCSupportPortalKnowledgebase
+            </loc>
+            <priority>0.50</priority>
+        </url>
+        <url>
+            <loc>
+            {!siteurl}/RCSupportPortalDownloads
+            </loc>
+            <priority>0.50</priority>
+        </url>
+        <url>
+            <loc>
+            {!siteurl}/RCSupportPortalGuidesVideos
+            </loc>
+            <priority>0.50</priority>
+        </url>
+        <apex:repeat id="faqrepeat" var="d" value="{!FaqList}">
+            <apex:variable var="prioparam" value="priority="/>
+            <apex:variable var="prio" value="{!IF(d.RC_Knowledge_Article_Ranking__c=='','10',d.RC_Knowledge_Article_Ranking__c)}"/>
+            <apex:variable var="prioparamafter" value="&amp;"/>
+            <url>
+                <loc>
+                {!siteurl}/articles/RC_Knowledge_Article/{!d.UrlName}
+                </loc>
+                <lastmod>{!(TEXT(YEAR(DATEVALUE(d.LastPublishedDate))) & "-" & IF(LEN(TEXT(MONTH(DATEVALUE(d.LastPublishedDate))))==2,TEXT(MONTH(DATEVALUE(d.LastPublishedDate))),"0" & TEXT(MONTH(DATEVALUE(d.LastPublishedDate)))) & "-" & IF(LEN(TEXT(DAY(DATEVALUE(d.LastPublishedDate))))==2,TEXT(DAY(DATEVALUE(d.LastPublishedDate))),"0" & TEXT(DAY(DATEVALUE(d.LastPublishedDate)))))}</lastmod>
+                <priority>0.50</priority>
+            </url>
+        </apex:repeat>
+    </urlset>
+
+
+
+</apex:page>

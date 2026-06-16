@@ -1,0 +1,561 @@
+<apex:page standardController="Knowledge__kav" extensions="KnowledgeArticleControllerExtension" showHeader="false" standardStylesheets="true" showQuickActionVfHeader="true" tabStyle="Knowledge__kav">
+    <apex:includeScript value="/support/console/46.0/integration.js"/>
+    <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}" />
+    <apex:sectionHeader title="{!articleVersion.Title}"  printUrl="/knowledge/articlePrintableView.apexp?id={!Knowledge__kav.KnowledgeArticleId}{!printParameters}" help="https://help.salesforce.com/apex/htdoor?loc=help&target=knowledge_article_create.htm"/>
+
+<div>
+	<knowledge:articleRendererToolBar canVote="true" articleId="{! $CurrentPage.parameters.id}"/>
+</div>
+
+<style>
+    .activeTab { 
+    	border-top-left-radius: 8px;
+    	border-top-right-radius: 8px;
+    	-webkit-box-shadow: 3px 0 5px -3px #999, 1px 0 7px -14px #999;
+    	background-image: linear-gradient(rgba(255,255,255,.50),rgba(255,255,255,0) 8px);
+    	height: 19px;
+    	margin-bottom: 0;
+        font-family: Verdana, sans-serif;
+    	font-weight: bold;
+    	font-size: .9em;
+    	color: #fff;
+    	padding-top: 2px;
+    	background-color: rgb(63,68,164);
+        border: solid 1px #d0d0d0;
+        border-top-color: rgb(208, 208, 208);
+        border-right-color: rgb(208, 208, 208);
+        border-bottom-color: initial;
+        border-bottom-style: initial;
+        border-left-color: rgb(208, 208, 208);
+        border-image-source: initial;
+        border-image-slice: initial;
+        border-image-repeat: initial;
+        border-bottom: 0;
+        border-bottom-color: initial;
+        zoom: 1;
+	}
+    .inactiveTab {
+        color:black;
+    	background-image:none;
+        font-family: Verdana, sans-serif;
+    	font-weight: normal;
+    	background-color: #fff;
+    	height: 19px;
+    }
+    .comment-wrapper {
+        overflow-y: scroll;
+        overflow-x: hidden;
+        height: 500px;
+    }
+    .comment-list_item {
+        display: flex;
+        border: 1px solid #f1f1f1;
+        border-radius: 4px;
+        background-color: #fff;
+        padding: 5px;
+        margin: 5px;
+        position: relative;
+    }
+    .comment_date {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        color: #a5b3c2;
+        font-size: 11px;
+    }
+    .comment {
+        display:inline;
+        word-break: break-word;
+    }
+    .comment > span {
+        margin-left: 5px;
+        display: inline-block;
+    }
+    .comment:after {
+        content:"\A";
+        white-space: pre;
+    }
+    .comment_user {
+        min-width: 120px;
+        max-width: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 10px 5px;
+    }
+    .comment_user > * {
+        display: block;
+    }
+    .comment_user > img {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+    }
+    .comment_user-info {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 5px;
+        max-width: 100%;
+    }
+    .comment_user-mail {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        border: 1px solid #a5b3c2;
+        background-color: #a5b3c2;
+        border-radius: 3px;
+        width: 14px;
+        height: 10px;
+        margin-right: 4px;
+        transition: all .3s;
+    }
+    .comment_user-mail:after {
+        content: '';
+        position: absolute;
+        transform: rotate(-45deg);
+        border: 1px solid #fff;
+        background-color: #a5b3c2;
+        border-radius: 3px;
+        left: -1px;
+        top: -11px;
+        width: 15px;
+        height: 13px;
+        transition: all .3s;
+    }
+    .comment_user-mail:hover {
+        border-color: #1797c0;
+        background-color: #1797c0;
+    }
+    .comment_user-mail:hover:after {
+        background-color: #1797c0;
+    }
+    .comment_user-name {
+        font-size: 12px;
+        font-weight: bold;
+        color: #4a4a56;
+        text-decoration: none;
+        transition: color .3s;
+        overflow: hidden;
+        max-width: calc(100% - 20px);
+        text-overflow: ellipsis;
+        word-break: break-all;
+        white-space: nowrap;
+    }
+    .comment_user-name:hover {
+        text-decoration: underline;
+    }
+    .comment_data {
+        overflow: hidden;
+        padding: 10px 5px 20px;
+        word-break: break-all;
+    }
+    .comment-textarea-wrapper .comment-textarea {
+        outline: none;
+        border-color: #e6e6e6;
+        position: relative;
+    }
+    .comment-textarea-wrapper .detailList {
+        padding-top: 10px;
+    }
+    .comment-textarea-wrapper .dataCol.first {
+        position: relative;
+    }
+    .comment-textarea-wrapper .dataCol.first:before {
+        content: attr(data-count);
+        position: absolute;
+        bottom: -8px;
+        right: 4px;
+        font-size: 11px;
+    }
+    .comment-textarea-wrapper .dataCol.first:after {
+        content: '(Min 20 characters)';
+        position: absolute;
+        bottom: -9px;
+        left: 9px;
+        font-size: 10px;
+    }
+    .comment-textarea-wrapper .dataCol.first[data-valid=false]:before {
+        color: #FF002B;
+    }
+    .comment-textarea-wrapper .dataCol.first[data-valid=false] .comment-textarea:not(:focus) {
+        -webkit-box-shadow: 0 0 3px 1px #FF002B;
+        -moz-box-shadow: 0 0 3px 1px #FF002B;
+        box-shadow: 0 0 3px 1px #FF002B;
+        border-color: #FF002B;
+    }
+    .comment-textarea-wrapper .dataCol.first[data-valid=true] .comment-textarea {
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        box-shadow: none;
+        border-color: #e6e6e6;
+    }
+    .rejection-popup-wrapper {
+        display: none;
+    }
+    .channels-popup-wrapper {
+        display: none;
+    }
+    .rejection-popup {
+        background-color: white;
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 8px;
+        border-color: rgba(63, 68, 164, 1);
+        z-index: 9999;
+        left: 50%;
+        padding:10px;
+        position: absolute;
+        width: 500px;
+        margin-left: -250px;
+        top:100px;
+    }
+    .channels-popup {
+        background-color: white;
+        border-width: 2px;
+        border-style: solid;
+        border-radius: 8px;
+        border-color: rgba(63, 68, 164, 1);
+        z-index: 9999;
+        left: 50%;
+        padding:10px;
+        position: absolute;
+        width: 500px;
+        margin-left: -250px;
+        top:100px;
+    }
+    .rejection-popup-background {
+        background-color:black;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+    }
+    .channels-popup-background {
+        background-color:black;
+        opacity: 0.25;
+        filter: alpha(opacity = 25);
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+    }
+    .rejection-popup-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+    .channels-popup-buttons {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+    .reasonError {
+        font-size: smaller;
+        color: red;
+        display: none;
+    }
+    .not-latest-notice-wrapper {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .not-latest-notice {
+        background-color: white;
+        align-content: center;
+        display: block;
+        width: 100%;
+        border-style: solid;
+        border-radius: 8px;
+        border-color: rgb(63,68,164);
+        text-align: center;
+        padding: 15px;
+        font-weight: bold;
+        font-size: 1.2em;
+        margin: 6px;
+    }
+    .channels-popup-item {
+        margin-top: 10px;
+    }
+    .button-disabled {
+        background-position: 0 -90px !important;
+        color: #909090 !important;
+        border-color: rgb(216, 216, 216) rgb(209, 209, 209) rgb(186, 186, 186) !important;
+        border-style: solid !important;
+        border-width: 1px !important;
+        border-radius: 3px !important;
+    }
+</style>
+<script>
+    const MAX_LEN_COMMENT = 32768;
+    const MIN_LEN_COMMENT = 20;
+    const BLOCK_ELEMENT_TIME = 1000;
+
+    var successMessage;
+    function isRejectionPopupShown() {
+        return document.querySelector('.rejection-popup-wrapper') == "block";
+    }
+    function toggleRejectionPopup() {
+        const rejectionPopup = document.querySelector('.rejection-popup-wrapper');
+        if (rejectionPopup.style.display == "block") {
+            rejectionPopup.style.display = "none";
+        } else {
+            rejectionPopup.style.display = "block";
+        }
+    }
+    function reject(el) {
+        const reasonInput = document.querySelector('.reasonInput');
+        reasonInput.blur();
+        if (el) el.focus();
+        setTimeout(
+            function() {
+                const reasonError = document.querySelector('.reasonError');
+                reasonError.style.display = "none";
+                if (!reasonInput.value || reasonInput.value.trim().length === 0) {
+                    reasonError.style.display = "block";
+                } else {
+                    document.querySelector('.rejection-popup-wrapper').style.display = "none";
+                    rcnotify.showSpinner();
+                    rejectArticleFn();
+                }
+            },
+            1
+        );
+    }
+    function publishExternally() {
+        document.querySelector('.channels-popup-wrapper').style.display = "none";
+        rcnotify.showSpinner();
+        publishExternallyFn();
+    }
+    function toggleChannelsPopup() {
+        const channelsPopup = document.querySelector('.channels-popup-wrapper');
+        if (channelsPopup.style.display == "block") {
+            channelsPopup.style.display = "none";
+        } else {
+            channelsPopup.style.display = "block";
+            refreshPublishExternallyButton();
+        }
+    }
+    function refreshPublishExternallyButton() {
+        const publishBtn = document.querySelector('.publish-externally-btn');
+        publishBtn.disabled = true;
+        publishBtn.classList.add("button-disabled");
+        [...document.querySelectorAll('.channel-checkbox')].forEach(
+            function(channelCheckbox) {
+                if (channelCheckbox.checked) {
+                    publishBtn.disabled = false;
+                    publishBtn.classList.remove("button-disabled");
+                }
+            }
+        );
+    }
+    function clearComment(force) {
+        if(force || document.querySelector('.comment-textarea-wrapper .dataCol.first[data-valid=true]')) {
+            const textAria = document.querySelector('.comment-textarea');
+            textAria.value = '';
+            successMessage = document.querySelector('.comment-textarea-wrapper .message.confirmM3');
+            updateCount(textAria);
+            textAria.focus();
+        }
+    }
+    function removeMessage() {
+        if(successMessage && successMessage.parentNode) {
+            successMessage.parentNode.removeChild(successMessage);
+        }
+    }
+    function updateCount(el) {
+        const wrapper = document.querySelector('.comment-textarea-wrapper .dataCol.first');
+        var text = el.value;
+        try {
+            text = text.trim();
+        }catch (e) {
+            console.warn('You have IE < 10',e);
+        }
+        const count = text.length;
+        wrapper.setAttribute('data-count','Comment length: '+ count);
+        wrapper.setAttribute('data-valid',count >= MIN_LEN_COMMENT && count < MAX_LEN_COMMENT);
+    }
+    function buttonTumbler(el) {
+        el.setAttribute('disabled','disabled');
+        setTimeout(function() {
+            el.removeAttribute('disabled');
+        },BLOCK_ELEMENT_TIME)
+    }
+    function setTitle() {
+        sforce.console.setTabTitle("{!articleVersion.Title}");
+    }
+    setTitle();
+
+
+</script>
+<apex:outputText value="{!Knowledge__kav.ArticleNumber} {!Knowledge__kav.MasterVersion} {!Knowledge__kav.Title} {!Knowledge__kav.MasterVersion.ArticleNumber} {!Knowledge__kav.MasterVersion.VersionNumber}
+" rendered="false"/>
+  <div class="not-latest-notice-wrapper">
+    <apex:outputPanel styleClass="not-latest-notice" rendered="{!latestVersionLink != null}">
+      <apex:outputText value="This is an outdated version of the article. Please find the latest version "/>
+      <apex:outputLink value="{!latestVersionLink}" >here</apex:outputLink>.
+    </apex:outputPanel>
+  </div>
+  <apex:form rendered="{!currentUserCanReviewArticle && (isDraft || isInternal)}" style="margin-top: 10px;">
+    <apex:actionFunction name="rejectArticleFn" action="{!rejectArticle}"/>
+    <apex:actionFunction name="publishExternallyFn" action="{!publishArticleExternally}"/>
+    <apex:pageBlock title="Knowledge Reviewer Panel">
+      <apex:outputPanel rendered="{!isDraft}">This article is in a <b>Published As Draft</b> status. You can <b>Publish</b> or <b>Reject</b> it.<br/></apex:outputPanel>
+      <apex:outputPanel rendered="{!isInternal}">This article is in a <b>Published Internally</b> status. You can choose external channels to share it with external users. Status will change to <b>Published Externally</b>.<br/></apex:outputPanel>
+      <apex:outputPanel rendered="{!draftVersion != null}">
+        <br/>
+        <b>Unpublished draft, assigned to&nbsp;
+        <apex:outputLink rendered="{!!iAmDraftEditor}" value="{!draftEditorLink}">{!draftEditorName}</apex:outputLink>
+        <apex:outputText rendered="{!iAmDraftEditor}">you</apex:outputText>,
+        exists for this article.
+        <apex:outputText rendered="{!isDraft}"> It must be published or deleted before internal publishing or rejection.</apex:outputText></b>
+      </apex:outputPanel>
+        <apex:outputPanel styleClass="rejection-popup-wrapper">
+          <apex:outputPanel styleClass="rejection-popup-background" layout="block"/>
+          <apex:outputPanel styleClass="rejection-popup" layout="block" id="rejectionPopup">
+            <div style="margin-bottom: 8px;">Please specify a rejection reason:</div>
+            <apex:outputPanel styleClass="requiredInput" layout="block">
+              <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+              <div class="reasonError">You must populate a rejection reason</div>
+              <apex:inputTextArea id="reasonInput" richText="true" styleClass="reasonInput" cols="100" rows="5" style="width: 100%; padding: initial;" value="{!rejectionComment}"/>
+            </apex:outputPanel>
+            <div class="rejection-popup-buttons" id="rejectionPopupButtons">
+              <apex:commandButton value="Reject" onClick="reject(this);" rerender="none"/>
+              <apex:commandButton value="Back" onClick="toggleRejectionPopup()" rerender="none"/>
+            </div>
+          </apex:outputPanel>
+        </apex:outputPanel>
+      <apex:outputPanel styleClass="channels-popup-wrapper">
+        <apex:outputPanel styleClass="channels-popup-background" layout="block"/>
+        <apex:outputPanel styleClass="channels-popup" layout="block" id="channelsPopup">
+        <div style="margin-bottom: 8px;">Please select external channels to publish to:</div>
+            <div class="channels-popup-item">
+                <apex:inputCheckbox styleClass="channel-checkbox" value="{!articleVersion.IsVisibleInPrm}" onClick="refreshPublishExternallyButton();"></apex:inputCheckbox>
+                &nbsp;Partner
+            </div>
+            <div class="channels-popup-item">
+                <apex:inputCheckbox styleClass="channel-checkbox" value="{!articleVersion.IsVisibleInCsp}" onClick="refreshPublishExternallyButton();"></apex:inputCheckbox>
+                &nbsp;Community
+            </div>
+            <div class="channels-popup-item">
+                <apex:inputCheckbox styleClass="channel-checkbox" value="{!articleVersion.IsVisibleInPkb}" onClick="refreshPublishExternallyButton();"></apex:inputCheckbox>
+                &nbsp;Public Knowledge Base
+            </div>
+        <div class="channels-popup-buttons" id="rejectionPopupButtons">
+          <apex:commandButton styleClass="publish-externally-btn" value="Publish Externally" onClick="publishExternally();" rerender="none"/>
+          <apex:commandButton value="Back" onClick="toggleChannelsPopup()" rerender="none"/>
+        </div>
+        </apex:outputPanel>
+      </apex:outputPanel>
+      <apex:pageBlockButtons location="bottom"> 
+          <apex:commandButton rendered="{!isDraft}" disabled="{!draftVersion != null}" onclick="rcnotify.showSpinner()" action="{!approveArticle}" value="Publish Internally"/>
+          <apex:commandButton rendered="{!isDraft || isInternal}" disabled="{!draftVersion != null}" onclick="toggleChannelsPopup()" value="Publish Externally" rerender="none"/>
+          <apex:commandButton rendered="{!isDraft}" disabled="{!draftVersion != null}" onclick="toggleRejectionPopup()" value="Reject" rerender="none"/>
+          <apex:commandButton rendered="{!!isRejected}" onclick="rcnotify.showSpinner()" action="{!goToEditArticle}" value="Go To Draft"/>
+      </apex:pageBlockButtons>
+    </apex:pageBlock>
+  </apex:form>
+  <apex:tabPanel switchType="client" selectedTab="Article" tabClass="activeTab" inactiveTabClass="inactiveTab">
+    <apex:tab label="Article" name="Article">
+      <apex:pageBlock >
+        <apex:pageBlockSection columns="1">
+          <apex:outputField value="{!Knowledge__kav.Summary}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Details__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Issue__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Question__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Symptom__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_STR__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_AffectedEnv__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Cause__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Resolution__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Status__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Key_Words__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Legacy_Article_ID__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Confidence__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Ranking__c}"/>
+        </apex:pageBlockSection>
+      </apex:pageBlock>
+    </apex:tab>
+    <apex:tab label="Information" name="Information">
+      <apex:pageBlock >
+        <apex:pageBlockSection columns="1">
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Category__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_Product__c}"/>
+          <apex:outputField value="{!Knowledge__kav.FileAttachmentsLink__c}"/>
+          <apex:outputField value="{!Knowledge__kav.ValidationStatus}"/>
+          <apex:outputField value="{!Knowledge__kav.TimeSinceSubmission__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_ReviewDateTime__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_DecisionMaker__c}"/>
+          <apex:outputField value="{!Knowledge__kav.RC_Knowledge_Article_RejectionReason__c}"/>
+        </apex:pageBlockSection>
+      </apex:pageBlock>
+    </apex:tab>
+  </apex:tabPanel>
+
+  <apex:form styleClass="comment-textarea-wrapper">
+    <apex:pageBlock title="Create comment">
+      <apex:pageMessages id="messages"/>
+      <apex:pageBlockButtons location="bottom">
+        <apex:commandButton action="{! saveComment }" value="Save" onClick="buttonTumbler(this)" onComplete="clearComment(false)" rerender="comments,messages"/>
+        <apex:commandButton onClick="clearComment(true)" value="Clear" rerender="comments,messages"/>
+      </apex:pageBlockButtons>
+      <apex:pageBlockSection >
+          <apex:inputTextarea onFocus="updateCount(this);" onKeyUp="updateCount(this);removeMessage();" value="{!comment.User_Comments__c}" id="form" rows="5" cols="150" styleClass="comment-textarea"/>
+      </apex:pageBlockSection>
+    </apex:pageBlock>
+  </apex:form>
+<apex:tabPanel id="comments" switchType="client" selectedTab="Internal comments" tabClass="activeTab"
+inactiveTabClass="inactiveTab">
+  <apex:tab label="Internal comments" name="Internal comments">
+    <apex:pageBlock title="Comments">
+      <div class="comment-wrapper">
+          <apex:dataList value="{!internalComments}" var="comment" styleClass="comment-list">
+            <div class="comment-list_item">
+                <apex:outputText value="{0, date, MMMM d','  yyyy 'at' h:mm a}" styleClass="comment_date">
+                    <apex:param value="{!IF(comment['comment'].CreatedDate == null, NOW(), comment['comment'].CreatedDate)}" />
+                </apex:outputText>
+                <div class="comment_user">
+                    <apex:image value="{!IF(comment['user']!= '{}',comment['user'].SmallPhotoUrl,'/profilephoto/005/T')}"/>
+                    <span class="comment_user-info">
+                        <apex:outputLink value="{!'mailto:' + comment['user'].Email}" title="{!comment['user'].Email}" styleClass="comment_user-mail" rendered="{!comment['user']!= '{}'}"></apex:outputLink>
+                         <apex:outputLink value="{!IF(comment['user']!= '{}','/' + comment['comment'].RC_User_Id__c,'#')}" styleClass="comment_user-name" target="_blank" title="{!comment['comment'].RC_User_name__c}">{!comment['comment'].RC_User_name__c}</apex:outputLink>
+                    </span>
+                </div>
+                <div class="comment_data">{!comment['comment'].User_Comments__c}</div>
+            </div>
+          </apex:dataList>
+        </div>
+    </apex:pageBlock>
+  </apex:tab>
+	<apex:tab label="External comments" name="External comments">
+		<apex:pageBlock title="Comments">
+			<div class="comment-wrapper">
+                <apex:dataList value="{!externalComments}" var="comment" styleClass="comment-list">
+                    <div class="comment-list_item">
+                        <apex:outputText value="{0, date, MMMM d','  yyyy 'at' h:mm a}" styleClass="comment_date">
+                            <apex:param value="{!comment['comment'].CreatedDate}" />
+                        </apex:outputText>
+                        <div class="comment_user">
+                            <apex:image value="{!IF(comment['user']!= '{}',comment['user'].SmallPhotoUrl,'/profilephoto/005/T')}"/>
+                            <span class="comment_user-info">
+                                <apex:outputLink value="{!'mailto:' + comment['user'].Email}" title="{!comment['user'].Email}" styleClass="comment_user-mail" rendered="{!comment['user']!= '{}'}"></apex:outputLink>
+                                <apex:outputLink value="{!IF(comment['user']!= '{}','/' + comment['comment'].RC_User_Id__c,'#')}" styleClass="comment_user-name" target="_blank">{!comment['comment'].RC_User_name__c}</apex:outputLink>
+                            </span>
+                        </div>
+                        <div class="comment_data">{!comment['comment'].User_Comments__c}</div>
+                    </div>
+                </apex:dataList>
+   			</div>
+		</apex:pageBlock>
+	</apex:tab>
+</apex:tabPanel>
+</apex:page>

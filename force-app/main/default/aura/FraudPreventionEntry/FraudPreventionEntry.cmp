@@ -1,0 +1,54 @@
+<aura:component>
+    <aura:attribute name="settings" type="Map" />
+
+    <aura:attribute name="showField" type="Boolean" />
+    <aura:attribute name="hasChildren" type="Boolean" />
+    <aura:attribute name="fieldConfig" type="Map" />
+    <aura:attribute name="formObject" type="Map" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler event="c:FraudPreventionEvent" action="{!c.eventHandler}" />
+
+
+    <!-- One -->
+        <!-- <div class="{!join(' ', (!v.fieldConfig.groupList &amp;&amp; v.fieldConfig.display ? '' : 'slds-hide'), 'entry')}"> -->
+        <aura:if isTrue="{! !v.fieldConfig.groupList &amp;&amp; v.fieldConfig.display }">
+            <div class="entry">
+                <!-- field -->
+                <c:FraudPreventionInput fieldLabel="{!v.fieldConfig.name}"
+                                        fieldName="{!v.fieldConfig.fieldName}"
+                                        inputType="{!v.fieldConfig.type}"
+                                        isMulti="{!v.fieldConfig.isMulti}"
+                                        isPicklist="{!v.fieldConfig.isPicklist}"
+                                        picklistValues="{!v.fieldConfig.values}"
+
+                                        fieldConfig="{!v.fieldConfig}"
+                                        formObject="{!v.formObject}"
+                                        settings="{!v.settings}" />
+                <!-- field -->
+
+                <!-- inner fields -->
+                <aura:if isTrue="{!v.fieldConfig.children}">
+                    <c:FraudPreventionListItems items="{!v.fieldConfig.children}" formObject="{!v.formObject}" settings="{!v.settings}" />
+                </aura:if>
+                <!-- inner fields -->
+            </div>
+        </aura:if>
+        <!-- </div> -->
+    <!-- One -->
+
+    <!-- Group -->
+        <!-- <div class="{!join(' ', (v.fieldConfig.groupList &amp;&amp; v.fieldConfig.display ? '' : 'slds-hide'), 'grouped-entry')}"> -->
+        <aura:if isTrue="{! v.fieldConfig.groupList &amp;&amp; v.fieldConfig.display }">
+            <div class="grouped-entry">
+                <p class="{! join(' ', (v.fieldConfig.label ? '' : 'slds-hide'), 'group-label slds-text-title_caps')}">{!v.fieldConfig.label || '&nbsp;'}</p>
+                <div class="grouped">
+                    <aura:iteration items="{!v.fieldConfig.items}" var="itemInGroup" indexVar="indexInGroup">
+                        <c:FraudPreventionEntry fieldConfig="{!itemInGroup}" formObject="{!v.formObject}" settings="{!v.settings}" />
+                    </aura:iteration>
+                </div>
+            </div>
+        </aura:if>
+    <!-- Group -->
+
+</aura:component>

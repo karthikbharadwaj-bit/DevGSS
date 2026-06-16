@@ -1,0 +1,104 @@
+<apex:page controller="ArticleReviewControllerExtension">
+    <apex:form >
+        <apex:includeScript value="{!$Resource.rcnotify + '/rcnotify.js'}"/>
+        <apex:pageBlock id="pb" mode="inlineEdit">
+            <div class="listViewport">
+                <apex:commandButton styleClass="btn refreshListButton" reRender="pb" style="margin-bottom: 5px;"
+                                    onClick="DisableOnClick('doRefresh')"/>
+                <apex:actionFunction name="doRefresh" action="{!refresh}"/>
+                <apex:outputtext style="margin:3px;" value="Language:"/>
+                <apex:selectList style="margin:3px;" id="selected_lang" value="{!lang}" required="false" size="1">
+                    <apex:selectOptions value="{!Languages}"/>
+                    <apex:actionSupport event="onchange" reRender="pb" action="{!refresh}"/>
+                </apex:selectList>
+            </div>
+
+            <apex:pageBlockTable value="{!articles}" var="a">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:commandLink action="{!toggleSort}" rerender="pb"
+                                          value="Article Title {!IF(sortField=='Title', IF(sortDir='ASC','▲','▼'),'')}">
+                            <apex:param name="sortField" value="Title" assignTo="{!sortField}"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputLink value="/apex/NewArticlePage?id={!a.KnowledgeArticleId}">{!a.Title}
+                    </apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:commandLink action="{!toggleSort}" rerender="pb"
+                                          value="Article Number  {!IF(sortField=='ArticleNumber', IF(sortDir='ASC','▲','▼'),'')}">
+                            <apex:param name="sortField" value="ArticleNumber" assignTo="{!sortField}"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputLink value="/{!a.KnowledgeArticleId}">{!a.ArticleNumber}</apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:commandLink action="{!toggleSort}" rerender="pb"
+                                          value="Agent Submitted  {!IF(sortField=='CreatedBy.Name', IF(sortDir='ASC','▲','▼'),'')}">
+                            <apex:param name="sortField" value="CreatedBy.Name" assignTo="{!sortField}"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputLink value="/{!a.CreatedBy.Id}">{!a.CreatedBy.Name}
+                    </apex:outputLink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:commandLink action="{!toggleSort}" rerender="pb"
+                                          value="Created Date {!IF(sortField=='ArticleCreatedDate', IF(sortDir='ASC','▲','▼'),'')}">
+                            <apex:param name="sortField" value="ArticleCreatedDate" assignTo="{!sortField}"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputField value="{!a.ArticleCreatedDate}"/>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:commandLink action="{!toggleSort}" rerender="pb"
+                                          value="Time Lapsed Since Submission {!IF(sortField=='TimeSinceSubmission_ms__c', IF(sortDir='ASC','▲','▼'),'')}">
+                            <apex:param name="sortField" value="TimeSinceSubmission_ms__c" assignTo="{!sortField}"/>
+                        </apex:commandLink>
+                    </apex:facet>
+                    <apex:outputField value="{!a.TimeSinceSubmission__c}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+
+            <div style="display: flex">
+                <apex:outputtext style="padding-top:7px;display:block;" value="Page {!pageNumber} of {!TotalPages}"
+                                 rendered="{!TotalPages > 0}"/>
+                <apex:panelGrid columns="7" style="margin:0 auto;">
+                    <apex:commandButton reRender="pb" value="|<" disabled="{!!hasPrevious}"
+                                        onClick="DisableOnClick('doFirst')"/>
+                    <apex:actionFunction name="doFirst" action="{!first}"/>
+                    <apex:commandButton reRender="pb" value="<" disabled="{!!hasPrevious}"
+                                        onClick="DisableOnClick('doPrevious')"/>
+                    <apex:actionFunction name="doPrevious" action="{!previous}"/>
+                    <apex:commandButton reRender="pb" value=">" disabled="{!!hasNext}"
+                                        onClick="DisableOnClick('doNext')"/>
+                    <apex:actionFunction name="doNext" action="{!next}"/>
+                    <apex:commandButton reRender="pb" value=">|" disabled="{!!hasNext}"
+                                        onClick="DisableOnClick('doLast')"/>
+                    <apex:actionFunction name="doLast" action="{!last}"/>
+                </apex:panelGrid>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+
+    <script>
+        function DisableOnClick(functionName) {
+            rcnotify.showSpinner();
+
+            if (functionName === 'doFirst') {
+                doFirst();
+            } else if (functionName === 'doPrevious') {
+                doPrevious();
+            } else if (functionName === 'doNext') {
+                doNext();
+            } else if (functionName === 'doLast') {
+                doLast();
+            } else if (functionName === 'doRefresh') {
+                doRefresh();
+            }
+        }
+    </script>
+</apex:page>

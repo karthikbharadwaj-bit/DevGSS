@@ -1,0 +1,145 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 06-01-2020
+* Description    : Component for New Deal Support Comment addition- Partner_DealSupportComments
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component  implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" access="global" controller="Partner_DealSupport">
+    <aura:attribute name="DealSupportRecordId" type="String"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="true" />
+    <aura:attribute name="displayErrorMessage" type="boolean"/>
+    <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="dealSupportCommentsList" type="List"/> 
+    <aura:attribute name="comment" type="string"/>
+    <aura:attribute name="ShowNewComment" type="boolean" default="false" />
+    <aura:attribute name="isActive" type="Boolean" default="false" required="true" />	
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="isReadOnly" type="boolean"/>    
+    
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:attribute name="translationsMap" type="Map" />
+    
+    <aura:attribute name="ShowSpinnerCom" type="boolean" default="true" /><!-- Added for ALE safari issue-->
+    
+    <aura:if isTrue="{!v.ShowRecordDetail}">
+        <!--<lightning:card variant="Narrow" title="Deal Support Comments" iconName="utility:comments">-->
+        <!-- Aura if added for ALE safari issue-->
+        <aura:if isTrue="{!v.ShowSpinnerCom}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                </div>
+            </div> 
+        </aura:if>
+        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_small" style="bottom-border:.25rem !important;">
+           <aura:if isTrue="{!!v.isReadOnly}">
+            <lightning:button variant="brand" label="{!v.translationsMap.New_Comment}" iconName="action:new" iconPosition="left" onclick="{!c.createNewComment}" />
+           </aura:if>
+        </div>
+        <aura:if isTrue="{!v.displayErrorMessage}">
+            <div class="errorMessageDiv">
+                <div class="slds-is-relative errorMessageDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.errorMessage}</h2>
+                        </div>
+                    </div>
+                </div>  
+            </div>
+            
+        </aura:if>
+        
+        
+        <aura:if isTrue="{!v.ShowNewComment}">
+            <section role="dialog" tabindex="-1" aria-labelledby="Lookup Search" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="min-width: 70vw;">
+                    <header class="slds-modal__header">
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.New_Comment}</h2>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+                        <div class="slds-is-relative">
+                            <div class="spinnerHolder">
+                                <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                            </div>
+                        </div> 
+                        <div class="slds-form-element slds-form-element_horizontal">
+                            <lightning:layout>
+                                <lightning:layoutItem size="6">
+                                    <lightning:textarea aura:id="comments"  label="{!v.translationsMap.Comments}" required="true" value="{!v.comment}"/>
+                                </lightning:layoutItem>
+                            </lightning:layout>
+                            <lightning:layoutItem size="6"></lightning:layoutItem>
+                        </div>                            
+                    </div>	
+                    <footer class="slds-modal__footer"> 
+                        <lightning:button variant="brand" label="{!v.translationsMap.Submit}" name="Submit" type="button"  iconName="action:check" iconPosition="left" onclick="{!c.createNewDealComment}"/>
+                        <lightning:button variant="neutral" label="{!v.translationsMap.Cancel}" title="{!v.translationsMap.Cancel}" iconName="action:close" iconPosition="left" onclick="{!c.closeModal}"/>
+                    </footer>
+                </div>
+            </section>
+        </aura:if>
+        
+        <div class="{!'slds-backdrop ' + ((v.isActive) ? 'slds-backdrop_open' : 'slds-backdrop_close')}"></div>
+        <!--<aura:if isTrue="{!!v.ShowNewComment}"> -->      
+        <aura:if isTrue="{!!v.displayErrorMessage}">        
+            <div class="slds-m-around_xx-small">  
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Comment}">{!v.translationsMap.Comment}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Created_By}">{!v.translationsMap.Created_By}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Created_Date}">{!v.translationsMap.Created_Date}</div></strong>
+                            </th>                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                        <aura:iteration items="{!v.dealSupportCommentsList}" var="comment"> 
+                            <tr>
+                                <th scope="row" data-label="Comment">
+                                    <div class="slds-truncate" title="{!comment.Comments__c}">
+                                        {!comment.Comments__c}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Created By">
+                                    <div class="slds-truncate" title="{!comment.CreatedBy.Name}">
+                                        {!comment.CreatedBy.Name}
+                                    </div>
+                                </th>                               
+                                <th scope="row" data-label="Created Date">
+                                    <div class="slds-truncate">
+                                        <lightning:formattedDateTime value="{!comment.CreatedDate}"
+                                                                     month="numeric"
+                                                                     day="numeric"
+                                                                     year="numeric"
+                                                                     hour="2-digit"
+                                                                     minute="2-digit"
+                                                                     timeZone="{!$Locale.timezone}"/>
+                                    </div>
+                                </th>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <!--</aura:if>-->
+        </aura:if>
+        <!-- </lightning:card>-->
+    </aura:if>
+</aura:component>

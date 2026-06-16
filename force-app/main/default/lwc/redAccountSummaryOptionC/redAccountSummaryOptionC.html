@@ -1,0 +1,62 @@
+<template>
+    <div class="option-label">Option C — Slim Banner</div>
+    <div class="banner-wrap">
+        <div class="banner-collapsed" onclick={toggleExpand}>
+            <span class="ai-chip">✦ AI</span>
+            <span class="preview-text">{previewText}</span>
+            <span class="expand-icon">
+                <template if:false={isExpanded}>▼ Show more</template>
+                <template if:true={isExpanded}>▲ Hide</template>
+            </span>
+        </div>
+        <template if:true={isExpanded}>
+            <div class="banner-expanded">
+                <template if:true={isLoading}>
+                    <div class="loading-row">
+                        <lightning-spinner size="x-small" alternative-text="Loading"></lightning-spinner>
+                        <span>Fetching from AI…</span>
+                    </div>
+                </template>
+                <template if:false={isLoading}>
+                    <ul class="banner-list">
+                        <template for:each={bulletPoints} for:item="p">
+                            <li key={p}>{p}</li>
+                        </template>
+                    </ul>
+                    <div class="banner-footer">
+                        <div class="action-row">
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                title="Like" alternative-text="Like" onclick={submitLike}
+                                selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+                            <lightning-button-icon-stateful icon-name="utility:dislike" selected-icon-name="utility:dislike"
+                                title="Dislike" alternative-text="Dislike" onclick={submitDislike}
+                                selected={summaryIsDisliked} variant={dislikeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+                            <lightning-button-icon-stateful icon-name={copyIcon} selected-icon-name="utility:copy"
+                                title="Copy" alternative-text="Copy" onclick={handleCopy}>
+                            </lightning-button-icon-stateful>
+                            <template if:false={summaryReviewed}>
+                                <a href="javascript:void(0);" onclick={toggleFeedback} class="feedback-link">Give Feedback</a>
+                            </template>
+                            <template if:true={summaryReviewed}>
+                                <span class="thanks">✓ Thanks!</span>
+                            </template>
+                        </div>
+                        <span class="powered-ai">Powered by AI ✨</span>
+                    </div>
+                    <template if:true={showFeedback}>
+                        <div class="feedback-row">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…"
+                                value={feedback} oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="fb-actions">
+                                <lightning-button variant="brand" label="Send" onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button variant="neutral" label="Cancel" onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

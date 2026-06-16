@@ -1,0 +1,60 @@
+<template>
+    <div lwc:dom="manual"></div>
+    <div class="slds-modal-component">
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-modal="true"
+            class={modalCls}>
+            <div class="slds-modal__container">
+                <div class="slds-modal__header slds-grid slds-wrap">
+                    <div class="slds-size_1-of-12 slds-text-align_left">
+                        <lightning-icon icon-name="standard:file"
+                                        aria-hidden="true"
+                                        alternative-text="icon">
+                        </lightning-icon>
+                    </div>
+                    <div class="slds-size_10-of-12 slds-align_absolute-center">
+                        <h2 class="slds-text-heading--medium">{sectionName}</h2>
+                    </div>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <div if:true={hasFilesToShow} class="flex-container">
+                        <template for:each={filesToShow} for:item="file">
+                            <c-kyc-section-detail key={file.uid} file={file} is-form-locked={isFormLocked}></c-kyc-section-detail>
+                        </template>
+                    </div>
+                    <div if:false={hasFilesToShow} class="flex-container">
+                        <p class="slds-align_absolute-center slds-text-heading_small slds-text-color_weak italic">
+                            All section attachments were deleted.<br>
+                            Press Cancel in the KYC Details to rollback changes.
+                        </p>
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <div class="slds-grid slds-wrap">
+                        <div if:false={isFormLocked} class="slds-text-align_left slds-size_1-of-2">
+                            <lightning-input
+                                type="file"
+                                accept={acceptedFileFormats}
+                                id="0"
+                                data-id="0"
+                                class="file-upload-label-hide"
+                                onchange={handleFileSelection}
+                                multiple>
+                            </lightning-input>
+                        </div>
+                        <div class="slds-text-align_right slds-size_1-of-2">
+                            <lightning-button
+                                label="OK"
+                                class="slds-m-left_small"
+                                onclick={onSubmit}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        </section>
+        <div class={backdropCls}></div>
+    </div>
+</template>

@@ -1,0 +1,149 @@
+<template>
+    <div class="sc-case-list__header">
+        <div class="sc-case-list__show">
+            {labels.show}
+            <lightning-combobox
+                name="limit"
+                label=""
+                value={limit}
+                options={limitOptions}
+                onchange={handleChangeLimit}
+                class="sc-case-list__show-combo"
+                if:false={loading}
+            ></lightning-combobox>
+            <c-placeholder-loading
+                width="80px"
+                height="32px"
+                if:true={loading}
+                class="sc-case-list__show-preloader"
+            ></c-placeholder-loading>
+            <c-placeholder-loading
+                width="121px"
+                height="32px"
+                if:true={loading}
+                class="sc-case-list__show-preloader"
+            ></c-placeholder-loading>
+            <lightning-button
+                label={labels.exportCSV}
+                title={labels.exportCSV}
+                icon-name="utility:download"
+                class="slds-m-left_x-small"
+                onclick={handleExportCSV}
+                if:false={loading}
+            ></lightning-button>
+            <lightning-button
+                label={labels.clearSearchResults}
+                title={labels.clearSearchResults}
+                class="slds-m-left_x-small"
+                variant="base"
+                onclick={handleClearSearch}
+                if:true={isSearch}
+            ></lightning-button>
+        </div>
+        <c-lwc-pagination
+            page={currentPage}
+            size={pagesLen}
+            onchangepage={handleChangePage}
+            disabled={loading}
+        ></c-lwc-pagination>
+    </div>
+    <div class="sc-case__block">
+        <div class="sc-case-list__table">
+            <table class="slds-table slds-table_bordered slds-table_fixed-layout" role="grid">
+                <thead>
+                    <tr class="slds-line-height_reset">
+                        <template for:each={cols} for:item="col" for:index="inx">
+                            <th
+                                key={col.title}
+                                aria-label={col.title}
+                                aria-sort={col.ariaSort}
+                                class={col.colCls}
+                                data-inx={inx}
+                                onclick={handleChangeSort}
+                                scope="col"
+                            >
+                                <a
+                                    class="slds-th__action slds-text-link_reset"
+                                    href="javascript:void(0);"
+                                    role="button"
+                                    tabindex="0"
+                                >
+                                    <span class="slds-assistive-text">Sort by: </span>
+                                    <div class="slds-grid slds-grid_vertical-align-center slds-has-flexi-truncate">
+                                        <span class="slds-truncate" title={col.title}>{col.title}</span>
+                                        <span class="slds-icon_container slds-icon-utility-arrowdown">
+                                            <lightning-icon
+                                                class="slds-is-sortable__icon"
+                                                icon-name="utility:arrowdown"
+                                                size="xx-small"
+                                            ></lightning-icon>
+                                        </span>
+                                    </div>
+                                </a>
+                                <span
+                                    if:true={col.sort}
+                                    class="slds-assistive-text"
+                                    aria-live="assertive"
+                                    aria-atomic="true"
+                                    >{col.sortedText}</span
+                                >
+                            </th>
+                        </template>
+                    </tr>
+                </thead>
+                <tbody data-empty={emptyText}>
+                    <template for:each={rows} for:item="item">
+                        <tr key={item.id} aria-selected="false" class="slds-hint-parent">
+                            <th scope="row">
+                                <div class="slds-truncate" title={item.caseNumber}>
+                                    <a href={item.link} target="_blank" tabindex="0">{item.caseNumber}</a>
+                                </div>
+                            </th>
+                            <td role="gridcell">
+                                <div class="slds-truncate" title={item.subject}>{item.subject}</div>
+                            </td>
+                            <td role="gridcell">
+                                <div class="slds-truncate" title={item.createdDate}>{item.createdDate}</div>
+                            </td>
+                            <td role="gridcell">
+                                <div class="slds-truncate" title={item.contactName}>{item.contactName}</div>
+                            </td>
+                            <td role="gridcell">
+                                <div class="slds-truncate" title={item.status}>{item.status}</div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <div if:true={loading}>
+                <div class="slds-spinner_container">
+                    <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="sc-case-list__footer">
+        <div class="sc-case-list__total" if:false={loading}>
+            <span>{from}</span>
+            {labels.to}
+            <span>{to}</span>
+            {labels.of}
+            <span>{count}</span>
+        </div>
+        <c-placeholder-loading
+            width="76px"
+            height="19px"
+            if:true={loading}
+            class="sc-case-list__total-preloader"
+        ></c-placeholder-loading>
+        <c-lwc-pagination
+            page={currentPage}
+            size={pagesLen}
+            onchangepage={handleChangePage}
+            disabled={loading}
+        ></c-lwc-pagination>
+    </div>
+</template>

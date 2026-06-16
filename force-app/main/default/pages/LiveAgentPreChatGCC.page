@@ -1,0 +1,386 @@
+<apex:page showHeader="false" controller="LiveAgentPreChatControllerGCC" applyHtmlTag="false" applyBodyTag="false">
+    <html>
+
+    <head>
+        <title>Support Pre-Chat Form</title>
+        <style type="text/css"> 
+        * {
+            box-sizing: border-box;
+        }
+        
+        body,
+        html {
+            height: 100%;
+            font-size: 13px;
+            overflow: hidden;
+        }
+        
+        ::-webkit-input-placeholder {
+            color: #a9a9a9;
+        }
+        
+        ::-moz-placeholder {
+            color: #a9a9a9;
+        }
+        
+        :-ms-input-placeholder {
+            color: #a9a9a9;
+        }
+        
+        :-moz-placeholder {
+            color: #a9a9a9;
+        }
+        
+        .pre-chat a {
+            color: #0073ae;
+            background-color: transparent;
+        }
+        
+        .pre-chat a:link {
+            text-decoration: none;
+        }
+        
+        .pre-chat a:active,
+        .pre-chat a:hover {
+            text-decoration: underline;
+        }
+        
+        .pre-chat {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .pre-chat__container {
+            max-width: 290px;
+            min-width: 181px;
+            padding: 15px 20px;
+            border: 2px solid #f80;
+            border-radius: 3px;
+        }
+        
+        .pre-chat__welcome-text {
+            margin-bottom: 13px;
+        }
+        
+        .pre-chat__input-container {
+            margin: 8px 0;
+        }
+        
+        .pre-chat__input {
+            display: block;
+            border: 2px solid #f80;
+            font-size: 17px;
+            padding: 3px 4px;
+            width: 100%;
+            border-radius: 3px;
+        }
+        
+        .pre-chat__input-container:first-child {
+            margin-top: 0;
+        }
+        
+        .pre-chat__input--select {
+            border: 2px solid #f80;
+            padding-left: 0;
+            padding-right: 0;
+            color: #a9a9a9;
+        }
+        
+        .pre-chat__button-container {
+            margin-top: 13px;
+        }
+        
+        .pre-chat__button {
+            background-color: #f80;
+            color: #FFF;
+            line-height: 34px;
+            padding-top: 2px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 300;
+            border-radius: 3px;
+            cursor: pointer;
+            width: 100%;
+            border: 0;
+        }
+        
+        .pre-chat__button:hover {
+            background: #ff9d2a;
+        }
+
+        .pre-chat__button:active{
+            background: #eb6321;
+        }
+        
+        .pre-chat__footer {
+            margin-top: 13px;
+        }
+        
+        .pre-chat__contact-text {
+            margin: 0;
+            text-align: center;
+        }
+
+        .pre-chat__field-error{
+            color: red;
+            font-style: italic;
+        }
+        </style>
+    </head>
+
+    <body onload="changeScreenSize()" class="pre-chat">
+        <!-- This script takes the endpoint URL parameter passed from the deployment page and makes it the action for the form -->
+        <script type='text/javascript'>
+        (function() {
+            function handlePageLoad() {
+                try {
+                    var endpointMatcher = new RegExp("[\\?\\&]endpoint=([^&#]*)");
+                    var domainMatcher = new RegExp("(https?:\\/\\/(.+?\\.)?(salesforce|salesforceliveagent)\\.com(\\/[A-Za-z0-9\\-\\._~:\\/\\?#\[\\]@!$&'\\(\\)\*\\+,;\\=]*)?)");
+                    var endpointValue = endpointMatcher.exec(document.location.search)[1] || '';
+                    var escapedEndpoint = decodeURIComponent(endpointValue.replace(/javascript/gi, ''));
+                    
+                    if (domainMatcher.test(escapedEndpoint) === true) {
+                        document.getElementById('prechatForm').setAttribute('action', escapedEndpoint);
+                    }
+                } catch (e) { console.log(e); }
+            }
+
+            if (window.addEventListener) {
+                window.addEventListener('load', handlePageLoad, false);
+            } else {
+                window.attachEvent('onload', handlePageLoad, false);
+            }
+        })();
+
+        function validateForm(){
+            var formValid = true;
+            var fields = [];
+            // First Name
+            fields.push({
+                errorsId: "firstNameError",
+                rules: [{
+                    pass: document.getElementById("firstName").value.trim(),
+                    message: 'Please provide your first name',
+                }]
+            });
+            // Last Name
+            fields.push({
+                errorsId: "lastNameError",
+                rules: [{
+                    pass: document.getElementById("lastName").value.trim(),
+                    message: 'Please provide your last name',
+                }]
+            });
+            // Email
+            var email = document.getElementById("email").value.trim();
+            fields.push({
+                errorsId: "emailError",
+                rules: [
+                {
+                    pass: validateEmail(email),
+                    message: 'Email is invalid',
+                },
+                {
+                    pass: email,
+                    message: 'Please provide your email',
+                }]
+            });
+            // Phone
+            fields.push({
+                errorsId: "phoneError",
+                rules: [{
+                    pass: document.getElementById("phone").value.trim(),
+                    message: 'Please provide your phone',
+                }]
+            });
+            // Account Number
+            fields.push({
+                errorsId: "accountnumError",
+                rules: [{
+                    pass: document.getElementById("accountnum").value.trim(),
+                    message: 'Please provide account number',
+                }]
+            });
+
+            fields.forEach(function(field){
+                var valid = true;
+                var message = '';
+                var errorContainer = document.getElementById(field.errorsId);
+                field.rules.forEach(function(rule){
+                    if (!rule.pass) {
+                        valid = false;
+                        message = rule.message;
+                    }
+                });
+                if (valid) {
+                    errorContainer.style.display="none";
+                } else {
+                    formValid = false;
+                    errorContainer.innerHTML = message;
+                    errorContainer.style.display="block";
+                }
+            });
+            changeScreenSize();
+            return formValid;
+        }
+
+        function validateEmail(email){
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+
+        var prechatSubmit = function(event) {
+            event.preventDefault();
+
+            var validated = validateForm();
+            if (validated) {
+
+                // Set the visitor's name for the agent in the Console to first and last name provided by the customer
+                document.getElementById("prechat_field_name").value = document.getElementById("firstName").value + " " + document.getElementById("lastName").value;
+
+                // get account
+                var accountNumber = document.getElementById('accountnum').value.trim();
+                var email = document.getElementById('email').value.trim();
+                var params = {
+                    accountNumber: accountNumber,
+                    email: email
+                };
+                try {
+                    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.LiveAgentPreChatControllerGCC.getAccount}', params, function(result, event) {
+                        if (event.status) {
+                            var chatId = document.getElementById('inbound').value;
+                            if (result) {
+                                var totalAccountDls = parseInt(result.Total_Account_DL_s__c);
+                                // choose chat according to account information
+                                if (result.RC_Service_name__c === "RingCentral FAX UK" || result.RC_Service_name__c === "RingCentral Office UK" || result.RC_Service_name__c === "RingCentral Professional UK") {
+                                    chatId = document.getElementById('inbound-uk').value; // Support - Inbound Chat UK
+                                } else if(totalAccountDls >= 20 && totalAccountDls <= 29) {
+                                    chatId = document.getElementById('inbound-us-20').value; // 20-29 - Support - Inbound 20
+                                } else if(totalAccountDls >= 30){
+                                    chatId = document.getElementById('inbound-us-30').value; // 30+ - Support - Inbound Chat US
+                                } else {
+                                    chatId = document.getElementById('inbound').value; // 0-19 - Support - Inbound Chat
+                                }
+                            }
+                            var lineSelect = document.getElementById('chat-buttons');
+                            lineSelect.value = chatId;
+                            document.forms["prechatForm"].submit();
+                            return true;
+                        }
+                    }, {
+                        escape: false
+                    });
+                } catch (ex) {
+                    console.error(ex);
+                    var chatId = document.getElementById('inbound').value;
+                    var lineSelect = document.getElementById('chat-buttons');
+                    lineSelect.value = chatId;
+                    document.forms["prechatForm"].submit();
+                    return true
+                }
+
+            }
+            return false;
+        }
+        </script>
+        <div class="pre-chat__container" id="container">
+            <div class="pre-chat__header">
+                <img class="pre-chat__logo" src="{!UrlFor($Resource.RCLogoOnSite)}"/>
+                <p class="pre-chat__welcome-text">Tell us about yourself and chat with a Technical Support Specialist.</p>
+            </div>
+            <div class="pre-chat__form-container">
+                <!-- Form that gathers information from the chat visitor and sets the values to Live Agent Custom Details used later in the example -->
+                <form method='POST' class="pre-chat__form" id='prechatForm'>
+                    <div class="pre-chat__input-container">
+                        <input type='text' name='liveagent.prechat:ContactFirstName' id='firstName' required="true" placeholder='*First Name' class="pre-chat__input"/>
+                        <span class="pre-chat__field-error" id="firstNameError"></span>
+                    </div>
+                    <div class="pre-chat__input-container">
+                        <input type='text' name='liveagent.prechat:ContactLastName' id='lastName' required="true" placeholder='*Last Name' class="pre-chat__input"/>
+                        <span class="pre-chat__field-error" id="lastNameError"></span>
+                    </div>
+                    <div class="pre-chat__input-container">
+                        <input type='text' name='liveagent.prechat:ContactEmail' id='email' required="true" placeholder='*Email Address' class="pre-chat__input"/>
+                        <span class="pre-chat__field-error" id="emailError"></span>
+                    </div>
+                    <div class="pre-chat__input-container">
+                        <input type='text' name='liveagent.prechat:AccountNumber' id='accountnum' required="true" placeholder='*RingCentral Account Number' class="pre-chat__input" />
+                        <span class="pre-chat__field-error" id="accountnumError"></span>
+                    </div>
+                    <div class="pre-chat__input-container">
+                        <input type='text' name='liveagent.prechat:ContactPhone' id='phone' required="true" placeholder='*Callback Number' class="pre-chat__input"/>
+                        <span class="pre-chat__field-error" id="phoneError"></span>
+                    </div>
+                    <div class="pre-chat__button-container">
+                        <input type='submit' value='Chat Now' id='prechat_submit' class="pre-chat__button" />
+                    </div>
+                    <!-- Hidden fields used to set additional custom details -->
+                    <!-- Used to set the visitor's name for the agent in the Console -->
+                    <input type="hidden" name="liveagent.prechat.name" id="prechat_field_name" />
+                    <!-- map: Use the data from prechat form to map it to the Salesforce record's fields -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="FirstName,ContactFirstName;LastName,ContactLastName;Email,ContactEmail;Phone,ContactPhone" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="Subject,CaseSubject;Status,CaseStatus;Origin,CaseOrigin;RecordTypeId,CaseRecordType" />
+                    <!-- doFind, doCreate and isExactMatch example for a Contact:
+                Find a contact whose Email exactly matches the value provided by the customer in the form
+                If there's no match, then create a Contact record and set it's First Name, Last Name, Email, and Phone to the values provided by the customer -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doFind:Contact" value="Email,true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.isExactMatch:Contact" value="Email,true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Contact" value="FirstName,true;LastName,true;Email,true;Phone,true" />
+                    <!-- doCreate example for a Case: create a case to attach to the chat, set the Case Subject to the value provided by the customer and set the case's Status and Origin fields -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Case" value="Subject,true;Status,true;Origin,true;RecordTypeId,true" />
+                    <!-- linkToEntity: Set the record Contact record, found/created above, as the Contact on the Case that's created -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.linkToEntity:Contact" value="Case,ContactId" />
+                    <!-- showOnCreate: Open the Contact and Case records as sub-tabs to the chat for the agent in the Console -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="true" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Case" value="true" />
+                    <!-- saveToTranscript: Associates the records found / created, i.e. Contact and Case, to the Live Chat Transcript record. -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Contact" value="ContactId" />
+                    <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Case" value="CaseId" />
+                    <!-- displayToAgent: Hides the case record type from the agent -->
+                    <input type="hidden" name="liveagent.prechat.findorcreate.displayToAgent:CaseRecordType" value="false" />
+                    <!-- searchKnowledge: Searches knowledge article based on the text, this assumes that Knowledge is setup -->
+                    <!-- <input type="hidden" name="liveagent.prechat.knowledgeSearch:CaseSubject" value="true" />  -->
+                    <!-- Number digital Lines -->
+                    <select name="liveagent.prechat.buttons" style="display:none;" id="chat-buttons">
+                        <option id="inbound" value="{!buttons['Support_Inbound_Chat']}" selected="true">Support - Inbound Chat</option> <!-- 0-19 -->
+                        <option id="inbound-us-20" value="{!buttons['Support_Inbound_20']},{!buttons['Support_Inbound_Chat']}">Support - Inbound 20</option> <!-- 20-29 -->
+                        <option id="inbound-us-30" value="{!buttons['Support_Inbound_Chat_US']},{!buttons['Support_Inbound_Chat']}">Support - Inbound Chat US</option> <!-- 30+ -->
+                        <option id="inbound-uk" value="{!buttons['Support_Inbound_Chat_UK']},{!buttons['Support_Inbound_Chat']}">Support - Inbound Chat UK</option>
+                    </select>
+                    <input type="hidden" name="liveagent.prechat.save:ContactFirstName" value="PreChat_Firstname__c" />
+                    <input type="hidden" name="liveagent.prechat.save:ContactLastName" value="PreChat_Lastname__c" />
+                    <input type="hidden" name="liveagent.prechat.save:ContactEmail" value="PreChat_Email__c" />
+                    <input type="hidden" name="liveagent.prechat.save:ContactPhone" value="PreChat_Phone__c" />
+                    <input type="hidden" name="liveagent.prechat.save:AccountNumber" value="PreChat_Account_Number__c" />
+                </form>
+            </div>
+            <div class="pre-chat__footer"></div>
+        </div>
+        <script>
+        // change window size
+        function changeScreenSize() {
+            var container = document.getElementById('container');
+            var contentWidth = container.offsetWidth;
+            var contentHeight = container.offsetHeight;
+            var bodyHeight = document.body.clientHeight;
+            var bodyWidth = document.body.clientWidth;
+            var browserHeight = window.outerHeight;
+            var browserWidth = window.outerWidth;
+            var browserNavHeight = browserHeight - bodyHeight;
+            var browserNavWidth = browserWidth - bodyWidth;
+            var height = contentHeight + browserNavHeight;
+            var width = contentWidth + browserNavWidth;
+            window.resizeTo(width, height);
+        }
+
+        var prechatForm = document.getElementById('prechatForm');
+        if (prechatForm.attachEvent) {
+            prechatForm.attachEvent("submit", prechatSubmit);
+        } else {
+            prechatForm.addEventListener("submit", prechatSubmit);
+        }
+        </script>
+    </body>
+
+    </html>
+</apex:page>

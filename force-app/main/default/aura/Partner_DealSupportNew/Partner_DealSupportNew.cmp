@@ -1,0 +1,62 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 06-01-2020
+* Description    : Component for New Deal Support addition- Partner_DealSupportNew
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global"  controller="Partner_DealSupport">
+    <aura:attribute name="dsname" type="string"/>
+    <aura:attribute name="comment" type="string"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="ShowListView" type="boolean" default="false" />
+    <aura:attribute name="newDealRecordID" type="String"/>
+    <aura:attribute name="SavedRecord" type="boolean" default="false" />
+    <aura:attribute name="ShowNewRecord" type="boolean" default="true" />
+    <aura:registerEvent name="cancelEvent" type="c:Partner_OpportunitiesGoBackEvent"/>
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    
+    <aura:attribute name="translationsMap" type="Map"/>
+    
+    <aura:if isTrue="{!v.ShowNewRecord}"> 
+        <lightning:card title="{!v.translationsMap.New_Deal_Support}" iconName="standard:case">  
+            <div class="slds-grid slds-wrap">
+                <div class="slds-is-relative">
+                    <div class="spinnerHolder">
+                        <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                    </div>
+                </div> 
+                
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium" style="color:gray;">
+                    <abbr class="slds-required slds-float_right">* </abbr>
+                    <span class="slds-float_right">{!v.translationsMap.Comments}:</span>
+                    
+                </div>                        
+                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                    <span><lightning:textarea aura:id="comments" required="true" value="{!v.comment}" variant="label-hidden"/></span>
+                </div> 
+                <div class="slds-col slds-size_2-of-6"></div>
+                <div class="slds-col slds-size_1-of-6"></div>
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                    <lightning:button variant="brand" label="{!v.translationsMap.Submit}" iconName="action:check" iconPosition="left" name="Submit" type="button"  onclick="{!c.createDealSupport}"/>
+                    <lightning:button variant="brand" type="cancel" iconName="action:close" iconPosition="left" name="Cancel" label="{!v.translationsMap.Cancel}" onclick="{!c.cancelDealSupport}"/>            
+                </div>
+            </div>
+        </lightning:card>
+    </aura:if>
+    <aura:if isTrue="{!v.SavedRecord}">
+        <c:Partner_DealSupportDetail recordID = "{!v.newDealRecordID}"/>
+    </aura:if>
+    
+</aura:component>

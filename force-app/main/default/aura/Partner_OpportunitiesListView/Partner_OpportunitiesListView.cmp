@@ -1,0 +1,433 @@
+<!--
+* Created By     : Ishwarya
+* Created Date   : 03-12-2019
+* Description    : Component for Opportunities - Partner_OpportunitiesMain
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description 									Tag
+*******************************************************************************************************************************************
+Ishwarya/Namitha		10-12-2019		UI modification of record detail page
+*******************************************************************************************************************************************
+*/-->
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,lightning:hasPageReference,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+                access="global" extensible="true" controller="Partner_OpportunitiesMain">
+    
+    <aura:attribute name="oppList" type="Opportunity[]"/>
+    <aura:attribute name="partnerAccounts" type="List"/>
+    <aura:attribute name="selectedValue" type="string" access="public"/>
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="Message" type="boolean" default="false" />
+    
+    <!--attributes for pagination-->
+    <aura:attribute name="pageNumber" type="integer" default="1"/>
+    <aura:attribute name="totalPages" type="integer" default="0"/>
+    <aura:attribute name="totalRecords" type="integer" default="0"/>
+    <aura:attribute name="recordStart" type="integer" default="0"/>
+    <aura:attribute name="recordEnd" type="integer" default="0"/>
+    <!--attributes for pagination><-->
+    
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="RespectiveTabURL" type="string"/>
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="ShowListView" type="boolean" default="true"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    <aura:attribute name="ShowComponentButtons" type="boolean" default="false" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" /> 
+    <aura:attribute name="showQuotes" type="Boolean" default="false" />
+    <aura:attribute name="oppType" type="String"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="OpportunityRecord" type="Opportunity"/>
+    
+    <aura:attribute name="showSpinner" type="Boolean" default="false" />
+    <aura:attribute name="saved" type="Boolean" default="false" />
+    
+    <aura:attribute name="partnerAccountName" type="String"/>
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    
+    <aura:handler name="populatePartnerEvent" event="c:Partner_SearchContactEvent" action="{!c.handlePartnerComponentEvent}"/>
+    
+    <aura:handler name="goBackEvent" event="c:Partner_OpportunitiesGoBackEvent" action="{!c.handleGoBackComponentEvent}"/>
+    
+    <aura:attribute name="ShowConAcc" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false"/> 
+    <aura:attribute name="viewAll" type = "boolean" default="false"/>
+    
+    <aura:attribute name="partnerCommunity" type="List"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    
+    <aura:attribute name="searchBy" type="String" default="Name" />
+    <aura:attribute name="searchKeyword" type="String" />
+    <!--<aura:attribute name="searchByCountry" type="String" default="" />-->
+        
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <aura:attribute name="oppFieldsMap" type="Map" />
+    <aura:attribute name="accFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+    
+    <aura:if isTrue="{!v.ShowSpinnerOpp}">
+        <div class="slds-is-relative">
+            <div class="spinnerHolder">
+                <lightning:spinner alternativeText="{!v.translationsMap.Loading +'...'}" aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+            </div>
+        </div>
+    </aura:if>
+    <!-- Display list view for Opportunities -->
+    <aura:if isTrue="{!v.ShowListView}">
+        <div>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-1">
+                    <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                        title="Opportunities"><lightning:icon iconName="standard:opportunity"/><b>&nbsp;{!v.translationsMap.Opportunities}</b></h1>
+                </div> 
+                <aura:if isTrue="{!v.ShowConAcc}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_2-of-5 slds-p-top_small slds-p-left_small">                        
+                        <div class="slds-grid slds-grid_align-left">
+                            <div class="slds-col slds-grow-none durationtoggle"> 
+                                <div class="slds-grid togglewrap">
+                                    <label for="filterType" class="slds-form-element__label
+                                                                   slds-grid_align-center">{!v.translationsMap.Filter_By+':'}</label>
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                        &nbsp; {!v.oppFieldsMap.Partner_Account__c}
+                                    </span>
+                                    <lightning:input aura:id="filterType" type="toggle"
+                                                     name="filterAccounts" checked="{!v.viewAll}"
+                                                     
+                                                     onchange="{!c.toggleFilterBy}"/>
+                                    <span style="font-weight: 600;padding-top:1%;">
+                                        &nbsp; {!v.translationsMap.All_Accounts}
+                                    </span>
+                                </div>
+                            </div>                                                            
+                        </div>                       
+                    </div>           
+                    <div class="slds-col slds-has-flexi-truncate slds-size_3-of-5 slds-p-top_small slds-p-left_small">
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!!v.viewAll}">
+                    <aura:if isTrue="{!v.ShowConAcc}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                            <!--<lightning:select name="partnerAccounts" label="Select Partner Account:" aura:id="partnerAccounts" value="{!v.selectedValue}" onchange="{!c.onChangeVal}" >                  
+                        <aura:iteration items="{!v.partnerAccounts}" var="item">
+                            <option value="{!item.Id}">{!item.Name}</option>
+                        </aura:iteration>
+                    </lightning:select>-->
+                            
+                            <label for="partnerAccountIdDiv" class="slds-form-element__label">{!v.translationsMap.View_Records_by_Partner}</label>
+                            <lightning:buttonIcon iconName="utility:search" variant="bare" onclick="{!c.createAccountLookup}" alternativeText="Please choose a Partner Account" />
+                            <div id="partnerAccountIdDiv" class="slds-p-top_x-small slds-truncate slds-box slds-box_xx-small boxheight">
+                                {!v.partnerAccountName}
+                                
+                            </div>
+                            
+                        </div>
+                    </aura:if>
+                </aura:if>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                    <lightning:input label="{!v.translationsMap.Keyword}" value="{!v.searchKeyword}" placeholder="{!v.translationsMap.search_placeholder + '...'}"
+                                     aura:id="searchField" />
+                </div>
+                <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium">
+                    <lightning:select name="searchBy" value="{!v.searchBy}" label="{!v.translationsMap.Search_by}">
+                        <option value="Name">{!v.oppFieldsMap.Name}</option>
+                        <option value="StageName">{!v.oppFieldsMap.StageName}</option>
+                        <option value="Forecasted_Users__c">{!v.translationsMap.Forecasted_Users}</option>
+                        <option value="Owner.Name">{!v.PRMSpecificTranslationsMap.Account_Executive}</option>
+                         <!--<aura:if isTrue="{!!v.ShowOnlyRC}"><option value="Avaya_Cloud_Specialist__c">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</option></aura:if>-->
+                        <!-- Added Rainbow Office condition for ALE --> 
+                        <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}"><option value="Portal_Cloud_Specialist__r.Name">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</option></aura:if>
+                        <option value="Account.BillingCountry">{!v.translationsMap.Country}</option>
+                        <option value="Account.BillingState">{!v.translationsMap.State}</option>
+                        <aura:if isTrue="{!v.isSingleLogin}">
+                                <option value="Partner_Account__r.Partner_ID__c">{!v.accFieldsMap.Partner_ID__c}</option>
+                                <option value="Partner_Account__r.name">{!v.oppFieldsMap.Partner_Account__c}</option>
+                         </aura:if>
+                        <!-- <option value="Email">Email</option>
+                        <option value="Phone">Phone</option> -->
+                    </lightning:select>
+                </div>
+                <!--<div class="slds-col slds-has-flexi-truncate slds-size_1-of-6 slds-p-around_medium">
+                    <lightning:select name="searchByCountry" value="{!v.searchByCountry}" label="Country:">
+                        <option value="">Select</option>    
+                        <option value="USD">United States</option>
+                        <option value="AUD">Australia</option>
+                        <option value="CAD">Canada</option>
+                        <option value="GBP">United Kingdom</option>
+                    </lightning:select>
+                </div>-->
+                <div
+                     class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium searchBtnWrap">
+                    <lightning:button onclick="{!c.doFilterSearch}" variant="brand" label="{!v.translationsMap.Search}"
+                                      iconName="utility:search" />
+                </div>
+                <aura:if isTrue="{!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium"/>
+                </aura:if>
+                
+                <aura:if isTrue="{!!v.viewAll}">
+                    <aura:if isTrue="{!!v.ShowConAcc}">
+                        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-around_medium"/>
+                    </aura:if>
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-vertical_medium slds-float_right">
+                        <lightning:select aura:id="pageSize" label="{!v.translationsMap.Display_Opportunities_Per_Page}" onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true"/>
+                            <option text="100" value="100"/>
+                            <option text="150" value="150"/>
+                            <option text="200" value="200"/>
+                        </lightning:select>            
+                    </div> 
+                </aura:if>
+                
+                <aura:if isTrue="{!v.viewAll}">
+                    <div class="slds-col slds-has-flexi-truncate slds-size_1-of-5 slds-p-vertical_medium slds-float_right">
+                        <lightning:select aura:id="pageSizeForAll" label="{!v.translationsMap.Display_Opportunities_Per_Page}" onchange="{!c.onSelectChange}">
+                            <option text="50" value="50" selected="true"/>
+                            <option text="100" value="100"/>
+                            <option text="150" value="150"/>
+                            <option text="200" value="200"/>
+                        </lightning:select>            
+                    </div>  
+                </aura:if>
+            </div>
+        </div>
+        
+        <aura:if isTrue="{!v.Message}">
+            <div class="errorMessageDiv">
+                <div class="slds-is-relative errorMessageDiv">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                        </div>
+                    </div>
+                </div>  
+            </div>
+        </aura:if>
+        
+        <aura:if isTrue="{!!v.Message}">
+            <div class="slds-m-around_xx-small">        
+                <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width:14rem;">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Opportunity_Name}">{!v.translationsMap.Opportunity_Name}</div></strong>
+                            </th>
+                            <!--<th scope="col">
+                                <strong><div class="slds-truncate" title="Account">Account Name</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="Tier">Tier Name</div></strong>
+                            </th>-->
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.oppFieldsMap.StageName}">{!v.oppFieldsMap.StageName}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.oppFieldsMap.CloseDate}">{!v.oppFieldsMap.CloseDate}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.oppFieldsMap.Forecasted_Users__c}">{!v.oppFieldsMap.Forecasted_Users__c}</div></strong>
+                            </th>
+                            <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.oppFieldsMap.Partner_Account__c}">{!v.oppFieldsMap.Partner_Account__c}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.oppFieldsMap.Partner_ID__c}">{!v.oppFieldsMap.Partner_ID__c}</div></strong>
+                                </th>
+                                <!-- <th scope="col">
+                                    <strong><div class="slds-truncate" title="Partner Channel Manager">Partner Channel Manager</div></strong>
+                                </th> -->
+                                <aura:if isTrue="{!v.ShowConAcc}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.oppFieldsMap.Partner_Contact__c}">{!v.oppFieldsMap.Partner_Contact__c}</div></strong>
+                                </th>
+                                </aura:if>
+                            </aura:if>
+                            <th scope="col">
+                                <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE== v.partnerCommunity}">
+                                <strong><div class="slds-truncate" title="RC-ACO-Account Executive">RC-ACO-Account Executive</div></strong>
+                                </aura:if>
+                                <aura:if isTrue="{!v.partnerCommunity=='ATOS'}">-->
+                                    <strong><div class="slds-truncate" title="{!v.PRMSpecificTranslationsMap.Account_Executive}"> 
+                                        {!v.PRMSpecificTranslationsMap.Account_Executive}</div></strong>
+                                <!--</aura:if>-->                                
+                            </th>
+                            <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="Ignite AE">Ignite AE</div></strong>
+                                </th>
+                            </aura:if>
+                            <!-- Added Rainbow Office condition for ALE -->
+                            <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}">{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</div></strong>
+                                </th>
+                            </aura:if>
+                            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Country}">{!v.translationsMap.Country}</div></strong>
+                                </th>
+                            </aura:if>
+                             <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.State}">{!v.translationsMap.State}</div></strong>
+                            </th>
+                            <th scope="col">
+                                <strong><div class="slds-truncate" title="{!v.translationsMap.Created_Date_Time}">{!v.translationsMap.Created_Date_Time}</div></strong>
+                            </th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <aura:iteration items="{!v.oppList}" var="opp"> 
+                            <tr>
+                                <th scope="row" data-label="Name" style="width:14rem;">
+                                    <div class="slds-truncate" title="{!opp.Name}"
+                                         data-value="{!opp.Id}"
+                                         data-record="{!opp.Type}"
+                                         data-account="{!opp.AccountId}">
+                                        <!--<a href="{!'/partner/s/partneropportunities?id='+opp.Id}">
+                                            {!opp.Name} {!opp.type}
+                                        </a>   -->
+                                        <a href="{!v.RespectiveTabURL +'?id=' +opp.Id}">
+                                            {!opp.Name} {!opp.type}
+                                        </a>
+                                    </div>
+                                </th>
+                                <!--<th scope="row" data-label="Account">
+                                    <div class="slds-truncate" title="{!opp.Account.Name}">
+                                        {!opp.Account.Name}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Tier">
+                                    <div class="slds-truncate" title="{!opp.Tier_Name__c}">
+                                        {!opp.Tier_Name__c}
+                                    </div>                            
+                                </th>-->
+                                <th scope="row" data-label="Stage">
+                                    <div class="slds-truncate" title="{!opp.StageName}">
+                                        {!opp.StageName}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Close Date">
+                                    <div class="slds-truncate" title="{!opp.CloseDate}">
+                                        <lightning:formattedDateTime value="{!opp.CloseDate}"
+                                                                     month="numeric"
+                                                                     day="numeric"
+                                                                     year="numeric"
+                                                                     />
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Partner Account">
+                                            <div class="slds-truncate" title="{!opp.Forecasted_Users__c}">
+                                                {!opp.Forecasted_Users__c}
+                                            </div>
+                                        </th>
+                                <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                                    <th scope="row" data-label="Partner Account">
+                                        <div class="slds-truncate" title="{!opp.Partner_Account__r.Name}">
+                                            {!opp.Partner_Account__r.Name}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="PartnerId">
+                                        <div class="slds-truncate" title="{!opp.Partner_Account__r.Partner_ID__c}">
+                                            {!opp.Partner_Account__r.Partner_ID__c}
+                                        </div>
+                                    </th>
+                                    <!-- <th scope="row" data-label="Partner Channel Manager">
+                                        <div class="slds-truncate" title="{!opp.Partner_Account__r.Partner_Channel_Manager__c}">
+                                            {!opp.Partner_Account__r.Partner_Channel_Manager__c}
+                                        </div>
+                                    </th> -->
+                                    <aura:if isTrue="{!v.ShowConAcc}">
+                                    <th scope="row" data-label="Partner Contact">
+                                        <div class="slds-truncate" title="{!opp.PartnerContact}">
+                                            {!opp.PartnerContact}
+                                        </div>
+                                    </th>
+                                    </aura:if>
+                                </aura:if>
+                                
+                                <th scope="row" data-label="Deal Owner">
+                                    <div class="slds-truncate" title="{!opp.Owner.Name}">
+                                        {!opp.Owner.Name}
+                                    </div>
+                                </th>
+                                <aura:if isTrue="{!v.ShowOnlyRC}">
+                                    <th scope="row" data-label="Ignite AE">
+                                        <div class="slds-truncate" title="{!opp.Ignite_AE__r.Full_Name__c}">
+                                            {!opp.Ignite_AE__r.Full_Name__c}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <!-- Added Rainbow Office condition for ALE -->
+                                <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                                <!--<th scope="row" data-label="{!opp.Avaya_Cloud_Specialist__c}">
+                                    <div class="slds-truncate" title="{!opp.Avaya_Cloud_Specialist__c}">
+                                        {!opp.Avaya_Cloud_Specialist__c}
+                                    </div>
+                                </th>-->
+                                    <th scope="row" data-label="{!v.opp.PortalCloudSpecialist}">
+                                        <div class="slds-truncate" title="{!v.opp.PortalCloudSpecialist}">
+                                            {!opp.PortalCloudSpecialist}
+                                        </div>
+                                    </th>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                <th scope="row" data-label="Country">
+                                    <div class="slds-truncate" title="{!opp.Account.BillingCountry}">
+                                        {!opp.Account.BillingCountry}
+                                    </div>
+                                </th>
+                                </aura:if>
+                                <th scope="row" data-label="State">
+                                    <div class="slds-truncate" title="{!opp.Account.BillingState}">
+                                        {!opp.Account.BillingState}
+                                    </div>
+                                </th>
+                                <th scope="row" data-label="Created Date">
+                                    <div class="slds-truncate">
+                                        <lightning:formattedDateTime value="{!opp.CreatedDate}"
+                                                                     month="numeric"
+                                                                     day="numeric"
+                                                                     year="numeric"
+                                                                     hour="2-digit"
+                                                                     minute="2-digit"
+                                                                     timeZone="{!$Locale.timezone}"/>
+                                    </div>
+                                </th>
+                            </tr>
+                        </aura:iteration>
+                    </tbody>
+                </table>
+            </div>
+            <div class="slds-clearfix">                
+                <div class="slds-float_right">            
+                    <lightning:button disabled="{!v.pageNumber == 1}"
+                                      variant="brand" aura:id="prevPage"
+                                      label="{!v.translationsMap.Previous}" onclick="{!c.handlePrev}" iconName="utility:chevronleft" iconPosition="left"/>            
+                    <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                      aura:id="nextPage" variant="brand"
+                                      label="{!v.translationsMap.Next}" onclick="{!c.handleNext}" iconName="utility:chevronright" iconPosition="right"/>
+                </div>
+                <p class="slds-truncate">{!v.translationsMap.Displaying + ' '} {!v.recordStart}-{!v.recordEnd}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalRecords} | {!v.translationsMap.Page + ' '} {!v.pageNumber}&nbsp;{!v.translationsMap.Of}&nbsp;{!v.totalPages}</p>
+            </div>
+        </aura:if>
+        
+        <aura:if isTrue="{!v.saved}">
+            <div class="slds-notify_container slds-is-relative">
+                <div class="slds-notify slds-notify_toast slds-theme_success" role="alert">
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">Saved.</h2>
+                    </div>
+                </div>
+            </div>
+        </aura:if>
+        
+    </aura:if>
+    <div aura:id="oppDetailDiv"></div>
+    <div aura:id="lookupSearchDiv"></div>
+</aura:component>

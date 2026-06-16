@@ -1,0 +1,39 @@
+<apex:component >
+  <link rel="stylesheet" href="{!URLFOR($Resource.RCSupportPortalvideo, 'RCSupportPortalvideo/css/prettyPhoto.css')}" type="text/css" media="screen" title="prettyPhoto main stylesheet" charset="utf-8" />
+     <script src="{!URLFOR($Resource.RCSupportPortalvideo, 'RCSupportPortalvideo/js/jquery.prettyPhoto.js')}" type="text/javascript" charset="utf-8"></script>
+    
+    <style>
+    .facebook{
+      width:80px !important;
+    }
+    .pp_overlay {
+        z-index: 9999 !important;
+        zIndex: 9999 !important;
+    }
+    </style>
+      <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+                $("area[rel^='prettyPhoto']").prettyPhoto();
+                
+                $(".gallery a[rel^='prettyPhoto']").prettyPhoto(
+                                                                 {animation_speed:'fast',
+                                                                  theme:'light_square',
+                                                                  slideshow:3000, 
+                                                                  autoplay_slideshow: false,
+                                                                  default_width: 600,
+                                                                  default_height: 344,
+                                                                  showTitle: true,
+                                                                  allow_resize: true,
+                                                                  horizontal_padding: 20,
+                                                                  deeplinking:true,
+                                                                  autoplay: false,                                                                                                                               
+                   changepicturecallback: function(){ clearHashtag(); }});
+               
+              function clearHashtag(){
+                 var url=location.href;
+                 var hashtag=(url.indexOf('#!'))?true:false;
+                 if(hashtag)location.hash="";
+                 }
+            });
+            </script>   
+</apex:component>

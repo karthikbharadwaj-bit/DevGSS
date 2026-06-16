@@ -1,0 +1,32 @@
+<aura:component description="SelectField" controller="AuraSFDescribeController">
+    <!-- Resources -->
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }" afterScriptsLoaded="{! c.afterScriptsLoaded }"/>
+
+    <!-- Attributes -->
+    <aura:attribute name="label" type="String"/>
+    <aura:attribute name="disabled" type="Boolean"/>
+    <aura:attribute name="required" type="Boolean"/>
+    <aura:attribute name="withEmpty" type="Boolean"/>
+    <aura:attribute name="value" type="String"/>
+    <aura:attribute name="value2" type="String"/>
+    <aura:attribute name="options" type="List"/>
+
+    <aura:attribute name="fieldName" type="String"/>
+    <aura:attribute name="sObjectName" type="String"/>
+    <aura:attribute name="recordTypeName" type="String"/>
+
+    <!-- Actions -->
+    <aura:attribute name="onready" type="Aura.Action"/>
+
+    <lightning:select required="{! v.required }"
+                      disabled="{! v.disabled }"
+                      label="{! v.label }"
+                      value="{! v.value }">
+        <aura:iteration items="{! v.options }" var="o">
+            <option value="{! o.value }"
+                    selected="{! o.value == v.value }">
+                {! o.label }
+            </option>
+        </aura:iteration>
+    </lightning:select>
+</aura:component>

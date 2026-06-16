@@ -1,0 +1,48 @@
+<template>
+    <div class="slds-modal-component">
+        <section
+            role="dialog"
+            tabindex="-1"
+            aria-labelledby="modal-heading-01"
+            aria-modal="true"
+            aria-describedby="modal-content-id-1"
+            class={modalCls}
+        >
+            <div class="slds-modal__container">
+                <header class={headerCls}>
+                    <lightning-button-icon
+                        icon-name="utility:close"
+                        alternative-text="Close"
+                        variant="bare-inverse"
+                        size="large"
+                        class="slds-modal__close"
+                        onclick={closeForm}
+                    ></lightning-button-icon>
+                    <template if:true={hasHeader}>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{title}</h2>
+                    </template>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" lwc:dom="manual"></div>
+                <template if:true={hasFooter}>
+                    <footer class={footerCls}>
+                        <template for:each={footer} for:item="button">
+                            <lightning-button
+                                key={button.name}
+                                variant={button.variant}
+                                label={button.label}
+                                icon-name={button.iconName}
+                                icon-position={button.iconPosition}
+                                name={button.name}
+                                value={button.id}
+                                class="slds-button"
+                                onclick={handleFooterClick}
+                            >
+                            </lightning-button>
+                        </template>
+                    </footer>
+                </template>
+            </div>
+        </section>
+        <div class={backdropCls}></div>
+    </div>
+</template>

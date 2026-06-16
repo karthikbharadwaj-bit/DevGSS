@@ -1,0 +1,74 @@
+<template>
+  <div class="root-view">
+    <lightning-tabset variant="vertical">
+      <lightning-tab onactive={handleTabChange} if:false={inProgress} label="Create Catalog Packages">
+        <div class="slds-grid slds-gutters">
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+          <div
+            class="slds-col slds-small-size_10-of-12 slds-small-size_12-of-12 slds-medium-size_10-of-12 slds-large-size_6-of-12 grid-root-view slds-theme_alert-texture">
+            <div class="slds-align_absolute-center slds-var-p-bottom_medium">
+              <lightning-input type="number" label="Enter Package ID" onchange={handleNgbsPackageIdInputChange} required
+                disabled={inCatalogProgress}>
+              </lightning-input>
+              <lightning-input type="number" label="Enter Package Version"
+                onchange={handleNgbsPackageVersionInputChange} required disabled={inCatalogProgress}>
+              </lightning-input>
+            </div>
+            <div class="slds-align_absolute-center slds-is-relative slds-var-p-bottom_medium">
+              <lightning-button variant="brand" label="Submit" title="Submit" onclick={handleCatalogSubmitButtonClick}
+                disabled={inCatalogProgress}>
+              </lightning-button>
+            </div>
+          </div>
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+        </div>
+        <div class="slds-grid slds-gutters" data-id="log-output">
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+          <div
+            class="slds-col slds-small-size_10-of-12 slds-medium-size_10-of-12 slds-large-size_6-of-12 grid-output-view">
+            <div class="slds-var-m-vertical_medium slds-text-font_monospace">
+              <pre>{transientLogs}</pre>
+              <pre>{logs}</pre>
+            </div>
+          </div>
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+        </div>
+      </lightning-tab>
+      <lightning-tab onactive={handleTabChange} if:false={inCatalogProgress} label="Create Wholesale Partner Packages">
+        <div class="slds-grid slds-gutters">
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+          <div
+            class="slds-col slds-small-size_10-of-12 slds-small-size_12-of-12 slds-medium-size_10-of-12 slds-large-size_6-of-12 grid-root-view slds-theme_alert-texture">
+            <div class="slds-align_absolute-center">
+              <lightning-input type="number" label="Enter NGBS Partner ID" onchange={handleNgbsPartnerIdInputChange}
+                required disabled={inProgress}>
+              </lightning-input>
+            </div>
+            <div class="slds-var-m-around_medium slds-align_absolute-center">
+              <lightning-input type="toggle" label="Only Include Packages Owned by Self"
+                onchange={handleSelfToggleChange} checked={isSelfChecked} name="includeSelf" disabled={inProgress}>
+              </lightning-input>
+            </div>
+            <div class="slds-align_absolute-center slds-is-relative slds-var-p-bottom_medium">
+              <lightning-button variant="brand" label="Submit" title="Submit" onclick={handleSubmitButtonClick}
+                disabled={inProgress}>
+              </lightning-button>
+            </div>
+          </div>
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+        </div>
+        <div class="slds-grid slds-gutters" data-id="log-output">
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+          <div
+            class="slds-col slds-small-size_10-of-12 slds-medium-size_10-of-12 slds-large-size_6-of-12 grid-output-view">
+            <div class="slds-var-m-vertical_medium slds-text-font_monospace">
+              <pre>{transientLogs}</pre>
+              <pre>{logs}</pre>
+            </div>
+          </div>
+          <div class="slds-col slds-small-size_1-of-12 slds-medium-size_1-of-12 slds-large-size_3-of-12"></div>
+        </div>
+      </lightning-tab>
+    </lightning-tabset>
+  </div>
+</template>

@@ -1,0 +1,35 @@
+<apex:page controller="DowngradeWizardController" showHeader="true" sidebar="true">
+
+    <apex:includeScript value="{!$Resource.DownWizardDependencies + '/DWPage.js'}" />
+
+    <style>
+        .noSidebarCell,
+        #bodyCell,
+        #bodyTable {
+            padding: 0 !important;
+        }
+        #wizard {
+            min-width: 960px;
+        }
+    </style>
+
+    <apex:includeLightning />
+
+    <div id="wizard"/>
+
+    <script>
+        $Lightning.use('c:DowngradeWizardApp', function () {
+            $Lightning.createComponent(
+                'c:DowngradeWizardComponent',
+                {
+                    'wizardType':'{!JSENCODE($CurrentPage.parameters.wizardType)}',
+                    'oppInfo': '{!JSENCODE($CurrentPage.parameters.opportunityInfo)}',
+                    'oppId': '{!JSENCODE($CurrentPage.parameters.oppId)}'
+                },
+
+                'wizard',
+                function(cmp){}
+            );
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,38 @@
+<apex:page showHeader="true" sidebar="true" title="Close/Downgrade Wizard">
+
+    <apex:includeScript value="{!$Resource.DownWizardDependencies + '/DWPage.js'}" />
+    <apex:stylesheet value="{!URLFOR($Resource.slds_helptext_fix)}"/>
+
+    <style>
+        .noSidebarCell,
+        #bodyCell,
+        #bodyTable {
+            padding: 0 !important;
+        }
+        #wizard {
+            min-width: 960px;
+        }
+    </style>
+
+    <apex:includeLightning />
+
+    <div id="wizard"/>
+
+    <script>
+        $Lightning.use('c:DowngradeWizardAppV2', function () {
+            $Lightning.createComponent(
+                'c:DowngradeWizardComponentV2',
+                {
+                    'wizardType':'{!JSENCODE($CurrentPage.parameters.wizardType)}',
+                    'oppInfo': '{!JSENCODE($CurrentPage.parameters.opportunityInfo)}',
+                    'oppId': '{!JSENCODE($CurrentPage.parameters.oppId)}',
+                    'requiredFields' : '{!JSENCODE($CurrentPage.parameters.requiredFields)}',
+                    'validationType' : '{!JSENCODE($CurrentPage.parameters.validationType)}'
+                },
+
+                'wizard',
+                function(cmp){}
+            );
+        });
+    </script>
+</apex:page>

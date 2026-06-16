@@ -1,0 +1,110 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Shared Attributes -->
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute access="private" name="modalType" type="String" />
+
+    <!-- Handlers -->
+    <aura:handler name="change" value="{! v.Wizard }" action="{! c.wizardChanged }" />
+
+    <!-- Submit For Approval Button -->
+    <span class="slds-m-left--xx-small slds-hide slds-show_inline-block"
+          aura:id="submitForApprovalButtonWrapper"
+          onmouseover="{!c.showPopover}"
+          onmouseout="{!c.hidePopover}"
+          data-buttonauraid="submitForApprovalButton">
+        <lightning:button label="Submit For Approval"
+                          onclick="{!c.submitForApproval}"
+                          aura:id="submitForApprovalButton"/>
+    </span>
+
+    <!-- Recall Approval Request Button -->
+    <lightning:button label="Recall Approval Request"
+                      onclick="{!c.recallApprovalModal}"
+                      class="slds-m-left--xx-small slds-hide"
+                      aura:id="recallApprovalModalButton"/>
+
+    <!-- Approve/Reject Button -->
+    <lightning:button label="Approve/Reject"
+                      onclick="{!c.approveRejectModal}"
+                      class="slds-m-left--xx-small slds-hide"
+                      aura:id="approveRejectModalButton"/>
+
+    <!-- Modal -->
+    <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal approve-modal" aura:id="modal">
+        <div class="slds-modal__container">
+            <div class="slds-modal__header">
+
+                <!-- x button -->
+                <lightning:buttonIcon size="large"
+                                      iconName="utility:close"
+                                      onclick="{!c.modalClose}"
+                                      alternativeText="Close window"
+                                      variant="bare-inverse" class=" slds-modal__close"/>
+
+                <!-- Modal Header -->
+                <h2 class="slds-text-heading--medium">
+                        {! v.modalType == 'approveReject' ?
+                                'Approve/Reject' :
+                                (v.modalType == 'recallApproval') ?
+                                        'Recall Approval Request' : '' }
+                </h2>
+
+            </div>
+            <div class="slds-modal--medium">
+                <div class="slds-modal__content slds-p-around--medium select-template__content">
+
+                    <!-- Comment Textarea -->
+                    <div class="{!v.modalType=='approveReject'?'':'slds-hide'}">
+                        <lightning:textarea name="Comment"
+                                            label="Comment"
+                                            aura:id="approveRejectComment"
+                                            value="" />
+                    </div>
+                    <div class="{!v.modalType=='recallApproval'?'':'slds-hide'}">
+                        <lightning:textarea name="Comment"
+                                            label="Comment"
+                                            aura:id="recallComment"
+                                            value="" />
+                    </div>
+
+                </div>
+                <div class="slds-modal__footer">
+
+                    <!-- Cancel Modal Button-->
+                    <lightning:button label="Cancel"
+                                      onclick="{!c.modalClose}"
+                                      class="cancel-button"/>
+
+                    <span class="{!v.modalType!='approveReject'? 'slds-hide':''}">
+
+                        <!-- Reject Button -->
+                        <lightning:button label="Reject"
+                                          onclick="{!c.rejectApprovalRequest}"
+                                          variant="destructive"
+                                          aura:id="rejectApprovalRequestButton"/>
+
+                        <!-- Approve Button -->
+                        <lightning:button label="Approve"
+                                          onclick="{!c.approveApprovalRequest}"
+                                          variant="brand"
+                                          aura:id="approveApprovalRequestButton"/>
+
+                    </span>
+
+                    <span class="{!v.modalType!='recallApproval'? 'slds-hide':''}">
+
+                        <!-- Recall Button -->
+                        <lightning:button   label="Recall Approval Request"
+                                            onclick="{!c.recallApprovalRequest}"
+                                            variant="brand"
+                                            aura:id="recallApprovalRequestButton"/>
+
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slds-backdrop" aura:id="modalBg"></div>
+</aura:component>

@@ -1,0 +1,167 @@
+<aura:component description="OpportunityCreationFormProduct">
+    <aura:attribute name="product" type="Object"/>
+    <aura:attribute name="app" type="Object"/>
+
+    <!-- Change Handlers -->
+    <aura:handler name="change" value="{! v.product }" action="{! c.productChanged }"/>
+    <aura:handler name="change" value="{! v.app }" action="{! c.appChanged }"/>
+
+    <!-- Event Handlers -->
+    <aura:handler name="removeAreaCode" event="c:ComponentEvent" action="{! c.removeAreaCode }" />
+    <aura:handler name="areaCodeQuantityChange" event="c:ComponentEvent" action="{! c.areaCodeQuantityChange }" />
+
+    <aura:if isTrue="{! and(v.app, v.product.isVisible) }">
+
+        <tr data-sfid="{# v.product.record.Id }"
+            class="{! join(' ', and(v.app, v.product.selected) ? 'slds-is-selected' : '',
+                                and(v.app, v.product.isExpanded) ? 'product_is-expanded' : '') }">
+
+            <!-- Expand -->
+            <td scope="row" class="product-details" data-label="Toggle Details">
+                <aura:if isTrue="{! v.product.isExpandable }">
+                    <lightning:buttonIcon iconName="utility:chevronright"
+                                          alternativeText="Toggle details"
+                                          variant="bare"
+                                          class="product-expand-icon"
+                                          onclick="{! c.toggleExpand }"/>
+
+                    <aura:if isTrue="{! v.product.selected &amp;&amp; v.product.areaCodes.length > 0  }">
+                        <div class="slds-badge badge-bordered slds-show_inline-block">
+                            <lightning:icon iconName="custom:custom64"
+                                            size="xx-small"
+                                            alternativeText="Area Codes"/>
+                            <span class="slds-p-left--xx-small">{! v.product.areaCodes.length }</span>
+                        </div>
+                    </aura:if>
+                </aura:if>
+            </td>
+
+            <td scope="row" class="product-info">
+                <aura:if isTrue="{! v.product.isPreviouslySold == true }">
+                    <c:Tooltip iconCollection="standard" theme="account" text="Previously Sold" class="service-plan-icon" position="bottom"/>
+                </aura:if>
+            </td>
+
+            <!-- Product Name -->
+            <td scope="row"
+                data-label="Product Name"
+                onclick="{! c.toggleExpand }">
+                <div class="slds-truncate" title="Product Name">
+                    {# v.product.name }
+
+                    <!-- Errors -->
+                    <aura:if isTrue="{! and(v.app, v.product.isAdditionalNumberAreaCodesErrorShown) }">
+                        <div class="slds-has-error">
+                            <p class="slds-form-element__help slds-m-top_none">
+                                Add Area Codes to selected products to Confirm &amp; Close
+                            </p>
+                        </div>
+                    </aura:if>
+
+                    <!-- Errors -->
+                    <aura:if isTrue="{! and(v.app, v.product.isPhonesAreaCodesErrorShown) }">
+                        <div class="slds-has-error">
+                            <p class="slds-form-element__help slds-m-top_none">
+                                Add Area Codes to selected Phones to Confirm &amp; Close
+                            </p>
+                        </div>
+                    </aura:if>
+
+                </div>
+            </td>
+
+            <!-- Category -->
+            <td data-label="Category">
+                <div class="slds-truncate" title="Category">{# v.product.category }</div>
+            </td>
+
+            <!-- Plan -->
+            <td data-label="Plan">
+                <div class="slds-truncate" title="Plan">{# v.product.plan }</div>
+            </td>
+
+            <!-- List Price -->
+            <td data-label="List Price">
+                <div class="slds-truncate" title="Price">
+                    <c:outputCurrency value="{# v.product.price }"
+                                      currencyCode="{# v.product.record.CurrencyIsoCode }"/>
+                </div>
+            </td>
+
+            <!-- Your Price -->
+            <td data-label="Your Price">
+                <div class="slds-truncate" title="Price">
+                    <c:outputCurrency value="{# v.product.effectivePrice }"
+                                      currencyCode="{# v.product.record.CurrencyIsoCode }"/>
+                </div>
+            </td>
+
+            <!-- Quantity -->
+            <td data-label="Quantity" class="col__qty">
+                <div class="slds-truncate" title="Quantity" onclick="{! c.quantityClick }">
+                    <aura:if isTrue="{! v.product.selected }">
+                        <lightning:input label="Quantity"
+                                         type="Number"
+                                         variant="label-hidden"
+                                         value="{! v.product.quantityInput.value }"
+                                         min="{! v.product.quantityInput.min }"
+                                         step="1"
+                                         class="slds-show_inline-block quantity-input"
+                                         aura:id="quantityInput"
+                                         disabled="{! v.product.areaCodes.length > 0 }"
+                                         onblur="{! c.onQuantityInputBlur }"/>
+
+                        <aura:set attribute="else">
+                            <lightning:input label="Disabled Quantity"
+                                             type="Number"
+                                             variant="label-hidden"
+                                             value="0"
+                                             class="slds-show_inline-block quantity-input"
+                                             disabled="true"/>
+                        </aura:set>
+                    </aura:if>
+                </div>
+            </td>
+
+            <!-- Selected Checkbox -->
+            <td data-label="Select Product" class="col__selected">
+                <div class="slds-truncate" title="Select Product">
+                    <lightning:input type="checkbox"
+                                     label="Select Product"
+                                     variant="label-hidden"
+                                     class="slds-show_inline-block slds-m-right_small"
+                                     aura:id="selectedCheckbox"
+                                     onchange="{! c.selectToggle }"/>
+                </div>
+            </td>
+        </tr>
+
+        <aura:if isTrue="{! and(v.app, v.product.isExpanded) }">
+
+            <aura:iteration items="{! v.product.areaCodes }" var="areaCode" indexVar="index">
+                <c:OpportunityCreationFormAreaCode areaCode="{! areaCode }"
+                                                   app="{! v.app }"
+                                                   index="{! index }"/>
+            </aura:iteration>
+
+            <aura:if isTrue="{! and(v.app, v.product.defaultAreaCode) }">
+                <tr>
+                    <td colspan="9">
+                        <h1 class="rc-message">
+                            There are no Area Code Line Items created for this product.
+                            Selected Phones will be added with Main Area Code (<span>{! v.product.defaultAreaCode.Name }</span>)
+                        </h1>
+                    </td>
+                </tr>
+            </aura:if>
+
+            <tr>
+                <td colspan="9" class="slds-text-align_center slds-p-bottom_large">
+                    <c:Button label="Add Area Code" onclick="{! c.addAreaCode }"/>
+                </td>
+            </tr>
+
+        </aura:if>
+
+    </aura:if>
+</aura:component>

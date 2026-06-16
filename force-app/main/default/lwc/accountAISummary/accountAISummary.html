@@ -1,0 +1,93 @@
+<template>
+    <lightning-card title="Account Summary">
+        <lightning-accordion allow-multiple-sections-open active-section-name={activeSections}
+            onsectiontoggle={handleAccordionToggle}>
+            <lightning-accordion-section name="Summary" label="Click to View">
+
+                <!-- Loading -->
+                <template if:true={isLoading}>
+                    <div
+                        class="slds-p-around_medium slds-align_absolute-center slds-grid slds-grid_vertical slds-text-align_center">
+                        <lightning-spinner size="small" alternative-text="Loading summary..."></lightning-spinner>
+                        <div class="slds-m-top_small slds-text-body_small">Fetching summary from AI…</div>
+                    </div>
+                </template>
+
+                <!-- Loaded -->
+                <template if:false={isLoading}>
+                    <ul class="custom-list slds-p-around_small">
+                        <template for:each={visiblePoints} for:item="point">
+                            <li key={point}>{point}</li>
+                        </template>
+                    </ul>
+                    <template if:false={visiblePoints.length}>
+                        <div class="slds-p-around_medium">
+                            <lightning-formatted-text value="No summary available yet."></lightning-formatted-text>
+                        </div>
+                    </template>
+
+                    <!-- Reactions + copy -->
+                    <div class="slds-p-horizontal_small slds-m-top_medium slds-align_absolute-center">
+                        <span class="inline-actions">
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                title="Like this Summary" alternative-text="Like this Summary" onclick={submitLike}
+                                selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+
+                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                selected-icon-name="utility:dislike" title="Dislike this Summary"
+                                alternative-text="Dislike this Summary" onclick={submitDislike}
+                                selected={summaryIsDisliked} variant={dislikeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+
+                            <span class="no-border-fix">
+                                <lightning-button-icon-stateful icon-name={copyIcon} selected-icon-name="utility:copy"
+                                    title="Copy summary" alternative-text="Copy Summary" onclick={handleCopy}>
+                                </lightning-button-icon-stateful>
+                            </span>
+                        </span>
+                    </div>
+
+                    <!-- Feedback link / thanks -->
+                    <div class="slds-align_absolute-center slds-m-top_x-small">
+                        <template if:false={summaryReviewed}>
+                            <template if:false={showFeedback}>
+                                <a href="javascript:void(0);" onclick={toggleFeedback} class="slds-text-link">Give
+                                    Feedback</a>
+                            </template>
+                        </template>
+                        <template if:true={summaryReviewed}>
+                            <span class="thanks-badge">Thanks for the review</span>
+                        </template>
+                    </div>
+
+                    <!-- Feedback row -->
+                    <template if:true={showFeedback}>
+                        <div class="slds-p-horizontal_small slds-m-top_small feedback-row">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…" value={feedback}
+                                oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="feedback-actions">
+                                <lightning-button class="btn-compact" variant="brand" label="Send"
+                                    onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                    onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+
+                <div class="slds-grid slds-grid_align-spread slds-p-around_small">
+                    <a class="slds-text-link toggle-label" href="javascript:void(0);" onclick={closeAccordion}>
+                        Hide
+                        <lightning-icon icon-name="utility:chevronup" size="x-small"
+                            class="chevron-icon"></lightning-icon>
+                    </a>
+                    <div class="slds-text-color_weak powered-ai">Powered by <strong>AI</strong> ✨</div>
+                </div>
+
+
+            </lightning-accordion-section>
+        </lightning-accordion>
+    </lightning-card>
+</template>

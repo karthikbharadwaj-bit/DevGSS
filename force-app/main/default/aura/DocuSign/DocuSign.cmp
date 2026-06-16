@@ -1,0 +1,54 @@
+<aura:component description="DocuSign" controller="DocuSignController">
+
+    <!-- resources -->
+    <ltng:require scripts="{! join(',',
+        $Resource.DocuSignDependencies + '/DS.js',
+        $Resource.RCHelper + '/RC.js') }"
+                  afterScriptsLoaded="{!c.onScriptsLoaded}"/>
+
+    <!-- Methods -->
+    <aura:method name="validate"/>
+    <aura:method name="show"/>
+
+    <!-- Attributes -->
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="opportunityId" type="String"/>
+    <aura:attribute name="primaryQuoteId" type="String"/>
+
+    <!-- Loading Indicators -->
+    <aura:attribute name="isEnvelopesLoading" type="Boolean"/>
+    <aura:attribute name="isDocumentsLoading" type="Boolean"/>
+    <aura:attribute name="isRecipientsLoading" type="Boolean"/>
+
+    <!-- Record Ownership -->
+    <aura:attribute name="isVoidEnvelopesAllowed" type="Boolean"/>
+
+    <!-- Register Event -->
+    <aura:registerEvent name="docuSignEnvelopeListRefresh" type="c:ComponentEvent"/>
+
+    <c:Modal aura:id="modal">
+        <lightning:layout class="docu-sign" multipleRows="true">
+
+            <!-- header -->
+            <c:DocuSignHeader app="{! v.app }"/>
+
+            <!-- Envelopes -->
+            <aura:if isTrue="{! v.app.tabs.isManageActive }">
+                <c:DocuSignEnvelopeList app="{! v.app }"
+                                        primaryQuoteId="{! v.primaryQuoteId }"
+                                        isEnvelopesLoading="{! v.isEnvelopesLoading }"
+                                        aura:id="envelopeList"/>
+            </aura:if>
+
+            <!-- Send With DocuSign -->
+            <aura:if isTrue="{! v.app.tabs.isSendActive }">
+                <c:DocuSignSend app="{! v.app }"
+                                isDocumentsLoading="{! v.isDocumentsLoading }"
+                                isRecipientsLoading="{! v.isRecipientsLoading }"/>
+            </aura:if>
+
+        </lightning:layout>
+    </c:Modal>
+
+
+</aura:component>

@@ -1,0 +1,44 @@
+<template>
+    <div class={mvpSectionClasses}>
+        <div class="slds-progress slds-progress_vertical">
+            <c-sn-progress-section header="Preparing Data" status={firstStepStatus}>
+                <div class="slds-m-top_x-small text" data-ui-auto="mvp-step">{step}</div>
+            </c-sn-progress-section>
+        </div>
+        <div class="slds-progress slds-progress_vertical first">
+            <c-sn-progress-section header="Add General Information" status={secondStepStatus}>
+                <div class="dropdown-container">
+                    <c-searchable-dropdown
+                        combobox-options={options}
+                        slds-modal-el={sldsModalEl}
+                        disabled={disableTimezone}
+                        placeholder={placeholder}
+                        label="Timezone"
+                        onchange={handleChangeTimezone}>
+                    </c-searchable-dropdown>
+                </div>
+            </c-sn-progress-section>
+        </div>
+        <div class="slds-progress slds-progress_vertical last">
+            <c-sn-progress-section header={signUpSectionHeader} status={lastStepStatus} last>
+                <lightning-tabset lwc:if={lastStepActive}>
+                    <lightning-tab label={SIGN_UP} onactive={handleSelectedSignUpTab}>
+                        <div class="slds-m-vertical_xx-small text">{helpSignUpLabel}</div>
+                    </lightning-tab>
+                    <lightning-tab label={ADMIN_PREVIEW} onactive={handleSelectedSignUpTab}>
+                        <pre lwc:if={signupJsonFormatted} class="slds-m-vertical_xx-small">{signupJsonFormatted}</pre>
+                        <!-- Placeholder during loading -->
+                        <div lwc:else>
+                            <div class="slds-spinner slds-spinner_small preview-spinner">
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                            <div class="slds-m-vertical_xx-small text preview-text">{REQUEST_PREVIEW_PLACEHOLDER}</div>
+                        </div>
+                    </lightning-tab>
+                </lightning-tabset>
+                <div lwc:else class="slds-m-vertical_xx-small text">{helpSignUpLabel}</div>
+            </c-sn-progress-section>
+        </div>
+    </div>
+</template>

@@ -1,0 +1,157 @@
+<apex:page standardController="Legal_Requests__c" extensions="LegalRequestPDFController" id="pg" renderAs="pdf">
+	<apex:composition template="ITPortalTemplate1">		
+		<apex:define name="content">
+			<apex:form id="mainForm" styleclass="CaseForm1Cls">
+				<div>						
+					<p class="mainHeadingTd"><b>RingCentral Free or Open Source
+						Software Authorization Request Form</b></p>
+					<br />
+					<p style="text-align: justify;">
+						If you discover free or open source software (“FOSS”) that may be
+						useful in developing code for your project, please provide the
+						information requested below and submit this form to <a
+							href="mailto:opensource@ringcentral.com" style="color: blue;">opensource@ringcentral.com</a>
+						before you start working with the FOSS. If you have already
+						started to use the FOSS, please submit this form immediately.
+						Reviewing this information ahead of time will allow us to protect
+						RingCentral’s intellectual property rights and ensure that we do
+						not violate the rights of others.
+					</p>
+					<br style="clear: both;" />
+					
+					<div class="sectionContainer">
+						<table class="sectionTable">
+						
+							<tr>
+								<td>
+									<div class="sectionHeading">About the FOSS</div><hr/>
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>									
+									<apex:outputLabel value="{!requestObjectMap['FOSS_Name__c']} : " />								
+									<apex:outputText value="{!requestObj.FOSS_Name__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['FOSS_Version__c']} : "/>								
+									<apex:outputText value="{!requestObj.FOSS_Version__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['Status__c']} : "/>								
+									<!-- <apex:outputText value="{!requestObj.Status__c}"/> -->
+									<apex:outputText value="Submitted"/><br/>										
+								</td>
+							</tr>	
+							
+							<tr>	
+								<td>									
+									<apex:outputLabel value="{!requestObjectMap['FOSS_Submitter__c']} : " />								
+									<apex:outputText value="{!requestObj.FOSS_Submitter__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['Location__c']} : "/>								
+									<apex:outputText value="{!requestObj.Location__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['Department__c']} : "/>								
+									<apex:outputText value="{!requestObj.Department__c}"/><br/>										
+								</td>
+							</tr>	
+													
+							<tr>	
+								<td>									
+									<apex:outputLabel value="{!requestObjectMap['RingCentral_Product_where_used__c']} : "/>								
+									<apex:outputText value="{!requestObj.RingCentral_Product_where_used__c}"/><br/>							
+									<apex:outputLabel value="{!requestObjectMap['Date_for_RC_Product_Integration__c']} : "/>								
+									<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+										<apex:param value="{!requestObj.Date_for_RC_Product_Integration__c}"/>
+									</apex:outputText><br/>										
+								</td>
+							</tr>	
+													
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Is_FOSS_currently_being_used__c']} : "/>								
+									<apex:outputField value="{!requestObj.Is_FOSS_currently_being_used__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['When_did_FOSS_start_being_used__c']} : "/>								
+									<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+										<apex:param value="{!requestObj.When_did_FOSS_start_being_used__c}" />
+									</apex:outputText><br/>								
+								</td>
+							</tr>	
+													
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Applicable_License__c']} : "/>								
+									<apex:outputText value="{!requestObj.Applicable_License__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['License_URL__c']} : "/>								
+									<apex:outputText value="{!requestObj.License_URL__c}"/><br/>										
+								</td>
+							</tr>		
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Is_attribution_required_for_use__c']} : "/>								
+									<apex:outputField value="{!requestObj.Is_attribution_required_for_use__c}"/><br/>							
+									<apex:outputLabel value="{!requestObjectMap['Include_attribution__c']} : "/>								
+									<apex:outputText value="{!requestObj.Include_attribution__c}"/><br/>										
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Why_do_you_want_to_incorporate_the_FOSS__c']} : "/>									
+									<apex:outputText value="{!requestObj.Why_do_you_want_to_incorporate_the_FOSS__c}"/><br/>									
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Will_FOSS_be_modified__c']} : "/>								
+									<apex:outputField value="{!requestObj.Will_FOSS_be_modified__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['How_will_FOSS_be_modified__c']} : "/>								
+									<apex:outputText value="{!requestObj.How_will_FOSS_be_modified__c}"/><br/>								
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['FOSS_be_embeded_in_external_RC_Products__c']} : "/>								
+									<apex:outputField value="{!requestObj.FOSS_be_embeded_in_external_RC_Products__c}" /><br/>								
+									<apex:outputLabel value="{!requestObjectMap['In_what_form_will_FOSS_be_redistributed__c']} : "/>								
+									<apex:outputText value="{!requestObj.In_what_form_will_FOSS_be_redistributed__c}"/><br/>									
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['Will_you_link_to_FOSS__c']} : "/>								
+									<apex:outputField value="{!requestObj.Will_you_link_to_FOSS__c}" /><br/>								
+									<apex:outputLabel value="{!requestObjectMap['How_will_you_link_to_FOSS__c']} : "/>								
+									<apex:outputText value="{!requestObj.How_will_you_link_to_FOSS__c}" id="fossLinkIdOut"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['If_Other_explain__c']} : "/>								
+									<apex:outputText value="{!requestObj.If_Other_explain__c}"/><br/>										
+								</td>
+							</tr>
+							
+							<tr>	
+								<td>
+									<apex:outputLabel value="{!requestObjectMap['How_widely_is_this_FOSS_used_externally__c']} : "/>							
+									<apex:outputText value="{!requestObj.How_widely_is_this_FOSS_used_externally__c}"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['FOSS_introduced_to_the_marketplace__c']} : "/>								
+									<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+										<apex:param value="{!requestObj.FOSS_introduced_to_the_marketplace__c}" />
+									</apex:outputText><br/>	
+								</td>									
+							</tr>
+							
+							<tr>	
+								<td>									
+									<apex:outputLabel value="{!requestObjectMap['Are_alternatives_to_the_FOSS_available__c']} : "/>								
+									<apex:outputField value="{!requestObj.Are_alternatives_to_the_FOSS_available__c}" id="alternateFossOut"/><br/>								
+									<apex:outputLabel value="{!requestObjectMap['If_yes_what_are_they__c']} : "/>								
+									<apex:outputText value="{!requestObj.If_yes_what_are_they__c}"/><br/>							
+									<apex:outputLabel value="{!requestObjectMap['If_no_how_important_is_the_FOSS_to_RC__c']} : "/>								
+									<apex:outputText value="{!requestObj.If_no_how_important_is_the_FOSS_to_RC__c}"/><br/>
+								</td>
+							</tr>							
+						</table>
+					</div>
+				</div>
+			</apex:form>
+		</apex:define>
+	</apex:composition>
+</apex:page>

@@ -1,0 +1,90 @@
+<apex:page sidebar="false" title="Ramp Up Period Editor" standardController="Order" extensions="RampUpPeriodEditorController">
+    <apex:slds />
+    <apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"/>
+    <c:HerokuScripts />
+
+    <style type="text/css">
+        .zen .zen-headerBottom {
+            border-bottom-right-radius: 5px;
+            border-bottom-left-radius: 5px;
+        }
+        .zen .zen-moreTabs ul {
+            z-index: 20;
+        }
+        .bodyDiv.brdPalette.brandPrimaryBrd {
+            border: none;
+            font-family: "Salesforce Sans", Arial, sans-serif;
+            height: inherit;
+            min-height: calc(100vh - 170px);
+            border-radius: 0;
+            margin: 0 -10px;
+            width: calc(100% + 20px);
+        }
+        .noSidebarCell, .bodyDiv .outerNoSidebar {
+            padding: 0;
+        }
+
+        .noTableFooter {
+            margin-left: 0;
+        }
+        .cdk-overlay-container {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            z-index: 1000;
+        }
+        .cdk-overlay-pane {
+            position: absolute;
+            pointer-events: auto;
+            box-sizing: border-box;
+            z-index: 1000;
+            display: flex;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        rampup-table-data > table td[colspan="8"]:empty {
+            display: none;
+        }
+        .slds-scope rampup-table-data .slds-section__content {
+            display: none;
+        }
+        .slds-scope rampup-table-data .slds-section__title-action {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .slds-scope rampup-table-data .empty_products {
+            background: #fff;
+            margin-top: -4px;
+            margin-left: -8px;
+            width: calc(100% + 16px);
+            height: calc(100% + 8px);
+        }
+    </style>
+
+    <div id="rampUpEditorContainer" class="slds-scope"></div>
+
+    <script type="text/javascript">
+        const herokuEndpoint = '{!billingWizardUrl}';
+        const sessionId      = '{!sId}';
+        const origin         = '{!JSENCODE(origin)}';
+        const orderParams    = '{! JSENCODE(orderRecordJSON)}';
+
+        const angular = document.createElement('app-root');
+        angular.routeParams = {
+            name: 'rampup-editor',
+            data: {
+                billingParams: {
+                    herokuEndpoint,
+                    sessionId,
+                    origin
+                },
+                orderParams
+            }
+        };
+        document.getElementById('rampUpEditorContainer').appendChild(angular);
+    </script>
+
+</apex:page>

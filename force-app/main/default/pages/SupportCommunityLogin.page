@@ -1,0 +1,302 @@
+<apex:page id="SupportCommunityLogin" lightningstylesheets="true" controller="SupportCommunityLoginController" showheader="false" standardstylesheets="false" sidebar="false" applyhtmltag="true" applybodytag="false" doctype="html-5.0">
+    <apex:slds />
+    <head>
+        <meta charset="utf-8"/>
+        <meta http-equiv="x-ua-compatible" content="ie=edge"/>
+        <title>Support Community Login</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <style>
+            * {
+                box-sizing: border-box;
+            }
+            .loader {
+                position: absolute;
+                width: 100%;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            .slds-scope_my {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+            html,body {
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+            }
+            #iframe-place {
+                visibility: hidden;
+                position: absolute;
+                top: -1000px;
+
+            }
+        </style>
+        <script type="text/javascript">
+            "use strict";
+            const CLOSE_TIMEOUT = 5;
+            const PAGE_NAME = "SupportCommunityLogin";
+            const NUMBER_OF_ATTEMPTS_TO_REQUEST_SOURCE = 5;
+            const TIME_OF_ATTEMPTS_TO_REQUEST_SOURCE = 550;
+
+            function _instanceof(left, right) { if (right != null && typeof Symbol !== "undefined" && right[Symbol.hasInstance]) { return !!right[Symbol.hasInstance](left); } else { return left instanceof right; } }
+
+            function _classCallCheck(instance, Constructor) { if (!_instanceof(instance, Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+            function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+            function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+            function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+            var Loginner =
+                /*#__PURE__*/
+                function () {
+                    _createClass(Loginner, [{
+                        key: "setCookie",
+                        value: function setCookie(name, value, exp_y, exp_m, exp_d, path, domain, secure) {
+                            var cookie_string = name + "=" + value;
+
+                            if (exp_y) {
+                                var expires = new Date(exp_y, exp_m, exp_d);
+                                cookie_string += "; expires=" + expires.toGMTString();
+                            }
+
+                            if (path) cookie_string += "; path=" + escape(path);
+                            if (domain) cookie_string += "; domain=" + escape(domain);
+                            if (secure) cookie_string += "; secure";
+                            document.cookie = cookie_string;
+                        }
+                    }, {
+                        key: "getCookie",
+                        value: function getCookie(cookie_name) {
+                            var results = document.cookie.match('(^|;) ?' + cookie_name + '=([^;]*)(;|$)');
+                            return results ? unescape(results[2]) : null;
+                        }
+                    }, {
+                        key: "getParams",
+                        value: function getParams() {
+                            var hash = window.location.hash.substring(1);
+
+                            if (hash.length > 0) {
+                                try {
+                                    this.params = JSON.parse(decodeURIComponent(window.atob(decodeURIComponent(hash))));
+                                } catch (e) {
+                                    console.warn(e);
+                                }
+                            }
+                        }
+                    }, {
+                        key: "getUrlParameter",
+                        value: function getUrlParameter(name) {
+                            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+                            var results = regex.exec(location.search);
+                            return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+                        }
+                    }, {
+                        key: "listener",
+                        value: function listener(event) {
+                            if (this.fullDomainList.filter(function (item) {
+                                return item.indexOf(event.origin) === 0;
+                            }).length === 0 && event.origin !== document.location.origin) {
+                                return;
+                            }
+
+                            if (event.data === this.eventsName.init) {
+                                this.source = event.source;
+                                this.origin = event.origin;
+                                var path = this.source.location.pathname;
+                                this.main = this.source.location.origin
+                                    + (path.indexOf("/s/") >= 0 ? path.split("/s/")[0] : path)
+                                    + '/SupportCommunityLogin';
+                            }
+                        }
+                    }, {
+                        key: "exit",
+                        value: function exit(type, count) {
+                            count = count || 1;
+                            if (this.referer) {
+                                document.location.href = this.referer;
+                            } else {
+                                if (this.main && this.main.indexOf(document.location.origin) !== 0) {
+                                    document.location.href = this.main
+                                        + "?exit=1&domains=" + encodeURIComponent(JSON.stringify(this.fullDomainList));
+                                }
+                                if (!this.source) {
+                                    if (count < NUMBER_OF_ATTEMPTS_TO_REQUEST_SOURCE) {
+                                        var this_ = this;
+                                        setTimeout(function () {
+                                            this_.exit(type, ++count);
+                                        }, TIME_OF_ATTEMPTS_TO_REQUEST_SOURCE);
+                                    } else {
+                                        self.close();
+                                        alert('Please, close this window and reload tab!');
+                                    }
+
+                                    return null;
+                                }
+
+                                this.source.postMessage(this.eventsName[type], this.origin);
+                                setTimeout(function () {
+                                    self.close();
+                                }, CLOSE_TIMEOUT * 1000);
+                            }
+                        }
+                    }, {
+                        key: "filterDomains",
+                        value: function filterDomains(domains) {
+                            return domains.filter(function (domain) {
+                                return document.location.href.indexOf(domain + '/') !== 0;
+                            });
+                        }
+                    }, {
+                        key: "goNext",
+                        value: function goNext() {
+                            document.location.href = this.domains[0] + "/" + PAGE_NAME + document.location.search +
+                                "#" +
+                                encodeURIComponent(window.btoa(encodeURIComponent(JSON.stringify(this.nextParams))));
+                        }
+                    }, {
+                        key: "writeCookies",
+                        value: function writeCookies() {
+                            var d = new Date();
+
+                            for (var key in this.cookies) {
+                                this.setCookie(key, this.cookies[key], d.getFullYear() + 1, 1, 1, '/', '.'
+                                    + document.location.host, true);
+                            }
+                        }
+                    }, {
+                        key: "getDomains",
+                        value: function getDomains() {
+                            var this_ = this;
+                            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.SupportCommunityLoginController.getDomains}',
+                                function (domains, event) {
+                                    if (event.status) {
+                                        this_.fullDomainList = domains;
+                                        this_.domains = this_.filterDomains(domains);
+                                        if (this_.domains.length === 0) {
+                                            this_.exit("good");
+                                        } else {
+                                            this_.goNext();
+                                        }
+                                    } else {
+                                        console.error(event.message);
+                                        this_.exit("bad");
+                                    }
+                                }, {
+                                    escape: true
+                                });
+                        }
+                    }, {
+                        key: "nextParams",
+                        get: function get() {
+                            return {
+                                domains: this.domains,
+                                cookies: this.cookies,
+                                fullDomainList: this.fullDomainList,
+                                referer: this.referer,
+                                main: this.main
+                            };
+                        }
+                    }]);
+
+                    function Loginner() {
+                        _classCallCheck(this, Loginner);
+
+                        _defineProperty(this, "eventsName", {
+                            message: "message",
+                            good: "sc_login__good",
+                            bad: "sc_login__bad",
+                            partial: "sc_login__partial",
+                            init: "sc_login__init"
+                        });
+
+                        _defineProperty(this, "domains", []);
+
+                        _defineProperty(this, "fullDomainList", []);
+
+                        _defineProperty(this, "source", void 0);
+
+                        _defineProperty(this, "origin", void 0);
+
+                        _defineProperty(this, "referer", void 0);
+
+                        _defineProperty(this, "main", void 0);
+
+                        _defineProperty(this, "exitParam", void 0);
+
+                        _defineProperty(this, "isPopup", true);
+
+                        _defineProperty(this, "cookies", {});
+
+                        _defineProperty(this, "params", {});
+
+                        this.getParams();
+                        this.isPopup = !this.getUrlParameter("url");
+
+                        if (this.isPopup) {
+                            window.addEventListener(this.eventsName.message, this.listener.bind(this));
+                        }
+
+                        if (this.params.cookies) {
+                            this.cookies = this.params.cookies;
+                            this.domains = this.filterDomains(this.params.domains);
+                            this.referer = this.params.referer;
+                            this.fullDomainList = this.params.fullDomainList;
+                            this.main = this.params.main;
+                            this.writeCookies();
+
+                            if (this.domains.length > 0) {
+                                this.goNext();
+                            } else {
+                                this.exit("good");
+                            }
+                        } else {
+                            if (!this.main) {
+                                this.main = document.location.origin + document.location.pathname;
+                            }
+                            this.referer = this.getUrlParameter("url");
+                            this.exitParam = !!this.getUrlParameter("exit");
+                            try {
+                                this.fullDomainList = JSON.parse(this.getUrlParameter("domains"));
+                            }catch(e) {
+                                console.error(e);
+                            }
+
+                            if (this.exitParam) {
+                                this.referer = null;
+                                this.exit("good");
+                            } else {
+                                this.cookies = {
+                                    sid: this.getCookie('sid'),
+                                    sid_Client: this.getCookie('sid_Client')
+                                };
+                                this.getDomains();
+                            }
+                        }
+                    }
+
+                    return Loginner;
+                }();
+
+            new Loginner();
+        </script>
+    </head>
+    <body>
+    <div class="slds-scope slds-scope_my">
+        <div class="loader slds-align_absolute-center" style="height: 4rem;">
+            <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_inline slds-spinner_brand">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+        <div id="iframe-place">
+        </div>
+    </div>
+    </body>
+</apex:page>

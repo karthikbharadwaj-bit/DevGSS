@@ -1,0 +1,162 @@
+<apex:page showHeader="true"
+           applyBodyTag="false"
+           sidebar="false"
+           title="New Opportunity"
+           standardController="opportunity"
+           extensions="OpportunityCreationFormController"
+           action="{!checkRecordType}"
+           tabStyle="Opportunity">
+
+    <title>New Opportunity</title>
+    <apex:includeScript value="{!$Resource.OpportunityCreationFormDependencies + '/OCPage.js'}" />
+    <c:HerokuScripts />
+    <apex:includeLightning />
+
+    <style type="text/css">
+        html,
+        body,
+        .slds-scope:not(html),
+        .slds-scope body {
+            height: 100%;
+        }
+        html body.sfdcBody {
+            padding: 0;
+        }
+        .loading-page{
+            min-height: 34.55rem;
+        }
+        .noSidebarCell, #bodyTable{
+            padding: 0;
+        }
+        #angular {
+            display: none;
+        }
+    <!--Will make ng-lightning tool-tips to have a huge indent from the top.-->
+        .cdk-overlay-pane {
+  			position: absolute;
+        	top: 13%;
+  			pointer-events: auto;
+  			box-sizing: border-box;
+  			z-index: 1000;
+  			display: flex;
+        	max-width: 100%;
+        	max-height: max-content;
+			min-height: min-content;
+		}
+    </style>
+    <div id="angular" class="slds-scope"></div>
+
+    <div id="lightning"></div>
+    <div class="slds-scope loading-page" id="appLoadingContent">
+        <div class="slds-spinner_container">
+            <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="progressbar">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </div>
+    <div style="display: none;">
+        <!-- Fake form with input to get picklist values from SF -->
+        <apex:form id="fakeForm">
+            <apex:inputField value="{!opportunityObj.LeadSource}" id="LeadSourceField"/>
+            <apex:inputField value="{!opportunityContactRoleObj.Role}" id="ContactRoleField"/>
+        </apex:form>
+    </div>
+    <script type="text/javascript">
+        const toggleParams = { lightningComponent: null };
+        OCPage.toggle.init(toggleParams);
+        const appLoadingContent = document.getElementById('appLoadingContent');
+
+        const LeadSourceOptions = OCPage.getPicklistOptions('{!$Component.fakeForm.LeadSourceField}');
+        const leadSourceValues = LeadSourceOptions.values;
+        const leadSourceDefault = LeadSourceOptions.default;
+
+        const contactRoleValues = OCPage.getPicklistOptions('{!$Component.fakeForm.ContactRoleField}').values;
+
+        const serviceDependencies  = {!BLANKVALUE(serviceDependencies,'null')};
+        const brandValues    = {!BLANKVALUE(brandValues,'null')};
+        const brandConfiguration = {!BLANKVALUE(brandConfiguration,'null')};
+        const serviceValues  = {!BLANKVALUE(serviceValues,'null')};
+        const recordTypeName = '{!recordTypeName}';
+        const recordTypeId   = '{!recordTypeId}';
+        const retURL         = '{!retURL}';
+        const tiers          = {!BLANKVALUE(tiers,'null')};
+        const taskId         = '{!BLANKVALUE(taskId,'null')}';
+        const fromContact    = '{!BLANKVALUE(fromContact,'null')}';
+        const fromContactId    = '{!BLANKVALUE(fromContactId,'null')}';
+        const contactCenterUsers    = '{!BLANKVALUE(contactCenterUsers,'null')}';
+        const engageDigitalUsers    = '{!BLANKVALUE(engageDigitalUsers,'null')}';
+        const engageVoiceUsers    = '{!BLANKVALUE(engageVoiceUsers,'null')}';
+        const globalOfficeUsers    = '{!BLANKVALUE(globalOfficeUsers,'null')}';
+        const officeUsers    = '{!BLANKVALUE(officeUsers,'null')}';
+        const rcVideoUsers    = '{!BLANKVALUE(rcVideoUsers,'null')}';
+        const oppCreationFlow = '{!BLANKVALUE(oppCreationFlow,'null')}';
+        const retention      = '{!$CurrentPage.parameters.retention}';
+        const herokuEndpoint = '{!JSENCODE(billingWizardURL)}';
+        const sessionId      = '{!sId}';
+        const origin         = '{!JSENCODE(origin)}';
+        const biValues = {!BLANKVALUE(biValues,'null')};
+        const userId = '{!userId}';
+        const fromConversionContact = '{!BLANKVALUE(fromConversionContact,'null')}';
+        const fromConversionContactId = '{!BLANKVALUE(fromConversionContactId,'null')}';
+
+        $Lightning.use("c:OpportunityCreationForm", function() {
+            $Lightning.createComponent("c:OpportunityCreationFormWrapper", {
+                // isNGBSAllowed
+                retention:           retention,
+                recordTypeName:      recordTypeName,
+                recordTypeId:        recordTypeId,
+                brandValues:         brandValues,
+                brandConfiguration:  brandConfiguration,
+                serviceValues:       serviceValues,
+                leadSourceValues:    leadSourceValues,
+                contactRoleValues:   contactRoleValues,
+                serviceDependencies: serviceDependencies,
+                leadSource:          leadSourceDefault,
+                tiers:               tiers,
+                retURL:              retURL,
+                taskId:              taskId,
+                fromContact:         fromContact,
+                fromContactId:       fromContactId,
+                contactCenterUsers:  contactCenterUsers,
+                engageDigitalUsers:  engageDigitalUsers,
+                engageVoiceUsers:    engageVoiceUsers,
+                globalOfficeUsers:   globalOfficeUsers,
+                officeUsers:         officeUsers,
+                rcVideoUsers:        rcVideoUsers,
+                oppCreationFlow:     oppCreationFlow,
+                sessionId:           sessionId,
+                billingWizardURL:    herokuEndpoint,
+                origin:              origin,
+                biValues:           biValues,
+                fromConversionContact: fromConversionContact,
+                fromConversionContactId: fromConversionContactId
+            }, "lightning", function(component) {
+                appLoadingContent.style.display="none";
+                toggleParams.lightningComponent = component;
+            });
+        });
+
+        const angular = document.createElement('app-root');
+        angular.routeParams = {
+            name: 'opportunity-creation',
+            data: {
+                userId,
+                billingParams: {
+                    herokuEndpoint,
+                    sessionId,
+                    origin
+                },
+                brandValues,
+                serviceDependencies,
+                recordTypeId,
+                recordTypeName,
+                brandConfiguration,
+                leadSourceValues,
+                leadSourceDefault,
+                getRunningContactRecId: fromContactId
+            }
+        }
+        document.getElementById('angular').appendChild(angular);
+    </script>
+</apex:page>

@@ -1,0 +1,48 @@
+<template>
+    <article class="slds-card slds-card_narrow">
+        <header class="slds-card__header slds-grid">
+            <div class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:knowledge" alternative-text="Articles" ></lightning-icon>
+                </div>
+                <div class="slds-media__body slds-truncate">
+                    <h2><span class="slds-text-heading_small">Articles</span></h2></div>
+            </div>
+            <div class="slds-no-flex">
+            </div>
+        </header>
+        <div class="slds-card__body">
+                <div class="slds-p-horizontal_small">
+                    <div onkeyup={handleKeyUp} class={wrapperClass} data-message={minLenMessage}>
+                        <lightning-input
+                            name="search"
+                            label="Search when user hits the 'enter' key"
+                            onchange={handleClear}
+                            class={inputClass}
+                            value={queryValue}
+                            type="search"></lightning-input>
+                    </div>
+                    <div if:true={resultsLoaded}>
+                        <p class="slds-p-vertical_small">Results for "{queryTerm}":</p>
+                        <ul class="slds-has-dividers_around-space" if:false={loading} data-empty='No articles found'>
+                            <template for:each={results} for:item="item">
+                                <li class={item.cName}
+                                    draggable="true"
+                                    ondragstart={dragStart}
+                                    ondragend={dragEnd}
+                                    key={item.id}
+                                    data-id={item.id}
+                                    data-name={item.name}
+                                    title={item.name}
+                                    onmouseleave={highlightEnd}
+                                    onmouseover={highlightStart}>
+                                    <a href={item.link} draggable="false" target="_blank">{item.name}</a>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                    <lightning-spinner alternative-text="Loading" size="small" if:true={loading}></lightning-spinner>
+                </div>
+        </div>
+    </article>
+</template>

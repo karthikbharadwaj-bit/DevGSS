@@ -1,0 +1,153 @@
+<apex:page standardController="Opportunity" extensions="CampaignInfluenceRelatedListController">
+
+    <style>
+        .apexp .bPageBlock.apexDefaultPageBlock .pbHeader>table {
+            border: 0;
+            padding: 0;
+        }
+        .apexp .bPageBlock.apexDefaultPageBlock .pbHeader {
+            border: 0 !important;
+        }
+        .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin: 6px;
+        }
+        .opportunityTab .bPageBlock {
+            border-top: 3px solid #e5c130 !important;
+        }
+        .bRelatedList .opportunityBlock .pbTitle h3 {
+            margin: 0 !important;
+        }
+    </style>
+
+    <div class="bRelatedList">
+        <apex:form >
+            <apex:pageBlock title="Campaign Influence" mode="detail">
+
+                <apex:facet name="header">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                            <tr>
+                                <td class="pbTitle">
+                                    <!-- <img src="/img/s.gif" alt="" width="1" height="1" class="minWidth" title="" /> -->
+                                    <!-- <img src="/img/s.gif" alt="" class="relatedListIcon" title="" /> -->
+                                    <h3>Campaign Influence</h3>
+                                </td>
+                                <td class="pbButton">
+                                    <input type="button" class="btn" value="New" onclick="newCampaignInfluence()" />
+                                </td>
+                                <td class="pbHelp">&nbsp;</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </apex:facet>
+
+                <apex:actionFunction action="{!newCampaignInfluence}" name="newCampaignInfluence" rerender="redirect" />
+
+                <apex:pageBlockTable value="{!cInfluenceRList}" var="rItem" rendered="{!cInfluenceRList.size > 0}">
+
+                    <!-- Actions -->
+                    <apex:column styleClass="actionColumn">
+                        <apex:facet name="header">Action</apex:facet>
+
+                       <apex:commandLink value="Edit" onclick="beforeEdit('{!rItem.CampaignInfluence.Id}', '{!rItem.Campaign.Name}');" styleClass="actionLink" reRender="false" />
+                        &nbsp;|&nbsp;
+                        <apex:commandLink value="Del" onclick="beforeDelete('{!rItem.CampaignInfluence.Id}', '{!rItem.Campaign.Name}');" styleClass="actionLink" reRender="false" />
+                    </apex:column>
+
+                    <apex:column headerValue="Campaign Name">
+                        <!--apex:commandLink target="_blank" action="/{!rItem.Campaign.Id}" value="{!rItem.Campaign.Name}" /-->
+                        <apex:outputLink value="{!URLFOR($Action.Campaign.View,rItem.Campaign.Id)}" target="_parent">{!rItem.Campaign.Name}</apex:outputLink>
+                    </apex:column>
+
+                    <apex:column headerValue="Contact Name">
+                        <!--apex:commandLink target="_blank" action="/{!rItem.Contact.Id}" value="{!rItem.Contact.Name}" /-->
+                        <apex:outputLink rendered="{!!ISNULL(rItem.Contact)}" value="{!URLFOR($Action.Contact.View,rItem.Contact.Id)}" target="_parent">{!rItem.Contact.Name}</apex:outputLink>
+                    </apex:column>
+
+                    <apex:column headerValue="Primary Campaign Source">
+                        <img src="/img/checkbox_{!IF(rItem.isPrimaryCampaignSource == TRUE, '', 'un')}checked.gif" />
+                    </apex:column>
+
+                    <apex:column headerValue="Non Attributable Campaign">
+                        <img src="/img/checkbox_{!IF(rItem.isNonAttributable == TRUE, '', 'un')}checked.gif" />
+                    </apex:column>
+
+                    <apex:column headerValue="Member First Associated Date">
+                        <apex:outputText value="{!rItem.memberFirstAssociatedDate}"/>
+                    </apex:column>
+
+                    <apex:column headerValue="Contact Role">
+                        <apex:outputText rendered="!!ISNULL(rItem.ContactRole)" value="{!rItem.ContactRole}"/>
+                    </apex:column>
+
+                </apex:pageBlockTable>
+
+                <apex:outputPanel rendered="{!cInfluenceRList.size == 0}" styleClass="noRowsHeader">
+                    <table class="list" border="0" cellspacing="0" cellpadding="0">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th scope="col" class="noRowsHeader">No records to display</th>
+                            </tr>
+                        </tbody>
+                    </table>
+                </apex:outputPanel>
+
+                <apex:actionFunction name="editCI" immediate="true" action="{!editCampaignInfluence}" rerender="redirect">
+                    <apex:param name="cId" value="" />
+                </apex:actionFunction>
+
+                <apex:actionFunction name="deleteCI" immediate="true" action="{!deleteCampaignInfluence}" rerender="redirect">
+                    <apex:param name="cId" value="" />
+                </apex:actionFunction>
+
+                <!-- redirect -->
+                <apex:outputPanel id="redirect" >
+                    <apex:outputText rendered="{!shouldRedirect}">
+                        <script type="text/javascript">
+                            window.top.location.href = '{!redirectUrl}';
+                        </script>
+                    </apex:outputText>
+                </apex:outputPanel>
+
+            </apex:pageBlock>
+        </apex:form>
+    </div>
+
+    <script>    
+        function beforeEdit(cId, cName) {
+            event.preventDefault();
+
+            if (!restrictModifyGPAOpty(cName)) {
+                editCI(cId);
+            }
+        }
+
+        function beforeDelete(cId, cName) {
+            event.preventDefault();
+
+            if (!restrictModifyGPAOpty(cName)) {
+                var text = 'Are you sure?';
+                if(confirm(text)) deleteCI(cId);
+
+                return false;
+            }
+        }
+
+        function restrictModifyGPAOpty(cName) {
+            if ('{!isGPAOpportunity}' 
+                    && cName.startsWith('Sales_Purchasing') 
+                    && !{!$Permission.Edit_Sales_Purchasing_Campaign_for_GPA_Account}) {
+                        sforce.one.showToast({
+                            "title": "Error!",
+                            "message": "{!$Label.GPA_Campaign_Error}",
+                            "type": "error"
+                        });
+                        return true;
+            } else {
+                return false;
+            }
+        }
+    
+    </script>
+
+</apex:page>

@@ -1,0 +1,40 @@
+<aura:component description="button">
+    <aura:attribute name="tooltipText" type="String"/>
+    <aura:attribute name="variant" type="String" default="neutral"/>
+    <aura:attribute name="label" type="String"/>
+    <aura:attribute name="wrapperClass" type="String"/>
+    <aura:attribute name="class" type="String"/>
+    <aura:attribute name="disabled" type="Boolean" default="false"/>
+    <aura:attribute name="iconName" type="String"/>
+    <aura:attribute name="iconPosition" type="String" default="left"/>
+    <aura:attribute name="isBusy" type="Boolean" default="false"/>
+    <aura:attribute name="onclick" type="Aura.Action"/>
+    <aura:attribute name="defaultMargin" type="Boolean" default="true"/>
+    <aura:attribute name="type" type="String"/>
+    <aura:attribute name="show" type="Boolean" default="true"/>
+
+    <aura:if isTrue="{! v.show }">
+        <span class="{! v.wrapperClass }"
+              onmouseover="{!c.onMouseOver}"
+              onmouseout="{!c.onMouseOut}">
+            <lightning:button variant="{! v.variant }"
+                              class="{! join(' ', v.class,
+                                                  v.isBusy ? 'button__is-busy' : '',
+                                                  v.defaultMargin ? 'button__default-margin' : '') }"
+                              onclick="{! v.onclick }"
+                              disabled="{! or(v.disabled, v.isBusy) }"
+                              iconName="{! v.iconName }"
+                              iconPosition="{! v.iconPosition }"
+                              type="{! v.type }">
+
+                <aura:if isTrue="{! v.isBusy }">
+                    <lightning:spinner size="small"/>
+                </aura:if>
+
+                {! v.label }
+                {! v.body }
+
+            </lightning:button>
+        </span>
+    </aura:if>
+</aura:component>

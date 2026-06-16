@@ -1,0 +1,77 @@
+<aura:component>
+    <!-- resources -->
+    <ltng:require scripts="{! join(',',
+            $Resource.QuotingToolDependencies + '/QW.js',
+            $Resource.RCHelper + '/RC.js',
+            $Resource.underscoreJs + '/underscore-min.js') }"
+                  afterScriptsLoaded="{!c.qwHelperLoaded}"/>
+
+    <aura:attribute name="config" type="Map" />
+    <aura:attribute name="isProserv" type="Boolean" />
+    <aura:attribute name="isCC" type="Boolean" />
+    <!-- GOA changes start -->
+    <aura:attribute name="submitApprovalCallbackFn" type="object" />
+    <!-- GOA changes ends -->
+
+    <div>
+
+        <aura:if isTrue="{! and(not(v.isProserv), not(v.isCC)) }">
+
+            <aura:if isTrue="{!v.config.wizard.isBilling}">
+                <!-- Billing Wizard Component -->
+                <!-- GOA changes start -->
+                <c:BillingWizard config="{!v.config}"/>
+                <!-- GOA changes ends -->
+            </aura:if>
+        </aura:if>
+
+        <aura:if isTrue="{!!v.config.wizard.isBilling || v.isProserv || v.isCC}">
+            <c:QuotingToolWrapper config="{!v.config}" isProserv="{!v.isProserv}"
+                isCC                          = "{!v.isCC}"
+                currentOpportunity            = "{!v.config.old.currentOpportunity}"
+                opportunityId                 = "{!v.config.old.opportunityId}"
+                legalApprovalId               = "{!v.config.old.legalApprovalId}"
+                currencyIsoCode               = "{!v.config.old.currencyIsoCode}"
+                servicePlan                   = "{!v.config.old.servicePlan}"
+                rcTier                        = "{!v.config.old.rcTier}"
+                rcUserId                      = "{!v.config.old.rcUserId}"
+                paymentPlan                   = "{!v.config.old.paymentPlan}"
+                numberDLs                     = "{!v.config.old.numberDLs}"
+                contractDays                  = "{!v.config.old.contractDays}"
+                recordTypeName                = "{!v.config.old.recordTypeName}"
+                stageName                     = "{!v.config.old.stageName}"
+                effectiveNoOfEmployeesRange   = "{!v.config.old.effectiveNoOfEmployeesRange}"
+                defaultUpsellStatus           = "{!v.config.old.defaultUpsellStatus}"
+                tiers                         = "{!v.config.old.tiers}"
+                user                          = "{!v.config.old.user}"
+                quoteTypeValues               = "{!v.config.old.quoteTypeValues}"
+                initialTermMonthsValues       = "{!v.config.old.initialTermMonthsValues}"
+                specialTermsValues            = "{!v.config.old.specialTermsValues}"
+                termMonthsValues              = "{!v.config.old.termMonthsValues}"
+                statusValues                  = "{!v.config.old.statusValues}"
+                addOnsValues                  = "{!v.config.old.addOnsValues}"
+                accomodationValues            = "{!v.config.old.accomodationValues}"
+                featureAddOnsValues           = "{!v.config.old.featureAddOnsValues}"
+                legalEngagementTypeValues     = "{!v.config.old.legalEngagementTypeValues}"
+                changeOrderTypeValues         = "{!v.config.old.changeOrderTypeValues}"
+                proServStatusValues           = "{!v.config.old.proServStatusValues}"
+                proServForecastCategoryValues = "{!v.config.old.proServForecastCategoryValues}"
+                proServOfferTypeValues        = "{!v.config.old.proServOfferTypeValues}"
+                proServProjectComplexityValues= "{!v.config.old.proServProjectComplexityValues}"
+                proServSOWTypeValues          = "{!v.config.old.proServSOWTypeValues}"
+                ASAOwnerValues                = "{!v.config.old.ASAOwnerValues}"
+                PSSegmentValues               = "{!v.config.old.PSSegmentValues}"
+                TEValues                      = "{!v.config.old.TEValues}"
+                settings                      = "{!v.config.old.settings}"
+                accountId                     = "{!v.config.old.accountId}"/>
+        </aura:if>
+        <!-- Overlays -->
+        <c:Toasts />
+        <c:Popover />
+        <c:Spinner />
+        <c:LookupItemList />
+        <c:Modals />
+        <c:PhaseManagementLocationForm />
+
+    </div>
+</aura:component>

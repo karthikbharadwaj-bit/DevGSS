@@ -1,0 +1,200 @@
+<aura:component description="PhaseManagementCartItem">
+    <aura:attribute name="cartItem" type="Object"/>
+    <aura:attribute name="phase" type="Object"/>
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false"
+                    description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="preventDeselection" type="Boolean"/>
+    <aura:attribute name="hasSelectedCartItems" type="Boolean"/>
+
+    <aura:attribute access="private" name="isDraggable" type="Boolean" default="true"/>
+    <aura:attribute access="private" name="isCartItemClick" type="Boolean" default="true"/>
+
+    <!-- Phase Cart Item -->
+    <li class="{! join(' ', 'drag-item cart-item',
+            v.cartItem.selected ? 'drag-item_selected' : '',
+            lessthan(v.cartItem.quantity,v.cartItem.quantityMax) ? 'cart-item_partial' : '',
+            and(not(empty(v.phase)), empty(v.cartItem.pli_sfid)) ? 'cart-item_is-changed' : '',
+            v.cartItem.quantity != v.cartItem.quantityOrig ? 'cart-item_quantity-is-changed' : '',
+            v.cartItem.isMovable ? 'drag-item_is-movable' : '',
+            v.cartItem.isSite ? 'cart-item_is-site' : '',
+            v.cartItem.isDetailsShown ? 'cart-item_is-details-shown' : '',
+            v.cartItem.locations.length > 0 ? 'cart-item_has-locations' : ''
+            )}"
+        draggable="{! and(v.isDraggable, v.cartItem.isMovable) }"
+        data-prod_sfid="{! v.cartItem.prod_sfid }"
+        data-pli_sfid="{! v.cartItem.pli_sfid }"
+        data-phaseguid="{! v.phase.guid }"
+        ondragstart="{! c.onDragItemDragStart }"
+        ondragend="{! c.onDragEnd }"
+        onclick="{! c.onDragItemClick }">
+
+        <lightning:layout class="drag-item__header"
+                          verticalAlign="center">
+
+            <lightning:layoutItem class="cart-item__name slds-has-flexi-truncate">
+                <div class="slds-media slds-media_center">
+
+                    <div class="slds-media__figure">
+                        <!-- Expand Icon -->
+                        <aura:if isTrue="{! and(v.cartItem.isExpandable, v.phase)}">
+                            <lightning:buttonIcon iconName="utility:chevronright"
+                                                  alternativeText="Toggle details"
+                                                  variant="bare"
+                                                  class="cart-item__details-button slds-m-right_small"
+                                                  aura:id="toggleDetailsButton"
+                                                  onclick="{! c.toggleDetails }"/>
+                        </aura:if>
+
+                        <!-- Product Icon -->
+                        <lightning:icon iconName="{! v.cartItem.isSite ?
+                                'custom:custom107' :
+                                'standard:quotes' }"
+                                        alternativeText="Quote Line Item"
+                                        size="x-small"/>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div class="slds-media__body">
+                        <div class="slds-truncate">
+                        {! v.cartItem.name }
+                            <i class="{! v.cartItem.isSite ?
+                                    'cart-item__hower-label text-weak slds-m-left_x-small' :
+                                    'slds-hide' }">
+                                Site
+                            </i>
+                        </div>
+                        <aura:if isTrue="{!v.app.isOnOrder}">
+                            <span>
+                                (<lightning:formattedNumber value="{!v.cartItem.effectivePrice}" style="currency" currencyCode="{!v.cartItem.currencyIsoCode}" currencyDisplayAs="code"/> per item)
+                            </span>
+                        </aura:if>
+                    </div>
+
+                </div>
+            </lightning:layoutItem>
+
+            <span class="{! v.phase &amp;&amp; v.app.isLocationsEnabled &amp;&amp; v.cartItem.isHasLocations ? '' : 'slds-hide' }">
+                <span class="{! join(' ', '',
+                        v.cartItem.isValidationInProgress ? 'slds-hide' : '') }">
+                    <lightning:dynamicIcon type="score"
+                                           class="slds-m-horizontal--small"
+                                           option="{! v.cartItem.isAllLocationAdressesValid ? 'positive' : 'negative'}"/>
+                </span>
+
+                <span class="{! join(' ', 'slds-is-relative location__spinner',
+                        v.cartItem.isValidationInProgress ? '' : 'slds-hide')}">
+                    <lightning:spinner  alternativeText="Loading"
+                                        size="small" />
+                </span>
+            </span>
+
+            <lightning:layoutItem class="slds-col_bump-left slds-grid slds-grid_vertical-align-center">
+                <!-- Quantity -->
+                <div>
+
+                    <div class="cart-item_quantity-input slds-grid slds-grid_vertical-align-center"
+                         onclick="{! c.stopPropagation }">
+                        <lightning:input type="Number"
+                                         label="Quantity"
+                                         name="Quantity"
+                                         variant="label-hidden"
+                                         class="input_small slds-show_inline slds-m-right--xx-small"
+                                         max="{! v.cartItem.quantityMax }"
+                                         min="1"
+                                         value="{! v.cartItem.quantity }"
+                                         onblur="{!c.onDragItemQuantityInputBlur}"
+                                         onfocus="{!c.onDragItemQuantityInputFocus}"
+                                         aura:id="quantityInput"/>
+                        /
+                        <lightning:formattedNumber class="slds-m-left--xx-small"
+                                                   value="{! v.cartItem.quantityMax }"/>
+                    </div>
+
+                    <div class="cart-item_quantity-display">
+                        <aura:if isTrue="{! v.cartItem.locationQuantity > 0 }">
+                            <span class="slds-badge badge-bordered slds-m-right_xx-small">
+                                <lightning:icon iconName="utility:checkin"
+                                                size="xx-small"
+                                                alternativeText="Location Quantity"/>
+                                <span class="slds-p-left--xx-small">{!v.cartItem.locationQuantity} 
+                                    <aura:if isTrue="{!v.app.isOnOrder}">
+                                        (<lightning:formattedNumber value="{!mult(v.cartItem.locationQuantity, v.cartItem.effectivePrice)}" style="currency" currencyCode="{!v.cartItem.currencyIsoCode}" currencyDisplayAs="code"/>)
+                                    </aura:if>
+                                </span>
+                            </span>/
+                        </aura:if>
+                        <span class="slds-p-left_xxx-small">{!v.cartItem.quantityMax} 
+                            <aura:if isTrue="{!v.app.isOnOrder}">
+                                (<lightning:formattedNumber value="{!mult(v.cartItem.quantityMax, v.cartItem.effectivePrice)}" style="currency" currencyCode="{!v.cartItem.currencyIsoCode}" currencyDisplayAs="code"/>)
+                            </aura:if>
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <aura:if isTrue="{! v.cartItem.isDeleteAllowed }">
+                    <!-- Delete button -->
+                    <span data-prod_sfid="{! v.cartItem.prod_sfid }"
+                          data-phaseguid="{! v.phase.guid }"
+                          onclick="{! c.deleteItem }"
+                          class="drag-item__delete-button">
+
+                        <lightning:buttonIcon iconName="utility:delete"
+                                              class="slds-m-left--medium"
+                                              variant="bare"
+                                              alternativeText="Move this item to unassigned"/>
+                    </span>
+                </aura:if>
+
+            </lightning:layoutItem>
+
+        </lightning:layout>
+
+        <aura:if isTrue="{! v.cartItem.isExpandable }">
+            <lightning:layout class="{! join(' ', 'cart-item__details',
+                    v.cartItem.isDetailsShown ? '' : 'slds-hide' ) }">
+                <lightning:layoutItem class="slds-grow slds-p-around_small">
+
+                    <aura:if isTrue="{! v.cartItem.isUnassignedLocationsError }">
+                        <div class="slds-has-error slds-p-bottom_small slds-text-align_center">
+                            <p class="slds-form-element__help">Please assign all Locations to this Product</p>
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{! v.cartItem.isNoLocationsInfoError }">
+                        <div class="slds-has-error slds-p-bottom_small slds-text-align_center">
+                            <p class="slds-form-element__help">Please provide full info on all Locations</p>
+                        </div>
+                    </aura:if>
+
+                    <ul onmouseover="{!c.onMouseOverDetails}"
+                        onmouseout="{!c.onMouseOutDetails}">
+                        <aura:iteration items="{! v.cartItem.locations }" var="location">
+                            <c:PhaseManagementLocation app="{! v.app }"
+                                                       phase="{! v.phase }"
+                                                       cartItem="{! v.cartItem }"
+                                                       location="{! location }"
+                                                       unitPrice="{! v.cartItem.effectivePrice }"
+                                                       currencyIsoCode="{! v.cartItem.currencyIsoCode }"
+                                                       preventDeselection="{! v.preventDeselection }"
+                                                       isPhasesChanged="{! v.isPhasesChanged }"/>
+                        </aura:iteration>
+                    </ul>
+
+                    <div class="{! join(' ', 'slds-text-align_center slds-p-top_small',
+                            v.cartItem.unassignedQuantity > 0 ? '' : 'slds-hide') }">
+                        <lightning:button variant="neutral"
+                                          label="Add Location"
+                                          iconName="utility:add"
+                                          iconPosition="left"
+                                          onclick="{! c.addLocation }"/>
+                    </div>
+                </lightning:layoutItem>
+
+            </lightning:layout>
+        </aura:if>
+
+    </li>
+
+</aura:component>

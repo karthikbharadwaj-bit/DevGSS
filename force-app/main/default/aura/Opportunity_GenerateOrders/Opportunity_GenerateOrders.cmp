@@ -1,0 +1,173 @@
+<!--
+* Created By     : Ranjani N
+* Created Date   : 04-08-2020
+* Description    : Component invoked when 'Generate order' button is clicked on Opportunity in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+<aura:component controller="GenerateOrders" implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId,force:hasSObjectName" access="public" >
+       
+
+    <!--<ltng:require scripts="{!join(',', $Resource.rcnotify_Helper,
+                           $Resource.oppsynctest + '/OpportunityButton/buttons.js')}" afterScriptsLoaded="{!c.setup}" />!-->
+    <aura:attribute name="Fromclose" type="Boolean" default="false"/>
+    <aura:attribute name="oppId" type="String"/>
+    <aura:attribute name="isBillingOpportunity" type="Boolean" default="false"/>
+    <aura:attribute name="rcNumber" type="String"/>
+    <aura:attribute name="rcNumberInput" type="String"/>
+    <aura:attribute name="ccNumber" type="String"/>
+    <aura:attribute name="messages" type="List"/>
+    <aura:attribute name="infoMessage" type="String"/>
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+
+    <aura:attribute name="isGenerateorderprompt" type="Boolean" default="false"/>
+    <aura:attribute name="isRCnumberprompt" type="Boolean" default="false"/>
+    <aura:attribute name="isCCnumberprompt" type="Boolean" default="false"/>
+    <aura:attribute name="isMessageprompt" type="Boolean" default="false"/>
+    <aura:attribute name="promptContent" type="string"/>
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <aura:if isTrue="{!v.spinner}">
+        <div aura:id="spinnerId" class="slds-spinner_container">
+            <div class="slds-spinner_brand  slds-spinner slds-spinner_medium slds-is-relative" role="alert">
+                <span class="slds-assistive-text">Generating orders...</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </aura:if>
+
+    <aura:if isTrue="{!v.isMessageprompt}">
+        <div class="info-message slds-align_absolute-center slds-text-heading_small">
+            <span>{!v.infoMessage}</span>
+        </div>
+    </aura:if>
+
+    <aura:if isTrue="{!v.isGenerateorderprompt}">
+        <div class="slds-m-around_xx-large">
+            <!-- Modal/Popup Box starts here-isGenerateorderprompt -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Generate Orders</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <p><b>Is the customer porting in a number that will become the RingCentral main number?
+                            </b>
+                        </p>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="No"
+                                          title="No"
+                                          onclick="{! c.checkRC }"/>
+                        <lightning:button variant="brand"
+                                          label="Yes"
+                                          title="Yes"
+                                          onclick="{!c.provideRCNumber}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+
+        </div>
+    </aura:if>
+
+    <aura:if isTrue="{!v.isRCnumberprompt}">
+
+        <div class="slds-m-around_xx-large">
+            <!-- Modal/Popup Box starts here-isGenerateorderprompt -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Generate Orders</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <p><b>Please provide the number that will become the RingCentral main number: {!v.rcNumberInput}
+                                <lightning:input name="Ringcentralnum" value="{!v.rcNumberInput}"
+                                                 placeholder="Enter RingCentral main number..."
+                                                 label="RingCentral main number"/>
+                            </b>
+                        </p>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+
+                        <lightning:button variant="brand"
+                                          label="Submit"
+                                          title="Submit"
+                                          onclick="{!c.provideCCNumber}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+
+        </div>
+    </aura:if>
+
+    <aura:if isTrue="{!v.isCCnumberprompt}">
+
+        <div class="slds-m-around_xx-large">
+            <!-- Modal/Popup Box starts here-isGenerateorderprompt -->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                     aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Generate Orders</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <p>
+                            <b>
+                                {! v.promptContent}
+                                <lightning:input name="Customer primary call center number" value="{! v.ccNumber}"
+                                                 placeholder="Enter primary call center number..."
+                                                 label="Customer primary call center number"/>
+                            </b>
+                        </p>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="brand"
+                                          label="Generate Orders"
+                                          title="Generate Orders"
+                                          onclick="{!c.generateOrders}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+
+        </div>
+    </aura:if>
+
+</aura:component>

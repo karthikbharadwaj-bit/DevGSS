@@ -1,0 +1,99 @@
+<template>
+    <div class="slds-box slds-m-around_small background"> 
+        <h2 class="slds-text-heading_small title">Customer Information</h2>
+        <div class="slds-grid slds-gutters slds-form-element_horizontal">
+            <div class="slds-col slds-size_4-of-12 slds-m-left_x-small">
+                <lightning-input data-id="firstN" class="slds-m-top_small" name="firstName" variant="label-inline" type="text" label="First Name" onchange={handleInputChange} autocomplete="name" value={textBoxValues.firstName}></lightning-input>
+                <div data-id="lastName" class={lastNameRedBox}>
+                    <div class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>Last Name</div>
+                    <div class="slds-form-element__control">
+                        <input name="lName" type="text" class="slds-input" onchange={handleLastName} autocomplete="name" value={textBoxValues.lastName}/>
+                    </div>
+                    <div if:true={showLastNameErrorMsg} class="slds-form-element__help">
+                        {textValues.requiredFieldMessage}
+                    </div>
+                </div>
+                <lightning-input data-id="titleId" class="slds-m-top_small" name="titleN" variant="label-inline" type="text" label="Title" onchange={handleInputChange} autocomplete="name"></lightning-input>
+                <div data-id="companyName" class={companyNameRedBox}>
+                    <div class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>Company Name</div>
+                    <div class="slds-form-element__control"> 
+                        <input name="company" type="text" class="slds-input" onchange={handleCompanyName} autocomplete="name"/>
+                    </div>
+                    <div if:true={showCompanyNameErrorMsg} class="slds-form-element__help">
+                        {textValues.requiredFieldMessage}
+                    </div>
+                </div>
+                <div data-id="emailAddress" class={emailRedBox}>
+                    <div class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>Email Address</div>
+                    <div class="slds-form-element__control">
+                        <input name="email" type="text" class="slds-input" onchange={handleEmail} autocomplete="email" value={textBoxValues.email}/>
+                    </div>
+                    <div if:true={showEmailErrorMsg} class="slds-form-element__help">
+                        {textValues.requiredFieldMessage}
+                    </div>
+                </div>
+                <div data-id="contactPhone">
+                    <lightning-input 
+                        data-id="contactPhoneNumber" 
+                        class="slds-m-top_small" 
+                        name="contactPhoneNumber" 
+                        placeholder="(eg: 4082343254)" 
+                        variant="label-inline" 
+                        type="tel" 
+                        label="Contact Phone Number" 
+                        onchange={handleInputChange} 
+                        value={textBoxValues.contactPhoneNumber}
+                        autocomplete="tel">
+                    </lightning-input>
+                </div>
+            </div>
+
+            <div class="slds-col slds-size_3-of-12"></div>
+
+            <div class="slds-col slds-size_4-of-12">
+                <div class={leadSourceRedBox}>
+                    <div data-id="leadSource" class="slds-form-element__label"><p class="slds-m-right_xx-small required">*</p>Lead Source</div>
+                    <template if:true={leadSourceValues}>
+                            <div class="slds-form-element__control">
+                                <lightning-combobox
+                                    class={leadSourceRedBox}
+                                    data-id="lead-select"
+                                    name="LeadSource"
+                                    label="Lead Source"
+                                    variant="label-hidden"
+                                    placeholder="--None--"
+                                    options={leadSourceValues}
+                                    onchange={handleChangePicklist}>
+                                </lightning-combobox>
+                            </div>
+                        </template>
+                    <div if:true={showLeadSourceErrorMsg} class="slds-form-element__help">
+                        {textValues.requiredFieldMessage}
+                    </div>
+                </div>
+                <div class="slds-m-top_small">
+                    <template if:true={leadSourceIsSalesGenerated}>
+                        <div class="slds-form-element__label">Sales Generated Source</div>
+                        <lightning-combobox
+                            class="lead-select"
+                            name="saleGeneratedSource"
+                            label="Sales Generated Source"
+                            variant="label-hidden"
+                            placeholder="--None--"
+                            options={saleGeneratedSources}
+                            onchange={handleChangePicklistSalesGenerated}>
+                        </lightning-combobox>
+                    </template>
+                </div>
+                <lightning-input class="slds-m-top_small" read-only name="inContact DNIS" variant="label-inline" type="text" value={textValues.inContactDNIS}  label="inContact DNIS"></lightning-input>
+                <lightning-input class="slds-m-top_small" read-only name="inContact Contact Id" variant="label-inline" type="email" value={textValues.inContactContactId}  label="inContact Contact Id"></lightning-input>
+                <lightning-input class="slds-m-top_small" read-only name="inContact Skill" variant="label-inline" type="text" value={textValues.inContactSkill}  label="inContact Skill"></lightning-input>
+                <lightning-input class="slds-m-top_small" read-only name="Campaign Name" variant="label-inline" type="text" value={textValues.campaignName} label="Campaign Name"></lightning-input>
+                <lightning-input class="slds-m-top_small" read-only name="Campaign Product" variant="label-inline" type="text" value={textValues.campaignProduct}  label="Campaign Product"></lightning-input>
+                <lightning-input class="slds-m-top_small" read-only name="Campaign Description" variant="label-inline" type="text" value={textValues.campaignDescription}  label="Campaign Description"></lightning-input>
+                <lightning-input class="slds-m-top_small" name="supportAgentEmailAddress" variant="label-inline" type="text" label="Support Agent Email Address" onchange={handleInputChange} autocomplete="email" data-id="supportEmail"></lightning-input>
+            </div>
+            
+        </div>
+    </div>
+</template>

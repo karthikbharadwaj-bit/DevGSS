@@ -1,0 +1,69 @@
+<apex:page standardController="Case" extensions="CaseHighlighter"
+    id="CaseHighlighter" showHeader="false" sidebar="false" lightningStylesheets="true">
+    <style>
+.backCss {
+    background-color: #fffcce !important;
+    border: 1px solid #cd9e5a !important;
+    border-radius: 5px;
+    -moz-border-radius: 5px !important;
+    -webkit-border-radius: 5px !important;
+}
+</style>
+    <apex:outputPanel id="message"
+        rendered="{!IF(bRedAccount || bContactCenter || isCloudConnectCustomer || highlighterMsg != NULL || Case.isEscalated, true, false)}">
+        <div class="backCss">
+            <apex:panelGrid columns="3" id="Paneltable" style="background-color:#fffcce !important">
+                <apex:image id="warning" value="/resource/WarningRed" width="48.7"
+                    height="48.7" style="padding:5px;" />
+                <apex:outputpanel >
+                    <apex:outputpanel rendered="{!bRedAccount}">
+                        <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false">
+                            <!-- This is a Red Account - Please see <a href="/{!strRedAccountId}" target='_blank'><b>here</b></a> for details.-->
+                            <font color='#FFF'
+                                style="background: red; font-size: 15px; font-weight: bold;">
+                                This is a Red Account. Handle with Care. Please see <a
+                                href="/{!strRedAccountId}" target='_blank'
+                                style="font-weight: normal;"><b>here</b>
+                            </a> for details. </font>
+                        </apex:outputText>
+                        <br/>
+                    </apex:outputpanel>
+                    <apex:outputLabel escape="false" rendered="{!bContactCenter}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!bContactCenter}">
+                                <B>T</B>his is a Contact Center Account, please do NOT change the main account phone number without prior discussion with cc.desk@ringcentral.com                        
+                            </apex:outputText>
+                    <apex:outputpanel rendered="{!IF(highlighterMsg != NULL , true, false)}">
+                        <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false">
+                            <font color='#FFF'
+                                style="color: black; font-size: 15px; font-weight: bold;">This
+                                is a
+                                <b style="color: red;">{!highlighterMsg}</b> Case, please handle with care.</font>
+                        </apex:outputText>
+                        <br/>
+                    </apex:outputpanel>
+                    <apex:outputpanel rendered="{!isCloudConnectCustomer}">
+                        <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false">
+                            <font color='#FFF' style="color: black; font-size: 15px; font-weight: bold;"><b style="color: red;">CloudConnect</b> , please handle with care.</font>
+                        </apex:outputText>
+                        <br/>    
+                    </apex:outputpanel>
+                    <apex:outputpanel rendered="{!Case.isEscalated}">
+                        <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false">
+                            <p style="display:inline-block; color:red">Please handle with care. This case has been escalated.</p>
+                        </apex:outputText>
+                        <br/>    
+                    </apex:outputpanel>
+                </apex:outputpanel>
+            </apex:panelGrid>
+        </div>
+    </apex:outputPanel>
+    <!-- <div class="backCss">
+    <apex:outputText escape="false" rendered="{!IF(highlighterMsg != NULL , true, false)}">
+        <font color='#FFF' style="color:red;font-size:15px;font-weight:bold;">{!highlighterMsg}</font>
+     </apex:outputText>
+  </div> -->
+</apex:page>

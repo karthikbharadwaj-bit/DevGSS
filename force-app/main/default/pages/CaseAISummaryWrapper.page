@@ -1,0 +1,16 @@
+<apex:page sidebar="false" showHeader="true" standardStylesheets="false" lightningStylesheets="true">
+    <apex:includeLightning />
+
+    <div id="summaryContainer" style="min-height: 100vh; padding: 0;"></div>
+
+    <script>
+        const recordId = new URLSearchParams(window.location.search).get('recordId');
+
+        $Lightning.use("c:caseAISummaryAppHost", function () {
+            $Lightning.createComponent("c:caseAISummaryViewer",
+                { recordId: recordId },
+                "summaryContainer"
+            );
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,164 @@
+<aura:component description="Vat Number" controller="TaxExemptionController">
+   <!-- handlers -->
+   <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+   <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+   <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+
+   <!-- attribute -->
+   <aura:attribute name="accountId" type="Id"/>
+   <aura:attribute name="accVATNumber" type="String"/>
+   <aura:attribute name="fullVATNumber" type="String"/>
+   <aura:attribute name="brand" type="String"/>
+   <aura:attribute name="billingCountry" type="String"/>
+   <aura:attribute name="countryCode" type="CountryCodes__c"/>
+   <aura:attribute name="isValid" type="Boolean" default="true"/>
+   <aura:attribute name="errorMessage" type="String" />
+   <aura:attribute name="successGSTMessage" type="String" />
+   <aura:attribute name="swissVATMessage1" type="String" />
+   <aura:attribute name="swissVATMessage2" type="String" />
+   <aura:attribute name="swissVatIdExemptUrl" type="String" />
+
+   <aura:attribute name="validationMethod" type="String"/>
+
+   <aura:attribute name="UITheme" type="String" default=""/>
+   <aura:attribute name="isShowMessage" type="Boolean" default="false"/>
+   <aura:attribute name="isLoadSpinner" type="Boolean" default="false"/>
+   <aura:attribute name="cssStyle" type="String" default="slds-has-selection"/>
+   <aura:attribute name="isDisablesSave" type="Boolean" default="true"/>
+   <aura:attribute name="isDisablesValidate" type="Boolean" default="true"/>
+   <aura:attribute name="isEditable" type="Boolean" default="false"/>
+   <aura:attribute name="isVATCountry" type="Boolean" default="false"/>
+   <aura:if isTrue="{!v.countryCode.CountryNameShort__c == 'TW'}">
+    <div class="slds-form-element">
+        <div class="slds-form-element__help" ><aura:unescapedHtml value="{!format($Label.c.VatNumberInfoTaiwan, v.accountId)}" /></div>
+    </div>
+      <aura:set attribute="else">
+         <aura:if isTrue="{!or(v.validationMethod)}">
+            <div class="slds-form">
+               <div class="slds-form-element slds-form-element_horizontal">
+                  <div class="slds-form-element__control">
+                     <div>{!v.validationMethod}</div>
+                  </div>
+               </div>
+            </div>
+            <aura:set attribute="else">
+               <div class="slds-form slds-scrollable_none" role="list" >
+                  <h2>
+                     <div class="title-label">
+                        <aura:if isTrue="{!v.countryCode.CountryNameShort__c != null}">
+                           <aura:if isTrue="{!and(v.countryCode.CountryNameShort__c != null, v.countryCode.CountryNameShort__c == '')}">
+                              <b>{!v.countryCode.VATNumbersByName__c} Number</b>
+                           </aura:if>
+                        </aura:if>
+                     </div>
+                  </h2>
+                  <div class="slds-form__row">
+                     <div class="slds-form__item" role="listitem">
+
+                        <aura:if isTrue="{!v.countryCode.VATNumbersByName__c == 'VAT'}">
+                           <div class="slds-form-element__control slds-m-top_xxx-small">
+                              <div class="slds-m-top_small slds-m-right_x-small">{!v.countryCode.CountryNameShort__c}</div>
+                           </div>
+                           <div class="slds-form-element__control">
+                              <lightning:input messageWhenValueMissing="error" aura:id="vatNumberId" label=""
+                                 class="{!v.cssStyle}"
+                                 name="VATNumber__c"
+                                 value="{!v.accVATNumber}"
+                                 isLoading="{! v.isLoadSpinner }"
+                                 type="text"
+                                 onchange="{! c.onChange}"
+                                 required="false" messageWhenBadInput="{!v.errorMessage}">
+                              </lightning:input>
+                              <aura:if isTrue="{!v.isShowMessage}">
+                                 <aura:if isTrue="{!v.isValid}">
+                                    <div class="slds-form-element slds-has-success">
+                                       <div class="slds-form-element__help" id="success-message-unique-id">{!$Label.c.VatNumberInfoVatValid}</div>
+                                    </div>
+                                    <aura:set attribute="else">
+                                       <div class="slds-form-element slds-has-error">
+                                          <div class="slds-form-element__help" id="error-message-unique-id">{!v.errorMessage}</div>
+                                       </div>
+                                    </aura:set>
+                                 </aura:if>
+                              </aura:if>
+                           </div>
+                           <div class="slds-form-element__control slds-m-top_xxx-small">
+                              <lightning:button disabled="{!v.isDisablesValidate}" variant="brand-outline" label="Validate" title="Validate"
+                                 class="slds-m-top_xxx-small slds-m-left_xx-small small-button " onclick="{!c.handleClick}"/>
+                           </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.countryCode.VATNumbersByName__c == 'GST'}">
+                           <div class="slds-form-element__control">
+                              <lightning:input messageWhenValueMissing="error" aura:id="gstNumberId" label=""
+                                 class="{!v.cssStyle}"
+                                 name="VATNumber__c"
+                                 value="{!v.fullVATNumber}"
+                                 isLoading="{!v.isLoadSpinner }"
+                                 type="text"
+                                 onchange="{!c.onChange}"
+                                 required="false" messageWhenBadInput="{!v.errorMessage}">
+                              </lightning:input>
+                              <aura:if isTrue="{!v.isShowMessage}">
+                                 <aura:if isTrue="{!v.isValid}">
+                                    <div class="slds-form-element slds-has-success">
+                                       <div class="slds-form-element__help" id="success-message-unique-id">{!v.successGSTMessage}</div>
+                                    </div>
+                                    <aura:set attribute="else">
+                                       <div class="slds-form-element slds-has-error">
+                                          <div class="slds-form-element__help" id="error-message-unique-id">{!v.errorMessage}</div>
+                                       </div>
+                                    </aura:set>
+                                 </aura:if>
+                              </aura:if>
+                           </div>
+                           <div class="slds-form-element__control slds-m-top_xxx-small">
+                              <lightning:button disabled="{!v.isDisablesValidate}" variant="brand-outline" label="Save" title="Save"
+                                 class="slds-m-top_xxx-small slds-m-left_xx-small" onclick="{!c.saveClick }"/>
+                           </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.countryCode.VATNumbersByName__c == 'No validation'}">
+                           <div class="slds-form-element__control slds-m-top_xxx-small">
+                              <div class="slds-m-top_small slds-m-right_x-small">{!v.countryCode.CountryNameShort__c}</div>
+                           </div>
+                           <div class="slds-form-element__control">
+                              <lightning:input messageWhenValueMissing="error" aura:id="swissVatNumberId" label=""
+                                 class="{!v.cssStyle}"
+                                 name="VATNumber__c"
+                                 value="{!v.accVATNumber}"
+                                 isLoading="{! v.isLoadSpinner }"
+                                 type="text"
+                                 onchange="{! c.onChange}"
+                                 required="false" messageWhenBadInput="{!v.errorMessage}">
+                              </lightning:input>
+                              <aura:if isTrue="{!v.isShowMessage}">
+                                 <aura:if isTrue="{!v.isValid}">
+                                    <div class="slds-form-element slds-has-success">
+                                       <div class="slds-form-element__help" id="success-message-unique-id">{!$Label.c.SwissVatNumberInfoVatValid}</div>
+                                    </div>
+                                    <aura:set attribute="else">
+                                       <div class="slds-form-element slds-has-error">
+                                          <div class="slds-form-element__help" id="error-message-unique-id">{!v.errorMessage}</div>
+                                       </div>
+                                    </aura:set>
+                                 </aura:if>
+                              </aura:if>
+                              <aura:if isTrue="{!v.countryCode.CountryNameShort__c == 'CH'}">
+                                 <div class="slds-form-element">
+                                    <div class="slds-form-element__help" >{!v.swissVATMessage1}<a href="{!v.swissVatIdExemptUrl}" style="color: #0000FF;">VAT ID Exemption</a> {!v.swissVATMessage2}<a href="https://www.uid.admin.ch/" style="color: #0000FF;"> https://www.uid.admin.ch/</a></div>
+                                 </div>
+                              </aura:if>
+                           </div>
+                           <div class="slds-form-element__control slds-m-top_xxx-small">
+                              <lightning:button disabled="{!v.isDisablesSave}" variant="brand-outline" label="Save" title="Save"
+                                 class="slds-m-top_xxx-small slds-m-left_xx-small" onclick="{!c.saveClick }"/>
+                           </div>
+                        </aura:if>
+                     </div>
+                  </div>
+               </div>
+            </aura:set>
+         </aura:if>
+      </aura:set>
+   </aura:if>
+</aura:component>

@@ -1,0 +1,79 @@
+<template>
+    <div class="sc-case-info__header">
+        <h3>
+            <c-placeholder-loading width="500px" height="36px" type="line" if:true={loading}> </c-placeholder-loading>
+            {subject}
+        </h3>
+        <button class="sc-button" if:true={isClosed} onclick={duplicate}>{labels.duplicate}</button>
+    </div>
+    <div class="sc-case-info__body">
+
+        <template if:true={isGDPR}>
+            <h4>{labels.userRequiringPA}</h4>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_6-of-12 sc-case-info__value">
+                    <label>{labels.firstName}</label>
+                    <span>{GDPRInfo.firstName}</span>
+                </div>
+                <div class="slds-col slds-size_6-of-12 sc-case-info__value">
+                    <label>{labels.lastName}</label>
+                    <span>{GDPRInfo.lastName}</span>
+                </div>
+                <div class="slds-col slds-size_6-of-12 sc-case-info__value">
+                    <label>{labels.emailPA}</label>
+                    <span>{GDPRInfo.email}</span>
+                </div>
+                <div class="slds-col slds-size_6-of-12 sc-case-info__value">
+                    <label>{labels.phonePA}</label>
+                    <span>{GDPRInfo.phone}</span>
+                </div>
+            </div>
+            <lightning-input
+                type="toggle"
+                label={labels.citizenEU}
+                name="citizen"
+                message-toggle-active={labels.yes}
+                message-toggle-inactive={labels.no}
+                checked={GDPRInfo.citizen}
+                disabled
+            ></lightning-input>
+            <div class="slds-grid slds-wrap">
+                <div class="slds-col slds-size_6-of-12">
+                    <lightning-checkbox-group
+                        name="action"
+                        label={labels.describe}
+                        options={describeOptions}
+                        value={describeValue}
+                        disabled
+                    ></lightning-checkbox-group>
+                </div>
+                <div class="slds-col slds-size_6-of-12 slds-grid slds-grid_vertical-align-end">
+                    <lightning-checkbox-group
+                        name="actionAdditional"
+                        label=""
+                        options={describeAdlOptions}
+                        value={describeAdlValue}
+                        disabled
+                        if:true={describeDeleteSelected}
+                    ></lightning-checkbox-group>
+                </div>
+            </div>
+            <h4>{labels.description}</h4>
+        </template>
+        <div class="sc-case-info__placeholder" if:true={loading}>
+            <c-placeholder-loading width="100%" height="17px" type="line"> </c-placeholder-loading>
+            <c-placeholder-loading width="100%" height="17px" type="line"> </c-placeholder-loading>
+            <c-placeholder-loading width="100%" height="17px" type="line"> </c-placeholder-loading>
+            <c-placeholder-loading width="100%" height="17px" type="line"> </c-placeholder-loading>
+            <c-placeholder-loading width="40%" height="17px" type="line"> </c-placeholder-loading>
+        </div>
+        <div class="sc-case-info__description" lwc:dom="manual"></div>
+        <c-sc-case-detail-comments
+            comments={comments}
+            is-closed={isClosed}
+            case-id={id}
+            onsendcomment={handleNewComment}
+            if:false={loading}
+        ></c-sc-case-detail-comments>
+    </div>
+</template>

@@ -1,0 +1,60 @@
+<template>
+    <li class="slds-card slds-p-horizontal_medium slds-p-vertical_x-small slds-m-top_medium">
+        <!-- Conversion Info Section -->
+        <article class="slds-setup-assistant__step">
+            <div class="slds-setup-assistant__step-summary">
+                <div class="slds-media">
+
+                    <div class="slds-setup-assistant__step-summary-content slds-media__body slds-m-right_none">
+
+                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                            <template if:true={isExpandedView}>Enter&nbsp;</template>
+                            {label.LeadQualificationsection}
+                        </h3>
+
+                        <c-placeholder-loading type='line'
+                                            width="20rem"
+                                            if:true={isLoading}></c-placeholder-loading>
+                        <!-- Collapsed Preview -->
+                        <div class="slds-page-header__row" if:true={isCollapsedView}>
+
+                            <!-- Lead Qualification -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.SelectedQualification}
+                                </p>
+                                <h3 class="slds-text-heading_small">
+                                    <a href={selectedLeadQualification.url} tabindex="-1" target="_blank"
+                                    if:true={selectedLeadQualification}>
+                                        {selectedLeadQualification.name}
+                                    </a>
+                                    <span if:false={selectedLeadQualification}>{label.None}</span>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Expand -->
+                    <div class="slds-media__figure slds-media__figure_reverse" if:true={isCollapsedView}>
+                        <lightning-button  if:false={isLeadRecordTypeSales} onclick={toggleIsExpanded} label="Edit"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Block -->
+            <div class="slds-summary-detail__content" if:true={isExpandedView}>
+
+                <!-- Available Qualifications -->
+                <c-cl-lead-qualifications></c-cl-lead-qualifications>
+
+                <!-- Toggle Expand -->
+                <div class="slds-clearfix slds-m-top_small">
+                    <div class="slds-float_right">
+                        <lightning-button variant="brand" onclick={toggleIsExpanded} label="Apply"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+        </article>
+    </li>
+</template>

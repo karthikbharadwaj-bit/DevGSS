@@ -1,0 +1,158 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Attributes -->
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="quotes" type="Quote[]" />
+    <aura:attribute name="oppty" type="Quote[]" />
+    <aura:attribute name="enterpriseDealRequestButton" type="Map" default="{disabled:false,isBusy:false,forceDisabled:false}" />
+    <aura:attribute name="submitButton" type="Map" default="{disabled:false,isBusy:false}" />
+    <aura:attribute name="isBusy" type="Boolean" default="false" />
+    <aura:attribute name="readOnly" type="Boolean" default="false" />
+    <aura:attribute name="typeDefined" type="Boolean" default="false" />
+    <aura:attribute name="isChangeOrder" type="Boolean" default="false" />
+    <aura:attribute name="recallButtonVisible" type="Boolean" default="false" />
+    <aura:attribute name="tooltipText" type="String" />
+    <aura:attribute name="effectiveNoOfEmployeesRange" type="String" />
+    <aura:attribute name="stageName" type="String" />
+    <aura:attribute name="user" type="User"/>
+    <aura:attribute name="addOnsValues" type="String[]" />
+    <aura:attribute name="accomodationValues" type="String[]" />
+    <aura:attribute name="featureAddOnsValues" type="String[]" />
+    <aura:attribute name="legalEngagementTypeValues" type="String[]" />
+    <aura:attribute name="changeOrderTypeValues" type="String[]" />
+    <!-- Handlers -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChange}" />
+    <aura:handler name="change" value="{!v.askByCustomer}" action="{!c.askByCustomerChange}" />
+    <aura:handler name="change" value="{!v.legalAccountName}" action="{!c.legalAccountNameChange}" />
+    <aura:handler name="change" value="{!v.legalEngagementType}" action="{!c.legalEngagementTypeChange}" />
+    <aura:handler name="change" value="{!v.isBusy}" action="{!c.isBusyChange}" />
+    <aura:handler event="c:QuotingToolOpportunityInitEvent" action="{!c.initQuote}" />
+    <aura:handler event="c:QuotingToolPropagateUserEvent" action="{!c.propagateUser}"/>
+    <aura:handler event="c:QuotingToolLegalEngagedSpecialTOS" action="{!c.modalOpen}"/>
+    <!-- Approval Fields -->
+    <aura:attribute name="askByCustomer" type="String" />
+    <aura:attribute name="addOns" type="String" />
+    <aura:attribute name="accommodations" type="String" />
+    <aura:attribute name="trialPeriod" type="String" />
+    <aura:attribute name="featureAddOns" type="String" />
+    <aura:attribute name="legalEngagementType" type="String" />
+    <aura:attribute name="changeOrderTypes" type="String" />
+    <aura:attribute name="contractLink" type="String" />
+    <aura:attribute name="legalAccountName" type="String" />
+    <!-- Modal Submit -->
+    <div role="dialog" tabindex="-1" class="slds-modal content-centered" aura:id="modal">
+        <div class="slds-modal__container fit-content">
+            <div class="slds-modal__header">
+                <lightning:buttonIcon iconName="utility:close" variant="bare-inverse" size="large" onclick="{! c.modalClose }" alternativeText="Close window." class="slds-modal__close" disabled="{!v.isBusy}" />
+                <h2 class="slds-text-heading--medium">
+                    Engage Legal Request
+                </h2>
+            </div>
+            <div class="slds-modal--medium">
+                <!-- Modal Body -->
+                <div class="slds-modal__content slds-p-around--medium select-template__content slds-scrollable--y" style="max-height: calc(100vh - 13rem)">
+                	<div class="slds-col slds-grid add-margin-bottom" aura:id="legalEngagementTypeContainer">
+						<lightning:select class="is-required full-width" label="Legal Engagement Type" value="{!v.legalEngagementType}" aura:id="legalEngagementType" disabled="{!v.isBusy || v.readOnly || v.typeDefined}">
+							<option selected="{!'' == v.legalEngagementType}" value="">--None--</option>
+							<aura:iteration items="{!v.legalEngagementTypeValues}" var="opt">
+								<option selected="{!opt.value == v.legalEngagementType}" value="{!opt.value}">{!opt.label}</option>
+							</aura:iteration>
+						</lightning:select>
+					</div>
+
+                    <div class="slds-col slds-grid add-margin-bottom">
+                    	<div class="slds-form-element__control" >
+                            <label class="slds-form-element__label" for="">Add Ons</label>
+                            <div class="slds-select_container">
+								<ui:inputSelect aura:id="addOns" value="{!v.addOns}" multiple="true" disabled="{!v.isBusy || v.readOnly}">
+								    <aura:iteration items="{!v.addOnsValues}" var="opt">
+								         <ui:inputSelectOption text="{!opt.value}" label="{!opt.label}"/>
+								    </aura:iteration>
+								</ui:inputSelect>
+							</div>
+						</div>
+
+						<div class="slds-form-element__control add-margin-left">
+                            <label class="slds-form-element__label" for="">Accommodations</label>
+                            <div class="slds-select_container">
+								<ui:inputSelect aura:id="accomodations" value="{!v.accommodations}" multiple="true" disabled="{!v.isBusy || v.readOnly}">
+								    <aura:iteration items="{!v.accomodationValues}" var="opt">
+								         <ui:inputSelectOption text="{!opt.value}" label="{!opt.label}"/>
+								    </aura:iteration>
+								</ui:inputSelect>
+							</div>
+						</div>
+
+						<div class="slds-form-element__control add-margin-left">
+                            <label class="slds-form-element__label" for="">Feature Add Ons</label>
+                            <div class="slds-select_container">
+								<ui:inputSelect aura:id="featureAddOns" value="{!v.featureAddOns}" multiple="true" disabled="{!v.isBusy || v.readOnly}">
+								    <aura:iteration items="{!v.featureAddOnsValues}" var="opt">
+								         <ui:inputSelectOption text="{!opt.value}" label="{!opt.label}"/>
+								    </aura:iteration>
+								</ui:inputSelect>
+							</div>
+						</div>
+
+                        <aura:if isTrue="{!v.isChangeOrder}">
+                            <div class="slds-form-element__control add-margin-left">
+                                <label class="slds-form-element__label" for="">Change Order Types</label>
+                                <div class="slds-select_container">
+                                    <ui:inputSelect aura:id="changeOrderTypes" value="{!v.changeOrderTypes}" multiple="true" disabled="{!v.isBusy || v.readOnly}">
+                                        <aura:iteration items="{!v.changeOrderTypeValues}" var="opt">
+                                            <ui:inputSelectOption text="{!opt.value}" label="{!opt.label}"/>
+                                        </aura:iteration>
+                                    </ui:inputSelect>
+                                </div>
+                            </div>
+                        </aura:if>
+                    </div>
+
+                    <div class="slds-form-element is-required add-margin-bottom" aura:id="legalAccountNameContainer">
+                        <ui:inputText label="Full Legal Account Name" class="slds-input" labelClass="slds-form-element__label" value="{!v.legalAccountName}" aura:id="legalAccountName"  disabled="{!v.isBusy || v.readOnly}"/>
+                    </div>
+
+                    <div class="slds-col slds-grid add-margin-bottom">
+                        <div class="slds-col slds-grid four-fifth-width">
+                            <lightning:input label="Contract Link" class="full-width" value="{!v.contractLink}" disabled="{!v.isBusy || v.readOnly}"/>
+                        </div>
+                        <div class="slds-form-element one-fifth-width add-margin-left" aura:id="trialPeriodContainer">
+                            <lightning:input label="Trial Period" class="no-padding-right" value="{!v.trialPeriod}" type="Number" min="0" max="999" aura:id="trialPeriod" disabled="{!v.isBusy || v.readOnly}"/>
+                        </div>
+                    </div>
+
+                	<div class="slds-form-element is-required" aura:id="askByCustomerContainer">
+                        <ui:inputTextArea label='Ask(s) by customer and Sales Rep Notes. Give as much detail as possible, especially if you selected "Other".' class="slds-textarea" labelClass="slds-form-element__label" value="{!v.askByCustomer}" aura:id="askByCustomer" disabled="{!v.isBusy || v.readOnly}" />
+                    </div>
+                </div>
+                <!-- Modal footer -->
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--neutral cancel-button" onclick="{!c.modalClose}" disabled="{!v.isBusy}">
+                        Cancel
+                    </button>
+                    <button class="slds-button slds-button--neutral cancel-button" onclick="{!c.discard}" disabled="{!v.isBusy || v.readOnly}">
+                        Discard
+                    </button>
+                    <aura:if isTrue="{!v.recallButtonVisible}">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.recall}" aura:id="recallButton" disabled="{!v.isBusy}">
+                            <div class="slds-spinner--brand slds-spinner slds-spinner--small button-spinner" aria-hidden="false" role="alert">
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                            Recall
+                        </button>
+                    </aura:if>
+                    <aura:if isTrue="{!not(v.recallButtonVisible)}">
+                        <button class="slds-button slds-button--neutral slds-button--brand" onclick="{!c.submit}" aura:id="submitButton" disabled="{!v.isBusy || v.readOnly}">
+                            <div class="slds-spinner--brand slds-spinner slds-spinner--small button-spinner" aria-hidden="false" role="alert">
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                            Save
+                        </button>
+                    </aura:if>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slds-backdrop" aura:id="legal-name-modal-bg"></div>
+</aura:component>

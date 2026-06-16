@@ -1,0 +1,338 @@
+<apex:component access="global" controller="DQ_ApproveRejectEmailTemplateController">
+    <apex:attribute name="dealQualId" description="Hold the DQ Qualification Approver Id" type="String" assignTo="{!dqId}" />
+    <p>
+        Hi User,
+    </p>
+    <div>
+        The following Deal Qualification has been {!dqRecord.Status__c}.
+        <br/>
+        <a href="{!dqLink}">{!dqLink}</a>
+    </div>
+    <p>
+        
+    </p>
+    
+    
+    <div style="background-color: #70aac6;color: #ffffff;padding: 2px 5px 2px 5px;">
+        Opportunity Details
+    </div>
+    
+    <table width="100%">
+        <colgroup>
+            <col span="1" style="width: 10%;"/>
+            <col span="1" style="width: 1%;"/>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 10%;"/>
+            <col span="1" style="width: 1%;"/>
+            <col span="1" style="width: 20%;"/>
+        </colgroup>
+        <tr>
+            <td>Opportunity Name</td>
+            <td>:</td>
+            <td>{!dqRecord.Opportunity__r.Name}</td>
+            <td>Opportunity Owner</td>
+            <td>:</td>
+            <td>{!dqRecord.Opportunity__r.Owner.Name}</td>
+        </tr>
+        
+        <tr>
+            <td>Customer Name</td>
+            <td>:</td>
+            <td>{!dqRecord.Opportunity__r.Account.Name}</td>
+            <td>Customer Type</td>
+            <td>:</td>
+            <td>{!dqRecord.Opportunity__r.Account.Type}</td>
+        </tr>
+        
+        <tr>
+            <td>Partner Name</td>
+            <td>:</td>
+            <td>{!dqRecord.Opportunity__r.Partner_Account__r.Name}</td>
+            <td>Deal Type</td>
+            <td>:</td>
+            <td>{!dqRecord.Deal_Type__c}</td>
+        </tr>
+        <tr>
+            <td>Region</td>
+            <td>:</td>
+            <td>{!dqRecord.Region__c}</td>
+            <td>Segment</td>
+            <td>:</td>
+            <td>{!dqRecord.Segment__c}</td>
+        </tr>
+        
+        
+        <tr>
+            <td>Brand</td>
+            <td>:</td>
+            <td>{!dqRecord.Brand__c}</td>
+            <td>Opportunity Close Date</td>
+            <td>:</td>
+            <td>
+                <apex:outputText value="{0,date,MM/dd/yy}"> 
+                    <apex:param value="{!dqRecord.Opportunity__r.CloseDate}" /> 
+                </apex:outputText>
+            </td>
+        </tr> 
+        
+       
+    </table>
+    
+    <div style="background-color: #70aac6;color: #ffffff;margin-top: 15px;padding: 2px 5px 2px 5px;">
+        Quote Requirement
+    </div>
+    
+    <table width="100%">
+        <colgroup>
+            <col span="1" style="width: 10%;"/>
+            <col span="1" style="width: 1%;"/>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 10%;"/>
+            <col span="1" style="width: 1%;"/>
+            <col span="1" style="width: 20%;"/>
+        </colgroup>
+        <tr>
+            <td>Charge Term</td>
+            <td>:</td>
+            <td>{!dqRecord.Charge_Term__c}</td>
+              <td>Renewal Term</td>
+            <td>:</td>
+            <td>{!dqRecord.Renewal_Term__c}</td>
+        </tr>
+      
+        <tr>
+            <td>Initial Term</td>
+            <td>:</td>
+            <td>{!dqRecord.Initial_Term__c}</td>
+             <td>Package</td>
+            <td>:</td>
+            <td>{!packageName}</td>
+        </tr>
+       
+        <tr>
+            <td>Deal Size</td>
+            <td>:</td>
+            <td>{!dqRecord.Deal_Size__c}</td>
+            <td>Overall Discount</td>
+            <td>:</td>
+            <td>{!overallDiscount}</td>
+        </tr> 
+         <tr>
+            <td><b>Cost of One-Time items</b></td>
+            <td>:</td>
+            <td><b>{!dqRecord.Cost_of_One_Time_items__c}</b></td>
+            <td><b>New Annual Recurring Charges</b></td>
+            <td>:</td>
+            <td>
+                <b>{!annualRecurringCharges}</b>
+            </td>
+        </tr> 
+        <tr>
+            <td><b>Monthly Recurring Revenue</b></td>
+            <td>:</td>
+            <td><b>{!monthlyRecurringRevenue}</b></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr> 
+        <apex:outputPanel rendered="{!dqRecord.Is_ELA__c == 'No'}">
+            <tr>
+                <td>Is ELA</td>
+                <td>:</td>
+                <td>No</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+       </apex:outputPanel>
+    </table>
+    <br/>
+    <apex:outputPanel rendered="{!dqRecord.Is_ELA__c == 'Yes'}">
+        <table width="100%">
+            <colgroup>
+                <col span="1" style="width: 10%;"/>
+                <col span="1" style="width: 1%;"/>
+                <col span="1" style="width: 20%;"/>
+                <col span="1" style="width: 10%;"/>
+                <col span="1" style="width: 1%;"/>
+                <col span="1" style="width: 20%;"/>
+            </colgroup>
+            <tr>
+                <td>Is ELA</td>
+                <td>:</td>
+                <td>Yes</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr> 
+            <tr>
+                <td>Charge Term</td>
+                <td>:</td>
+                <td>{!dqRecord.Charge_Term__c}</td>
+                <td>Initial Terms</td>
+                <td>:</td>
+                <td>
+                    {!dqRecord.ELA_Initial_Terms__c}
+                </td>
+            </tr>
+            <tr>
+                <td>Start Date</td>
+                <td>:</td>
+                <td>{!dqRecord.Start_Date__c}</td>
+                <td>Minimum Baseline</td>
+                <td>:</td>
+                <td>
+                    {!dqRecord.Minimum_Baseline__c}
+                </td>
+            </tr>
+            <tr>
+                <td>Maximum Potential</td>
+                <td>:</td>
+                <td>{!dqRecord.Maximum_Potential__c}</td>
+                <td>Additional Info</td>
+                <td>:</td>
+                <td>
+                    {!dqRecord.Additional_Info__c}
+                </td>
+            </tr>
+        </table>
+    </apex:outputPanel>
+    
+    <div style="background-color: #70aac6;color: #ffffff;margin-top: 15px;padding: 2px 5px 2px 5px;">
+        Description and Justification
+    </div>
+    <table width="100%">
+         <colgroup>
+            <col span="1" style="width: 100%;"/>
+        </colgroup>
+        <tr>
+        	<td> {!dqRecord.Justification_Description__c}</td>
+        </tr>
+    </table>
+    
+    <div style="background-color: #70aac6;color: #ffffff;margin-top: 15px;padding: 2px 5px 2px 5px;">
+        Maximum Discounts
+    </div>
+    <table width="100%">
+        <colgroup>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 20%;"/>
+            <col span="1" style="width: 20%;"/>
+        </colgroup>
+        <tr style="text-align:left;">
+            <th>Product Category</th>
+            <th>Product</th>
+            <th>Discount Type</th>
+            <th>Quantity</th>
+            <th>Discount</th>
+        </tr>
+        <apex:repeat value="{!listOfDqQualDiscount}" var="discountItem">
+            <tr>
+                <td>{!discountItem.Product_Category__c}</td>
+                <td>{!discountItem.Product__r.Name}</td>
+                <td>{!discountItem.Discount_Type__c}</td>
+                <td>{!discountItem.Quantity__c}</td>
+                <td>
+                    <apex:outputText value="{0,number,0}%">
+                        <apex:param value="{!discountItem.Discount__c}" />
+                    </apex:outputText>
+                </td>
+            </tr>
+        </apex:repeat>
+    </table>
+    <div style="background-color: #70aac6;color: #ffffff;margin-top: 15px;padding: 2px 5px 2px 5px;">
+        Approval History
+    </div>
+    <table width="100%">
+        <tr style="text-align:left;">
+            <th>Submitted Date</th>
+            <th>Status</th>
+            <th>Assigned To</th>
+            <th>Actual Approver</th>
+            <th>Approve/Reject Date</th>
+            <th>Approver Reason</th>
+            <th>Comments</th>
+            <th>Overall Status</th>
+        </tr>
+        
+        <apex:variable var="outerIndex" value="{!0}" />
+        <apex:repeat value="{!dqApproverHistoryList}" var="approvalStatus">
+            <tr style="background:#A2D5FE;color:#ffffff;">
+                <td scope="col" colspan="8" style="color:white;font-weight:bold;">Step {!approvalStatus.stepNumber}</td>
+                <td>
+                     
+                </td>
+            </tr>
+            <apex:variable var="index" value="{!0}" />
+            <apex:repeat value="{!approvalStatus.SLAWrapperList}" var="approver">
+                <tr>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yy}"> 
+                            <apex:param value="{!approver.approverRec.Submitted_Date__c}" /> 
+                        </apex:outputText>
+                    </td>
+                    <td class="{!if(approver.approverRec.Status__c == 'Approved','textBold','')}">
+                        {!approver.approverRec.Status__c}
+                    </td>
+                    <td>
+                        {!approver.approverRec.Owner.Name}
+                    </td>
+                    <td>
+                        {!approver.approverRec.Approved_By__r.Name}
+                    </td>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yy}"> 
+                            <apex:param value="{!approver.approverRec.Approve_Reject_Date__c}" /> 
+                        </apex:outputText> 
+                    </td>
+                    <td style="white-space:normal;">
+                        {!approver.approverRec.Approval_Reason__c}
+                    </td>
+                    <td style="word-wrap:break-word;width:50px;white-space:normal;">
+                        {!approver.approverRec.Comments__c}
+                    </td>
+                    <td>
+                        <apex:outputPanel rendered="{!AND(!dqRecord.IsDQCreatedFromCPQOpp__c,!unifiedQuotingEnabled)}">
+                            <apex:outputPanel rendered="{!approver.approverRec.Approval_Step_Approver__r.Approval_Type__c == 'Notification'}">
+                                <div style="background:yellow;color:black;font-weight:bold;">
+                                    <div>&nbsp;&nbsp;[Notification Only]</div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!OR(dqRecord.IsDQCreatedFromCPQOpp__c,unifiedQuotingEnabled)}">
+                            <apex:outputPanel rendered="{!approver.approverRec.Status__c == 'Notification'}">
+                                <div style="background:yellow;color:black;font-weight:bold;">
+                                    <div>&nbsp;&nbsp;[Notification Only]</div>
+                                </div>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </td>
+                </tr>
+                <apex:variable var="index" value="{!index + 1}" />
+            </apex:repeat>
+            <apex:outputPanel rendered="{!approvalStatus.stepNumber == '1'}">
+                <tr style="background:#A2D5FE;color:#ffffff;">
+                    <td scope="col" colspan="8" style="color:white;font-weight:bold;">Approval Requested Submitted</td>
+                    <td>
+                        
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <apex:outputText value="{0,date,MM/dd/yy}"> 
+                            <apex:param value="{!approvalStatus.submittedDetails.Submitted_Date__c}" /> 
+                        </apex:outputText>
+                        
+                        
+                    </td>
+                    <td>Submitted</td>
+                    <td colSpan="7"> {!approvalStatus.submittedDetails.createdBy.Name}</td>
+                </tr>
+            </apex:outputPanel> 
+            <apex:variable var="outerIndex" value="{!outerIndex + 1}" />
+        </apex:repeat>
+    </table>
+    <span style="color:white;">{!refTemplateString}</span>  
+</apex:component>

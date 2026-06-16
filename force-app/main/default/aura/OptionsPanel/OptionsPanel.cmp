@@ -1,0 +1,30 @@
+<aura:component>
+    <aura:attribute name="data" type="Map" />
+    <aura:attribute name="params" type="Map" />
+    <aura:attribute name="panelId" type="String" />
+    <aura:attribute name="errorMap" type="Map" default="{}"/>
+    <aura:attribute name="isComplete" type="Boolean" default="false"/>
+    <aura:attribute name="isEditable" type="Boolean" default="false"/>
+    <aura:attribute name="isInline" type="Boolean" default="false"/>
+    <aura:attribute name="isWizardDataLoaded" type="Boolean" default="false"/>
+    <aura:attribute name="global" type="Map" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+    <aura:handler event="c:OptionsPanelEvent" action="{!c.onOptionsPanelEvent}" />
+
+    <div class="{!not(v.isEditable) ? 'slds-box panel-container slds-size--3-of-12 panel-container--compact' : 'slds-box panel-container slds-size--3-of-12'}">
+        <div class="{!'slds-panel-header' + (v.data.required ? ' required' : '')}">
+            <p class="slds-text-align_center slds-text-heading_medium">{!v.data.label}</p>
+        </div>
+        <div class="{!(v.global.isLoading ? 'panel-disabler slds-panel-body slds-scrollable--y' : 'slds-panel-body slds-scrollable--y')}">
+            <aura:if isTrue="{!empty(v.data.options)}">
+                <p class="slds-p-around_medium slds-text-align_center">There is no one option.</p>
+            </aura:if>
+
+            <aura:if isTrue="{!not(empty(v.data.options))}">
+                <c:OptionsPanelList panelId="{!v.panelId}" data="{!v.data}" isEditable="{!v.isEditable}" isWizardDataLoaded="{!v.isWizardDataLoaded}"/>
+            </aura:if>
+        </div>
+    </div>
+
+</aura:component>

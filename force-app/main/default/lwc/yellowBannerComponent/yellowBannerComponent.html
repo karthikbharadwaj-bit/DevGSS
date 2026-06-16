@@ -1,0 +1,39 @@
+<template>
+    <div id="LeadHighlighter" class={BookCalClass}>
+        <h3 class="slds-section__title">
+            <button
+                aria-controls="manageSection"
+                aria-expanded="true"
+                class="slds-button slds-section__title-action"
+                onclick={manageSection}
+            >
+                <lightning-icon
+                    icon-name="utility:switch"
+                    alternative-text="button icon"
+                    size="x-small"
+                    class="slds-section__title-action-icon slds-button__icon_left"
+                ></lightning-icon>
+                <span class="slds-truncate highlighter-section-background" title="Highlighter"
+                    >{sectionTitle}</span
+                >
+            </button>
+        </h3>
+        <div aria-hidden="false" class="slds-section__content" id="manageSection">
+            <c-placeholder-loading type="line" width="20rem" if:false={isLoaded}></c-placeholder-loading>
+            <template if:true={showLeadComponent}>
+                <c-lead-highlighter-component
+                    record-id={recordId}
+                    app-data={componentData}
+                ></c-lead-highlighter-component>
+            </template>
+
+            <template if:true={showContactComponent}>
+                <c-contact-highlighter-component
+                    record-id={recordId}
+                    app-data={componentData}
+                    contact-parent-account={componentData.contactParentAccount}
+                ></c-contact-highlighter-component>
+            </template>
+        </div>
+    </div>
+</template>

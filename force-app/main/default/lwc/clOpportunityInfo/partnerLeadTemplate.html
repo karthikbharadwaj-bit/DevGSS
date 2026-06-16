@@ -1,0 +1,218 @@
+<template>
+    <li if:true={showNewOpportunityCheckbox}
+        class="slds-card slds-p-horizontal_medium slds-p-vertical_x-small new-opportunity-card slds-m-top_medium slds-show_inline-block">
+        <!-- Create New Opportunity -->
+        <lightning-input type="checkbox" name="isCreateNewOpportunity"
+                         label="Create New Opportunity"
+                         disabled={isNotLoaded}
+                         checked={isCreateNewOpportunity}
+                         onchange={onIsCreateNewOpportunityChange}></lightning-input>
+    </li>
+
+    <li class={containerClasses}>
+        <div class="disable-overlay" if:false={isCreateNewOpportunity}>
+            <div class="slds-theme_shade slds-theme_alert-texture disable-overlay__backdrop"></div>
+            <div class="disable-overlay__message">
+               {label.NewOpportunitywillnotbecreated}&nbsp;
+                <template if:true={showNoOpportunityNewAccountMessage}>
+                    {label.LeadwillbeconvertedintonewAccountandContact}
+                </template>
+                <template if:true={showNoOpportunityExistingAccountMessage}>
+                    {label.LeadwillbeconvertedasaContactunderexistingAccount}
+                </template>
+            </div>
+        </div>
+        <article class="slds-setup-assistant__step">
+            <div class="slds-setup-assistant__step-summary">
+                <div class="slds-media">
+                    <div class="slds-setup-assistant__step-summary-content slds-media__body">
+                        <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                            <template if:true={isExpandedView}>Enter&nbsp;</template>
+                           {label.Opportunitysection}
+                        </h3>
+
+                        <c-placeholder-loading type='line'
+                                               width="20rem"
+                                               if:true={isLoading}></c-placeholder-loading>
+
+                        <!-- Collapsed Preview -->
+                        <div class="slds-page-header__row" if:true={isCollapsedView}>
+                            <!-- Opportunity Name -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.OpportunityName}
+                                </p>
+                                <h3 class="slds-text-heading_small">
+                                    <span if:true={opportunityName}>{opportunityName}</span>
+                                    <span if:false={opportunityName}>{label.None}</span>
+                                </h3>
+                            </div>
+                            <!-- Selected Business Identity -->
+                            <div class="slds-m-right_large" if:true={isSelectPackagesByBusinessIdentity}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.BusinessIdentity}
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedBusinessIdentity}>{selectedBusinessIdentity}</template>
+                                    <template if:false={selectedBusinessIdentity}>{label.None}</template>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+                            <!-- Selected Currency -->
+                            <div class="slds-m-right_large" if:true={isSelectPackagesByBusinessIdentity}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.Currency}
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedCurrency}>{selectedCurrency}</template>
+                                    <template if:false={selectedCurrency}>{label.None}</template>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+                            <!-- Selected Brand -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.Brand}
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedBrand}>{selectedBrand}</template>
+                                    <template if:false={selectedBrand}>{label.None}</template>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+                            <!-- Selected CloseDate -->
+                            <div class="slds-m-right_large">
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    Close Date
+                                </p>
+                                <h3 class="slds-text-heading_small" if:false={isPreselectLoading}>
+                                    <template if:true={selectedCloseDate}>{formattedCloseDate}</template>
+                                    <template if:false={selectedCloseDate}>{label.None}</template>
+                                </h3>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                    type="line"
+                                    width="5.35rem">
+                                </c-placeholder-loading>
+                            </div>
+                            <!-- Selected Service Plan -->
+                            <div class="slds-m-right_large" if:true={showSelectedServicePlan}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    {label.SelectedServicePlan}
+                                </p>
+                                <template if:false={isPreselectLoading}>
+                                    <h3 class="slds-text-heading_small">
+                                        {selectedServiceName}
+                                    </h3>
+                                    <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right"
+                                        if:true={selectedServiceId}>
+                                        <li class="slds-item">
+                                            <template if:true={selectedServiceChargeTerm}>
+                                                {selectedServiceChargeTerm}
+                                            </template>
+                                            <template if:false={selectedServiceChargeTerm}>
+                                                {label.None}
+                                            </template>
+                                        </li>
+                                        <li class="slds-item" if:true={selectedServicePrice}>
+                                            <lightning-formatted-number value={selectedServicePrice}
+                                                                        format-style="currency"
+                                                                        currency-display-as="code"
+                                                                        currency-code={selectedServicePriceCurrencyCode}>
+                                            </lightning-formatted-number>
+
+                                        </li>
+                                        <li class="slds-item" if:true={selectedServiceId}>{label.BillingSystem}
+                                            <template if:true={selectedServiceIsLegacy}> {label.Legacy}</template>
+                                            <template if:false={selectedServiceIsLegacy}> {label.NGBS}</template>
+                                        </li>
+                                    </ul>
+                                </template>
+                                <c-placeholder-loading if:true={isPreselectLoading}
+                                                       type="line"
+                                                       width="13rem">
+                                </c-placeholder-loading>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Edit Button -->
+                    <div class="slds-media__figure slds-media__figure_reverse" if:false={isExpanded}>
+                        <lightning-button onclick={toggleIsExpanded} label="Edit"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expanded Block -->
+            <div class="slds-summary-detail__content">
+                <lightning-layout class="slds-gutters slds-m-bottom_medium" if:true={isExpandedView}>
+                    <!-- Opportunity Name -->
+                    <lightning-layout-item size="3" padding="horizontal-small">
+                        <lightning-input type="text" name="opportunityName"
+                                         label="Opportunity Name"
+                                         value={opportunityName}
+                                         required
+                                         onchange={onOpportunityNameChange}></lightning-input>
+                    </lightning-layout-item>
+                    <!-- Billing System -->
+                    <lightning-layout-item padding="horizontal-small" if:true={isSelectPackagesByBusinessIdentity} >
+                        <div class="slds-m-right_large">
+                            <p class="slds-text-title slds-m-bottom_xx-small slds-m-top_xx-small">
+                                {label.BillingSystem}
+                            </p>
+                            <p>
+                                <template if:true={isLegacy}>{label.Legacy}</template>
+                                <template if:false={isLegacy}>{label.NGBS}</template>
+                            </p>
+                        </div>
+                    </lightning-layout-item>
+                    <!-- Brand -->
+                    <lightning-layout-item if:true={isSelectPackagesByBusinessIdentity} padding="horizontal-small">
+                        <div class="slds-m-right_large">
+                            <p class="slds-text-title slds-m-bottom_xx-small slds-m-top_xx-small">Brand</p>
+                            <p>{selectedBrand}</p>
+                        </div>
+                    </lightning-layout-item>
+                </lightning-layout>
+
+                <c-cl-service-plan-selector is-shown={isExpandedView}></c-cl-service-plan-selector>
+
+                <!-- Toggle Expand -->
+                <div class="slds-clearfix slds-m-top_small" if:true={isExpanded}>
+                    <div class="slds-float_right">
+                        <lightning-button variant="brand" onclick={toggleIsExpanded} label="Apply"></lightning-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Container -->
+            <ul class="slds-list_dotted slds-media__body slds-text-color_error slds-m-top_small">
+                <li if:true={showIsOpportunityNameMissingError}>
+                    <b> {label.Opportunitynameisrequired}</b><br>
+                    {label.Pleasespecifyanopportunityname}
+                </li>
+                <li if:true={showIsServicePlanMissingError}>
+                    <b>{label.ServicePlanisrequired}</b><br>
+                    {label.PleaseselectServicePlan}
+                </li>
+                <li if:true={showIsNgbsChargeTermMissingError}>
+                    <b>{label.ChargeTermisrequired}</b><br>
+                    {label.PleaseselectChargeTerm}
+                </li>
+                <li if:true={isCloseDateMissing}>
+                    <b>{label.CloseDateIsRequired}</b><br>
+                    {label.SelectCloseDate}
+                </li>
+            </ul>
+        </article>
+    </li>
+</template>

@@ -1,0 +1,61 @@
+<template>
+    <div class={formElementClass}>
+        <label if:true={label} class="slds-form-element__label">
+            <abbr if:true={required} title="required" class="slds-required">*</abbr>
+            {label}
+        </label>
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" data-id="container">
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right">
+                        <input class={inputClass} placeholder={placeholder} onfocus={onFocus} onblur={onBlur}
+                            oninput={onEnterData} type="text" data-id="input" value={inputText} disabled={disabled} />
+                        <span if:false={hideIcon}
+                            class="slds-icon_container slds-icon-utility-search slds-input__icon slds-input__icon_right icon-container">
+                            <lightning-icon icon-name={icon} size="x-small" class={iconClass} alternative-text="icon"
+                                onclick={removeItem}>
+                            </lightning-icon>
+                        </span>
+                    </div>
+                    <div class="slds-dropdown slds-dropdown_length-with-icon-7 slds-dropdown_fluid dropdown"
+                        role="listbox" data-id="combobox">
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <li class="slds-listbox__item" if:true={emptyResult} onmousedown={clearResults}>
+                                <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small"
+                                    role="option">
+                                    <span class="slds-media__body">
+                                        <span class="slds-truncate">
+                                            {label} was not found
+                                        </span>
+                                    </span>
+                                </div>
+                            </li>
+                            <template for:each={searchResults} for:item="searchResult">
+                                <li key={searchResult.value} data-value={searchResult.value} role="presentation"
+                                    onmousedown={onSelect} class="slds-listbox__item">
+                                    <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small list-item"
+                                        role="option">
+                                        <span class="slds-media__figure slds-listbox__option-icon">
+                                            <lightning-icon if:true={searchResult.selected} class="slds-icon check-icon"
+                                                icon-name="utility:check" size="x-small" alternative-text="icon"
+                                                data-id={searchResult.value}>
+                                            </lightning-icon>
+                                        </span>
+                                        <span class="slds-media__body">
+                                            <span class="slds-truncate" title={searchResult.label}>
+                                                {searchResult.label}
+                                            </span>
+                                        </span>
+                                    </div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div if:true={isError} class="slds-form-element__help">
+            {errorMessage}
+        </div>
+    </div>
+</template>

@@ -1,0 +1,60 @@
+<!--
+ - Created on 16.10.2018
+ -->
+<aura:component description="SupportCommunityContact" implements="forceCommunity:availableForAllPageTypes">
+    <aura:attribute name="adminPortalLink" type="String" default="#"/>
+    <aura:attribute name="contactName" type="String" default=""/>
+    <aura:attribute name="contactRole" type="String" default=""/>
+    <aura:attribute name="contactEmail" type="String" default=""/>
+    <aura:attribute name="contactPhone" type="String" default=""/>
+    <aura:attribute name="mainContact" type="String" default=""/>
+    <aura:attribute name="companyAddress" type="String" default=""/>
+    <aura:attribute name="show" type="Boolean" default="false"/>
+    <aura:attribute name="isGuest" type="Boolean" default="true"/>
+    <div class="{!(v.show == true?'':' blured')}">
+        <div class="cSupportCommunityContact__column">
+            <div class="cSupportCommunityContact__info">
+                <div class="info__title">{!$Label.c.SC_contact + ': '}</div>
+                <div class="info__row">
+                    <span class="label">{!$Label.c.SC_name + ': '}</span>
+                    <span class="value">{!v.contactName}</span>
+                </div>
+                <div class="info__row">
+                    <span class="label">{!$Label.c.SC_role + ': '}</span>
+                    <span class="value">{!v.contactRole}</span>
+                </div>
+                <div class="info__row">
+                    <span class="label">{!$Label.c.SC_email + ': '}</span>
+                    <span class="value">{!v.contactEmail}</span>
+                </div>
+                <div class="info__row">
+                    <span class="label">{!$Label.c.SC_phoneNumber + ': '}</span>
+                    <span class="value"><lightning:formattedPhone value="{!v.contactPhone}"></lightning:formattedPhone></span>
+                </div>
+            </div>
+            <div class="cSupportCommunityContact__info">
+                <div class="info__title">
+                    {!$Label.c.SC_mainContact + ': '}
+                    <span class="value">{!v.mainContact}</span>
+                </div>
+            </div>
+            <div class="cSupportCommunityContact__info">
+                <div class="info__title">{!$Label.c.SC_companyAddress + ': '}</div>
+                <div class="info__row">
+                    {!v.companyAddress}
+                </div>
+            </div>
+        </div>
+        <div class="cSupportCommunityContact__column">
+            <div class="cSupportCommunityContact__info cSupportCommunityContact__info_centered">
+                <div>{!$Label.c.SC_moreContactInfo}</div>
+                <aura:if isTrue="{!v.isGuest}">
+                    <div>{!$Label.c.SC_moreInfoContact}</div>
+                    <aura:set attribute="else">
+                        <div>{!$Label.c.SC_moreInfoLogin + '&nbsp;'}<a href="{!v.adminPortalLink}">{!$Label.c.SC_adminPortal}</a>.</div>
+                    </aura:set>
+                </aura:if>
+            </div>
+        </div>
+    </div>
+</aura:component>

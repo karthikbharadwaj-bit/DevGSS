@@ -1,0 +1,54 @@
+<template>
+    <br />
+    <div class={pageWrap}>
+        <lightning-card class='eachinfo leftwrap'>
+            <h3 slot="title">
+                <lightning-icon icon-name="standard:avatar" size="small"></lightning-icon>
+                &nbsp;&nbsp;Your Info
+            </h3>
+            <p class="slds-p-horizontal_small">
+                Name : {result.UserName}
+            </p>
+            <p class="slds-p-horizontal_small">
+                Company : {result.CompanyName}
+            </p>
+            <p class="slds-p-horizontal_small">
+                Partner Id : {result.PartnerId}
+            </p>
+            <p class="slds-p-horizontal_small">
+                Partner Country : {result.PartnerCountry}
+            </p>
+        </lightning-card><br />
+        <lightning-card class='eachinfo rightwrap'>
+            <h3 slot="title">
+                <lightning-icon icon-name="standard:omni_supervisor" size="small"></lightning-icon>
+                &nbsp;&nbsp;
+                <span if:true={result.isIgnite}>Your Partner Manager Info</span>
+                <span if:false={result.isIgnite}>Your Channel Manager Info</span>
+            </h3>
+
+            <template if:true={result.isInsideSalesRep}>
+                <p class="slds-p-horizontal_small">
+                    Name : {result.InsideSalesRepName}
+                </p>
+                <p class="slds-p-horizontal_small">
+                    Phone : {result.InsideSalesRepPhone}
+                </p>
+                <p class="slds-p-horizontal_small">
+                    Email : {result.InsideSalesRepEmail}
+                </p>
+            </template>
+            <template if:true={result.isAvaya}>
+                <p class="slds-p-horizontal_small">
+                    Name : {result.ChannelManagerName}
+                </p>
+                <!--<p class="slds-p-horizontal_small">
+            Phone :{result.ChannelManagerPhone}
+        </p>
+        <p class="slds-p-horizontal_small">
+            Email : {result.ChannelManagerEmail}
+        </p>-->
+            </template>
+        </lightning-card>
+    </div>
+</template>

@@ -1,0 +1,225 @@
+<template>
+    <template if:true={isShown}>
+        <p class="slds-text-heading_small" if:false={noQuoteForThisLead}>
+            {label.Selectserviceplan}
+        </p>
+
+        <c-placeholder-loading type='line'
+                               width="20rem"
+                               if:true={isLegacyServicesLoading}></c-placeholder-loading>
+    </template>
+
+    <div class="slds-m-bottom_small slds-summary-detail__content" if:true={isShown}>
+        <lightning-layout class="slds-gutters slds-m-bottom_small">
+
+            <!-- Brand (select) -->
+            <lightning-layout-item if:false={isSelectPackagesByBusinessIdentity} padding="horizontal-small" size="2">
+                <c-input-select label="Brand"
+                                options={brandFilterOptions}
+                                value={brandFilter}
+                                disabled={isBrandFilterDisabled}
+                                is-loading={isPreselectLoading}
+                                onchange={onBrandFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Business Identity -->
+            <lightning-layout-item if:true={isSelectPackagesByBusinessIdentity} padding="horizontal-small" size="2">
+                <c-input-select label="Business Identity"
+                                options={businessIdentityOptions}
+                                value={businessIdentityFilter}
+                                disabled={isBusinessIdentityDisabled}
+                                onchange={onBusinessIdentityFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Currency -->
+            <lightning-layout-item if:true={isSelectPackagesByBusinessIdentity} padding="horizontal-small" size="2">
+                <c-input-select label="Currency"
+                                options={currencyOptions}
+                                value={currencyFilter}
+                                disabled={isCurrencyDisabled}
+                                onchange={onCurrencyFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Type -->
+            <lightning-layout-item padding="horizontal-small" size="2" if:false={noQuoteForThisLead}>
+                <c-input-select options={typeOptions} label="Type"
+                                value={type}
+                                disabled={isTypeDisabled}
+                                onchange={onTypeChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Service -->
+            <lightning-layout-item padding="horizontal-small" size="3" large-device-size="2" if:true={isServiceFilterShown}>
+                <c-input-select label="Service" value={serviceFilter} options={serviceFilterOptions}
+                                disabled={isServiceFilterDisabled}
+                                is-loading={isPreselectLoading}
+                                onchange={onServiceFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Edition -->
+            <lightning-layout-item padding="horizontal-small" size="3" large-device-size="2" if:true={isEditionFilterShown}>
+                <c-input-select label="Edition" value={editionFilter} options={editionFilterOptions}
+                                disabled={isEditionFilterDisabled}
+                                is-loading={isPreselectLoading}
+                                onchange={onEditionFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Billing System -->
+            <lightning-layout-item if:false={isSelectPackagesByBusinessIdentity} padding="horizontal-small">
+                <div class="slds-m-right_large">
+                    <p class="slds-text-title slds-m-bottom_xx-small slds-m-top_xx-small">
+                        {label.BillingSystem}
+                    </p>
+                    <p>
+                        <template if:true={isLegacy}> {label.Legacy}</template>
+                        <template if:false={isLegacy}> {label.NGBS}</template>
+                    </p>
+                </div>
+            </lightning-layout-item>
+
+            <!-- Number of Existing Users -->
+            <lightning-layout-item padding="horizontal-small" if:true={isNumberOfExistingUsersShown}>
+                <div class="slds-m-right_large">
+                    <p class="slds-text-title slds-m-bottom_xx-small slds-m-top_xx-small">
+                        {label.NumberofExistingUsers}
+                    </p>
+                    <p>{account.numberOfLines}</p>
+                </div>
+            </lightning-layout-item>
+        </lightning-layout>
+
+        <lightning-layout class="slds-gutters">
+            <!-- Charge Term -->
+            <lightning-layout-item padding="horizontal-small" size="2" if:true={isChargeTermFilterShown}>
+                <c-input-select label="Charge Term" value={chargeTermFilter} options={chargeTermFilterOptions}
+                                disabled={isChargeTermFilterDisabled}
+                                onchange={onChargeTermFilterChange}></c-input-select>
+            </lightning-layout-item>
+
+            <!-- Forecasted Office Users -->
+            <lightning-layout-item if:true={showOfficeForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedUsers"
+                                 label={forecastedUsersLabel}
+                                 value={forecastedUsersFilter}
+                                 disabled={isPreselectLoading}
+                                 oncommit={onForecastedUsersFilterChange}
+                                 step="1"
+                                 required={isRequiredOffice}></lightning-input>
+            </lightning-layout-item>
+            <!-- Forecasted  Event  Users -->
+            <lightning-layout-item if:true={showEventForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedEventUsers"
+                                 label="Forecasted  Event  Users"
+                                 value={forecastedEventUsers}
+                                 disabled={isPreselectLoading}
+                                 oncommit={onFieldFilterChange}
+                                 step="1"
+                                 required={isRequiredEvent}>
+                </lightning-input>
+            </lightning-layout-item>
+            <!-- Forecasted Engage Digital Users -->
+            <lightning-layout-item if:true={showDigitalForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedDigitalUsers"
+                                 label="Forecasted Engage Digital Users"
+                                 value={forecastedDigitalUsers}
+                                 disabled={isPreselectLoading}
+                                 oncommit={onFieldFilterChange}
+                                 step="1"
+                                 required={isRequiredED}>
+                </lightning-input>
+            </lightning-layout-item>
+
+            <!-- Forecasted Engage Voice Users -->
+            <lightning-layout-item if:true={showVoiceForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedVoiceUsers"
+                                label="Forecasted Engage Voice Users"
+                                value={forecastedVoiceUsers}
+                                disabled={isDisabledInput}
+                                oncommit={onFieldFilterChange}
+                                step="1"
+                                required={isRequiredEV}>
+                </lightning-input>
+            </lightning-layout-item>
+
+            <!-- Forecasted RingCentral Video Users -->
+            <lightning-layout-item if:true={showVideoForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedRCVideoUsers"
+                                label="Forecasted RingCentral Video Users"
+                                value={forecastedRCVideoUsers}
+                                disabled={isPreselectLoading}
+                                oncommit={onFieldFilterChange}
+                                step="1">
+                </lightning-input>
+            </lightning-layout-item>
+
+            <!-- Forecasted Contact Center Users -->
+            <lightning-layout-item if:true={showCCForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedCCUsers"
+                                 label="Forecasted Contact Center Users"
+                                 value={forecastedCCUsersFilter}
+                                 disabled={isDisabledInput}
+                                 oncommit={onForecastedCCUsersFilterChange}
+                                 step="1"
+                                 required={isRequiredCC}>
+                </lightning-input>
+            </lightning-layout-item>
+
+            <!-- Forecasted Global Office Users -->
+            <lightning-layout-item if:true={showGlobalForecast} padding="horizontal-small" size="2">
+                <lightning-input class="custom-input" type="Number" name="forecastedGlobalUsers"
+                                label="Forecasted Global Office Users"
+                                value={forecastedGlobalUsers}
+                                disabled={isPreselectLoading}
+                                oncommit={onFieldFilterChange}
+                                step="1">
+                </lightning-input>
+            </lightning-layout-item>
+        </lightning-layout>
+
+        <lightning-layout class="slds-gutters slds-m-top_small">
+            <!-- Close Date -->
+            <lightning-layout-item padding="horizontal-small" size="2">
+                <div class="slds-form-element"><label class="slds-form-element__label" for="tooltip-showing-form-element-help-01">* Close Date</label>
+                    <div class="slds-form-element__icon">
+                        <button class="slds-button slds-button_icon" onmouseover={displayHelpText} onmouseout={displayOutHelpText} aria-describedby="help">
+                            <lightning-icon class="slds-button__icon" icon-name="utility:info" size="x-small" alternative-text="Help Text" title="Image" ></lightning-icon>
+                        </button>
+                        <div class="slds-popover slds-popover_tooltip slds-nubbin_bottom-left  slds-fall-into-ground" role="tooltip" data-id="help"
+                            style="position:absolute;top:-45px;left:-15px;width:200px;">
+                            <div class="slds-popover__body">Estimated Close Date of the Lead</div>
+                        </div>
+                    </div>
+                    <div class="slds-form-element__control">
+                        <lightning-input
+                            type="date"
+                            name="closeDate"
+                            data-id="closeDate"
+                            label="Close Date"
+                            placeholder="Pick a Date"
+                            min={today}
+                            value={closeDate}
+                            disabled={isPreselectLoading}
+                            onchange={onCloseDateChanged}
+                            message-when-value-missing={label.CloseDateIsRequired}
+                            message-when-range-underflow={label.CloseDateCannotBeInThePast}
+                            variant="label-hidden"
+                            required>
+                        </lightning-input>
+                    </div>
+                </div>
+            </lightning-layout-item>
+        </lightning-layout>
+    </div>
+    
+    <div class={classPlanSelector} if:false={isLoading}>
+        <c-lwc-spinner if:true={isShown}
+                       is-shown={isPreselectLoading}
+                       type="local"
+                       text="Loading Existing Subscription Info"></c-lwc-spinner>
+        <div class="no-quote-message" if:true={showNoQuoteMessage}>
+            {noQuoteMessage}
+        </div>
+        <c-cl-legacy-service-plan-selector is-shown={showServicePlanSelector}></c-cl-legacy-service-plan-selector>
+        <c-cl-ngbs-service-plan-selector is-shown={showServicePlanSelectorNBGS} is-prm-flow={isPrmFlow}></c-cl-ngbs-service-plan-selector>
+    </div>
+</template>

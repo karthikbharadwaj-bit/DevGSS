@@ -1,0 +1,100 @@
+<template>
+    <div class="slds-hide">{opportunityRecordId}</div>
+
+    <c-lwc-toasts></c-lwc-toasts>
+    <div class="expandable slds-scrollable_y" style={processOrderHeight}>
+        <div class="slds-backdrop slds-backdrop_open slds-is-absolute slds-align_absolute-center"
+             if:true={showRefreshBackdrop}>
+            <div class="slds-text-color_inverse slds-text-align_center">
+                <p class="slds-p-bottom_small">Click refresh after ICB screens are complete</p>
+                <button class="slds-button slds-button_neutral slds-text-color_inverse refresh-on-backdrop"
+                    data-ui-auto="refresh-button"
+                    onclick={onBackdropRefresh}>
+                    Refresh
+                </button>
+            </div>
+        </div>
+
+    <div class="main slds-p-horizontal_medium slds-p-bottom_medium expandable slds-scrollable_y" style={minHeightStyle}>
+        <lightning-spinner if:true={isShowSpinner} variant="brand" size="medium"></lightning-spinner>
+        <template if:true={isReady}>
+                <div class="slds-progress slds-progress_vertical">
+                    <ol class="slds-progress__list">
+                        <template for:each={items} for:item="item" for:index="idx">
+
+                            <!-- Blocked -->
+                            <li if:true={item.isBlocked} key={item.name} class="slds-progress__item" data-ui-auto={item.name}>
+                                <c-sn-progress-item
+                                    item={item}
+                                    steps={steps}
+                                    idx={idx}
+                                    last-idx={lastIdx}
+                                    class="slds-progress__item slds-grow"
+                                    onselected={onSelectedHandler}>
+                                </c-sn-progress-item>
+                            </li>
+
+                            <template if:false={item.isBlocked}>
+
+                                <!-- synced (sync with success) -->
+                                <li if:true={item.isSync} key={item.name} class="slds-progress__item slds-is-completed" data-ui-auto={item.name}>
+                                    <c-sn-progress-item
+                                        item={item}
+                                        steps={steps}
+                                        idx={idx}
+                                        last-idx={lastIdx}
+                                        class="slds-progress__item slds-grow"
+                                        onselected={onSelectedHandler}>
+                                    </c-sn-progress-item>
+                                </li>
+
+                                <template if:false={item.isSync}>
+                                    <!-- active -->
+                                    <template if:true={item.isActive}>
+                                        <li key={item.name} class="slds-progress__item slds-is-active" data-ui-auto={item.name}>
+                                            <c-sn-progress-item
+                                                item={item}
+                                                steps={steps}
+                                                idx={idx}
+                                                last-idx={lastIdx}
+                                                class="slds-progress__item slds-grow"
+                                                onselected={onSelectedHandler}>
+                                            </c-sn-progress-item>
+                                        </li>
+                                    </template>
+
+                                    <template if:false={item.isActive}>
+                                        <!-- not sync -->
+                                        <li if:false={item.isSkip} key={item.name} class="slds-progress__item" data-ui-auto={item.name}>
+                                            <c-sn-progress-item
+                                                item={item}
+                                                steps={steps}
+                                                idx={idx}
+                                                last-idx={lastIdx}
+                                                class="slds-progress__item slds-grow"
+                                                onselected={onSelectedHandler}>
+                                            </c-sn-progress-item>
+                                        </li>
+                                        <!-- skipped -->
+                                        <li if:true={item.isSkip} key={item.name} class="slds-progress__item slds-is-completed" data-ui-auto={item.name}>
+                                            <c-sn-progress-item
+                                                item={item}
+                                                steps={steps}
+                                                idx={idx}
+                                                last-idx={lastIdx}
+                                                class="slds-progress__item slds-grow"
+                                                onselected={onSelectedHandler}>
+                                            </c-sn-progress-item>
+                                        </li>
+                                    </template>
+                                </template>
+                            </template>
+                        </template>
+                    </ol>
+                </div>
+        </template>
+    </div>
+
+    <!-- https://www.lightningdesignsystem.com/components/progress-ring/ -->
+    </div>
+</template>

@@ -1,0 +1,51 @@
+<apex:page showHeader="false" title="{!$Label.site.authorization_required}" id="ATTUnauthorized">
+  <style>
+    .message {
+        background-color: #c00;
+        border-style: solid;
+        border-width: 1px;
+        color: #000;
+        padding: 6px 8px 6px 6px;
+        margin: 4px 20px;
+        color: white;
+    }
+    .message .messageText {
+        margin-left: 8px;
+        color: white;
+    }
+</style>
+<apex:pageMessage escape="false" summary="{!$Label.Prepare_Unused_Pages_For_Deletion_Part_1}" severity="error" strength="3" />
+  <apex:composition template="ATTOfficeAtHandExceptionTemplate">
+    <apex:define name="body">  
+      <center>
+        <apex:panelGrid bgcolor="white" columns="1"> 
+          <br/>
+          <br/>
+          <apex:panelGrid width="758" cellpadding="0" cellspacing="0" bgcolor="white" columns="1" styleClass="topPanelContainer" frame="none"> 
+            <br/>
+            <apex:outputPanel layout="block" styleClass="topPanel">
+              <apex:panelGrid width="758" cellpadding="0" cellspacing="0" bgcolor="white" columns="3" frame="none"> 
+                <apex:panelGroup >
+                  <apex:outputText styleClass="title" value="{!$Label.site.authorization_required}"/>      
+                  <br/>
+                  <br/>
+                  <apex:outputText value="{!$Label.site.login_or_register_first}"/>
+                  <br/>
+                  <apex:outputText value="{!$Label.site.click_forget_password}"/>
+                  <br/>
+                  <br/>
+                </apex:panelGroup>
+                <apex:outputText value=""/>
+                <apex:outputText value=""/>
+                <c:SiteLogin rendered="{!$Site.LoginEnabled && ISPICKVAL($User.UserType,'Guest')}" id="siteLogin"/>
+                <br/>
+              </apex:panelGrid> 
+            </apex:outputPanel>
+            <c:SitePoweredBy />
+          </apex:panelGrid> 
+        </apex:panelGrid>
+      </center>
+      <br/>
+    </apex:define>
+  </apex:composition>
+</apex:page>

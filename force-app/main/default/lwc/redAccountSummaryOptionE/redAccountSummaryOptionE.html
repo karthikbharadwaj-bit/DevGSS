@@ -1,0 +1,87 @@
+<template>
+    <div class="summary-wrapper">
+        <div class="summary-header" onclick={toggleExpand}>
+            <div class="ai-badge-container">
+              <div class="ai-badge">
+                <span class="ai-text">AI</span>
+              </div>
+            </div>
+            <span class="toggle-btn">{toggleLabel}</span>
+        </div>
+
+        <template if:true={isExpanded}>
+            <div class="expanded-body">
+                <template if:true={isLoading}>
+                    <div class="slds-align_absolute-center slds-p-around_medium">
+                        <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+                        <span class="slds-m-left_small slds-text-body_small">Fetching from AI...</span>
+                    </div>
+                </template>
+                <template if:false={isLoading}>
+                    <lightning-tabset variant="scoped">
+                        <lightning-tab label="📝 Overview" value="overview">
+                            <ul class="tab-list">
+                                <template for:each={overallPoints} for:item="p">
+                                    <li key={p}>{p}</li>
+                                </template>
+                            </ul>
+                        </lightning-tab>
+                        <lightning-tab label="🔴 Risk" value="risk">
+                            <ul class="tab-list">
+                                <template for:each={riskPoints} for:item="p">
+                                    <li key={p} class="risk-item">{p}</li>
+                                </template>
+                            </ul>
+                        </lightning-tab>
+                        <lightning-tab label="📋 Status" value="status">
+                            <ul class="tab-list">
+                                <template for:each={statusPoints} for:item="p">
+                                    <li key={p}>{p}</li>
+                                </template>
+                            </ul>
+                        </lightning-tab>
+                        <lightning-tab label="➡ Next Steps" value="nextsteps">
+                            <ul class="tab-list">
+                                <template for:each={nextStepsPoints} for:item="p">
+                                    <li key={p} class="next-item">{p}</li>
+                                </template>
+                            </ul>
+                        </lightning-tab>
+                    </lightning-tabset>
+                    <div class="bottom-bar">
+                        <div class="action-row">
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                title="Like" alternative-text="Like" onclick={submitLike}
+                                selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+                            <lightning-button-icon-stateful icon-name="utility:dislike" selected-icon-name="utility:dislike"
+                                title="Dislike" alternative-text="Dislike" onclick={submitDislike}
+                                selected={summaryIsDisliked} variant={dislikeVariant} disabled={summaryBusy}>
+                            </lightning-button-icon-stateful>
+                            <lightning-button-icon-stateful icon-name={copyIcon} selected-icon-name="utility:copy"
+                                title="Copy" alternative-text="Copy" onclick={handleCopy}>
+                            </lightning-button-icon-stateful>
+                            <template if:false={summaryReviewed}>
+                                <a href="javascript:void(0);" onclick={toggleFeedback} class="feedback-link">Give Feedback</a>
+                            </template>
+                            <template if:true={summaryReviewed}>
+                                <span class="thanks">Thanks!</span>
+                            </template>
+                        </div>
+                        <span class="powered-ai">Powered by <strong>AI</strong></span>
+                    </div>
+                    <template if:true={showFeedback}>
+                        <div class="feedback-row">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note..."
+                                value={feedback} oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="fb-actions">
+                                <lightning-button variant="brand" label="Send" onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button variant="neutral" label="Cancel" onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

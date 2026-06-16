@@ -1,0 +1,221 @@
+<aura:component controller="QuotingToolQuoteApexController">
+
+    <!-- Shared Attributes -->
+    <aura:attribute name="isCC" type="Boolean" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="quotes" type="Quote[]" />
+    <aura:attribute name="user" type="User" />
+    <aura:attribute name="numberOfDls" type="String" />
+    <aura:attribute name="state" type="Map" description="Contain common checks for use by components"/>
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="proServQuote" type="Quote" description="Quote with ProServ RecordType on Opportunity"/>
+    <aura:attribute name="ccProServQuote" type="Quote" description="Quote with CC ProServ RecordType on Opportunity"/>
+    <aura:attribute name="primaryQuote" type="Quote" description="Quote with primary flag on Opportunity"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+
+    <!-- Form -->
+    <aura:attribute name="details" type="String" default=""/>
+    <!-- Misc -->
+    <aura:attribute name="isBusy" type="Boolean" />
+    <aura:attribute name="readOnly" type="Boolean" />
+    <aura:attribute name="proServType" type="String" />
+    <aura:attribute name="modalInfo" type="Map" />
+    <aura:attribute name="caseReasons" type="List" />
+    <aura:attribute name="selectedCaseReasons" type="List"/>
+
+    <!-- Change Attribute handlers -->
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}"/>
+    <aura:handler name="change" value="{!v.proServQuote}" action="{!c.proServQuoteChanged}"/>
+    <aura:handler name="change" value="{!v.ccProServQuote}" action="{!c.ccProServQuoteChanged}"/>
+    <aura:handler name="change" value="{! v.Wizard }" action="{! c.wizardChanged }"/>
+
+    <!-- Event handlers -->
+    <aura:handler event="c:QuotingToolModalResponseEvent" action="{!c.modalResponse}" />
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="refreshCart" type="c:QuotingToolRefreshCartEvent" />
+    <aura:registerEvent type="c:PopoverEvent" name="popover" />
+
+    <!-- Buttons -->
+
+    <!-- Sync -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="syncButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="syncButton">
+        <lightning:button onclick="{!c.sync}"
+                          aura:id="syncButton"/>
+    </span>
+
+    <!-- Professional Services -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="engageProServButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="engageProServButton">
+        <lightning:button label="Engage ProServ"
+                          onclick="{!c.modalOpen}"
+                          aura:id="engageProServButton"/>
+    </span>
+
+    <!-- Cancel Professional Services -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="cancelProServButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="cancelProServButton">
+        <lightning:button label="Cancel ProServ Engagement"
+                          onclick="{!c.modalOpen}"
+                          aura:id="cancelProServButton"/>
+    </span>
+
+    <!-- CC Professional Services -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="engageCCProServButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="engageCCProServButton">
+        <lightning:button label="Engage CC ProServ"
+                          onclick="{!c.modalOpen}"
+                          aura:id="engageCCProServButton"/>
+    </span>
+
+    <!-- Cancel CC Professional Services -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="cancelCCProServButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="cancelCCProServButton">
+        <lightning:button label="Cancel CC ProServ Engagement"
+                          onclick="{!c.modalOpen}"
+                          aura:id="cancelCCProServButton"/>
+    </span>
+
+    <!-- Unlock -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="unlockButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="unlockButton">
+        <lightning:button label="Unlock"
+                          onclick="{!c.unlock}"
+                          aura:id="unlockButton"/>
+    </span>
+
+    <!-- ProServ is Out for Signature -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="proServIsOutForSignatureButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="proServIsOutForSignatureButton">
+        <lightning:button label="ProServ is Out for Signature"
+                          onclick="{!c.proServIsOutForSignature}"
+                          aura:id="proServIsOutForSignatureButton"/>
+    </span>
+
+    <!-- ProServ is Sold -->
+    <span class="slds-show_inline-block slds-m-left--xx-small slds-hide" aura:id="proServIsSoldButtonContainer"
+          onmouseover="{!c.showPopover}" onmouseout="{!c.hidePopover}" data-buttonauraid="proServIsSoldButton">
+        <lightning:button label="ProServ is Sold"
+                          onclick="{!c.proServIsSold}"
+                          aura:id="proServIsSoldButton"/>
+    </span>
+
+    <!-- Switch Service Plan -->
+    <lightning:button label="Switch Plan"
+                      variant="brand"
+                      class="slds-m-left--xx-small slds-hide"
+                      onclick="{!c.switch}"
+                      aura:id="switchButton"/>
+
+    <!-- Modal -->
+    <div role="dialog" tabindex="-1" class="slds-modal" aura:id="modal">
+        <!-- For egage CC ProServ -->
+        <aura:if isTrue="{!v.modalInfo.type == 'engageCCProServ'}">
+            <div class="slds-modal__container">
+
+                <!-- Modal Header -->
+                <div class="slds-modal__header">
+
+                    <!-- x button -->
+                    <lightning:buttonIcon iconName="utility:close"
+                                        variant="bare-inverse"
+                                        size="large"
+                                        onclick="{! c.modalClose }"
+                                        alternativeText="Close window."
+                                        class="slds-modal__close"
+                                        disabled="{!v.isBusy}" />
+
+                    <h2 class="slds-text-heading_medium slds-hyphenate black-font">
+                        {!v.modalInfo.title}
+                    </h2>
+
+                </div>
+
+                <div class="slds-modal--medium">
+
+                    <!-- Modal Body -->
+                    <div class="slds-modal__content slds-p-around_medium">
+
+                        <lightning:checkboxGroup name="Checkbox Group"
+                            label="{!v.modalInfo.textareaLabel}"
+                            options="{! v.caseReasons }"
+                            value="{! v.selectedCaseReasons }"
+                            onchange="{! c.selectReason }"/>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="slds-modal__footer">
+
+                        <!-- Cancel button -->
+                        <lightning:button label="Cancel" onclick="{!c.modalClose}" disabled="{!v.isBusy}" />
+
+                        <!-- Submit button -->
+                        <button class="slds-button slds-button--brand" onclick="{!c.submit}" disabled="{!v.isBusy}">
+                            Submit
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+            <!-- For engage ProServ and cancel (CC) ProServ -->
+            <aura:set attribute="else">
+                <div class="slds-modal__container">
+
+                    <!-- Modal Header -->
+                    <div class="slds-modal__header">
+
+                        <!-- x button -->
+                        <lightning:buttonIcon iconName="utility:close"
+                                                variant="bare-inverse"
+                                                size="large"
+                                                onclick="{! c.modalClose }"
+                                                alternativeText="Close window."
+                                                class="slds-modal__close"
+                                                disabled="{!v.isBusy}" />
+
+                        <h2 class="slds-text-heading--medium">
+                            {!v.modalInfo.title}
+                        </h2>
+
+                    </div>
+
+                    <div class="slds-modal--medium">
+
+                        <!-- Modal Body -->
+                        <div class="slds-modal__content slds-p-around--medium slds-scrollable--y"
+                                style="max-height: calc(100vh - 13rem)">
+
+                            <aura:if isTrue="{! not(empty(v.modalInfo.message)) }">
+                                <div class="slds-grid slds-m-bottom--small">
+                                    <div class="slds-col">
+                                        <span class="slds-icon_container slds-theme--info info-icon-container" style="margin-top:.2rem">
+                                            <lightning:icon iconName="utility:info" class="info-icon" size="x-small" />
+                                        </span>
+                                    </div>
+                                    <div class="slds-p-left--small">
+                                        {! v.modalInfo.message }
+                                    </div>
+                                </div>
+                            </aura:if>
+                        </div>
+
+                        <!-- Modal footer -->
+                        <div class="slds-modal__footer">
+
+                            <!-- Cancel button -->
+                            <lightning:button label="Cancel" onclick="{!c.modalClose}" disabled="{!v.isBusy}" />
+
+                            <!-- Submit button -->
+                            <button class="slds-button slds-button--brand" onclick="{!c.submit}" disabled="{!v.isBusy}">
+                                Submit
+                            </button>
+
+                        </div>
+                    </div>
+                </div>
+            </aura:set>
+        </aura:if>
+    </div>
+    <div class="slds-backdrop" aura:id="modalBg"></div>
+</aura:component>

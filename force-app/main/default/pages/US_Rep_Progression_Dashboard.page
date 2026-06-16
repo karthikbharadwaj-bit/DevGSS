@@ -1,0 +1,303 @@
+<apex:page standardcontroller="Employee__c" extensions="USCareerDashboardClass"  sidebar="false" showHeader="false" readOnly="true">
+<script> 
+ var previousOnload = window.onload; 
+ window.onload = function() { if (previousOnload) { previousOnload(); } setColor(); } 
+
+ function setColor() {
+        var LoginType= document.getElementById("LoginType").value;
+        var mnid = document.getElementById("managerid").value;  
+        var uprof = document.getElementById("UserProfile").value; 
+        var udiv = document.getElementById("UserDivision").value;
+        var lvlup = document.getElementById("forLevelUp").value;
+        
+        if(mnid ==''){
+            document.getElementById("lvlup").style.display = 'none';
+            document.getElementById("lvlupold").style.display = 'none';
+        }
+        else{
+            if(lvlup == "true"){
+                document.getElementById("lvlup").style.display = 'inline';
+                document.getElementById("lvlupold").style.display = 'none';
+            }    
+            else{
+                document.getElementById("lvlup").style.display = 'none';
+                document.getElementById("lvlupold").style.display = 'inline';
+            }
+        }
+       
+        if(LoginType == "All"){
+            document.getElementById("divAll").style.display = 'inline';
+            document.getElementById("divManager").style.display = 'inline';
+            document.getElementById("mainHolder").style.display = 'inline';
+        }
+        if(LoginType == "Manager"){
+            document.getElementById("divAll").style.display = 'none';
+            document.getElementById("divManager").style.display = 'inline';
+            document.getElementById("mainHolder").style.display = 'inline';
+        }
+        if(LoginType == "Agent"){
+            document.getElementById("divAll").style.display = 'none';
+            document.getElementById("divManager").style.display = 'none';
+            document.getElementById("mainHolder").style.display = 'none';
+        }
+        
+    }
+</script>
+<script>
+function search()
+{
+    sendvaltocontroller();
+}
+function search2()
+{
+    sendvaltocontroller2();
+}
+function openPopup(page,param){
+    if(param!=''){
+    window.open(page+'?tid='+param,'_blank', 'toolbar=yes, scrollbars=yes, resizable=yes, top=500, left=500, width=800, height=400')
+    }
+}
+</script>
+    <style>   
+  <!-- Css for Tab onIndustry Page -->  
+     .clsbtn{
+     width: 220px;
+     height: 32px;
+     background-position: 63px -183px !important;
+   }
+   <!-- Css  Hover for Tab Button onIndustry Page -->
+  .clsbtn:hover {
+    background-position: 63px -132px !important;
+    color: white !important;
+  }  
+ 
+</style>
+
+<apex:form >
+<body onload="setColor()">
+<apex:pageBlock >
+<br/>
+<div id="mainHolder" style="overflow: auto; max-height: 300px;">
+<table border="0" height="300px">
+<tr>
+    <td align="left" width="50%">
+        <div id="divAll">
+        <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:23px;font-weight: bold;text-align: middle;" value="Manager Name: "/><br/>    
+        <apex:selectList id="mnglist" size="1" onchange="search2()" value="{!selectedVal2}" multiselect="false" style="width:300px;"> 
+        <apex:selectOptions value="{!UserList2}" /> 
+        </apex:selectList><br/><br/>
+        </div>
+        <div id="divManager">
+        <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:23px;font-weight: bold;text-align: middle;" value="Agent Name: "/><br/>
+        <apex:selectList size="5" onchange="search()" value="{!selectedVal}" multiselect="false" style="width:300px;"> 
+        <apex:selectOptions value="{!repList}" /> 
+        </apex:selectList>
+        <br/><br/>
+        <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:23px;font-weight: bold;text-align: middle;" value="Current Role: "/><apex:outputText style="font-family: Book Antiqua,fantasy;font-size:23px;font-weight: bold;text-align: middle;" value="{!agentlevel}"/><br/>
+        </div>
+        <input type="hidden" id="managerid" value="{!MngerId}"/>
+        <input type="hidden" id="UserDivision" value="{!UserDivision}"/>
+        <input type="hidden" id="UserProfile" value="{!UserProfile}"/>
+        <input type="hidden" id="LoginType" value="{!strLogin}"/>
+        <input type="hidden" id="forLevelUp" value="{!forLevelUp}"/>
+        <apex:actionFunction name="sendvaltocontroller" action="{!checkops}"/>
+        <apex:actionFunction name="sendvaltocontroller2" action="{!checkops2}"/>
+    </td>
+    <td align="center" width="50%">
+        <div id="lvlup" style="display:none;"><apex:image url="{!$Resource.LevelUpBadge}" styleClass="imageStyle" title="{!strLvlQlf}{!strLvlQlf2}"/><br/></div>
+        <div id="lvlupold" style="display:none;"><apex:image url="{!$Resource.LevelUpBadgeOld}" styleClass="imageStyle" title="{!strLvlQlf}{!strLvlQlf2}"/><br/></div>
+        <apex:image url="{!UserfullPhoto}"/>
+        <br/>
+    </td>
+</tr>
+</table>
+</div>
+<br/>
+<div id="divStats">
+<table border="0">
+    <tr>
+        <td align="center" width="30%">
+            <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:20px;font-weight: bold;text-align: middle;" value="Tenure"/>
+        </td>
+        <td align="center" width="30%">
+            <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:20px;font-weight: bold;text-align: middle;" value="Role Tenure"/>
+        </td>
+        <td align="center" width="30%">
+            <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:20px;font-weight: bold;text-align: middle;" value="Data as of"/>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="30%">
+            <input type="button" id="tnrbtn" value="{!intTenureship} month/s"
+                title="" style="width: 180px; height:50px;font-size:20px" styleclass="clsbtn">
+            </input>
+                                    
+        </td>
+        <td align="center" width="30%">
+            <input type="button" id="rltnrbtn" value="{!intRoleTenureship} month/s"
+                title="" style="width: 180px; height:50px;font-size:20px" styleclass="clsbtn">
+            </input>
+                                    
+        </td>
+        <td width="30%" align="center">
+            <input type="button" id="datebtn" value="{!strCoachingDate}"
+                title="" style="width: 180px; height:50px;font-size:20px" styleclass="clsbtn">
+            </input>            
+                                
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3"><br/><br/></td>
+    </tr>
+    <tr>
+        <td colspan="3" align="left" width="60%">
+        <br/>
+        <apex:outputText style="font-family: Book Antiqua,fantasy;font-size:23px;font-weight: bold;text-align: middle;" value="Performance Metrics:"/>
+        <br/><br/>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="30%">
+            <b>ASP</b>
+        </td>
+        <td align="center" width="30%">
+            <b>Close Rate %</b>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td width="30%">
+        <apex:outputlink onclick="openPopup('/apex/USCareerDashboardPopup','{!selectedVal}'); return false;" title="Target: ${!IF(ASP_TARGET!=null,ASP_TARGET, '0')}" >
+                                <input type="hidden" id="agentlevel" value="{!agentlevel}"/>
+                                <input type="hidden" id="hdnasp" value="{!ASP}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="${!ASP}" minimum="0" maximum="{!IF(ASP_TARGET!=null,ASP_TARGET*2, ASP*2)}" steps="1000"/>
+                                     <apex:gaugeSeries dataField="data" donut="50" colorSet="{!strHexCode1},#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+        </apex:outputlink>                            
+        </td>
+        <td width="30%">
+        <apex:outputlink onclick="openPopup('/apex/USCareerDashboardPopup','{!selectedVal}'); return false;" title="Target: 100%">
+                                <input type="hidden" id="hdncloserate" value="{!CLOSE_RATE}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="{!CLOSE_RATE}%" minimum="0" maximum="200" steps="10"/>
+                                     <apex:gaugeSeries dataField="data1" donut="50" colorSet="{!strHexCode2},#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+        </apex:outputlink>                                
+        </td>
+    <td></td>
+    </tr>
+    <tr>
+        <td colspan="3" width="60%">
+            <br/>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="30%">
+            <b>Upsell %</b>
+        </td>
+        <td align="center" width="30%">
+            <b>Bookings Quality %</b>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td width="30%">
+        <apex:outputlink onclick="openPopup('/apex/USCareerDashboardPopup','{!selectedVal}'); return false;" title="Target: 100%"> 
+                                <input type="hidden" id="hdnupsell" value="{!UPSELL}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="{!UPSELL}%" minimum="0" maximum="200" steps="10"/>
+                                     <apex:gaugeSeries dataField="data2" donut="50" colorSet="{!strHexCode3},#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+        </apex:outputlink>  
+        </td>
+        <td width="30%">
+        <apex:outputlink onclick="openPopup('/apex/USCareerDashboardPopup','{!selectedVal}'); return false;" title="Target: 100%">
+                                <input type="hidden" id="hdnbookings" value="{!BOOKINGS_QUALITY_TARGET}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="{!BOOKINGS_QUALITY_TARGET}%" minimum="0" maximum="200" steps="10"/>
+                                     <apex:gaugeSeries dataField="data3" donut="50" colorSet="{!strHexCode4},#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+        </apex:outputlink>  
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="3" width="60%">
+            <br/>
+        </td>
+    </tr>
+    <tr>
+        <td align="center" width="30%">
+            <b>Net Bookings %</b>
+        </td>
+        <td align="center" width="30%">
+            <b># of Months having hit quota at 100%</b>
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td width="30%">
+        <apex:outputlink onclick="openPopup('/apex/USCareerDashboardPopup','{!selectedVal}'); return false;" title="Target: 100%"> 
+                                <input type="hidden" id="hdnupsell" value="{!NETBOOKINGS_MTD_TARGET}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="{!NETBOOKINGS_MTD_TARGET}%" minimum="0" maximum="200" steps="10"/>
+                                     <apex:gaugeSeries dataField="data4" donut="50" colorSet="{!strHexCode5},#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+        </apex:outputlink>                             
+        </td>
+        <td width="30%" align="right">
+                                <input type="hidden" id="hdnnoMonths" value="{!noMonths}"/>
+                                    <apex:chart height="100" width="250" animate="true" data="{!ChartData}">
+                                     <apex:axis type="Gauge" position="gauge" title="{!noMonths} month/s" minimum="0" maximum="{!noMonths*2}" steps="1"/>
+                                     <apex:gaugeSeries dataField="data5" donut="50" colorSet="#00ff00,#008fcc" tips="false">
+                                     <apex:chartLabel display="under"/></apex:gaugeSeries>
+                                    </apex:chart>
+                                
+        </td>
+        <td></td>
+    </tr>
+    <tr>
+        <td colspan="3" width="60%">
+            <br/>
+            <table border="0">
+                <tr>
+                    <td colspan="5" style="font-family: Book Antiqua,fantasy;font-size:12px;font-weight: bold;">Legend:</td>
+                </tr>
+                <tr>
+                    <td style="padding-left:1em;" bgcolor="#00ff00"></td>
+                    <td style="font-family: Book Antiqua,fantasy;font-size:12px;font-weight: bold;">Passed</td>
+                    <td style="padding-left:3em;" ></td>
+                    <td style="padding-left:1em;" bgcolor="#ff0000"></td>
+                    <td style="font-family: Book Antiqua,fantasy;font-size:12px;font-weight: bold;">Failed</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3" width="60%">
+            <br/>
+        </td>
+    </tr>
+    <tr>
+        <td width="60%" colspan="3" align="center">
+                       
+        </td>
+    </tr>
+    <tr>
+        <td colspan="3" width="60%">
+            <br/>
+        </td>
+    </tr>
+</table>
+<hr/> 
+</div>
+</apex:pageBlock>
+</body>
+</apex:form>
+</apex:page>

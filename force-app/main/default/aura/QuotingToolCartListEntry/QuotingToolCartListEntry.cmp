@@ -1,0 +1,377 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Shared -->
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="document" type="QuoteLineItem" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="areaCodeItems" type="List" default="[]" description="Saved Are Code Line Items"/>
+    <aura:attribute name="areaCodeItemsInOperation" type="List" default="[]" description="Saved and unsaved Are Code Line Items"/>
+    <aura:attribute name="areaCodeItemsOnQlIqty" type="Integer" default="0" description="How many Area Codes this qli have"/>
+    <aura:attribute name="deletingItems" type="Set" description="QLIs deleting in progress"/>
+    <aura:attribute name="quoteRecordTypeName" type="String" description="Quote RecordType Name considering old quotes with null record type"/>
+    <aura:attribute name="deletingAreaCodeItems" type="Set" description="Area Code Line Items delete in progress"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute name="index" type="Integer" />
+    <aura:attribute name="busy" type="Boolean" />
+    <aura:attribute name="params" type="Map" />
+    <aura:attribute name="currencyPrecision" type="Integer" default="2" />
+    <aura:attribute name="isEntChanging" type="Boolean" default="false" />
+    <aura:attribute name="isDetailsEnabled" type="Boolean" default="false" description="Show details block"/>
+    <aura:attribute name="isShowDetails" type="Boolean" default="false" description="Show details block"/>
+    <aura:attribute name="updateTrigger" type="Integer" description="Data update detection helper variable"/>
+    <aura:attribute name="hasAreaCodes" type="Boolean" default="false" />
+    <aura:attribute name="disabledQLI" type="Boolean" default="false" description="Disable qli" />
+    <aura:attribute name="unmatched" type="Boolean" default="false" description="can not match with entitlement" />
+    <aura:attribute name="cartItem" access="private" type="Object" description="Cart Item object taken from v.Wizard for this qli. Contains many useful checks" />
+    <aura:attribute name="isAllowedEditDiscount" type="Boolean" default="false" description="if user's profile is allowed to edit" />
+    
+    <!-- Displayed values -->
+    <aura:attribute name="quantity" type="Integer" default="0" />
+    <aura:attribute name="existingQuantity" type="Integer" default="0" />
+    <aura:attribute name="newQuantity" type="Integer" default="0" />
+
+    <!-- Initial values. Used to discard -->
+    <aura:attribute name="initialQuantity" type="Integer" />
+    <aura:attribute name="initialNewQuantity" type="Integer" />
+    <aura:attribute name="initialProvisionedByInContact" type="Boolean" />
+    <aura:attribute name="initialDiscount" type="Decimal" />
+    <aura:attribute name="initialDiscountType" type="String" />
+
+
+    <aura:attribute name="quantityByAreaCodes" type="Integer" default="0" description="Quantity calculated by Area Codes"/>
+    <aura:attribute name="discount" type="Decimal" />
+    <aura:attribute name="discountType" type="String" />
+    <aura:attribute name="yourPrice" type="Decimal" />
+    <aura:attribute name="provisionedByInContact" type="Boolean" default="false" description="QuoteLineItem.Provisioned_by_inContact__c"/>
+
+    <!-- Table calculation -->
+    <aura:attribute name="columns" type="Map" default="{}" description="Size of each column"/>
+    <aura:attribute name="group" type="Map" default="{}" />
+    <aura:attribute name="calcCellWidth" type="Boolean" default="true" />
+    <aura:attribute name="calcMode" type="Boolean" default="false" />
+    <aura:attribute name="isCurrencyDiscountType" type="Boolean" />
+    <aura:attribute name="isPercentageDiscountType" type="Boolean" />
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:QuotingToolDiscardCardEvent" action="{!c.discardCart}" />
+
+    <!-- Attribute change handlers -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChanged}" />
+    <aura:handler name="change" value="{!v.activePriceBookEntry}" action="{!c.activePriceBookEntryChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.deletingItems}" action="{!c.deletingItemsChanged}" />
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}" />
+
+    <aura:handler name="change" value="{!v.areaCodeItemsInOperation}" action="{!c.areaCodeItemsInOperationChanged}" />
+    <aura:handler name="change" value="{!v.areaCodeItemsOnQlIqty}" action="{!c.areaCodeItemsOnQlIqtyChanged}" />
+    <aura:handler name="change" value="{!v.updateTrigger}" action="{!c.updateTriggerChanged}" />
+    <aura:handler name="change" value="{!v.document}" action="{!c.qliChanged}" />
+
+    <!-- registered events -->
+    <aura:registerEvent name="refreshQuote" type="c:QuotingToolRefreshQuoteEvent" />
+    <aura:registerEvent name="askDelete" type="c:QuotingToolModalRequestEvent" />
+    <aura:registerEvent name="UpdateCart" type="c:QuotingToolUpdateCartEvent" />
+    <aura:registerEvent name="QuotingToolCartListEntryEvent" type="c:QuotingToolCartListEntryEvent" />
+
+    <tr class="qli slds-border_top" aura:id="table-row">
+
+        <!-- EXPAND/COLLAPSE BUTTON-->
+        <td aura:id="detailsActionCol" class="cart__details-action" onclick="{!c.toggleDetails}">
+            <aura:if isTrue="{!v.isDetailsEnabled}">
+                <span class="details-button slds-show_inline-block">
+                    <lightning:buttonIcon iconName="utility:chevronright"
+                                          alternativeText="Toggle details"
+                                          variant="bare"
+                                          aura:id="toggleDetailsButton"/>
+                </span>
+            </aura:if>
+        </td>
+
+        <!-- NAME & FAMILY -->
+        <td aura:id="nameCol" class="slds-grid cart__name" onclick="{!c.toggleDetails}">
+            <div>
+                <div class="slds-truncate"
+                     title="{!v.document.Product2.Name}"
+                     data-ui-auto="cart-item-product-name">
+                        {!v.document.Product2.Name}
+                </div>
+                <div class="slds-truncate cart-col--family slds-text-body--small"
+                     title="{!v.document.Product2.Family}"
+                     data-ui-auto="cart-item-product-family">
+                        {!v.document.Product2.Family}
+                </div>
+            </div>
+            <aura:if isTrue="{!v.document.Product2.Warning_Message__c}">
+                <span class="tooltip-position-fix" aura:id="warningMessage">
+                    <c:Tooltip  aura:id="warningMessageTooltip"
+                                text="{!v.document.Product2.Warning_Message__c}" />
+                </span>
+            </aura:if>
+        </td>
+
+        <!-- Icon -->
+        <td aura:id="iconsCol" class="cart__icons">
+            <c:QuotingToolCartListEntryIcons
+                    areaCodeItemsOnQlIqty="{!v.areaCodeItemsOnQlIqty}"
+                    aura:id="QuotingToolCartListEntryIcons"/>
+        </td>
+
+        <!-- CHARGE TERM -->
+        <td aura:id="planCol" class="cart__plan">
+            <div class="slds-truncate"
+                 title="{!v.document.Product2.Charge_Term__c}"
+                 data-ui-auto="cart-item-charge-term">
+                    {!v.document.Product2.Charge_Term__c}
+            </div>
+        </td>
+
+        <!-- QUANTITY -->
+        <td aura:id="qtyCol" class="cart__qty">
+            <div class="slds-truncate" data-ui-auto="cart-item-quantity">
+                <lightning:input aura:id="quantityInput"
+                                 name="quantityInput"
+                                 label="Quantity"
+                                 type="Number"
+                                 step="1"
+                                 class="{!join(' ' , 'entry-input entry-input--number entry-input--qty', v.hasAreaCodes ? 'slds-hide':'')}"
+                                 onblur="{!c.updateQuantity}"
+                                 value="{!v.quantity}"/>
+
+                <span onmouseover="{!c.mouseOverAreaCodesQty}" onmouseout="{!c.mouseOutAreaCodesQty}">
+                    <lightning:input label="Quantity"
+                                     name="quantityByAreaCodesInput"
+                                     type="Number"
+                                     class="{!join(' ' , 'entry-input entry-input--number entry-input--qty', v.hasAreaCodes ? '' : 'slds-hide')}"
+                                     disabled="true"
+                                     value="{!v.quantityByAreaCodes}"/>
+                </span>
+            </div>
+        </td>
+
+        <!-- EXISTING QUANTITY -->
+        <td aura:id="existingQtyCol" class="cart__existing-qty" data-ui-auto="cart-item-existing-quantity">
+
+            <!-- Existing Quantity Using Entitlement -->
+            <lightning:input aura:id="existingQuantityInput"
+                             name="existingQuantityInput"
+                             label="Existing Quantity"
+                             type="Number"
+                             step="1"
+                             class="entry-input entry-input--number slds-hide"
+                             value="{!v.existingQuantity}"/>
+
+            <!-- Existing Quantity Using Asset -->
+            <lightning:input aura:id="assetExistingQuantityInput"
+                             name="assetExistingQuantityInput"
+                             label="Existing Quantity"
+                             type="Number"
+                             step="1"
+                             class="entry-input entry-input--number slds-hide"
+                             disabled="true"
+                             value="{! v.document.Asset__r.Quantity }"/>
+        </td>
+
+        <!-- DELIVERED QUANTITY -->
+        <td aura:id="deliveredQtyCol" class="cart__delivered-qty" data-ui-auto="cart-item-delivered-quantity">
+            <lightning:input aura:id="deliveredQuantityInput"
+                             name="deliveredQuantityInput"
+                             label="Delivered Quantity"
+                             type="Number"
+                             step="1"
+                             class="entry-input entry-input--number slds-hide"
+                             disabled="true"
+                             value="{! v.document.Asset__r.Delivered_Quantity__c }"/>
+        </td>
+
+        <!-- NEW QUANTITY -->
+        <td aura:id="newTotalQtyCol" class="cart__new-total-qty" data-ui-auto="cart-item-new-quantity">
+            <lightning:input aura:id="newQuantityInput"
+                             name="newQuantityInput"
+                             label="New Total Quantity"
+                             type="Number"
+                             step="1"
+                             class="{!join(' ' , 'entry-input entry-input--number entry-input--qty slds-show_inline-block')}"
+                             onblur="{! c.updateNewQuantity }"
+                             value="{! v.newQuantity }"/>
+
+
+            <span class="entry-input__error-tooltip">
+                <c:Tooltip  aura:id="newQuantityTooltip"
+                            theme="error"/>
+            </span>
+        </td>
+
+        <!-- LIST PRICE -->
+        <td aura:id="listPriceCol" class="cart__list-price">
+            <div class="slds-grid slds-grid_vertical-align-center">
+
+                <div class="slds-truncate" title="{!v.document.UnitPrice}" data-ui-auto="cart-item-unit-price">
+                    <c:outputCurrency value="{!v.document.UnitPrice}"
+                                      currencyCode="{!v.document.CurrencyIsoCode}"
+                                      precision="{!v.currencyPrecision}"/>
+                </div>
+
+                <aura:if isTrue="{!v.document.PriceFromEntitlement__c}">
+                    <span style="margin-top: -8px;">
+                        <c:Tooltip text="List Price at purchase."
+                                   position="{! (v.index &lt; 1 ? 'bottom' : 'top') }"/>
+                    </span>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- YOUR PRICE -->
+        <td aura:id="yourPriceCol" class="cart__your-price">
+            <div class="slds-truncate" title="{!v.yourPrice}" data-ui-auto="cart-item-your-price">
+                <c:outputCurrency value="{!v.yourPrice}"
+                                  currencyCode="{!v.document.CurrencyIsoCode}"
+                                  precision="{!v.currencyPrecision}"/>
+            </div>
+        </td>
+
+        <!-- DISCOUNT VALUE -->
+        <td aura:id="discountCol" class="cart__discount"
+                                data-name="discountCol"
+                                data-ui-auto="cart-item-discount-value">
+            <lightning:input aura:id="discountInput"
+                             label="Discount"
+                             type="Number"
+                             step="any"
+                             name="discountInput"
+                             class="entry-input entry-input--number entry-input--dsc"
+                             formatter="decimal"
+                             onblur="{!c.updateDiscount}"
+                             value="{!v.discount}"
+            />
+        </td>
+
+        <!-- DISCOUNT TYPE -->
+        <td aura:id="discountTypeCol" class="cart__discount-type"
+                                            data-name="discountTypeCol"
+                                            data-ui-auto="cart-item-discount-type">
+            <lightning:select class="qli-select"
+                              value="{!v.discountType}"
+                              aura:id="discountTypeInput"
+                              name="discountTypeInput"
+                              label="Discount Type"
+                              onchange="{!c.updateDiscountType}">
+                <aura:if isTrue="{!v.isCurrencyDiscountType}">
+                    <option value="Currency">{!v.document.CurrencyIsoCode}</option>
+                </aura:if>
+                <aura:if isTrue="{!v.isPercentageDiscountType}">
+                    <option value="Percentage">%</option>
+                </aura:if>
+
+            </lightning:select>
+        </td>
+
+        <!-- TOTAL PRICE -->
+        <td aura:id="totalPriceCol" class="cart__total-price">
+            <aura:if isTrue="{!v.document.Zero_Quantity__c}">
+                <div class="slds-truncate" title="0" data-ui-auto="cart-item-total-price">
+                    <c:outputCurrency value="0"
+                                      currencyCode="{!v.document.CurrencyIsoCode}"
+                                      precision="{!v.currencyPrecision}"/>
+                </div>
+                <aura:set attribute="else">
+                    <div class="slds-truncate" title="{!v.document.TotalPrice}" data-ui-auto="cart-item-total-price">
+                        <c:outputCurrency value="{!v.document.TotalPrice}"
+                                          currencyCode="{!v.document.CurrencyIsoCode}"
+                                          precision="{!v.currencyPrecision}"/>
+                    </div>
+                </aura:set>
+            </aura:if>
+        </td>
+
+        <!-- POVISIONED BY INCONTACT -->
+        <td aura:id="provisionedByInContactCol"
+            class="cart__provisioned-by-incontact"
+            data-ui-auto="cart-item-provisioned-by-incontact">
+            <lightning:input type="checkbox"
+                             label="Should product go to CC Order Details?"
+                             name="ccOrderDetails"
+                             checked="{! v.provisionedByInContact }"
+                             variant="label-hidden"
+                             class="slds-hide"
+                             onchange="{! c.updateProvisionedByInContact }"
+                             aura:id="provisionedByInContact"/>
+        </td>
+
+        <!-- ACTIONS -->
+        <td aura:id="actionsCol" class="cart__actions">
+            <div class="slds-spinner--brand slds-spinner slds-spinner--small slds-hide"
+                 aria-hidden="false"
+                 role="alert"
+                 aura:id="spinner"
+                 data-ui-auto="cart-item-delete-spinner">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+            <a href="javascript:void(0);"
+               onclick="{!c.deleteItem}"
+               aura:id="delete-button"
+               data-ui-auto="cart-item-delete-button">
+                <lightning:icon iconName="utility:delete"
+                                size="x-small"
+                                class="slds-m-right--small slds-col slds-no-flex delete-icon"/>
+            </a>
+        </td>
+    </tr>
+
+    <!-- AreaCodes -->
+    <aura:if isTrue="{! and( v.isDetailsEnabled, v.document.isShowDetails ) }">
+
+        <tr class="qli__details default-area-codes-message">
+            <td class="area-codes-message-cell" colspan="11">
+                <p class="message slds-p-around--medium" aura:id="defaultAreaCodeMessage">
+                    There are no Area Code Line Items created for this product.
+                    It will be sent to the Funnel with Main Area Code (<span>{!v.quote.AreaCode__r.Name}</span>)
+                </p>
+            </td>
+        </tr>
+
+        <!-- Area Codes List -->
+        <aura:iteration items="{!v.areaCodeItemsInOperation}"
+                        var="areaCodeItem"
+                        indexVar="areaCodeIndex">
+            <aura:if isTrue="{! areaCodeItem.Quote_Line_Item__c == v.document.Id }">
+
+                <c:QuotingToolAreaCodeEntry
+                        areaCodeItem="{!areaCodeItem}"
+                        updateTrigger="{!v.updateTrigger}"
+                        busy="{!v.busy}"
+                        state="{!v.state}"
+                        columns="{!v.columns}"
+                        qli="{!v.document}"
+                        activePriceBookEntry="{!v.activePriceBookEntry}"
+                        group="{!v.group}"
+                        deletingAreaCodeItems="{!v.deletingAreaCodeItems}"
+                        Wizard="{! v.Wizard }"/>
+
+            </aura:if>
+        </aura:iteration>
+
+        <tr class="slds-hide"><!-- Dummy fix for B-7276 --></tr>
+
+        <!-- Add Area Codes Button  -->
+        <tr class="qli__details">
+            <td class="border-top--none" colspan="11">
+                <footer class="{!join(' ',
+                        'slds-align_absolute-center',
+                        v.hasAreaCodes ? 'slds-p-top--medium' : '' )}">
+                    <lightning:button variant="neutral"
+                                      label="Add Area Code Item"
+                                      iconName="utility:add"
+                                      iconPosition="left"
+                                      onclick="{!c.createAreaCodeItem}"
+                                      aura:id="addAreaCodeItemButton"/>
+                </footer>
+            </td>
+        </tr>
+    </aura:if>
+</aura:component>

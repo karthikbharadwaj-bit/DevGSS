@@ -1,0 +1,33 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" >
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:attribute name="UK" type="String" default="" />
+    <aura:attribute name="US" type="String" default="" />
+    <aura:attribute name="current" type="Map" default=" {'label': 'US', 'value': 'en_US'}" />
+    <aura:attribute name="options" type="List" default="[
+    {'label': 'US', 'value': 'en_US'}
+    ]"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleEvent}"/>
+    <div>
+        <div class="slds-context-bar__item slds-context-bar__dropdown-trigger slds-dropdown-trigger slds-dropdown-trigger_click">
+
+                <span class="slds-truncate title" title="{!v.current.label}">{!v.current.label}</span>
+
+            <div class="slds-context-bar__icon-action slds-p-left_none">
+                <button class="slds-button slds-button_icon slds-button_icon slds-context-bar__button" aria-haspopup="true" title="Open menu item submenu">
+                    <lightning:icon iconName="utility:chevrondown" size="xx-small" alternativeText="" />
+                </button>
+            </div>
+            <div class="slds-dropdown slds-dropdown_right">
+                <ul class="slds-dropdown__list" role="menu">
+                    <aura:iteration items="{!v.options}" var="item" indexVar="inx">
+                        <li class="{!'slds-dropdown__item' + (item.checked?' checked':'')}" role="presentation" onclick="{!c.select}" data-value="{!item.value}">
+                            <lightning:icon iconName="utility:check" size="xx-small" alternativeText="" />
+                            <span class="slds-truncate" title="{!item.label}">{!item.label}</span>
+                        </li>
+                    </aura:iteration>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aura:component>

@@ -1,0 +1,218 @@
+<apex:page standardController="Legal_Requests__c" extensions="LegalRequestPDFController" id="pg" renderAs="pdf">    
+    <!-- Begin Default Content REMOVE THIS -->
+    <apex:composition template="ITPortalTemplate1">
+        <apex:define name="content">
+            <apex:form id="mainForm" styleclass="CaseForm1Cls">
+                <div>
+                    <p>
+                        <strong>{!requestObjectMap['IDF_Creation_Date__c']} : </strong>
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!requestObj.IDF_Creation_Date__c}" />
+                        </apex:outputText>
+                    </p>
+                    <br style="clear: both;" />
+
+                    <div>
+                        <table>
+                            <tr>
+                                <td style="font-weight: bold;">Invention Information<hr /></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Title_of_Invention__c']} : " style="width:82%" /> 
+                                    <apex:outputText value="{!requestObj.Title_of_Invention__c}" style="width:85%" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Technical_Field_of_the_Invention__c']} : " />
+                                    <apex:outputText value="{!requestObj.Technical_Field_of_the_Invention__c}" /><br />
+                                    <apex:outputPanel ><br />
+                                        <apex:outputLabel value="{!requestObjectMap['Status__c']} : " />
+                                        <!-- <apex:outputText value="{!requestObj.Status__c}" /><br /> -->
+                                        <apex:outputText value="Submitted" /><br />
+                                    </apex:outputPanel></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Inventor Information<hr /></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Inventor_Name__c']} : " />
+                                    <apex:outputField value="{!requestObj.Inventor_Name__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Location__c']} : " />
+                                    <apex:outputText value="{!requestObj.Location__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Department__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Department__c}" /><br />
+                                    <apex:outputLabel value="Additional inventors can be added after saving this invention disclosure form." escape="true" /><br/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">{!requestObjectMap['What_problem_needs_to_be_solved__c']}<hr /></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="&#8226; Identify the problem in the existing product or service that the invention seeks to solve. : "
+                                        escape="false" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputText value="{!requestObj.What_problem_needs_to_be_solved__c}" />
+                                    <!-- <apex:inputtextarea value="{!requestObj.What_problem_needs_to_be_solved__c}" disabled="true" readonly="true"/> -->
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Describe Ideas of Invention: {!requestObjectMap['How_is_the_problem_solved__c']}<hr />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="&#8226; Identify the basic concept that solves the problem. Explain how this basic concept solves the problem. :"
+                                        escape="false" /> <br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td> 
+                                    <apex:outputText value="{!requestObj.How_is_the_problem_solved__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Implementation: {!requestObjectMap['Provide_Practical_Example__c']} <hr />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <ul>
+                                        <li>Describe how the basic concept is used in a practical
+                                            example and in a precise, concrete manner (just like you
+                                            would write a short technical report).</li>
+                                        <li>Indicate advantages.</li>
+                                        <li>Indicate possible alternatives with respect to the
+                                            practical example.</li>
+                                        <li>Include drawings/flowcharts that illustrate the
+                                            practical example.</li>
+                                        <li>Attach any other relevant information, notes,
+                                            screenshots, or drawings.</li>
+                                    </ul> <br /> 
+                                    <apex:outputText value="{!requestObj.Provide_Practical_Example__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Related Work Information and Prior Art: {!requestObjectMap['What_was_already_known__c']}<hr />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <ul>
+                                        <li>Describe any existing product or service that you are
+                                            aware of and, in particular, the parts on which your
+                                            invention will have an impact.</li>
+                                        <li>Attach, if available, a document that describes the
+                                            existing product or service.</li>
+                                        <li>Indicate how your invention is different than the
+                                            existing solution, list the differentiators.</li>
+                                    </ul> <br /> 
+                                    <apex:outputText value="{!requestObj.What_was_already_known__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Publications and/or Disclosures of the Invention <hr />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Existing_Publication_or_Disclosure__c']} : " />
+                                    <apex:outputField value="{!requestObj.Existing_Publication_or_Disclosure__c}" id="outputDisclosure" /><br /> 
+                </td>
+                </tr>
+                <tr>
+                <td style="font-weight: bold;">If Yes to 'Existing Publication or Disclosure', please fill out the rest of this section.</td>
+                </tr>
+                <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Document_Title__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Document_Title__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Publication__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Publication__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Publication_Date__c']} : " /> 
+                                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                        <apex:param value="{!requestObj.Publication_Date__c}" />
+                                    </apex:outputText><br />
+                                </td>
+                            </tr>
+                <tr>
+                <td>
+                    <apex:outputLabel value="{!requestObjectMap['Plans_for_Publication__c']} : " />
+                                    <apex:outputField value="{!requestObj.Plans_for_Publication__c}" id="outputPublication" /><br />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">If Yes to 'Plan for Publication', please fill out the rest of this section.</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Document_Title_Plan__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Document_Title_Plan__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Publication_Plan__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Publication_Plan__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Publication_Date_Plan__c']} : " /> 
+                                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                        <apex:param value="{!requestObj.Publication_Date_Plan__c}" />
+                                    </apex:outputText><br />
+                                </td>
+                            </tr>
+                <tr>
+                                <td style="font-weight: bold;">If Yes to 'Disclosed to outside parties', please fill out the rest of this section. </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Disclosed_to_outside_parties__c']} : " />
+                                    <apex:outputField value="{!requestObj.Disclosed_to_outside_parties__c}"
+                                        id="outputDiscOutside" /> <br /> <br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['If_Yes_to_who__c']} : " />
+                                    <apex:outputText value="{!requestObj.If_Yes_to_who__c}" /><br /> 
+                                    <apex:outputLabel value="{!requestObjectMap['Disclosure_Date__c']} : " /> 
+                                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                        <apex:param value="{!requestObj.Disclosure_Date__c}" />
+                                    </apex:outputText><br /> <apex:outputLabel value="{!requestObjectMap['Under_NDA__c']} : " /> 
+                                    <apex:outputField value="{!requestObj.Under_NDA__c}" /></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold;">Publications and/or Disclosures of the Invention<hr />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Plans_for_Commercial_Release__c']} : " />
+                                    <apex:outputField value="{!requestObj.Plans_for_Commercial_Release__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['When_will_Product_be_released__c']} : " />
+                                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                        <apex:param value="{!requestObj.When_will_Product_be_released__c}" />
+                                    </apex:outputText>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputlabel value="What RingCentral Product is this related to?"/>
+                                    <!-- <apex:outputLabel value="{!requestObjectMap['What_RC_Product_is_this_related_to__c']} : " /> -->
+                                    <apex:outputText value="{!requestObj.What_RC_Product_is_this_related_to__c}" id="outputRCProduct" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <apex:outputLabel value="{!requestObjectMap['Other_RingCentral_Project__c']} : " /> 
+                                    <apex:outputText value="{!requestObj.Other_RingCentral_Project__c}" />
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </apex:form>
+        </apex:define>
+    </apex:composition>
+</apex:page>

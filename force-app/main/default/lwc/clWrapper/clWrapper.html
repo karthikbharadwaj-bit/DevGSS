@@ -1,0 +1,76 @@
+<template>
+
+    <!-- Overlays -->
+    <c-lwc-toasts></c-lwc-toasts>
+    <c-lwc-spinner></c-lwc-spinner>
+    <c-lwc-modal></c-lwc-modal>
+
+    <form class="wrapper" onsubmit={onSubmit} method="POST">
+        <!-- Markup -->
+
+        <c-cl-header is-prm-flow={isPrmFlow}></c-cl-header>
+
+        <div class="slds-p-horizontal_medium content">
+            <div class="slds-container_x-large slds-container_center">
+                <ul class="slds-setup-assistant slds-p-horizontal_none">
+                    <template if:false={showConvertedLeadInfo}>
+                        <!-- Account Selector-->
+                        <c-cl-account-selector is-lead-record-type-sales={isLeadRecordTypeSales} is-prm-flow={isPrmFlow} is-data-wave-loaded={isDataWaveLoaded}></c-cl-account-selector>
+                        <c-cl-modal></c-cl-modal>
+
+                        <!-- Opportunity Info -->
+
+                        <c-cl-opportunity-info if:true={isLeadRecordTypeSales} is-lead-record-type-sales={isLeadRecordTypeSales}></c-cl-opportunity-info>
+                        <c-cl-opportunity-info-partner if:false={isLeadRecordTypeSales} is-prm-flow={isPrmFlow}></c-cl-opportunity-info-partner>
+                        <!--Contact Selector-->
+                        <c-cl-contact-selector if:true={isLeadRecordTypeSales}></c-cl-contact-selector>
+
+                        <!-- Contact Role Selector -->
+                        <li if:true={isLeadRecordTypeSales}>
+                            <c-cl-contact-role-selector></c-cl-contact-role-selector>
+                        </li>
+
+                        <!-- Conversion Info -->
+                        <li if:true={showConversionInfo}>
+                            <c-cl-conversion-info is-lead-record-type-sales={isLeadRecordTypeSales}></c-cl-conversion-info>
+                        </li>
+                    </template>
+
+                    <template if:true={showConvertedLeadInfo}>
+                        <li class={containerClasses}>
+                            <!-- Converted Lead Info Section -->
+                            <article class="slds-setup-assistant__step">
+                                <div class="slds-setup-assistant__step-summary">
+                                    <div class="slds-media">
+                                        <div class="slds-p-around_medium">
+                                            <template if:true={accUrl}>
+                                                <p>
+                                                    <lightning-formatted-url value={accUrl} target="_blank" label="Account "></lightning-formatted-url>
+                                                    record is created.
+                                                </p>
+                                            </template>
+                                            <template if:true={conUrl}>
+                                                <p>
+                                                    <lightning-formatted-url value={conUrl} target="_blank" label="Contact "></lightning-formatted-url>
+                                                    record is created.
+                                                </p>
+                                            </template>
+                                            <template if:true={oppUrl}>
+                                                <p>
+                                                    <lightning-formatted-url value={oppUrl} label="Opportunity " target="_blank" ></lightning-formatted-url>
+                                                    record is created.
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </div>
+
+        <c-cl-footer></c-cl-footer>
+    </form>
+</template>

@@ -1,0 +1,144 @@
+<template>
+    <div class="slds-box slds-m-around_small backColor">
+        <lightning-button variant="base" label="Lead Qualification" title="Lead Qualification" icon-name={icon} onclick={showLeadQualificationSection} class="slds-text-heading_small boxTitle"></lightning-button>
+        <template if:true={showSection}>
+            <div class="slds-grid slds-gutters">
+                <div class="slds-size_1-of-2">
+                    <div class="slds-grid slds-grid_vertical">
+                        <div class="slds-col slds-m-top_small">
+                            <div class="slds-float_left with-white-spaces" style="font-weight: bold; color: red">{asterisks.currentSituation}</div>Current Situation<lightning-helptext content="Information about the company's current state. Tell me about your current communication solution"></lightning-helptext>
+                            <lightning-textarea name="currentSituation" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            <div class="slds-float_left with-white-spaces" style="font-weight: bold; color: red">{asterisks.problems}</div>Problems <lightning-helptext content="What are the challenges they have with their current solution?"></lightning-helptext>
+                            <lightning-textarea name="problems" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            Impact <lightning-helptext content="What are the impacts of the problems they are experiencing?"></lightning-helptext>
+                            <lightning-textarea name="impact" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            Ideal Situation <lightning-helptext content="What would be their ideal solution? How would they like their communication system to work?"></lightning-helptext>
+                            <lightning-textarea name="idealSituation" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            <div class="slds-float_left with-white-spaces" style="font-weight: bold; color: red">{asterisks.nextSteps}</div>Next Steps <lightning-helptext content="Confirm the customer is willing to meet. What is the next ideal meeting time? How would they like to meet, who should attend?"></lightning-helptext>
+                            <lightning-textarea name="nextSteps" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                      </div>
+                </div>
+                <div class="slds-size_1-of-2">
+                    <div class="slds-grid slds-grid_vertical">
+                        <div class="slds-col slds-m-top_small">
+                            Benefits <lightning-helptext content="How would their business be positively impacted by resolving these problems? What would it mean to your business if these problems were resolved?"></lightning-helptext>
+                            <lightning-textarea name="benefits" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            <div class="slds-float_left with-white-spaces" style="font-weight: bold; color: red">{asterisks.decisionMaking}</div>Decision Making <lightning-helptext content="What is their decision making progress? Who are the decision makers? What is their project time frame?"></lightning-helptext>
+                            <lightning-textarea name="decisionMaking" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            Competitive Landscape <lightning-helptext content="What other solutions are they looking for? What are we replacing?"></lightning-helptext>
+                            <lightning-textarea name="competitiveLandscape" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            Relationship Building Extras <lightning-helptext content="Any RBEs that were conducted"></lightning-helptext>
+                            <lightning-textarea name="relationshipBuildingExtras" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                        <div class="slds-col slds-m-top_small">
+                            Coaching Notes
+                            <lightning-textarea name="coachingNotes" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-grid slds-gutters slds-m-top_x-large">
+                <div class="slds-size_1-of-2">
+                    <div class="slds-grid slds-grid_vertical">
+                        <div class="slds-col slds-m-top_small">
+                            <h2 class="slds-text-heading_x-small boxTitle slds-m-top_small">Contracts</h2>
+                            <div class="slds-m-top_small">
+                                Are you in a contract? [2+]
+                                <template if:true={inContractValues}>
+                                    <lightning-combobox
+                                            name="leadQualContract"
+                                            value={value}
+                                            placeholder="--None--"
+                                            onchange={handleInContractValuesChange}
+                                            options={inContractValues}></lightning-combobox>
+                                </template>
+                            </div>
+                            <div class="slds-m-top_small">
+                                If yes, when does it expire? [2+]
+                                <template if:true={contractExpiresInfoValues}>
+                                    <lightning-combobox
+                                            class="change-value"
+                                            name="leadQualContractExpires"
+                                            value={value}
+                                            disabled={disableContractExpires}
+                                            placeholder="--None--"
+                                            onchange={handleComboBoxChange}
+                                            options={contractExpiresInfoValues}></lightning-combobox>
+                                </template>
+                            </div>
+                            <h3 class="slds-text-heading_xx-small boxTitle slds-m-top_small">Additional Information:</h3>
+                            <div class="slds-m-top_small">
+                                For 2-9 w/ contracts over 3 months OR For 10-49 w/ contracts over 6 months, ask:
+                                <ul class="slds-m-left_medium bulletList">
+                                    <li>Why looking now?</li>
+                                    <li>Looked at a buyout?</li>
+                                    <li>SLA allowing them an early out?</li>
+                                </ul>
+                                <lightning-textarea class="slds-m-top_xx-small" name="contractAdditionalInfo" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                            </div>
+                            <h2 class="slds-text-heading_x-small boxTitle slds-m-top_small">Decision Makers</h2>
+                            <div class="slds-m-top_small">
+                                Who besides yourself is responsible for making a decision?- I want </br>
+                                to make sure we address everyone's needs. [10-49] </br>
+                                Who else do you think would want to be a part of the next discussion </br>
+                                with the AE?[50+] </br>
+                                Is it possible to have them on the next call? [50+]
+                            </div>
+                            <h3 class="slds-text-heading_xx-small boxTitle slds-m-top_small">Additional Information:</h3>
+                            <lightning-textarea class="slds-m-top_xx-small" name="decMakersAdditionalInfo" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size_1-of-2">
+                    <div class="slds-grid slds-grid_vertical">
+                        <div class="slds-col slds-m-top_small">
+                            <h2 class="slds-text-heading_x-small boxTitle slds-m-top_small">Timeframe</h2>
+                            <div class="slds-m-top_small">
+                                When do you plan to make a decision on a new solution? [2+]
+                                <template if:true={newTimeframeValues}>
+                                    <lightning-combobox
+                                            name="leadQualTimeframe"
+                                            value={value}
+                                            placeholder="--None--"
+                                            onchange={handleComboBoxChange}
+                                            options={newTimeframeValues}></lightning-combobox>
+                                </template>
+                            </div>
+                            <div class="slds-m-top_small">
+                                When do you want it fully up and running? [2+]
+                                <template if:true={newSolutionTimeframeValues}>
+                                    <lightning-combobox
+                                            name="leadQualNewSolutionUpTimeframe"
+                                            value={value}
+                                            placeholder="--None--"
+                                            onchange={handleComboBoxChange}
+                                            options={newSolutionTimeframeValues}></lightning-combobox>
+                                </template>
+                            </div>
+                            <h3 class="slds-text-heading_xx-small boxTitle slds-m-top_small">Additional Information:</h3>
+                            <lightning-textarea class="slds-m-top_xx-small" name="timeframeAdditionalInfo" onchange={handleInputChange} onkeypress={handleKeyPress}></lightning-textarea>
+                            <div class="slds-m-top_xx-small inline">
+                                Quality Conversation? <lightning-input class="slds-m-left_xx-small" type="checkbox" name="qualConvCheckbox" onchange={handleCheckBoxChange}></lightning-input>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>

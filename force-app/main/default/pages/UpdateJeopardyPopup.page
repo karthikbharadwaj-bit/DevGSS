@@ -1,0 +1,67 @@
+<apex:page standardController="Case" extensions="UpdateJeopardyCtrl" showHeader="false" sideBar="false" lightningStylesheets="true">
+<apex:includeScript value="{!URLFOR($Resource.jquery, '/jquery-1.8.2.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.jquery, '/postmessage/jquery.ba-postmessage.js')}"/>
+<apex:slds />
+
+    <script language="JavaScript" type="text/javascript">
+        function disableOnSubmit(input) {
+            var btn = input;
+            setTimeout(function(){
+                btn.disabled = 'disabled';
+                btn.className = 'slds-button slds-button_outline-brand disabled';
+                btn.value = "OK";
+            }, 50);
+        }
+    </script>
+
+    <apex:form >
+        <apex:messages id="apxMsg" styleClass="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error">
+        </apex:messages>
+        <div class="slds-form">
+            <label class="slds-form-element_label slds-m-around_small slds-text-heading_medium"><b>Update Jeopardy</b></label>
+            <div class="slds-grid slds-m-around_small">
+                <div class="slds-col slds-size_6-of-12">
+                    <div class="slds-m-around_small slds-float_right">
+                        <span class="slds-form-" style="width: 100%" for="jCodeTextBox"> Jeopardy Code: </span>
+                        <div class="slds-form-element__control"></div>
+                        <span class="slds-form-element_label slds-float_right" style="width: 100%" for="jDescCombo">Jeopardy Description: </span>
+                        <div class="slds-form-element__control"></div>
+                    </div>
+                </div>
+                <div class="slds-col slds-size_6-of-12 slds-m-around_small ">
+                    <div style="width: 100%; height: 2%;"></div>
+                    <div>
+                        <apex:inputField value="{!caseToUpdate.Jeopardy_Code__c}" style="width: 93%;">
+                            <apex:actionSupport event="onchange" action="{!wipeOffRemark}" rerender="jRemarkTextArea" />
+                        </apex:inputField>
+                    </div>
+                    <div>
+                        <apex:inputField value="{!caseToUpdate.Jeopardy_Description__c}" style="width: 93%;">
+                            <apex:actionSupport event="onchange" action="{!wipeOffRemark}" rerender="jRemarkTextArea" />
+                        </apex:inputField>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-grid slds-gutter slds-grid_align-center slds-m-around_small">
+                <div class="slds-col slds-size-1-of-1">
+                    <label class="slds-form-element_label" for="jremarkTextArea">Jeopardy Remark: </label>
+                    <apex:inputTextarea id="jRemarkTextArea" value="{!jeopardyHistory.Jeopardy_Remark__c}" styleClass="slds-textarea" style="width: 98.5%;"></apex:inputTextarea>
+                    <apex:outputLabel styleClass="slds-align_absolute-center slds-text-align_center">
+                        <b>To enter a Remark for a new Jeopardy, you must change the Jeopardy Code and Description first.</b>
+                    </apex:outputLabel>
+                    <div class="slds-align_absolute-center slds-m-around_small">
+                        <apex:commandButton action="{!updateValidation}" value="OK" styleClass="slds-button slds-button_outline-brand" onclick="disableOnSubmit(this)"></apex:commandButton>
+                        <apex:actionfunction name="navigatebacktorec" action="{!navToRecforLightning}" >
+                        <button id="cnlBtn" onclick="navigatebacktorec();return false;" class="slds-button slds-button_outline-brand">Cancel</button>
+                        </apex:actionfunction>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+<script>
+    function closeWindow(){
+        window.close();
+    }
+</script>
+</apex:page>

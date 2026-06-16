@@ -1,0 +1,265 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" 
+                access="global" extends="c:Quote_BaseComponent" controller="Quote_PartnerQuoteEngageLegalController">
+    <aura:attribute name="parent" type="Aura.Component" />
+    <aura:attribute name="Quote" type="Quote" default="{ 'sobjectType': 'Partner_Quote__c',
+                                                       'Status__c': 'Draft'}" />
+    <aura:attribute name="objAccountCheckList" type="Account_Checklist__c" default="{'sobjectType':'Account_Checklist__c'}"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="areaCodeList" type="Area_Codes__c[]"/>
+    <aura:attribute name="showChecklistCMP" type="Boolean"/>
+    <aura:attribute name="isFromCheckOutPage" type="Boolean" default="false"/>
+    <aura:attribute name="isPartnerContractExist" type="Boolean" default="false"/>
+    <aura:attribute name="isOpenContractRequest" type="Boolean" default="false"/>
+    <aura:attribute name="showCreateContractCMP" type="Boolean" default="false" />
+    <aura:attribute name="oppType" type="String"/>
+    <aura:attribute name="currentTabId" type="String" default="one"/>
+    <aura:attribute name="partnerQuoteId" type="String" />
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="partnerContractId" type="String" />
+    <aura:attribute name="playBookDisplay" type="Boolean" default="false"/>
+    <aura:attribute name="isAvaya" type="Boolean" default="false" />
+    <aura:attribute name="isContractTeam" type="Boolean" default="false" />
+    <aura:attribute name="UserType" type="String" />
+    <aura:attribute name="isNoStandardPlayBook" type="Boolean" default="false" />
+    <aura:attribute name="isUpdateDetailClicked" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractTypeWrapperList" type="List" />
+    <aura:attribute name="initialDisplay" type="Boolean"/>
+    <aura:attribute name="standardMSAOptionValue" type="String"/>
+    <aura:attribute name="partnerContractWrapperList" type="List" /> 
+    <aura:attribute name="partnerContractApprovalSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalRecalled" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalApproved" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractApprovalRejected" type="Boolean" default="false"/>
+    <aura:attribute name="partnerContractCreated" type="Boolean" default="false"/>
+    <aura:attribute name="isFromContract" type="Boolean" default="false"/>
+    <aura:attribute name="nonStandardInputValue" type="String"/>
+    <aura:attribute name="detailComments" type="String"/>
+    <aura:attribute name="approvalComments" type="String"/>
+    <aura:attribute name="legalInputsDisplay" type="Boolean" /> 
+    <aura:attribute name="partnerContractServiceList" type="Partner_Contract_Service__c[]"/> 
+    <aura:attribute name="addressList" type="Account_Checklist_Address__c[]"/>
+    <aura:attribute name="objApprovalRec" type="Approval__c" default="{'sobjectType': 'Approval__c','Standard_Terms__c' : 'false'}"/>
+    <aura:attribute access="public" name="sObjectAttachedFiles" type="List" default="[]"/>
+    <aura:attribute name="Attachments" type="List"/>
+    <aura:attribute name="documentId" type="String"/>
+    <aura:attribute name="dealSupportExists" type="Boolean"/>
+    <aura:attribute name="isStandard" type="Boolean" default="true"/>
+    <aura:attribute name="showSpinner" type="Boolean" default="false"/>
+    <aura:attribute name="contractType" type="String" default="Standard"/>
+    <aura:attribute name="IsOpenInCommunity" type="Boolean" />
+    <aura:attribute type="String" name="avayaLegalComments"/>
+    <aura:attribute name="ShippingAddressList" type="Quote_PartnerDetailController.AccountCheckListAddressWrapp[]"/>
+    
+    <aura:attribute name="inputWrapper" type="Map" default="{'freeCredit' : 0,
+                                                            'digitalLines' : 0,
+                                                            'elasticityPercent' : 30,
+                                                            'elasticityDigitalLines' : 0,
+                                                            'featureAdditionEdition' : '',
+                                                            'featureAdditions' : '',
+                                                            'priceProtectionPercent' : 0}"/>
+    
+    <!--Added by Ishwarya to get respective Community Details-->
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    <aura:attribute name="baseURL" type="string"/>
+    <aura:attribute name="RespectiveTabURL" type="string"/>
+    
+    <aura:attribute name="showProductSection" type="Boolean" default="false" />
+    <aura:attribute name="show2MonthFreeCredit" type="Boolean" default="false" /><!--playbook-->
+    <aura:attribute name="accPartnerTypeval" type="String"/>
+    <aura:attribute name="isAccountPartnerTypeBOB" type="Boolean" default="false"/>
+    <aura:attribute name="PartnerAccountType" type="String[]"/>
+	
+	<aura:attribute name="translationsMap" type="Map" />
+    
+    <aura:if isTrue="{!v.showSpinner}">
+        <c:SpinnerComponent/>
+    </aura:if>
+    
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <div class="slds-m-around_xx-large">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModel }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
+                        <aura:if isTrue="{!v.isFromContract}">   
+                            {!v.translationsMap.Contract_details_PI}
+                            <aura:set attribute="else">
+                                Submit Order
+                            </aura:set>
+                        </aura:if>
+                        
+                    </h2>
+                </header>
+                <!--Modal/Popup Box Body Starts here-->
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+                        <lightning:tabset selectedTabId="{!v.currentTabId}">
+                            <aura:if isTrue="{!v.isFromContract}"> 
+                                <lightning:tab label="Contract" id="one">
+                                    <aura:if isTrue="{!and(v.isAvaya,v.isAccountPartnerTypeBOB)}">
+                                        A separate MSA is not required for Bill on Behalf transactions. The relevant customer terms will be incorporated by reference in the Order Form.
+                                    </aura:if>
+                                    <aura:if isTrue="{!!v.isAccountPartnerTypeBOB}">
+                                        <c:Quote_PartnerQuoteEngageLegal isOpenContractRequest="{!v.isOpenContractRequest}" 
+                                                                         isPartnerContractExist="{!v.isPartnerContractExist}" 
+                                                                         showCreateContractCMP="{!v.showCreateContractCMP}" 
+                                                                         showSpinner="{!v.showSpinner}" 
+                                                                         currentTabId="{!v.currentTabId}" 
+                                                                         sObjectAttachedFiles="{!v.sObjectAttachedFiles}" 
+                                                                         objApprovalRec="{!v.objApprovalRec}"  
+                                                                         aura:id="PartnerQuoteEngageLegal"  
+                                                                         partnerContractServiceList="{!v.partnerContractServiceList}" 
+                                                                         detailComments="{!v.detailComments}" 
+                                                                         approvalComments="{!v.approvalComments}" 
+                                                                         partnerContractWrapperList="{!v.partnerContractWrapperList}" 
+                                                                         nonStandardInputValue="{!v.nonStandardInputValue}" 
+                                                                         legalInputsDisplay="{!v.legalInputsDisplay}" 
+                                                                         partnerContractCreated="{!v.partnerContractCreated}" 
+                                                                         partnerContractApprovalRejected="{!v.partnerContractApprovalRejected}" partnerContractApprovalApproved="{!v.partnerContractApprovalApproved}" partnerContractApprovalRecalled="{!v.partnerContractApprovalRecalled}" partnerContractApprovalSubmitted="{!v.partnerContractApprovalSubmitted}"
+                                                                         isNoStandardPlayBook="{!v.isNoStandardPlayBook}" 
+                                                                         standardMSAOptionValue="{!v.standardMSAOptionValue}" 
+                                                                         partnerContractId="{!v.partnerContractId}" 
+                                                                         partnerQuoteId="{!v.partnerQuoteId}" 
+                                                                         initialDisplay="{!v.initialDisplay}" 
+                                                                         partnerContractTypeWrapperList="{!v.partnerContractTypeWrapperList}" 
+                                                                         isAvaya="{!v.isAvaya}" 
+                                                                         playBookDisplay="{!v.playBookDisplay}" 
+                                                                         partnerContractAttachmentList="{!v.partnerQuoteAttachmentList}" 
+                                                                         IsOpenInCommunity="{!v.IsOpenInCommunity}"
+                                                                         contractType="{!v.contractType}"
+                                                                         dealSupportExists="{!v.dealSupportExists}"
+                                                                         inputWrapper = "{!v.inputWrapper}"
+                                                                         avayaLegalComments="{!v.avayaLegalComments}"
+                                                                         communityDetailsRecord="{!v.communityDetailsRecord}"
+                                                                         Quote="{!v.Quote}"/>
+                                        </aura:if>
+                                    </lightning:tab>
+                                    <aura:if isTrue="{!or(v.isAvaya, v.UserType == 'Standard')}">
+                                        <lightning:tab label="PlayBook" id="two">
+                                            <c:Quote_QuotePlayBook partnerQuoteId="{!v.partnerQuoteId}" 
+                                                                   showCreateContractCMP="{!v.showCreateContractCMP}" 
+                                                                   partnerContractServiceList="{!v.partnerContractServiceList}"  
+                                                                   partnerContractWrapperList="{!v.partnerContractWrapperList}" 
+                                                                   initialDisplay="{!v.initialDisplay}" 
+                                                                   partnerContractTypeWrapperList="{!v.partnerContractTypeWrapperList}" 
+                                                                   isAvaya="{!or(v.isAvaya, v.UserType == 'Standard')}" 
+                                                                   playBookDisplay="{!v.playBookDisplay}" 
+                                                                   partnerContractId="{!v.partnerContractId}"
+                                                                   inputWrapper = "{!v.inputWrapper}"
+                                                                   communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                                        </lightning:tab>
+                                    </aura:if>
+                                    <aura:if isTrue="{!or(v.isContractTeam, v.UserType == 'Standard')}"> 
+                                        <aura:if isTrue="{!or(v.isAvaya, v.UserType == 'Standard')}">
+                                            <lightning:tab label="Non-Standard" id="three">
+                                                <c:Quote_NonStandardComment isStandard="{!v.isStandard}" 
+                                                                            sObjectAttachedFiles="{!v.sObjectAttachedFiles}" 
+                                                                            partnerQuoteId="{!v.partnerQuoteId}" 
+                                                                            objApprovalRec="{!v.objApprovalRec}" 
+                                                                            detailComments="{!v.detailComments}" 
+                                                                            approvalComments="{!v.approvalComments}"
+                                                                            IsOpenInCommunity="{!v.IsOpenInCommunity}"
+                                                                            baseURL="{!v.baseURL}"
+                                                                            communityDetailsRecord="{!v.communityDetailsRecord}"	translationsMap="{!v.translationsMap}"/>
+                                            </lightning:tab>
+                                        </aura:if>
+                                        <aura:if isTrue="{!or(v.isAvaya, v.UserType == 'Standard')}">
+                                            <lightning:tab label="Word Documents" id="five">
+                                                <c:Quote_WordDocuments isAvaya="true"
+                                                                       partnerContractServiceList="{!v.partnerContractServiceList}" 
+                                                                       partnerContractWrapperList="{!v.partnerContractWrapperList}" 
+                                                                       partnerContractTypeWrapperList="{!v.partnerContractTypeWrapperList}"
+                                                                       IsOpenInCommunity="{!v.IsOpenInCommunity}"
+                                                                       communityDetailsRecord="{!v.communityDetailsRecord}"
+                                                                       RespectiveTabURL="{!v.RespectiveTabURL}"
+                                                                       baseURL="{!v.baseURL}"
+                                                                       Quote="{!v.Quote}"/>
+                                            </lightning:tab> 
+                                        </aura:if>
+                                    </aura:if>
+                                    <aura:if isTrue="{!or(v.isAvaya, v.UserType == 'Standard')}">
+                                        <lightning:tab label="Engage Legal" id="six">
+                                            <c:Quote_QuoteEngageLegalContract avayaLegalComments="{!v.avayaLegalComments}" communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                                        </lightning:tab>
+                                    </aura:if>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.isFromContract}">    
+                                    <lightning:tab label="Submit Order" id="four">
+                                        <c:Quote_AccountCheckList aura:id="AccountCheckList"
+                                                                  ShippingAddressList = "{!v.ShippingAddressList}"
+                                                                  addressList="{!v.addressList}" 
+                                                                  isNoStandardPlayBook="{!v.isNoStandardPlayBook}" 
+                                                                  dealSupportExists="{!v.dealSupportExists}"
+                                                                  partnerContractCreated="{!v.partnerContractCreated}" 
+                                                                  isAvaya="{!v.isAvaya}" 
+                                                                  standardMSAOptionValue="{!v.standardMSAOptionValue}" 
+                                                                  objAccountCheckList="{!v.objAccountCheckList}" 
+                                                                  accountId ="{!v.accountId}" 
+                                                                  isFromCheckOutPage ="true" 
+                                                                  showSpinner="{!v.showSpinner}"
+                                                                  showChecklistCMP="{!v.showChecklistCMP}"
+                                                                  Quote="{!v.Quote}"
+                                                                  IsOpenInCommunity="{!v.IsOpenInCommunity}"
+                                                                  communityDetailsRecord="{!v.communityDetailsRecord}" 
+                                                                  showProductSection="{!v.showProductSection}" />
+                                    </lightning:tab>
+                                </aura:if>
+                            </lightning:tabset>
+                        </div>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <aura:if isTrue="{!v.currentTabId != 'four'}">
+                            <!-- <aura:if isTrue="{!and(v.isAvaya,!v.isStandard)}">
+                                 <lightning:button variant="brand" label="Submit to RC" title="{!if(v.dealSupportExists,'It is already submitted','Submit to RC')}" disabled="{!v.dealSupportExists}"  onclick="{!c.submitToRC}"/>
+                                </aura:if> -->
+                            <aura:if isTrue="{!v.currentTabId != 'six'}">
+                                <aura:if isTrue="{!v.currentTabId == 'one'}">
+                                    <lightning:button variant="brand" label="Save" title="Save" disabled="{!and(v.isAvaya,v.isAccountPartnerTypeBOB)}" onclick="{!c.handleSave}"/>
+                                    <aura:set attribute="else">
+                                        <lightning:button variant="brand" label="Save" title="Save"  onclick="{!c.handleSave}"/>
+                                    </aura:set>
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!v.currentTabId == 'six'}">
+                                <lightning:button variant="brand" label="{!v.communityDetailsRecord.Portal_Submit_Contract_Legal_Label__c}" title="Save"  onclick="{!c.handleSave}"/> 
+                            </aura:if>
+                            <aura:if isTrue = "{!or(v.partnerContractApprovalRecalled,v.partnerContractApprovalRejected)}">
+                                <lightning:button variant="brand" label="Update Details" title="Update Details" onclick="{!c.updateDetails}"/>
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.standardMSAOptionValue == 'No',v.currentTabId != 'two')}">
+                                <aura:if isTrue = "{!and(v.partnerContractCreated,!v.partnerContractApprovalSubmitted)}">
+                                    <!-- <lightning:button variant="brand" label="Submit for Approval" title="Submit for Approval"  onclick="{!c.handleApproval}"/>                         
+                                    -->
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!and(!v.partnerContractApprovalRecalled,v.partnerContractApprovalSubmitted)}">
+                                <lightning:button variant="brand" label="Recall Approval" title="Recall Approval" onclick="{!c.recallApproval}"/>                 
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!v.currentTabId == 'four'}">
+                            <lightning:button variant="brand"
+                                              label="{!if(v.isFromCheckOutPage,'Submit','Save')}"
+                                              title="Next"
+                                              onclick="{!c.handleSave}"/>
+                        </aura:if>
+                        <lightning:button variant="neutral"
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+                        
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+            
+        </div>
+    </aura:component>

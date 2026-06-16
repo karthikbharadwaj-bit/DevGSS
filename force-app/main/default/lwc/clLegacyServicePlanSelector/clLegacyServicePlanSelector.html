@@ -1,0 +1,75 @@
+<template>
+    <template if:true={isMarkupShown}>
+        <div class="slds-container slds-grid slds-grid_vertical tier-list-container">
+            <div class="header-background slds-border_bottom slds-border_top slds-shrink-none"></div>
+            <div class="fixed-table-container-inner">
+                <table class="slds-table slds-table--bordered service-table">
+                    <thead>
+                    <tr class="slds-text-heading--label">
+                        <th class="fixed-th th_info" scope="col">
+                        </th>
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Name}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Name}</div>
+                        </th>
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Service}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Service}</div>
+                        </th>
+
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Edition}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Edition}</div>
+                        </th>
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Linerange}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Linerange}</div>
+                        </th>
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Plan}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Plan}</div>
+                        </th>
+                        <th class="fixed-th" scope="col">
+                            <div class="th-inner slds-truncate">{label.Price}</div>
+                            <div class="th-inner-hidden slds-truncate">{label.Price}</div>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody class="tier-table__tbody">
+                    <template for:each={filteredServices} for:item='service' for:index="index">
+                        <tr class={service.cssClass} key={service.id} onclick={selectService} data-id={service.id}>
+
+                            <!-- Info Icons -->
+                            <td class="cart-col--info"></td>
+
+                            <!-- Name -->
+                            <td class="cart-col--name">{service.name}</td>
+
+                            <!-- Service -->
+                            <td>{service.service}</td>
+
+                            <!-- Edition -->
+                            <td>{service.edition}</td>
+
+                            <!-- Line Range -->
+                            <td>{service.lineRangeMin}-{service.lineRangeMax}</td>
+
+                            <!-- Charge Term -->
+                            <td>{service.chargeTerm}</td>
+
+                            <!-- Price -->
+                            <td>
+                                <lightning-formatted-number value={service.price}
+                                                            format-style="currency"
+                                                            currency-display-as="code"
+                                                            currency-code={service.currencyCode}>
+                                </lightning-formatted-number>
+                            </td>
+                        </tr>
+                    </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </template>
+</template>

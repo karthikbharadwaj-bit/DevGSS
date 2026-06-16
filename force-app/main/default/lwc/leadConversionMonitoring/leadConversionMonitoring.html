@@ -1,0 +1,148 @@
+<template>
+    <lightning-card icon-name="utility:jump_to_right">
+        <h3 slot="title">Lead Conversion Performance</h3>
+        <div>
+            <div class="slds-m-left_medium slds-text-title slds-text-color_weak">
+                <template if:true={showErrorDate}>
+                    Showing last Lead Conversion in error: <lightning-formatted-date-time
+                        value={cpuMonitorCreatedDate}
+                        year="numeric"
+                        month="numeric"
+                        day="numeric"
+                        hour="2-digit"
+                        minute="2-digit"
+                        hour12="true"
+                    ></lightning-formatted-date-time>
+                    {cpuMonitorDateDifference}
+                </template> 
+                <template if:false={showErrorDate}>
+                    Showing last Lead Conversion: <lightning-formatted-date-time
+                        value={cpuMonitorCreatedDate}
+                        year="numeric"
+                        month="numeric"
+                        day="numeric"
+                        hour="2-digit"
+                        minute="2-digit"
+                        hour12="true"
+                    ></lightning-formatted-date-time>
+                </template> 
+                <br/>
+                <b>{leadRecordType}</b>
+            </div>
+        </div>
+        <div class="referenceBox slds-grid slds-grid_vertical">
+            <div class="slds-col displayInline">
+                <div class="slds-box slds-box_xx-small slds-theme_success"></div>
+                <div class="slds-m-left_x-small">- Success</div>
+            </div>
+            <div class="slds-col displayInline">
+                <div class="slds-box slds-box_xx-small slds-theme_error"></div>
+                <div class="slds-m-left_x-small">- Error</div>
+            </div>
+            <div class="slds-col displayInline">
+                <div class="slds-box slds-box_xx-small slds-theme_shade"></div>
+                <div class="slds-m-left_x-small">- Not Executed</div>
+            </div>
+        </div>
+        <div data-id="noMonitorMsg" class="slds-hidden slds-text-align_center slds-m-top_x-large">
+            There are no Lead Monitor records for the last 7 days
+        </div>
+        <div data-id="monitor" class="hideElement slds-m-bottom_x-large">
+            <div class="slds-grid slds-grid_vertical-align-center slds-m-around_x-small slds-gutters_xxx-small">
+                <div class="slds-col">
+                    <div data-id="PrepareLead" class="slds-box slds-theme_shade boxShadow" onclick={redirectToError}>
+                        <p>Prepare Lead</p>
+                    </div>
+                </div>
+                <div data-id="PrepareLeadConvertLead" class="slds-col hideElement arrow displayInline moveDown">
+                    <div class="arrowCSS"></div>
+                    <div class="arrowPoint"></div>
+                </div>
+                <div class="slds-col">
+                    <div data-id="ConvertLead" class="slds-box slds-theme_shade boxShadow" onclick={redirectToError}>
+                        <p>Convert Lead</p>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div
+                        data-id="ConvertLeadCreateAccount"
+                        class="moveUp rotateArrowUp hideElement arrow displayInline"
+                    >
+                        <div class="arrowCSS"></div>
+                        <div class="arrowPoint"></div>
+                    </div>
+                    <div
+                        data-id="ConvertLeadExistingAccount"
+                        class="moveLargeDown rotateArrowDown hideElement arrow displayInline"
+                    >
+                        <div class="arrowCSS"></div>
+                        <div class="arrowPoint"></div>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div data-id="CreateAccount" class="slds-box slds-theme_shade boxShadow" onclick={redirectToError}>
+                        <p>Create Account</p>
+                    </div>
+                    <br />
+                    <br />
+                    <div
+                        data-id="ExistingAccount"
+                        class="slds-box slds-theme_shade boxShadow"
+                        onclick={redirectToError}
+                    >
+                        <p>Use existing Account</p>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div data-id="VariableArrow" class="hideElement arrow displayInline">
+                        <div class="arrowCSS"></div>
+                        <div class="arrowPoint"></div>
+                    </div>
+                </div>
+                <div class="slds-col">
+                    <div
+                        data-id="MergeContactOnly"
+                        class="slds-box slds-theme_shade boxShadow"
+                        onclick={redirectToError}
+                    >
+                        <p>Merge to Contact Only</p>
+                    </div>
+                    <br />
+                    <div
+                        data-id="CreateOpportunity"
+                        class="slds-box slds-theme_shade boxShadow"
+                        onclick={redirectToError}
+                    >
+                        <p>Create Opportunity</p>
+                    </div>
+                    <br />
+                    <div
+                        data-id="ExistingOpportunity"
+                        class="slds-box slds-theme_shade boxShadow"
+                        onclick={redirectToError}
+                    >
+                        <p>Use existing Opportunity</p>
+                    </div>
+                </div>
+                <div data-id="CreateOpportunityCreateQuotes" class="slds-col moveDown hideElement arrow displayInline">
+                    <div class="arrowCSS"></div>
+                    <div class="arrowPoint"></div>
+                </div>
+                <div class="slds-col">
+                    <div data-id="CreateQuotes" class="slds-box slds-theme_shade boxShadow" onclick={redirectToError}>
+                        <p>Create Quotes</p>
+                    </div>
+                </div>
+                <div data-id="CreateQuotesELAAccount" class="slds-col hideElement arrow displayInline moveDown">
+                    <div class="arrowCSS"></div>
+                    <div class="arrowPoint"></div>
+                </div>
+                <div class="slds-col">
+                    <div data-id="ELAAccount" class="slds-box slds-theme_shade boxShadow" onclick={redirectToError}>
+                        <p>ELA Account processing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+</template>

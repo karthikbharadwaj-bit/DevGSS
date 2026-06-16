@@ -1,0 +1,42 @@
+<apex:component controller="AutoCompleteController">
+ 	
+ 	<apex:includeScript value="{!URLFOR($Resource.AutoComplete, 'jquery-1.10.2.js')}" />
+ 	<apex:includeScript value="{!URLFOR($Resource.AutoComplete, 'jquery-ui.js')}" />
+ 	<apex:stylesheet value="{!URLFOR($Resource.AutoComplete,'style.css')}"/>
+	 
+ 	<apex:attribute name="autocomplete_textbox" description="The ID for the Autocomplete List Textbox." type="String" required="false"/>
+	<apex:attribute name="selectedvalue_textbox" description="The ID for the Selected value ui item." type="String" required="false"/>
+	
+	<script type="text/javascript">
+	    $().ready(function() {
+	    	$("[id$='{!autocomplete_textbox}']").autocomplete({
+	        //$("#{!autocomplete_textbox}").autocomplete({
+	            width: 400,
+	            max: 20,
+	            minChars: 1,
+	            matchContains: true,
+	            scroll: false,
+	            source: function(request, response) {
+					Visualforce.remoting.Manager.invokeAction(
+                		'{!$RemoteAction.AutoCompleteController.searchUser}',request.term,
+               			function(result, event){
+              				var data = [];
+							for(var i=0; i<result.length; i++)  {
+							    data.push({label: result[i].split('|')[0], value: result[i].split('|')[1]});
+							}          				
+							response(data);							
+						});
+				},
+				focus: function() {
+		          return false;
+		        },
+				select: function(event, ui){					
+					this.value = ui.item.label;
+					$("[id$='{!selectedvalue_textbox}']").val(ui.item.value);
+					return false;
+				},
+	            selectFirst: false
+	        });
+        });
+	</script>
+</apex:component>

@@ -1,0 +1,1347 @@
+<aura:component  implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+                access="global" controller="Partner_OpportunitiesMain" >
+    <aura:attribute name="showChecklistCMP" type="Boolean"/>
+    <aura:attribute name="showChangeRequestCMP" type="Boolean"/>
+    <aura:attribute name="ExistingChangeOrder" type="Boolean" default="false"/>
+    <aura:attribute name="changeOrderId" type="String"  />
+    <aura:attribute name="isChangeOrderSubmitted" type="Boolean" default="false"/>
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="DealSupportURLLink" type="String"/>
+    <aura:attribute name="recordID" type="String"/>
+    <aura:attribute name="areaCodeList" type="Area_Codes__c[]"/>
+    <aura:attribute name="existingAreaCodeList" type="List"/>
+    <aura:attribute name="ShowListView" type="boolean" default="true"/>
+    <aura:attribute name="ShowRecordDetail" type="boolean" default="false" />
+    <aura:attribute name="ShowSpinnerOpp" type="boolean" default="true" />
+    <aura:attribute name="ShowComponentButtons" type="boolean" default="false" />
+    <aura:attribute name="ShowEditSection" type="boolean" default="false" />
+    <aura:attribute name="ShowNewSection" type="boolean" default="false" />
+    <aura:attribute name="showQuotes" type="Boolean" default="false" />
+    <aura:attribute name="ShowOnlyRC" type="Boolean" default="false"/>
+    <aura:attribute name="isIgnite" type="Boolean" default="false"/>
+    <aura:attribute name="isIgniteUQTFlow" type="Boolean" default="false"/>
+     <aura:attribute name="ShowOnlyALE" type="Boolean" default="false" />
+    <aura:attribute name="oppType" type="String"/>
+    <aura:attribute name="accountId" type="String"/>
+    <aura:attribute name="oppStage" type="String" />
+    <aura:attribute name="showProcessOrder" type="Boolean" default="true"/>
+    <aura:attribute name="OpportunityRecord" type="Opportunity" default="{
+                                                                         'SObjectType': 'Opportunity'
+                                                                         }"/>
+    <aura:attribute name="objAccountCheckList" type="Account_Checklist__c" default="{'sobjectType':'Account_Checklist__c'}"/>
+
+    <aura:registerEvent name="goBackEvent" type="c:Partner_OpportunitiesGoBackEvent"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="Message" type="boolean" default="false" />
+    <aura:attribute name="DealStatusMessage" type="boolean" default="false" />
+
+    <aura:attribute name="ShowConAcc" type="boolean"/>
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false"/>
+    <aura:attribute name="fromcustomer" type="boolean" default="false"/>
+    <aura:attribute name="showCreateDealStatus" type="boolean" default="false" />
+    <aura:attribute name="comment" type="String"/>
+    <aura:attribute name="DSType" type="String"/>
+    <aura:attribute name="isReadOnly" type="boolean" default="true" />
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+
+    <aura:attribute name="partnerCommunity" type="List"/>
+    <aura:attribute name="hasReadAccess" type="boolean" default="true"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    <aura:attribute name="showMitelShare" type="boolean" /> <!-- PBC-9705 P2CSharing-->
+
+    <aura:registerEvent type="c:ToastEvent" name="ToastEvent"/>
+    <aura:attribute name="addressList" type="Account_Checklist_Address__c[]"/>
+    <aura:attribute name="ShippingAddressList" type="Quote_PartnerDetailController.AccountCheckListAddressWrapp[]"/>
+
+    <!-- Avaya Cloud Specialist Assignment-->
+    <aura:handler name="cloudSpecialistValueEvent" event="c:Partner_CloudSpecialistSearchEvent" action="{!c.handleCloudSpecialistEvent}"/>
+    <aura:attribute name="cloudSpecialistContactId" type="String"/>
+
+    <aura:attribute name="accCountry" type="String"/><!--ACO 3.0-->
+
+    <aura:attribute name="ShowOnlyAtos" type="boolean" default="false"/>
+    <aura:attribute name="tierNames" type="List" default="['Office']"/>
+
+    <aura:attribute name="employeeListDisplayed" type="List" />
+    <aura:attribute name="selectedEmployeeValue" type="string" access="public" />
+
+    <aura:attribute name="RCMeetings" type="boolean" default="false"/>
+    <aura:attribute name="Est12MPriceStd" type="string"/>
+    <aura:attribute name="Est12MPriceRCMeetings" type="string"/>
+
+    <aura:attribute name="oppFieldsMap" type="Map" />
+    <aura:attribute name="accFieldsMap" type="Map" />
+    <aura:attribute name="dealSupportFieldsMap" type="Map" />
+    <aura:attribute name="quoteFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+
+    <aura:attribute name="isShowUnifiedQuotingWizard" type="boolean"/>
+    <aura:attribute name="salesQuote" type="Quote" default="{'SObjectType': 'Quote'}"/>
+    <aura:attribute name = "showPartnerChecklistCMP" type="Boolean"/>
+    <aura:attribute name="processOrdercontext" type="String"/>
+    <aura:attribute name="changeOrderFlow" type="boolean" default="false"/>
+    <aura:attribute name="caseRecordTypeId" type="String"/>
+    <aura:attribute name="isExistingBusiness" type="Boolean" default="false"/>
+
+    <aura:if isTrue="{!!v.hasReadAccess}">
+        <div class="slds-notify_container slds-is-relative">
+            <div class="slds-notify slds-notify_toast slds-theme_error" role="alert">
+                <div class="slds-notify__content">
+                    <h2 class="slds-text-heading_small">{!v.translationsMap.Insufficient_privileges_to_view_Opportun}</h2>
+                </div>
+            </div>
+        </div>
+    </aura:if>
+    <aura:if isTrue="{!v.hasReadAccess}">
+        <aura:if isTrue="{!v.ShowSpinnerOpp}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                </div>
+            </div>
+        </aura:if>
+
+        <aura:if isTrue="{!v.showChecklistCMP}">
+            <c:Quote_AccountCheckList communityDetailsRecord="{!v.communityDetailsRecord}" ShippingAddressList="{!v.ShippingAddressList}" addressList="{!v.addressList}"  areaCodeList="{!v.areaCodeList}" objAccountCheckList="{!v.objAccountCheckList}" recordID="{!v.recordID}" parent="{!this}" oppType="{!v.oppType}" accountId="{!v.accountId}" showChecklistCMP="{!v.showChecklistCMP}" oppCountry="{!v.accCountry}" partnerCommunityName="{!v.partnerCommunity}" OpportunityRecord="{!v.OpportunityRecord}" showProcessOrder="{!v.showProcessOrder}" processOrdercontext="{!v.processOrdercontext}" />
+
+        </aura:if>
+
+        <aura:if isTrue="{!v.showPartnerChecklistCMP}">
+            <div class="slds-m-around_xx-large">
+        <!-- Modal/Popup Box starts here-->
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <!-- Modal/Popup Box Header Starts here-->
+                <header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModel }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    </header>
+             <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+             <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+            <c:Quote_AccountCheckList aura:id="AccountCheckList" communityDetailsRecord="{!v.communityDetailsRecord}" ShippingAddressList="{!v.ShippingAddressList}" addressList="{!v.addressList}" areaCodeList="{!v.areaCodeList}" dealSupportExists="{v.dealSupportExists}" isAvaya="{!v.isAvaya}" isFromCheckOutPage= "true" objAccountCheckList="{!v.objAccountCheckList}" recordID="{!v.recordID}" fromProcessOrder="true"  showSpinner="{!v.showSpinner}" parent="{!this}" oppType="{!v.oppType}" accountId="{!v.accountId}" showChecklistCMP="{!v.showPartnerChecklistCMP}" salesQuote="{!v.salesQuote}" IsOpenInCommunity="{!v.IsOpenInCommunity}" showProductSection="{!v.showProductSection}" partnerCommunityName="{!v.partnerCommunity}" OpportunityRecord="{!v.OpportunityRecord}" showProcessOrder="{!v.showProcessOrder}" processOrdercontext="{!v.processOrdercontext}" />
+       		 </div>
+             </div>
+             <footer class="slds-modal__footer">
+                  <lightning:button variant="brand"
+                                              label="Submit"
+                                              title="Next"
+                                              onclick="{!c.handleSave}"/>
+                        <lightning:button variant="neutral"
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+            </footer>
+                </div>
+            </section>
+                 <div class="slds-backdrop slds-backdrop_open"></div>
+
+        </div>
+          </aura:if>
+
+        <aura:if isTrue="{!v.showChangeRequestCMP}">
+            <c:Quote_OrderChangeRequest accountId="{!v.accountId}" isChangeOrderSubmitted="{!v.isChangeOrderSubmitted}" changeOrderId="{!v.changeOrderId}" ExistingChangeOrder="{!v.ExistingChangeOrder}" recordID="{!v.recordID}" showChangeRequestCMP="{!v.showChangeRequestCMP}" OpportunityRecord="{!v.OpportunityRecord}"/>
+        </aura:if>
+        <aura:if isTrue="{!!v.showChangeRequestCMP}">
+            <!-- Display Opportunity details -->
+            <aura:if isTrue="{!v.ShowRecordDetail}">
+                <lightning:card variant="Narrow" title="{!v.translationsMap.Opportunity_Detail}" iconName="standard:opportunity">
+                    <aura:if isTrue="{!not(v.isIgniteUQTFlow)}">
+                        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="border-bottom:.25rem !important;">
+                            <aura:if isTrue="{!v.OpportunityRecord.StageName != '7. Closed Won'}">
+                                <aura:if isTrue="{!!v.isReadOnly}">
+                                    <lightning:button variant="brand" label="{!v.translationsMap.Edit}" iconName="action:edit" iconPosition="left" onclick="{!c.showEditSectionAres}" />
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!v.ShowComponentButtons}">
+                                <lightning:button variant="brand" label="{!v.translationsMap.Go_Back}" iconName="action:recall" iconPosition="left" onclick="{!c.goBackToViewList}" />
+                            </aura:if>
+                        </div>
+                    </aura:if>
+                    <aura:set attribute="actions">
+                        <aura:if isTrue="{!v.ShowComponentButtons}">
+                            <aura:if isTrue="{!!v.isReadOnly}">
+                                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:button variant="brand" label="{!v.translationsMap.Account_checklist}" onclick="{!c.goToQuoteTool}" />
+                                    </aura:if>
+                                </aura:if>
+                            </aura:if>
+                            <aura:if isTrue="{!v.isIgniteUQTFlow}">
+                                <lightning:button variant="neutral" label="{!v.translationsMap.Go_Back}" onclick="{!c.goBackToViewList}" class="action-button"/>
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!and(v.OpportunityRecord.StageName != '7. Closed Won', v.isIgniteUQTFlow)}">
+                            <aura:if isTrue="{!!v.isReadOnly}">
+                                <lightning:button variant="brand" label="{!v.translationsMap.Edit}" onclick="{!c.showEditSectionAres}" class="action-button"/>
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!and(v.ShowComponentButtons, v.isIgniteUQTFlow, v.ShowOnlyRC)}">
+                            <div class="process-order-button-container">
+                                <lightning:button variant="brand" label="Process Order" class="action-button" onclick="{!c.processOrder}" disabled="{!v.showProcessOrder}"/>
+                                <aura:if isTrue="{!not(empty(v.processOrdercontext))}">
+                                    <span class="process-order-tooltip">{!v.processOrdercontext}</span>
+                                </aura:if>
+                            </div>
+                            <lightning:button variant="brand" label="Create a Case" onclick="{!c.openCreateCaseForm}" class="action-button"/>
+                        </aura:if>
+                    </aura:set>
+
+                    <div class="slds-grid slds-wrap">
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                            <span>{!v.OpportunityRecord.Name}</span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                            <span>{!v.OpportunityRecord.Account.Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Street}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Account.BillingStreet}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_City}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Account.BillingCity}</span>
+                        </div>
+                         <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_State_Province}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Account.BillingState}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Country}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Account.BillingCountry}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Postal_Code}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Account.BillingPostalCode}</span>
+                        </div>
+
+                        <aura:if isTrue="{!and(and(!v.ShowConAcc,!v.isSingleLogin),v.ShowOnlyRC)}">
+                            <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                <span></span>
+                            </div>
+                        </aura:if>
+
+                        <aura:if isTrue="{!!and(and(!v.ShowConAcc,!v.isSingleLogin),v.ShowOnlyRC)}">
+                         <div class="slds-col slds-size_4-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        </aura:if>
+                        <aura:if isTrue="{!or(v.ShowConAcc,v.isSingleLogin)}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Partner_Account__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Partner_Account__r.Name}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                <span></span>
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!or(v.ShowOnlyRC, or(v.ShowConAcc,v.isSingleLogin))}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Partner_Contact__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Partner_Contact__r.FirstName}&nbsp;{!v.OpportunityRecord.Partner_Contact__r.LastName}</span>
+                            </div>
+                        </aura:if>
+                        <!-- <aura:if isTrue="{!and(v.ShowOnlyRC,!v.ShowConAcc)}">
+                            <div class="slds-col slds-size_4-of-7">
+                                <span></span>
+                            </div>
+                        </aura:if> -->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Brand_Name__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Brand_Name__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Number_of_Employees__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Number_of_Employees__c}</span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Created_Date_Time}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>
+                                <lightning:formattedDateTime value="{!v.OpportunityRecord.CreateDateTime__c}"
+                                                             month="numeric"
+                                                             day="numeric"
+                                                             year="numeric"
+                                                             hour="2-digit"
+                                                             minute="2-digit"
+                                                             timeZone="{!$Locale.timezone}"/>
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.CloseDate}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>
+                                <lightning:formattedDateTime value="{!v.OpportunityRecord.CloseDate}"
+                                                             month="numeric"
+                                                             day="numeric"
+                                                             year="numeric"/>
+                            </span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Existing_Solution_Provider__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Existing_Solution_Provider__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Decision_Maker__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Decision_Maker__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Prompting_Change__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Prompting_Change__c}</span>
+                        </div>
+                        <!-- Added Rainbow Office condition for ALE -->
+                        <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</span>
+                            </div>
+
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <!-- <span>{!v.OpportunityRecord.Avaya_Cloud_Specialist__c}</span>-->
+                                <span>{!v.OpportunityRecord.Portal_Cloud_Specialist__r.Name}</span>
+                            </div>
+                        </aura:if>
+                        <!-- Added Rainbow Office condition for ALE -->
+                        <aura:if isTrue="{!or(v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c=='Rainbow Office')}">
+                            <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span></span>
+                            </div>
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Partner_ID__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Partner_ID__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Tier_Name__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Tier_Name__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.StageName}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.StageName}</span>
+                        </div>
+
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Primary_Opportunity_Contact__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Primary_Opportunity_Contact__r.Name}</span>
+                        </div>
+                        <aura:if isTrue="{!!v.ShowOnlyALE}">
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Probability}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Probability}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        </aura:if>
+                        <aura:if isTrue="{!v.OpportunityRecord.Tier_Name__c == 'RC Meetings'}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Forecasted_RingCentral_Video_Users__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Forecasted_RingCentral_Video_Users__c}</span>
+                            </div>
+                            <aura:set attribute="else">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                    <span>{!v.translationsMap.Forecasted_Users}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.OpportunityRecord.Forecasted_Users__c}</span>
+                                </div>
+                            </aura:set>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyALE}">
+                                  <div class="slds-col slds-size_4-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        </aura:if>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.ForecastCategoryName}</span>
+                        </div>
+
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.ForecastCategoryName}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Currently_in_a_contract__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Currently_in_a_contract__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Project_budget__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Project_budget__c}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Description}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Description}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.PRMSpecificTranslationsMap.Account_Executive}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Owner.Name}</span>
+                        </div>
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Sales_Notes__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.OpportunityRecord.Sales_Notes__c}</span>
+                                </div>
+                                <!--<div class="slds-col slds-size_4-of-7 slds-border_top">
+                            <span></span>
+                        </div>-->
+                            </aura:if>
+                        </aura:if>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top"></div>
+                        </aura:if>
+                        <!-- Added for PBC-10584-->
+                        <aura:if isTrue="{!v.communityDetailsRecord.Brand_Name__c=='Rainbow Office'}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                style="color:gray;">
+                                <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Partners_CRM_Opporunity_ID__c}</span>
+                            </div>
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                style="color:gray;">
+                                <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Portal_Cloud_Specialist__r.Name}</span>
+                            </div>
+                            <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+                        <!-- PBC-10584 END-->
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.oppFieldsMap.Id}</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                            <span>{!v.OpportunityRecord.Id}</span>
+                        </div>
+                        <!-- changed condition for ALE -->
+                        <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_4-of-7 slds-border_top"></div>
+                            </aura:if>
+                        </aura:if>
+                        <!--<aura:if isTrue="{!v.ShowOnlyRC}">-->
+                        <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyAtos)}">
+                            <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>Ignite Opportunity</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span><lightning:input type="checkbox" name="ignite" checked="{!v.OpportunityRecord.Deal_Registration__r.Ignite_Deal__c}" disabled="true" /></span>
+                            </div>-->
+                            <!--PBC-9705 P2CSharing-->
+                        <aura:if isTrue="{!v.showMitelShare}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                     style="color:gray;">
+                                    <span>Allow sharing this deal data with Mitel?</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.OpportunityRecord.Mitel_Data_Sharing__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                                <aura:set attribute="else">
+                                    <div class="slds-col slds-size_4-of-7 slds-border_top"></div>
+                                </aura:set>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Inside_Sales_Rep__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>{!v.OpportunityRecord.Inside_Sales_Rep__r.Full_Name__c}</span>
+                            </div>
+                        </aura:if>
+                         <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Installation_Service_Provider__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                    <span>{!v.OpportunityRecord.Installation_Service_Provider__c}</span>
+                                </div>
+                               	<div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                                <div class="slds-col slds-size_3-of-7 slds-border_top"></div>
+                           </aura:if>
+                        <!-- ALE -->
+                        <aura:if isTrue="{!v.communityDetailsRecord.Brand_Name__c=='Rainbow Office'}">
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                            <!-- commented for BZS-4808-->
+                            <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight"
+                                style="color:gray;">
+                                <span>Is this for RFP?</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                                <span>
+                                    <lightning:input type="checkbox" checked="{!v.OpportunityRecord.RFP__c}"
+                                        disabled="true" />
+                                </span>
+                            </div>
+                            <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                            </aura:if>-->
+                        </aura:if>
+                        <!-- ALE -->
+                    </div>
+                </lightning:card>
+
+            </aura:if>
+            <!-- Display Opportunity Edit section -->
+            <aura:if isTrue="{!v.ShowEditSection}">
+                <lightning:card variant="Narrow" title="{!v.translationsMap.Opportunity_Detail}" iconName="standard:opportunity">
+                    <lightning:recordEditForm
+                                              aura:id="editRecordForm"
+                                              onsubmit="{!c.handleSubmit}"
+                                              onsuccess="{!c.handleSuccess}"
+                                              onerror="{!c.handleError}"
+                                              recordId="{!v.recordID}"
+                                              objectApiName="Opportunity">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.Name}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Name" variant="label-hidden" value="{!v.OpportunityRecord.Name}"/></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.accFieldsMap.Name}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.Account.Name}</span>
+                            </div>
+                            <aura:if isTrue="{!v.ShowConAcc}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Partner_Account__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>{!v.OpportunityRecord.Partner_Account__r.Name}</span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowConAcc)}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Partner_Contact__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>{!v.OpportunityRecord.Partner_Contact__r.FirstName}&nbsp;{!v.OpportunityRecord.Partner_Contact__r.LastName}</span>
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{!and(v.ShowOnlyRC,!v.ShowConAcc)}">
+                                <div class="slds-col slds-size_4-of-7">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Brand_Name__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.Brand_Name__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Number_of_Employees__c}</span>
+                            </div>
+                            <!--<div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Number_of_Employees__c" variant="label-hidden" value="{!v.OpportunityRecord.Number_of_Employees__c}" required="true"/></span>
+                            </div>-->
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <!--<lightning:inputField fieldName="Edition__c" variant="label-hidden" required="true"/>-->
+                                    <lightning:select aura:id="employeeSelect" name="Number_of_Employees__c" variant="label-hidden"
+                                                      class="label-hidden" value="{!v.selectedEmployeeValue}">
+                                        <option value="">-- None --</option>
+                                        <aura:iteration items="{!v.employeeListDisplayed}" var="employee" indexVar="index">
+                                            <option value="{!employee.value}" selected="{!employee.value==v.selectedEmployeeValue}">{!employee}</option>
+                                        </aura:iteration>
+                                    </lightning:select>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.CreateDateTime__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <lightning:formattedDateTime value="{!v.OpportunityRecord.CreateDateTime__c}"
+                                                                 month="numeric"
+                                                                 day="numeric"
+                                                                 year="numeric"
+                                                                 hour="2-digit"
+                                                                 minute="2-digit"
+                                                                 timeZone="{!$Locale.timezone}"/>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 ">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.CloseDate}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <lightning:inputField fieldName="CloseDate" variant="label-hidden" value="{!v.OpportunityRecord.CloseDate}" required="true"/>
+                                </span>
+                            </div>
+                             <!-- changed Upsell to Existing Business for BZS-5535  -->
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <aura:if isTrue="{!v.oppType != 'Existing Business'}"> <abbr class="slds-required slds-float_right">* </abbr></aura:if>
+                                <span>{!v.oppFieldsMap.Existing_Solution_Provider__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:inputField fieldName="Existing_Solution_Provider__c" variant="label-hidden" value="{!v.OpportunityRecord.Existing_Solution_Provider__c}" required="true"/>
+                                        <aura:set attribute="else">
+                                            <lightning:inputField fieldName="Existing_Solution_Provider__c"  variant="label-hidden" value="{!v.OpportunityRecord.Existing_Solution_Provider__c}"/> </aura:set>
+                                    </aura:if>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <aura:if isTrue="{!v.oppType != 'Existing Business'}"> <abbr class="slds-required slds-float_right">* </abbr></aura:if>
+                                <span>{!v.oppFieldsMap.Decision_Maker__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:inputField fieldName="Decision_Maker__c" variant="label-hidden" value="{!v.OpportunityRecord.Decision_Maker__c}" required="true"/>
+                                        <aura:set attribute="else">
+                                            <lightning:inputField fieldName="Decision_Maker__c" variant="label-hidden"  value="{!v.OpportunityRecord.Decision_Maker__c}" />
+                                        </aura:set>
+                                    </aura:if>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <aura:if isTrue="{!v.oppType != 'Existing Business'}"> <abbr class="slds-required slds-float_right">* </abbr></aura:if>
+                                <span>{!v.oppFieldsMap.Prompting_Change__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small fieldWidth">
+                                <span>
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:inputField fieldName="Prompting_Change__c" variant="label-hidden" value="{!v.OpportunityRecord.Prompting_Change__c}" required="true"/>
+                                        <aura:set attribute="else">
+                                            <lightning:inputField fieldName="Prompting_Change__c" variant="label-hidden" value="{!v.OpportunityRecord.Prompting_Change__c}"/>
+                                        </aura:set>
+                                    </aura:if>
+                                </span>
+                            </div>
+                            <!-- Added Rainbow Office for ALE -->
+                            <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                            <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                    <span><lightning:inputField fieldName="Avaya_Cloud_Specialist__c" variant="label-hidden"
+                                                                value="{!v.OpportunityRecord.Avaya_Cloud_Specialist__c}"/>
+                                    </span>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                    <span>{!v.OpportunityRecord.Avaya_Cloud_Specialist__c}
+                                    </span>
+                                </aura:if>
+                            </div> -->
+                                <c:Partner_CloudSpecialistSearch searchUser="{!v.OpportunityRecord.Portal_Cloud_Specialist__r.Name}" communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                            </aura:if>
+                            <!-- Added Rainbow Office for ALE -->
+                            <aura:if isTrue="{!or(v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c=='Rainbow Office')}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Partner_ID__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.Partner_ID__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Tier_Name__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <!--<span>{!v.OpportunityRecord.Tier_Name__c}</span>-->
+                                 <aura:if isTrue="{!!v.ShowOnlyAtos}">
+                                    <span>{!v.OpportunityRecord.Tier_Name__c}</span>
+                                    <aura:set attribute="else">
+                                        <lightning:select aura:id="tierSelected" name="Tier_Name__c" variant="label-hidden"
+                                                          class="label-hidden" value="{!v.OpportunityRecord.Tier_Name__c}" onchange="{!c.onTierChange}">
+                                            <aura:iteration items="{!v.tierNames}"  var="tier" >
+                                                <option value="{!tier.value}" selected="{!tier.value==v.OpportunityRecord.Tier_Name__c}">{!tier}</option>
+                                            </aura:iteration>
+                                        </lightning:select>
+                                    </aura:set>
+                                </aura:if>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.StageName}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <!--<span><lightning:inputField disabled="true" fieldName="StageName" variant="label-hidden" value="{!v.OpportunityRecord.StageName}"/></span>-->
+                                <span>{!v.OpportunityRecord.StageName}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Primary_Opportunity_Contact__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.Primary_Opportunity_Contact__r.Name}</span>
+                            </div>
+                            <aura:if isTrue="{!!v.ShowOnlyALE}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.Probability}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.Probability}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            </aura:if>
+                            <aura:if isTrue="{!v.RCMeetings}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Forecasted_RingCentral_Video_Users__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Forecasted_RingCentral_Video_Users__c"
+                                           variant="label-hidden" value="{!v.OpportunityRecord.Forecasted_RingCentral_Video_Users__c}" required="true"/></span>
+                                </div>
+                            </aura:if>
+
+                            <aura:if isTrue="{!!v.RCMeetings}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.translationsMap.Forecasted_Users}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Forecasted_Users__c" variant="label-hidden" value="{!v.OpportunityRecord.Forecasted_Users__c}" required="true"/></span>
+                            </div>
+                            </aura:if>
+                           <aura:if isTrue="{!v.ShowOnlyALE}">
+                                  <div class="slds-col slds-size_4-of-7 ">
+                            <span></span>
+                        </div>
+                        </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <span>{!v.oppFieldsMap.ForecastCategoryName}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>{!v.OpportunityRecord.ForecastCategoryName}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <aura:if isTrue="{!v.oppType != 'Existing Business'}"> <abbr class="slds-required slds-float_right">* </abbr></aura:if>
+                                <span>{!v.oppFieldsMap.Currently_in_a_contract__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:inputField fieldName="Currently_in_a_contract__c" variant="label-hidden" value="{!v.OpportunityRecord.Currently_in_a_contract__c}" required="true"/>
+                                        <aura:set attribute="else">
+                                            <lightning:inputField fieldName="Currently_in_a_contract__c" variant="label-hidden" value="{!v.OpportunityRecord.Currently_in_a_contract__c}"/>
+                                        </aura:set>
+                                    </aura:if>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <aura:if isTrue="{!v.oppType != 'Existing Business'}"><abbr class="slds-required slds-float_right">* </abbr></aura:if>
+                                <span>{!v.oppFieldsMap.Project_budget__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <aura:if isTrue="{!v.oppType != 'Existing Business'}">
+                                        <lightning:inputField fieldName="Project_budget__c" variant="label-hidden" value="{!v.OpportunityRecord.Project_budget__c}" required="true"/>
+                                        <aura:set attribute="else">
+                                            <lightning:inputField fieldName="Project_budget__c" variant="label-hidden"
+                                                                  value="{!v.OpportunityRecord.Project_budget__c}" />
+                                        </aura:set>
+                                    </aura:if>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.Description}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Description" variant="label-hidden" value="{!v.OpportunityRecord.Description}" required="true"/></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  alignRight" style="color:gray;">
+                                <span>{!v.PRMSpecificTranslationsMap.Account_Executive}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                                <span>{!v.OpportunityRecord.Owner.Name}</span>
+                            </div>
+                            <!--<aura:if isTrue="{!v.ShowOnlyRC}">-->
+                            <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyAtos)}">
+                                <div class="slds-col slds-size_1-of-7"></div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Inside_Sales_Rep__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>{!v.OpportunityRecord.Inside_Sales_Rep__r.Full_Name__c}</span>
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                                <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                    <div class="slds-col slds-size_1-of-7 ">
+                                        <span></span>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                        <span>{!v.oppFieldsMap.Sales_Notes__c}</span>
+                                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    </div>
+                                        <span><lightning:inputField fieldName="Sales_Notes__c" variant="label-hidden" value="{!v.OpportunityRecord.Sales_Notes__c}"/></span>
+                                    </div>
+                                </aura:if>
+                            </aura:if>
+                            <!-- Added for PBC-10584-->
+                            <aura:if isTrue="{!v.communityDetailsRecord.Brand_Name__c=='Rainbow Office'}">
+                                <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                    <div class="slds-col slds-size_1-of-7 ">
+                                        <span></span>
+                                    </div>
+                                </aura:if>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.PRMSpecificTranslationsMap.Partners_CRM_Opportunity_ID}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Partners_CRM_Opporunity_ID__c" variant="label-hidden" value="{!v.OpportunityRecord.Partners_CRM_Opporunity_ID__c}"/></span>
+                                </div>
+                                <c:Partner_CloudSpecialistSearch searchUser="{!v.OpportunityRecord.Portal_Cloud_Specialist__r.Name}" communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                            </aura:if>
+                            <!-- PBC-10584 END-->
+                            <!-- Added for mitel starts-->
+                            <!--PBC-9705 P2CSharing-->
+                            <aura:if isTrue="{!v.showMitelShare}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight"
+                                     style="color:gray;">
+                                    <span>Allow sharing this deal data with Mitel?</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>{!v.OpportunityRecord.Mitel_Data_Sharing__c}</span>
+                                </div>
+                            </aura:if>
+                            <!--Added for mitel ends-->
+                            <!-- ALE -->
+                            <!-- commented for BZS-4808
+                            <aura:if isTrue="{!v.communityDetailsRecord.Brand_Name__c=='Rainbow Office'}">
+                                <aura:if isTrue="{!!v.ShowOnlyAvaya}">
+                                    <div class="slds-col slds-size_1-of-7">
+                                        <span></span>
+                                    </div>
+                                </aura:if>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight"
+                                    style="color:gray;">
+                                    <span>Is this for RFP?</span>
+                                    <abbr class="slds-required">* </abbr>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>
+                                        <lightning:inputField fieldName="RFP__c" value="{!v.OpportunityRecord.RFP__c}"
+                                            variant="label-hidden" />
+                                    </span>
+                                </div>
+                            </aura:if>-->
+                            <!-- ALE -->
+                        </div>
+                        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                            <lightning:button variant="brand" label="{!v.translationsMap.Save}" type="submit" iconName="action:check" iconPosition="left"  />
+                            <lightning:button variant="brand" type="{!v.translationsMap.Cancel}" name="Cancel" label="Cancel" onclick="{!c.goBack}" iconName="action:close" iconPosition="left"/>
+                        </div>
+                    </lightning:recordEditForm>
+                </lightning:card>
+            </aura:if>
+            <!-- Display Opportunity New section -->
+            <aura:if isTrue="{!v.ShowNewSection}">
+                <lightning:card variant="Narrow" title="{!v.translationsMap.New_Opportunity}" iconName="standard:opportunity">
+                    <lightning:recordEditForm
+                                              aura:id="editRecordForm"
+                                              onsubmit="{!c.handleSubmitNew}"
+                                              objectApiName="Opportunity">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.translationsMap.Name}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Name" variant="label-hidden" value="{!v.OpportunityRecord.Name}"/></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <aura:if isTrue="{!!v.fromcustomer}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.translationsMap.Number_Of_Employees}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Number_of_Employees__c" variant="label-hidden" value="{!v.OpportunityRecord.Number_of_Employees__c}" required="true"/></span>
+                                </div>
+                            </aura:if>
+
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.CloseDate}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <lightning:inputField fieldName="CloseDate" variant="label-hidden" value="{!v.OpportunityRecord.CloseDate}" required="true"/>
+                                </span>
+                            </div>
+
+                            <aura:if isTrue="{!!v.fromcustomer}">
+                                <div class="slds-col slds-size_1-of-7 ">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Existing_Solution_Provider__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Existing_Solution_Provider__c" variant="label-hidden" value="{!v.OpportunityRecord.Existing_Solution_Provider__c}" required="true"/></span>
+                                </div>
+
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Decision_Maker__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                                    <span><lightning:inputField fieldName="Decision_Maker__c" variant="label-hidden" value="{!v.OpportunityRecord.Decision_Maker__c}" required="true"/></span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Prompting_Change__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Prompting_Change__c" variant="label-hidden" value="{!v.OpportunityRecord.Prompting_Change__c}" required="true"/></span>
+                                </div>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.translationsMap.Forecasted_Users}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span>
+                                    <div class="slds-form-element"
+                                         onmouseover="{!c.forecasterUserMouseOver}"
+                                         onmouseout="{!c.forecasterUserMouseOut}">
+                                         <!-- Show Tooltip only if it's existing business -->
+                                         <aura:if isTrue="{!v.isExistingBusiness}">
+                                            <div aura:id="forecastedUserTooltip" class="tooltip slds-hide">
+                                                {!$Label.c.ForeCasted_Tooltip}
+                                            </div>
+                                         </aura:if>
+                                        <lightning:inputField fieldName="Forecasted_Users__c" variant="label-hidden" value="{!v.OpportunityRecord.Forecasted_Users__c}" required="true"/>
+                                    </div>
+                                </span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7">
+                                <span></span>
+                            </div>
+                            <aura:if isTrue="{!!v.fromcustomer}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Currently_in_a_contract__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Currently_in_a_contract__c" variant="label-hidden" value="{!v.OpportunityRecord.Currently_in_a_contract__c}" required="true"/></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>{!v.oppFieldsMap.Project_budget__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Project_budget__c" variant="label-hidden" value="{!v.OpportunityRecord.Project_budget__c}" required="true"/></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                <abbr class="slds-required slds-float_right">* </abbr>
+                                <span>{!v.oppFieldsMap.Description}</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                <span><lightning:inputField fieldName="Description" variant="label-hidden" value="{!v.OpportunityRecord.Description}" required="true"/></span>
+                            </div>
+							<!-- Added {!v.ShowOnlyRC} for  PBC 11156-->
+                            <aura:if isTrue="{!!v.RCMeetings}">
+                                <aura:if isTrue="{!v.ShowOnlyRC}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span>Forecasted Contact Center Users</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span>
+                                        <div class="slds-form-element"
+                                             onmouseover="{!c.forecasterCCUserMouseOver}"
+                                             onmouseout="{!c.forecasterCCUserMouseOut}">
+                                             <!-- Show Tooltip only if it's existing business -->
+                                             <aura:if isTrue="{!v.isExistingBusiness}">
+                                                    <div aura:id="forecastedCCUserTooltip" class="tooltip slds-hide">
+                                                        {!$Label.c.ForeCasted_CC_Tooltip}
+                                                    </div>
+                                             </aura:if>
+                                            <lightning:inputField fieldName="Forecast_Contact_Center_Users__c" variant="label-hidden" value="{!v.OpportunityRecord.Forecast_Contact_Center_Users__c}" required="true" />                                        
+                                        </div>
+                                    </span>
+                                </div>
+                                </aura:if>
+                            </aura:if>
+                                <!-- Added {!v.ShowOnlyRC} for  PBC 11156-->
+                            <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small  alignRight" style="color:gray;">
+                                <span>{!v.communityDetailsRecord.Portal_Cloud_Specialist__c}</span>
+                            </div> -->
+                              <aura:if isTrue="{!and(!v.ShowOnlyRC,v.communityDetailsRecord.Brand_Name__c!='Rainbow Office')}">
+                                <c:Partner_CloudSpecialistSearch  communityDetailsRecord="{!v.communityDetailsRecord}"/>
+                            </aura:if>
+                            <!--<div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                                <span><lightning:inputField fieldName="Avaya_Cloud_Specialist__c" variant="label-hidden" value="{!v.OpportunityRecord.Avaya_Cloud_Specialist__c}" /></span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 ">
+                                <span></span>
+                            </div>-->
+                            <!--<div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+
+                            <span>RC Overlay:</span>
+                        </div>
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small ">
+                            <span><lightning:inputField fieldName="RC_Overlay__c" variant="label-hidden" value="{!v.OpportunityRecord.RC_Overlay__c}"/></span>
+                        </div>-->
+						<!-- Added {!!v.ShowOnlyRC} for  PBC 11156-->
+                         <aura:if isTrue="{!!v.ShowOnlyRC}">
+                            <aura:if isTrue="{!v.ShowOnlyAvaya}">
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                                    <span>{!v.oppFieldsMap.Sales_Notes__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                                    <span><lightning:inputField fieldName="Sales_Notes__c" variant="label-hidden" value="{!v.OpportunityRecord.Sales_Notes__c}"/></span>
+                                </div>
+                            </aura:if>
+						 </aura:if>
+
+                        </div>
+                        <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                            <lightning:button variant="brand" label="{!v.translationsMap.Submit}" type="Submit" iconName="action:check" iconPosition="left" />
+                            <lightning:button variant="brand" type="{!v.translationsMap.Cancel}" name="Cancel" label="Cancel" iconName="action:close" iconPosition="left" onclick="{!c.goBackToViewList}"/>
+                        </div>
+                    </lightning:recordEditForm>
+                </lightning:card>
+            </aura:if>
+        </aura:if>
+        <aura:if isTrue="{!!v.isShowUnifiedQuotingWizard}">
+            <aura:if isTrue="{!v.ShowOnlyRC}">
+                <aura:if isTrue="{!and(v.ShowRecordDetail,!v.showChangeRequestCMP)}">
+                    <br/>
+                    <lightning:card variant="Narrow" title="{!v.translationsMap.Quotes}" iconName="standard:quotes">
+                        <!--<iframe src="{!v.baseURL+'/apex/Quotewizard?Id='+v.recordID}"
+                            width="100%" height="1000px" frameBorder="0"/>-->
+                        <c:Quote_OpportunityQuotes isChangeOrderSubmitted="{!v.isChangeOrderSubmitted}"
+                                                changeOrderId="{!v.changeOrderId}"
+                                                ExistingChangeOrder="{!v.ExistingChangeOrder}"
+                                                showChangeRequestCMP="{!v.showChangeRequestCMP}"
+                                                recordId="{!v.recordID}"
+                                                accountId="{!v.accountId}"
+                                                oppType="{!v.oppType}"
+                                                oppStage="{!v.oppStage}"
+                                                isReadOnlyProfile="{!v.isReadOnly}"
+                                                ShowOnlyRC="{!v.ShowOnlyRC}"
+                                                baseURL="{!v.baseURL}" communityDetailsRecord="{!v.communityDetailsRecord}"
+                                                oppCountry="{!v.accCountry}"/>
+                    </lightning:card>
+                </aura:if>
+            </aura:if>
+            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <aura:if isTrue="{!and(v.ShowRecordDetail,!v.showChangeRequestCMP)}">
+                    <br/>
+                    <lightning:card variant="Narrow" title="Quotes" iconName="standard:quotes">
+                        <!--<iframe src="{!v.baseURL+'/apex/Quotewizard?Id='+v.recordID}"
+                            width="100%" height="1000px" frameBorder="0"/>-->
+                        <c:Quote_OpportunityQuotes isChangeOrderSubmitted="{!v.isChangeOrderSubmitted}"
+                                                changeOrderId="{!v.changeOrderId}"
+                                                ExistingChangeOrder="{!v.ExistingChangeOrder}"
+                                                showChangeRequestCMP="{!v.showChangeRequestCMP}"
+                                                recordId="{!v.recordID}"
+                                                accountId="{!v.accountId}"
+                                                oppType="{!v.oppType}"
+                                                oppStage="{!v.oppStage}"
+                                                isReadOnlyProfile="{!v.isReadOnly}"
+                                                baseURL="{!v.baseURL}"
+                                                ShowOnlyRC="{!v.ShowOnlyRC}" quoteFieldsMap="{!v.quoteFieldsMap}" translationsMap="{!v.translationsMap}" communityDetailsRecord="{!v.communityDetailsRecord}" oppCountry="{!v.accCountry}"/>
+                    </lightning:card>
+                </aura:if>
+
+                <aura:if isTrue="{!v.hasReadAccess}">
+                    <aura:if isTrue="{!and(v.ShowRecordDetail,!v.showChangeRequestCMP)}">
+
+                        <lightning:card variant="Narrow" iconName="standard:case" title="{!v.translationsMap.Deal_Status + ':'}">
+                            <div class="slds-m-around_xx-small">
+                                <aura:if isTrue="{!v.DealStatusMessage}">
+                                    <div class="errorMessageDiv">
+                                        <div class="slds-is-relative errorMessageDiv">
+                                            <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="status">
+                                                <div class="slds-notify__content">
+                                                    <h2 class="slds-text-heading_small"> {!v.translationsMap.No_Records_to_display}</h2>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </aura:if>
+                                <aura:if isTrue="{!!v.DealStatusMessage}">
+                                    <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">
+                                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Deal_Status_Name}">{!v.translationsMap.Deal_Status_Name}</div></strong>
+                                                </th>
+                                                <th scope="col">
+                                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Status}">{!v.translationsMap.Status}</div></strong>
+                                                </th>
+                                                <th scope="col">
+                                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Type}">{!v.translationsMap.Type}</div></strong>
+                                                </th>
+                                                <th scope="col">
+                                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Created_Date}">{!v.translationsMap.Created_Date}</div></strong>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <aura:iteration items="{!v.OpportunityRecord.Deal_Supports__r}" var="dealStatus">
+                                                <tr>
+                                                    <th scope="row" data-label="Deal Status Name">
+                                                        <div class="slds-truncate" title="{!dealStatus.Name}">
+                                                            <!--<a href="{!'/partner/s/dealsupport?id='+dealStatus.Id}">
+                                                        {!dealStatus.Name}
+                                                    </a> -->
+                                                            <a href="{!v.DealSupportURLLink +dealStatus.Id}">
+                                                                {!dealStatus.Name}
+                                                            </a>
+                                                        </div>
+                                                    </th>
+                                                    <th scope="row" data-label="Status">
+                                                        <div class="slds-truncate" title="{!dealStatus.Status__c}">
+                                                            {!dealStatus.Status__c}
+                                                        </div>
+                                                    </th>
+                                                    <th scope="row" data-label="Type">
+                                                        <div class="slds-truncate" title="{!dealStatus.Type__c}">
+                                                            {!dealStatus.Type__c}
+                                                        </div>
+                                                    </th>
+                                                    <th scope="row" data-label="Created Date">
+                                                        <div class="slds-truncate" title="{!dealStatus.CreatedDate}">
+                                                            <span><lightning:formattedDateTime value="{!dealStatus.CreatedDate}"
+                                                                                            month="numeric"
+                                                                                            day="numeric"
+                                                                                            year="numeric"
+                                                                                            hour="2-digit"
+                                                                                            minute="2-digit"
+                                                                                            timeZone="{!$Locale.timezone}"/></span>
+                                                        </div>
+                                                    </th>
+                                                </tr>
+                                            </aura:iteration>
+                                        </tbody>
+                                    </table>
+                                </aura:if>
+                            </div>
+                        </lightning:card>
+                    </aura:if>
+                    <aura:if isTrue="{!v.showCreateDealStatus}">
+                        <lightning:card title="{!v.translationsMap.New_Deal_Support}" iconName="standard:case">
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-col slds-size_1-of-6"></div>
+                                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_large" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span class="slds-float_right">{!v.translationsMap.Type}:</span>
+
+                                </div>
+                                <div class="slds-col slds-size_2-of-6 slds-p-horizontal_x-small hideRequiredLabel" >
+                                    <!--<span><lightning:textarea aura:id="ds_type"   value="{!v.DSType}" variant="label-hidden"/></span>-->
+                                    <lightning:select variant="label-hidden" aura:id="ds_type" value="{!v.DSType}" messageWhenValueMissing="Choose one!" required="true">
+                                        <option value="">--Select Type--</option>
+                                        <option value="Change Order">{!v.translationsMap.Change_Order}</option>
+                                        <option value="Change Account">{!v.translationsMap.Change_Account}</option>
+                                        <option value="Initial Order">{!v.translationsMap.Initial_Order}</option>
+                                        <option value="Discount Request">{!v.translationsMap.Discount_Request}</option>
+                                        <option value="Lead Conversion">{!v.translationsMap.Lead_Conversion}</option>
+                                        <option value="New Contact Request">{!v.translationsMap.New_Contact_Request}</option>
+                                        <option value="New Contract Request">{!v.translationsMap.New_Contract_Request}</option>
+                                    </lightning:select>
+                                </div>
+                                <div class="slds-col slds-size_2-of-6"></div>
+                                <div class="slds-col slds-size_1-of-6"></div>
+                                <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium" style="color:gray;">
+                                    <abbr class="slds-required slds-float_right">* </abbr>
+                                    <span class="slds-float_right">{!v.translationsMap.Comments}:</span>
+
+                                </div>
+                                <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                    <span><lightning:textarea aura:id="comments" required="true"  value="{!v.comment}" variant="label-hidden"/></span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-6"></div>
+
+
+                                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                                    <lightning:button variant="brand" label="{!v.translationsMap.Submit}" iconName="action:check" iconPosition="left" name="Submit" type="button"  onclick="{!c.createDealSupport}"/>
+                                    <lightning:button variant="brand" type="cancel" iconName="action:close" iconPosition="left" name="Cancel" label="{!v.translationsMap.Cancel}" onclick="{!c.cancelDealSupport}"/>
+                                </div>
+                            </div>
+                        </lightning:card>
+                    </aura:if>
+                </aura:if>
+            </aura:if>
+        </aura:if>
+        <div aura:id="generateContractDiv"></div>
+        <div aura:id="quotingToolDiv"></div>
+        <div aura:id="generateAccChecklistDiv"></div>
+        <!--MODAL SECTION STARTS  -->
+        <div aura:id="selectedAcctDiv"></div>
+        <!--MODAL SECTION ENDS  -->
+        <div aura:id="listViewDiv"></div>
+        <div aura:id="docuSignDiv"></div>
+    </aura:if>
+
+</aura:component>

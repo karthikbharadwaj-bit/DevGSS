@@ -1,0 +1,257 @@
+<!--
+* Created By     : Namitha
+* Created Date   : 06-01-2020
+* Description    : Component to load Partner Accounts across all tabs
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes"
+                access="global" controller="Partner_LookupSearchController">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    
+    <aura:attribute name="isActive" type="Boolean" default="false" required="true" />	
+    <aura:attribute name="searchKeyword" type="String"/>
+    <aura:attribute name="displayErrorMessage" type="boolean"/>
+    <aura:attribute name="errorMessage" type="String"/>
+    <aura:attribute name="showList" type="boolean"/>
+    <aura:attribute name="searchBy" type="String" default="contact"/>    
+    <aura:attribute name="partnerContactList" type="List"/>
+    <aura:attribute name="partnerAccountList" type="List"/>
+    <aura:attribute name="searchPartnerAccount" type="Boolean" default="false"/>
+    <aura:attribute name="isMasterPartner" type="boolean" default="false"/>
+    
+    <aura:registerEvent name="populatePartnerEvent" type="c:Partner_SearchContactEvent"/>
+    
+    <aura:attribute name="currentContactPortalView" type="String" />
+    <aura:attribute name="isCurrentContactPCM" type="boolean" default="false" />
+    <aura:attribute name="isSFDC" type="boolean" default="false" />
+    <aura:attribute name="brandName" type="String" />
+     <aura:attribute name="brandsPermitted" type="List" default="['RingCentral']"/>
+    <aura:attribute name="isSingleLogin" type="boolean" default="false" />
+    <aura:attribute name="isNew" type="boolean" default="false" />
+    
+    <aura:attribute name="conFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    
+    <section role="dialog" tabindex="-1" aria-labelledby="Lookup Search" aria-modal="true"
+             aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container" style="min-width: 80vw;">
+            <header class="slds-modal__header">
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.Search_Partners}</h2>
+            </header>
+            <div class="slds-modal__content slds-p-around_small" style="min-width: 80vw;" id="modal-content-id-1">
+                <div class="slds-is-relative">
+                    <div class="spinnerHolder">
+                        <lightning:spinner alternativeText="{!v.translationsMap.Loading + '...'}" aura:id="loadingSpinner" class="slds-hide" size="small"/>
+                    </div>
+                </div> 
+                <!--<aura:if isTrue="{!!v.isMasterPartner}">-->
+                    <lightning:layout>
+                        <aura:if isTrue="{!v.searchPartnerAccount}">
+                            <lightning:layoutItem size="4" padding="horizontal-small">
+                                <lightning:input label="{!v.translationsMap.Search_by_Name}" value="{!v.searchKeyword}"                                         
+                                                 placeholder="{!v.translationsMap.Search +'...'}" required="true"
+                                                 aura:id="searchField"/>
+                            </lightning:layoutItem>
+                        </aura:if>
+                        
+                        <aura:if isTrue="{!!v.searchPartnerAccount}">
+                            <lightning:layoutItem size="4" padding="horizontal-small">
+                                <lightning:input label="{!v.conFieldsMap.Name}" value="{!v.searchKeyword}"                                         
+                                                 placeholder="{!v.translationsMap.Search +'...'}" required="true"
+                                                 aura:id="searchField"/>
+                            </lightning:layoutItem>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.isMasterPartner}">
+                            <aura:if isTrue="{!!v.searchPartnerAccount}">
+                                <lightning:layoutItem size="4" padding="horizontal-small">
+                                    <lightning:select name="searchBy" value= "{!v.searchBy}"
+                                                      label="{!v.translationsMap.Search_by}" required="true">
+                                        <option value="contact">{!v.translationsMap.Contact_Name}</option>
+                                        <option value="partner">{!v.translationsMap.Partner_Name}</option>
+                                        <!--<option value="Account.Partner_Account__r.Name">Partner Account</option>-->
+                                    </lightning:select>
+                                </lightning:layoutItem>
+                            </aura:if>
+                        </aura:if>
+                        <lightning:layoutItem size="2" padding="around-large">
+                            <lightning:button onclick="{!c.searchPartners}"
+                                              variant="brand"
+                                              label="{!v.translationsMap.Search}"
+                                              iconName="utility:search"/>
+                        </lightning:layoutItem>
+                        
+                    </lightning:layout>
+                <!--</aura:if>-->
+                <aura:if isTrue="{!v.displayErrorMessage}">
+                    <div class="slds-notify_container slds-is-relative">
+                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">{!v.errorMessage}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>                    
+                <aura:if isTrue="{!and(!v.searchPartnerAccount,and(!v.displayErrorMessage,v.showList,v.isMasterPartner))}">
+                    <div class="slds-m-around_xx-small ">        
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                            <thead>
+                                <tr>
+                                    <aura:if isTrue="{!!v.isMasterPartner}">
+                                        <th scope="col" style="max-width: 20vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_Contact}">{!v.translationsMap.Partner_Contact}</div></strong>
+                                        </th>
+                                        <th scope="col" style="max-width: 18vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_Name}">{!v.translationsMap.Partner_Name}</div></strong>
+                                        </th>
+                                        <th scope="col" style="max-width: 8vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_ID}">{!v.translationsMap.Partner_ID}</div></strong>
+                                        </th>   
+                                        <th scope="col" style="max-width: 14vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_Account}">{!v.translationsMap.Partner_Account}</div></strong>
+                                        </th>   
+                                        <th scope="col" style="max-width: 8vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Phone}">{!v.translationsMap.Phone}</div></strong>
+                                        </th>
+                                        <th scope="col" style="max-width: 14vw;">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Email}">{!v.translationsMap.Email}</div></strong>
+                                        </th>
+                                    </aura:if>
+                                    <aura:if isTrue="{!v.isMasterPartner}">
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_Name}">{!v.translationsMap.Partner_Name}</div></strong>
+                                        </th>
+                                    </aura:if>
+                                </tr>
+                            </thead> 
+                            <tbody>
+                                <aura:iteration items="{!v.partnerContactList}" var="partner"> 
+                                    <tr>
+                                        <aura:if isTrue="{!!v.isMasterPartner}">
+                                            <th scope="row" data-label="Name" style="max-width: 20vw;">
+                                                <div class="slds-truncate" title="{!partner.Name}"
+                                                     onclick="{!c.onSelectPartner}"
+                                                     data-value="{!partner.Id}"
+                                                     data-accountid="{!partner.AccountId}"
+                                                     data-name="{!partner.Name}"
+                                                     data-accountname="{!partner.Account.Name}"
+                                                     data-id="{!partner.Account.Partner_ID__c}"
+                                                     data-country="{!partner.Account.Partner_Country__c}"
+                                                     data-permittedbrands="{!partner.Account.Permitted_Brands__c}"
+                                                     data-varterritory="{!partner.Account.VAR_Territory__c}"
+                                                     data-partnertype="{!partner.Account.Partner_Type__c}"
+                                                     data-businessidentity="{!partner.Account.BusinessIdentity__c}"
+                                                     data-masteragentchlmgr="{!partner.Account.Master_Agent_Channel_Manager__c}"
+                                                     data-partnerAvailableCountries="{!partner.Permitted_Countries__c}" 
+                                                     data-insidesalesrep="{!partner.Account.Inside_Sales_Rep__c}"
+                                                     data-partnerClassification="{!partner.Account.Partner_Classification__c}">
+                                                     <!--PBC-9705 P2CSharing-->                                                    
+                                                    <a href="javascript:void(0)" >
+                                                        {!partner.Name}
+                                                    </a>                                
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Partner Name" style="max-width: 18vw;">
+                                                <div class="slds-truncate" title="{!partner.Account.Name}">                                                   
+                                                    {!partner.Account.Name}                                                                                                 
+                                                </div>
+                                            </th>   
+                                            <th scope="row" data-label="partnerId" style="max-width: 8vw;">
+                                                <div class="slds-truncate" title="{!partner.Account.Partner_ID__c}">
+                                                    {!partner.Account.Partner_ID__c}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="partnerId" style="max-width: 14vw;">
+                                                <div class="slds-truncate" title="{!partner.Account.Partner_Account__r.Name}">
+                                                    {!partner.Account.Partner_Account__r.Name}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Phone" style="max-width: 8vw;">
+                                                <div class="slds-truncate" title="{!partner.Phone}">
+                                                    {!partner.Phone}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Email" style="max-width: 15vw;">
+                                                <div class="slds-truncate" title="{!partner.Email}">
+                                                    {!partner.Email}
+                                                </div>
+                                            </th>
+                                        </aura:if>
+                                        <aura:if isTrue="{!v.isMasterPartner}">
+                                            <th scope="row" data-label="Name">
+                                                <div class="slds-truncate" title="{!partner.Account.Name}"
+                                                     onclick="{!c.onSelectPartner}"
+                                                     data-value="{!partner.Id}"
+                                                     data-accountid="{!partner.AccountId}"
+                                                     data-name="{!partner.Account.Name}"
+                                                     data-accountname="{!partner.Account.Name}"
+                                                     data-id="{!partner.Account.Partner_ID__c}"
+                                                     data-country="{!partner.Account.Partner_Country__c}"
+                                                     data-partnerAvailableCountries="{!partner.Permitted_Countries__c}">
+                                                    <a href="javascript:void(0)" >
+                                                        {!partner.Account.Name}        
+                                                    </a>                                
+                                                </div>
+                                            </th>  
+                                        </aura:if>
+                                    </tr>
+                                </aura:iteration> 
+                            </tbody>
+                        </table>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!and(v.searchPartnerAccount,and(!v.displayErrorMessage,v.showList))}">
+                    <div class="slds-m-around_xx-small">        
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_Account}">{!v.translationsMap.Partner_Account}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Partner_ID}">{!v.translationsMap.Partner_ID}</div></strong>
+                                    </th>                                     
+                                </tr>
+                            </thead> 
+                            <tbody>
+                                <aura:iteration items="{!v.partnerAccountList}" var="partner"> 
+                                    <tr>
+                                        <th scope="row" data-label="Name">
+                                            <div class="slds-truncate" title="{!partner.Name}"
+                                                 onclick="{!c.onSelectPartner}"
+                                                 data-value="{!partner.Id}"
+                                                 data-accountid="{!partner.AccountId}"
+                                                 data-name="{!partner.Name}"
+                                                 data-country="{!partner.Account.Partner_Country__c}">
+                                                <a href="javascript:void(0)" >
+                                                    {!partner.Name} 
+                                                </a>                                
+                                            </div>
+                                        </th>                                            
+                                        <th scope="row" data-label="Partner Name">
+                                            <div class="slds-truncate" title="{!partner.Partner_ID__c}">
+                                                
+                                                {!partner.Partner_ID__c}
+                                            </div>
+                                        </th>                                                                                        
+                                    </tr>
+                                </aura:iteration> 
+                            </tbody>
+                        </table>
+                    </div>
+                </aura:if>
+                
+            </div>
+            <footer class="slds-modal__footer">               
+                <lightning:button variant="neutral" label="{!v.translationsMap.Cancel}" title="{!v.translationsMap.Cancel}"  onclick="{!c.closeModal}"/>
+            </footer>
+        </div>				
+    </section>
+    <div class="{!'slds-backdrop ' + ((v.isActive) ? 'slds-backdrop_open' : 'slds-backdrop_close')}"></div>
+</aura:component>

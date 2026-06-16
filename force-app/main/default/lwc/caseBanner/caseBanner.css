@@ -1,0 +1,351 @@
+:host {
+    display: block;
+    --sf-pop-bg: #16325c;
+    /* SF navy */
+    --sf-pop-border: #0f2a4a;
+    /* darker edge */
+    --sf-pop-shadow: rgba(11, 46, 89, .22);
+}
+
+/* container */
+.shell {
+    padding-left: .5rem;
+    padding-right: .5rem;
+}
+
+/* banner card (anchor popovers to this box) */
+.case-banner-grid {
+    overflow: visible;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+    align-items: center;
+    background: #f8f9fb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
+}
+
+@media (max-width:48rem) {
+    .case-banner-grid {
+        grid-template-columns: 1fr;
+        gap: .75rem;
+    }
+}
+
+.banner-item {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.banner-label {
+    font-size: .78rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.banner-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    min-width: 0;
+}
+
+.value-row {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+/* loading chip inside card */
+.loading-chip {
+    grid-column: 1/-1;
+    order: -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .35rem .65rem;
+    background: #f1f5f9;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: .8rem;
+}
+
+.loading-dots {
+    display: inline-flex;
+    gap: .2rem;
+}
+
+.loading-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #9ca3af;
+    animation: jump 1.1s infinite ease-in-out;
+    opacity: .6;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: .15s
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: .30s
+}
+
+@keyframes jump {
+
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: .5
+    }
+
+    40% {
+        transform: translateY(-4px);
+        opacity: 1
+    }
+}
+
+/* skeletons */
+@keyframes shimmer {
+    0% {
+        background-position: -200px 0
+    }
+
+    100% {
+        background-position: 200px 0
+    }
+}
+
+.skel {
+    background: #eee;
+    background-image: linear-gradient(90deg, #eee 0, #f5f5f5 50%, #eee 100%);
+    background-size: 400px 100%;
+    animation: shimmer 1.2s infinite;
+    display: inline-block;
+    height: 18px;
+    border-radius: 9999px;
+}
+
+.skel-pill {
+    width: 90px;
+    border-radius: 999px;
+}
+
+.skel-bar {
+    /* never exceed the cell; and make it visually shorter */
+    width: clamp(96px, 58%, 160px);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.skel-age {
+    width: 90px;
+}
+
+/* sentiment pills */
+.sentiment-pill {
+    display: inline-block;
+    padding: .18rem .6rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.sentiment-pill.positive {
+    background: #eafbea;
+    color: #166534;
+    border-color: #bbf7d0;
+}
+
+.sentiment-pill.neutral {
+    background: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
+}
+
+.sentiment-pill.negative {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+/* escalation pills (tone) */
+.escalation-pill {
+    display: inline-block;
+    padding: .18rem .6rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.escalation-pill.stable {
+    background: #e0f2fe;
+    color: #075985;
+    border-color: #bae6fd;
+}
+
+.escalation-pill.likely {
+    background: #fff7ed;
+    color: #9a3412;
+    border-color: #fed7aa;
+}
+
+.escalation-pill.escalated {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecaca;
+}
+
+/* --- Bulb chip + left-opening popover (no “Show explanation” tooltip) --- */
+.hint {
+    position: relative;
+    display: inline-flex;
+}
+
+/* clickable chip */
+.bulb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+
+    /* warm amber base */
+    background: #FFFBEB;
+    /* amber-50 */
+    border: 1px solid #FDE68A;
+    /* amber-300 */
+    cursor: help;
+    transition: .15s ease;
+}
+
+.bulb-icon {
+    color: #F59E0B;
+    /* amber-500 */
+}
+
+/* nice hover/keyboard focus */
+.bulb:hover {
+    background: #FEF3C7;
+}
+
+/* amber-100 */
+.bulb:hover .bulb-icon {
+    color: #D97706;
+}
+
+/* amber-600 */
+
+.bulb:focus-visible {
+    outline: none;
+    /* soft glow ring for accessibility */
+    box-shadow:
+        0 0 0 3px #FEF3C7,
+        0 0 0 5px rgba(245, 158, 11, .35);
+}
+
+/* optional: tiny glow while hovering */
+.bulb:hover {
+    box-shadow:
+        0 0 0 1px #FDE68A,
+        0 2px 10px rgba(245, 158, 11, .25);
+}
+
+/* lightning-icon uses currentColor */
+
+.hint-pop {
+    position: absolute;
+    right: 0;
+    left: auto;
+    top: 125%;
+    z-index: 10;
+
+    min-width: 280px;
+    max-width: 520px;
+    max-height: min(200px, 35vh);
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
+
+    background: var(--sf-pop-bg);
+    color: #fff;
+    border: 1px solid var(--sf-pop-border);
+    border-radius: 6px;
+    padding: .5rem .75rem;
+    box-shadow: 0 2px 10px var(--sf-pop-shadow);
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+    transition: .15s ease;
+
+    /* ↓ “salesforce small” text */
+    font-size: .8125rem;
+    /* ~13px */
+    line-height: 1.25rem;
+    /* ~20px */
+    font-weight: 500;
+    /* medium, less shouty */
+    letter-spacing: .002em;
+    -webkit-font-smoothing: antialiased;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+.hint-pop:before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 14px;
+    width: 10px;
+    height: 10px;
+    background: var(--sf-pop-bg);
+    transform: rotate(45deg);
+    border-left: 1px solid var(--sf-pop-border);
+    border-top: 1px solid var(--sf-pop-border);
+}
+
+.hint:hover .hint-pop,
+.hint:focus-within .hint-pop {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* optional: tidy paragraphs if your text has line breaks */
+.hint-pop p {
+    margin: .25rem 0;
+}
+
+.hint-pop p:first-child {
+    margin-top: 0;
+}
+
+.hint-pop p:last-child {
+    margin-bottom: 0;
+}
+
+/* NEW: red pill for metric errors */
+.error-pill {
+    display: inline-block;
+    padding: .18rem .6rem;
+    border-radius: 999px;
+    font-size: .82rem;
+    font-weight: 700;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}

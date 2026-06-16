@@ -1,0 +1,83 @@
+<aura:component>
+    <!-- Attributes -->
+    <aura:attribute name="notifications" type="List" default="[]"/>
+    <aura:attribute name="activeNotifications" type="List" default="[]"/>
+
+    <aura:method name="update" action="{! c.update }">
+        <aura:attribute name="params" type="Object"/>
+    </aura:method>
+    <aura:method name="close" action="{! c.close }"/>
+    <aura:method name="open" action="{! c.open }"/>
+
+    <li class="slds-page-header__detail-block notifications-wrapper">
+        <aura:if isTrue="{! v.activeNotifications.length > 0 }">
+            <div aura:id="notificationsContainer" id="notificationsContainer" onclick="{!c.toggleNotifications}"
+                 class="notifications-container" title="Click to show/hide all notifications">
+
+                <!-- Notifications List -->
+                <div class="notifications slds-scrollable--y" aura:id="notifications">
+                    <aura:iteration items="{!v.activeNotifications}" var="notification">
+
+                        <!-- Notification -->
+                        <div class="slds-media slds-media--center notification">
+                            <div class="slds-media__figure notification__figure">
+                                <aura:if isTrue="{!notification.type == 'warning'}">
+                                    <lightning:icon iconName="utility:warning" size="xx-small" alternativeText="Warning"
+                                                    class="slds-theme--warning notification__icon-container"/>
+                                </aura:if>
+                                <aura:if isTrue="{!notification.type == 'success'}">
+                                    <lightning:icon iconName="utility:success" size="xx-small" alternativeText="Success"
+                                                    class="slds-theme--success notification__icon-container"/>
+                                </aura:if>
+                                <aura:if isTrue="{!notification.type == 'error'}">
+                                    <lightning:icon iconName="utility:error" size="xx-small" alternativeText="Error"
+                                                    class="slds-theme--error notification__icon-container"/>
+                                </aura:if>
+                                <aura:if isTrue="{!notification.type == 'info'}">
+                                    <lightning:icon iconName="utility:info" size="xx-small" alternativeText="Info"
+                                                    class="slds-theme--info notification__icon-container"/>
+                                </aura:if>
+                            </div>
+                            <div class="slds-media__body">
+                                <p class="notification__text">
+                                    <aura:unescapedHtml value="{!notification.text}"/>
+                                </p>
+                                <aura:if isTrue="{!notification.helpText}">
+                                    <p class="{! join(' ', 'notification__help-text',
+                                        notification.isHelpTextShown ? 'notification__help-text--open' : '') }">
+                                        <aura:unescapedHtml value="{!notification.helpText}"/>
+                                    </p>
+                                </aura:if>
+                            </div>
+                            <div class="notification__action-container">
+                                <a href="javascript:void(0);" onclick="{!c.helperAction}"
+                                   data-action="{!notification.name}"
+                                   class="notification__action">{!notification.actionLink}</a>
+                            </div>
+                        </div>
+
+                    </aura:iteration>
+                </div>
+
+
+                <!-- Expand Button -->
+                <div class="notifications-button-container">
+                    <button class="slds-button slds-button--icon-border notifications-button">
+                        <span class="slds-badge" style="padding-top: 8px;">
+                            <lightning:icon iconName="utility:down" size="xx-small"
+                                            alternativeText="Collapse notifications"
+                                            class="notification-button-down"/>
+                            <lightning:icon iconName="utility:up" size="xx-small"
+                                            alternativeText="Collapse notifications"
+                                            class="notification-button-up"/>
+                            <span class="sup">
+                                +{!v.activeNotifications.length - 1}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+
+            </div>
+        </aura:if>
+    </li>
+</aura:component>

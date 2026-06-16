@@ -1,0 +1,168 @@
+<template>
+    <template if:true={isAccessEnabled}>
+    <div class="manager-dashboard-card">
+        <lightning-card>
+            <div class="manager-dashboard-inner">
+
+                <!-- ========== Header Bar ========== -->
+                <div class="custom-header-bar">
+                    <img src={aiInsightsLogo} alt="AI Insights" class="card-header-logo" />
+                    <span class="custom-header-title">Support Manager Dashboard</span>
+                </div>
+
+                <div class="manager-dashboard-body">
+
+                    <!-- ========== Accordion Toggle ========== -->
+                    <button type="button"
+                            class="accordion-header"
+                            onclick={toggleSection}
+                            aria-expanded={isSectionOpen}
+                            aria-controls="manager-dashboard-content">
+                        <span class="accordion-label">Team Overview &amp; Workload</span>
+                        <lightning-icon icon-name={chevronIcon}
+                                        size="x-small"
+                                        class="accordion-chevron">
+                        </lightning-icon>
+                    </button>
+
+                    <!-- ========== Accordion Content ========== -->
+                    <div id="manager-dashboard-content"
+                         class="accordion-content"
+                         role="region"
+                         aria-hidden={isContentHidden}>
+
+                        <template if:true={isSectionOpen}>
+
+                            <!-- Loading State -->
+                            <template if:true={isDashboardLoading}>
+                                <div class="slds-align_absolute-center slds-m-vertical_large loading-container">
+                                    <img src={Processing} alt="Loading" class="loading-logo" />
+                                    <p class="loading-message">{loadingMessage}</p>
+                                </div>
+                            </template>
+
+                            <!-- Data Loaded -->
+                            <template if:false={isDashboardLoading}>
+
+                                <!-- ========== Summary Tiles ========== -->
+                                <div class="summary-cards">
+                                    <!-- Total Agents -->
+                                    <div class="summary-card summary-card-agents">
+                                        <span class="summary-card-label">Total Agents</span>
+                                        <span class="summary-card-value">{totalAgents}</span>
+                                    </div>
+                                    <!-- Team Backlog -->
+                                    <div class="summary-card summary-card-backlog">
+                                        <span class="summary-card-label">Team Backlog (Queue)</span>
+                                        <span class="summary-card-value">{teamBacklog}</span>
+                                    </div>
+                                    <!-- Closed Cases -->
+                                    <div class="summary-card summary-card-closed">
+                                        <span class="summary-card-label">Closed Cases (1 Month)</span>
+                                        <span class="summary-card-value">{closedCases}</span>
+                                    </div>
+                                    <!-- SLA Breach Risk -->
+                                    <div class="summary-card summary-card-sla">
+                                        <span class="summary-card-label">SLA Breach Risk</span>
+                                        <span class="summary-card-value">{slaBreachRisk}</span>
+                                    </div>
+                                    <!-- Negative Sentiment (CSAT) -->
+                                    <div class="summary-card summary-card-sentiment">
+                                        <span class="summary-card-label">Negative Sentiment (CSAT)</span>
+                                        <span class="summary-card-value">{aiNegativeSentimentTotal}</span>
+                                    </div>
+                                    <!-- Likely to Escalate -->
+                                    <div class="summary-card summary-card-escalation">
+                                        <span class="summary-card-label">Likely to Escalate</span>
+                                        <span class="summary-card-value">{aiEscalationRiskTotal}</span>
+                                    </div>
+                                </div>
+
+                                <!-- ========== Team Workload Table ========== -->
+                                <template if:true={hasAgents}>
+                                    <h3 class="section-heading">Team Workload Distribution</h3>
+
+                                    <div class="workload-table-container list-view-redesign">
+                                        <table class="list-view-table">
+                                            <thead>
+                                                <tr class="list-view-header-row">
+                                                    <th class="list-view-header" scope="col">
+                                                        <span class="list-view-header-text">Agent Name</span>
+                                                    </th>
+                                                    <th class="list-view-header" scope="col">
+                                                        <span class="list-view-header-text">Cases Resolved (1 Week)</span>
+                                                    </th>
+                                                    <th class="list-view-header" scope="col">
+                                                        <span class="list-view-header-text">Cases Open</span>
+                                                    </th>
+                                                    <th class="list-view-header" scope="col">
+                                                        <span class="list-view-header-text">Negative Sentiment (CSAT)</span>
+                                                    </th>
+                                                    <th class="list-view-header" scope="col">
+                                                        <span class="list-view-header-text">Likely to Escalate</span>
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={agentList} for:item="agent">
+                                                    <tr key={agent.agentId} class="list-view-row">
+                                                        <!-- Agent Name - clickable to open modal -->
+                                                        <td class="list-view-cell list-view-cell-id" data-label="Agent Name">
+                                                            <a href={agent.agentLink}
+                                                               data-agent-id={agent.agentId}
+                                                               data-agent-name={agent.agentName}
+                                                               onclick={handleAgentClick}
+                                                               class="list-view-link agent-name-link">
+                                                                {agent.agentName}
+                                                            </a>
+                                                        </td>
+                                                        <!-- Cases Resolved -->
+                                                        <td class="list-view-cell" data-label="Cases Resolved (1 Week)">
+                                                            <span class="resolved-count">{agent.casesResolved}</span>
+                                                        </td>
+                                                        <!-- Cases Open -->
+                                                        <td class="list-view-cell" data-label="Cases Open">
+                                                            <span class="open-count">{agent.casesOpen}</span>
+                                                        </td>
+                                                        <!-- Negative Sentiment (CSAT) -->
+                                                        <td class="list-view-cell" data-label="Negative Sentiment (CSAT)">
+                                                            <span class="negative-sentiment-count">{agent.atRiskSentimentCount}</span>
+                                                        </td>
+                                                        <!-- Likely to Escalate -->
+                                                        <td class="list-view-cell" data-label="Likely to Escalate">
+                                                            <span class="escalation-risk-count">{agent.escalationRiskCount}</span>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+
+                                <!-- No Agents State -->
+                                <template if:false={hasAgents}>
+                                    <div class="slds-align_absolute-center slds-m-vertical_large">
+                                        <lightning-icon icon-name="utility:info" size="medium"></lightning-icon>
+                                        <p class="slds-m-top_small slds-m-left_small slds-text-heading_small">
+                                            No direct-report agents found
+                                        </p>
+                                    </div>
+                                </template>
+
+                                <!-- AI disclaimer -->
+                                <p class="dashboard-disclaimer">
+                                    <span class="dashboard-disclaimer-label">&#9888; Disclaimer</span>
+                                    <span class="dashboard-disclaimer-colon"> : </span>
+                                    <span class="dashboard-disclaimer-text">Sentiment and escalation insights above are AI generated. Please review case details before taking action.</span>
+                                </p>
+
+                            </template>
+                        </template>
+                    </div>
+
+                </div>
+            </div>
+        </lightning-card>
+    </div>
+    </template>
+</template>

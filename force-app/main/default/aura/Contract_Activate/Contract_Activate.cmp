@@ -1,0 +1,26 @@
+<!-- 
+  @CreatedBy : Vidya Sampath
+  @Date : 18/Sep/2020
+  @Purpose : Custom component to activate contract in lightning. 
+-->
+
+<aura:component implements="flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader" 
+                access="global" >
+    
+    <!-- Declare attributes -->    
+    <!-- contractRecord : Capture contract record loaded using LDS -->
+    <aura:attribute name="contractRecord" type="Object"/>
+    <!-- isActive : Capture status of Contract on load -->
+    <aura:attribute name="isActive" type="Boolean" default="false"/>
+    
+    
+    <!-- Load contract record using LDS ; Handle record changes using recordUpdated method -->
+    <force:recordData aura:id="conRec" 
+                  fields="Status"
+                  recordId="{!v.recordId}"  
+                  targetError="{!v.recordSaveError}"                  
+                  targetFields="{!v.contractRecord}"
+                  mode="EDIT"
+                  recordUpdated="{!c.handleRecordUpdated}" 
+                  />
+</aura:component>

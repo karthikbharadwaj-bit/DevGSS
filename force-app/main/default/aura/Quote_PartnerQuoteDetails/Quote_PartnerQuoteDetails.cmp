@@ -1,0 +1,462 @@
+<!-- 
+Change History
+********************************************************************************************************************
+SCRUM/Jira      		ModifiedBy      Date     	Description       							 		Tag
+Generate Contract		Namitha			11/20/2019	Added logic for generate contract					T1		
+********************************************************************************************************************
+-->
+<aura:component controller="Quote_PartnerDetailController" 
+                implements="force:appHostable,force:lightningQuickAction,force:hasRecordId" extends="c:Quote_BaseComponent" access="global">
+    
+    <aura:attribute name="Quote" type="Quote" default="{ 'sobjectType': 'Partner_Quote__c',
+                        'Status__c': 'Draft'}" />
+    <aura:attribute name="showModalEngageLegal" type="Boolean" default="false"/>
+    <aura:attribute name="cloneQuoteName" type="string"  />
+    <aura:attribute name="Spinner" type="Boolean" default="false"/>
+    <aura:attribute name="isSuperUser" type="Boolean" default="false"/>
+    <aura:attribute name="isPartnerContractExist" type="Boolean" default="false"/>
+    <aura:attribute name="isOpenContractRequest" type="Boolean" default="false"/>
+    <aura:attribute name="showFavModel" type="boolean" default="false"/>
+    <aura:attribute name="cName" type="String" default="Partner_QuoteDetails" />
+    <aura:attribute name="currentDate" type="String"/>
+    <aura:attribute name="showChecklistCMP" type="Boolean"/>
+    <aura:attribute name="objAccountCheckList" type="Account_Checklist__c" default="{'sobjectType':'Account_Checklist__c'}"/>
+    <aura:attribute name="isQuoteLocked" type="Boolean" default="false" />
+    <aura:attribute name="showPartnerDiscount" type="Boolean" default="false" />
+    <aura:attribute name="showCreateContractCMP" type="Boolean" default="false" />
+    <aura:attribute name="discountDetails" type="String" default="" />
+    <aura:attribute name="discount" type="Decimal" default="" />
+    <aura:attribute name="promotion" type="Boolean" default="" />
+    <aura:attribute name="campaign" type="Boolean" default="" />
+    <aura:attribute name="IsOpenInCommunity" type="Boolean" />
+    <aura:attribute name="promoCode" type="String" default="" />
+    <aura:attribute name="currentUser" type="User" />
+    <aura:attribute name="Step" type="String" default="1" />
+    <aura:attribute name="selectedCategory" type="String" default="" />
+    <aura:attribute name="addressList" type="Account_Checklist_Address__c[]"/>
+    <aura:attribute name="showPOCRequest" type="Boolean" default="false"/>
+    <aura:attribute name="isPOCRequestExists" type="Boolean" default="false"/>
+    <aura:attribute name="isDiscountRequestExists" type="Boolean" default="false"/>
+    <aura:attribute name="invalidQuote" type="String" default="" />
+    <aura:attribute name="isCurrentUserReadOnlyProfile" type="Boolean" default="false"/>
+    <aura:attribute name="mapOfPackageToPromoDetail" type="Map" />
+    <aura:attribute name="mapOfPromoToListAssociatedDetail" type="Map" />
+    <aura:attribute name="ShippingAddressList" type="Quote_PartnerDetailController.AccountCheckListAddressWrapp[]"/>
+    <aura:attribute name="baseUrlComm" type="String" />
+    <aura:attribute name="isLongFormQuote" type="Boolean" default="false"/><!--Added for Longform Quote for ACO -->
+    <aura:attribute name="showLongFormModal" type="Boolean" default="false"/><!--Added for Longform Quote for ACO --> 
+    <aura:attribute name="BrandName" type="String" default=""/><!--Added for Longform Quote for ACO -->
+    <aura:handler name="init" value="{!this}" action="{!c.loadData}"/>
+    <aura:attribute name="SFbaseURL" type="String" default=""/>  <!-- Added for ALE jira issue - BZS 4452-->  
+    <aura:attribute name="discountType" type="String" />
+    <!--Added for Bill on Behalf-->
+    <aura:attribute name="hideRCContract" type="Boolean" default="false"/><!-- Added for JIRA issue PRM-6-->
+    <aura:attribute name="accPartnerTypeval" type="String" default=""/> <!-- Added for Bill on Behalf Partner Type-->
+    <aura:attribute name="isAccountPartnerTypeBOB" type="Boolean" default="false"/> <!-- Added for Bill on Behalf Partner Type-->
+    <aura:attribute name="isAvaya" type="Boolean" default="false"/> <!-- Added for Bill on Behalf Partner Type-->
+    <aura:attribute name="quoteBrandName" type="String"/>
+    <aura:attribute name="isContractTeam" type="Boolean" default="false"/>
+	
+	<aura:attribute name="translationsMap" type="Map" />
+    
+    <div>
+    <!-- <aura:if isTrue="{!v.showPOCRequest}">
+        <c:Quote_POCRequestCMP Quote="{!v.Quote}" isPOCRequestExists="{!v.isPOCRequestExists}" Spinner="{!v.Spinner}" showPOCRequest="{!v.showPOCRequest}" />
+   	</aura:if> -->
+    <aura:if isTrue="{!v.showCreateContractCMP}">
+        <c:Quote_QuoteSubmitMain isOpenContractRequest="{!v.isOpenContractRequest}"
+                                 ShippingAddressList = "{!v.ShippingAddressList}"
+                                 isPartnerContractExist="{!v.isPartnerContractExist}" 
+                                 Quote="{!v.Quote}" addressList="{!v.addressList}" 
+                                 showCreateContractCMP="{!v.showCreateContractCMP}" 
+                                 isFromContract="true" 
+                                 objAccountCheckList="{!v.objAccountCheckList}" 
+                                 accountId ="{!v.Quote.Opportunity__r.AccountId}" 
+                                 isFromCheckOutPage ="true" 
+                                 showChecklistCMP="{!v.showChecklistCMP}"
+                                 UserType="{!v.currentUser.UserType}"
+                                 IsOpenInCommunity="{!v.IsOpenInCommunity}"
+                                 accPartnerTypeval = "{!v.accPartnerTypeval}"/> 
+                                        
+    </aura:if>
+    <aura:if isTrue="{!v.showChecklistCMP}">
+       <!-- <c:Quote_AccountCheckList objAccountCheckList="{!v.objAccountCheckList}" accountId ="{!v.Quote.Opportunity__r.AccountId}" isFromCheckOutPage ="true" showChecklistCMP="{!v.showChecklistCMP}"/>
+    -->
+        <c:Quote_QuoteSubmitMain Quote="{!v.Quote}" 
+                                 addressList="{!v.addressList}"
+                                 ShippingAddressList = "{!v.ShippingAddressList}"
+                                 isFromContract="false" 
+                                 objAccountCheckList="{!v.objAccountCheckList}" 
+                                 accountId ="{!v.Quote.Opportunity__r.AccountId}" 
+                                 isFromCheckOutPage ="true" 
+                                 showChecklistCMP="{!v.showChecklistCMP}"
+                                 UserType="{!v.currentUser.UserType}"
+                                 IsOpenInCommunity="{!v.IsOpenInCommunity}"/>   
+	</aura:if>
+    
+   
+    
+    <div class="slds-grid slds-grid_vertical-align-start mrgn-btm-20">
+  		<div class="slds-col_bump-right">
+            	<!-- <span class="slds-icon_container slds-icon-standard-quote" title="{!v.Quote.Name__c}">
+                	<lightning:icon iconName="action:quote" alternativeText="Quote" />
+                </span> -->
+            	<div class="slds-page-header__col-title quoteheadinglabel">
+                    <aura:if isTrue="{!v.Quote.Id != null}">
+                        {!v.Quote.Name__c} - {!v.Quote.Status__c}
+                    	<aura:set attribute="else">
+                            New Quote
+                       	</aura:set>
+                    </aura:if>                	
+               	</div>
+                <div class="quoteheadingvalue">
+                	{!v.Quote.Name}
+                </div>
+        </div>
+        <aura:if isTrue="{!v.isCurrentUserReadOnlyProfile}">
+            <div class="actionbuttonswrap">
+                <!--added aura:if for Longform Quote for ACO-->
+                <aura:if isTrue="{!v.BrandName == 'Avaya Cloud Office'}">
+                    <a aria-live="assertive"
+                        class="slds-button slds-button_brand slds-not-selected"
+                        onclick="{!c.showLongformModal}"
+                        download="true">{!v.translationsMap.Quote_PDF_PI}</a>
+                </aura:if>
+                <!--added aura:if for Longform Quote for ACO-->
+                <aura:if isTrue="{!v.BrandName != 'Avaya Cloud Office'}">
+                    <a aria-live="assertive"
+    		        class="slds-button slds-button_brand slds-not-selected"
+    		        href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id : '/partner/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id}"
+    		        download="true">{!v.translationsMap.Quote_PDF_PI}</a>
+                </aura:if>
+            </div>
+        </aura:if>
+        <aura:if isTrue="{!!v.isCurrentUserReadOnlyProfile}">
+   		<div class="actionbuttonswrap">
+             <aura:if isTrue="{!v.IsOpenInCommunity}">
+                 <button class="slds-button slds-button_brand" onclick="{!c.goToAddProducts}" disabled="{!and(v.isQuoteLocked,!v.isSuperUser)}">
+                     <aura:if isTrue="{!v.isQuoteLocked}">
+                         <lightning:icon iconName="utility:lock" variant="inverse" size="x-small" alternativeText="Quote is locked"  />
+                         &nbsp;&nbsp;
+                     </aura:if>
+                      {!v.translationsMap.Add_Products_PI}
+                 </button>
+                 <button class="slds-button slds-button_brand" onclick="{!c.saveQuote}" disabled="{!and(v.Quote.Quote_Locked__c, !v.isSuperUser)}">{!v.translationsMap.Save}</button>
+            	 <!-- <button class="slds-button slds-button_brand" disabled="{!and(v.isPOCRequestExists,not(v.isSuperUser))}" onclick="{!c.showPOCRequest}" >Request for POC</button>
+             	 -->	
+				</aura:if>
+             <aura:if isTrue="{!!v.IsOpenInCommunity}">
+                 <button class="slds-button slds-button_brand" onclick="{!c.goToAddProducts}" >{!v.translationsMap.Add_Products_PI}</button>
+            	 <button class="slds-button slds-button_brand" onclick="{!c.saveQuote}">{!v.translationsMap.Save}</button>
+             </aura:if>
+            
+            <!--
+            <button class="slds-button slds-button_brand" onclick="{!c.clonePartnerQuote}">Clone</button>
+            -->
+
+            <!--added aura:if for Longform Quote for ACO-->
+            <aura:if isTrue="{!v.BrandName == 'Avaya Cloud Office'}">
+                <a aria-live="assertive"
+                   class="slds-button slds-button_brand slds-not-selected"
+                   onclick="{!c.showLongformModal}"
+                   download="true">{!v.translationsMap.Quote_PDF_PI}</a>
+            </aura:if>
+            <!--added aura:if for Longform Quote for ACO-->
+            <aura:if isTrue="{!v.BrandName != 'Avaya Cloud Office'}">
+                <a aria-live="assertive"
+    		        class="slds-button slds-button_brand slds-not-selected"
+    		        href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id : v.baseUrlComm+'/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id}"
+    		        download="true">{!v.translationsMap.Quote_PDF_PI}</a>
+            </aura:if>
+            <!--
+            <button class="slds-button slds-button_brand" onclick="{!c.engageLegal}">Contract PDFs</button>
+            -->
+            <aura:if isTrue="{!and(v.IsOpenInCommunity, not(v.isSuperUser))}">
+                <button class="slds-button slds-button_brand" onclick="{!c.requestDiscount}"  disabled="{!v.isQuoteLocked}">{!v.translationsMap.Non_Standard_Request_PI}
+                    <!-- JIRA issue 5042 change begins -->
+                    <lightning:helptext content="{!v.translationsMap.Use_this_button_to_request_a_discount}"/>
+                    <!-- JIRA issue 5042 change ends -->
+                </button>
+                <aura:if isTrue="{!v.Quote.Contract__c}">
+                    <!-- if condition for JIRA issue PRM-6 -->
+                    <aura:if isTrue="{!!v.hideRCContract}">
+                        <button class="slds-button slds-button_brand" onclick="{!c.createContract}" disabled="{!or(v.isQuoteLocked,and(!v.isAvaya,v.isAccountPartnerTypeBOB))}" >contract
+                            <lightning:helptext content="{!v.translationsMap.A_separate_MSA_is_not_required_for_Bill}"/>
+                        </button> 
+                    </aura:if>
+                </aura:if>
+                <button class="slds-button slds-button_brand" onclick="{!c.submitOrder}" disabled="{!or(v.isQuoteLocked, v.invalidQuote != '')}" >{!v.translationsMap.Submit_Order_PI}</button> 
+            </aura:if>
+            <aura:if isTrue="{!or(not(v.IsOpenInCommunity), v.isSuperUser)}">
+                 <button class="slds-button slds-button_brand" onclick="{!c.requestDiscount}" >{!v.translationsMap.Non_Standard_Request_PI}
+                    <!-- JIRA issue 5042 change begins -->
+                    <lightning:helptext content="{!v.translationsMap.Use_this_button_to_request_a_discount}"/>                        
+                    <!-- JIRA issue 5042 change ends -->
+                 </button>
+                <aura:if isTrue="{!v.Quote.Contract__c}">
+                    <!-- if condition for JIRA issue PRM-6 -->
+                    <aura:if isTrue="{!!v.hideRCContract}">
+                        <button class="slds-button slds-button_brand" onclick="{!c.createContract}" >{!v.translationsMap.Contract}
+                            <lightning:helptext content="{!v.translationsMap.A_separate_MSA_is_not_required_for_Bill}"/>
+                        </button> 
+                    </aura:if>
+                </aura:if>
+                <button class="slds-button slds-button_brand" onclick="{!c.submitOrder}" disabled="{!v.invalidQuote != ''}" >{!v.translationsMap.Submit_Order_PI}</button> 
+            </aura:if>
+            <button class="slds-button slds-button_brand fav-btn" onclick="{!c.addFav}" title="Add Favorite">
+                <span class="addfav-icon"></span>
+            </button>
+            <!--<button class="slds-button slds-button_brand" onclick="{!c.convertQuote}">Convert To Quote</button>
+            <button class="slds-button slds-button_brand" download="true" disabled="false" onclick="{!c.generatePDF}">Generate PDF</button>-->
+    		
+        </div>
+        </aura:if>
+    </div>
+    <!--
+    <aura:if isTrue="{!v.Quote.Highest_Discount__c > 15}">
+        <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
+           <span class="slds-assistive-text">Warning</span>
+           <span class="slds-icon_container slds-icon-utility-warning slds-m-right_x-small">
+              <lightning:icon iconName="utility:warning" size="small" />
+           </span>
+           <h2>
+               <b>Discount > 15% will require further approvals.</b>
+           </h2>
+        </div>
+    </aura:if>
+	 -->
+    <aura:if isTrue="{!v.invalidQuote != ''}">
+        <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_warning" role="alert">
+           <span class="slds-assistive-text">Warning</span>
+           <span class="slds-icon_container slds-icon-utility-warning slds-m-right_x-small">
+              <lightning:icon iconName="utility:warning" size="small" />
+           </span>
+           <h2>
+               <b>{!v.invalidQuote}</b>
+           </h2>
+        </div>
+    </aura:if>
+    <!-- Quote Details -->	
+    <div>
+        <fieldset class="slds-form--compound quotedetailsform">
+          <legend class="slds-text-title_bold">{!v.translationsMap.Quote_Details_PI}</legend>
+            <div class="slds-form-element__row slds-grid slds-gutters slds-grid_align-spread">
+                <div class="slds-form-element slds-col">
+                    <label class="slds-form-element__label">{!v.translationsMap.Name}</label>
+                    <div class="slds-form-element__control input">
+                        <lightning:input disabled="{!v.isCurrentUserReadOnlyProfile}" type="text" value="{!v.Quote.Name__c}" name="input1" variant="label-hidden" />
+                    </div>
+                </div>
+                <div class="slds-form-element slds-col">
+                    <label class="slds-form-element__label">{!v.translationsMap.Opportunity_Name}</label>
+                    <div class="slds-form-element__control" onclick="{!c.redirectTOOpportunityDetail}">
+                    <!-- Added aura:if condition for ALE jira issue - BZS 4452-->
+                        <aura:if isTrue="{!v.IsOpenInCommunity}">
+                        <ui:outputURL value="{!v.baseUrlComm +'/s/partneropportunities?id=' + v.Quote.Opportunity__c}" label="{!v.Quote.Opportunity__r.Name}"></ui:outputURL>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.IsOpenInCommunity}">
+                            <ui:outputURL value="{!v.SFbaseURL +'/' + v.Quote.Opportunity__c}" label="{!v.Quote.Opportunity__r.Name}"></ui:outputURL>
+                        </aura:if>
+                    </div>
+              	</div> 
+                <div class="slds-form-element slds-col">
+                	<label class="slds-form-element__label">{!v.translationsMap.Quote_Expiration_Date_PI}</label>
+                    <div class="slds-form-element__control input">
+                    	<lightning:input disabled="{!v.isCurrentUserReadOnlyProfile}" type="date" min="{!v.currentDate}" value="{!v.Quote.Expiration_Date__c}" name="input1" variant="label-hidden" />
+                 	</div>
+            	</div>
+            </div>
+            <aura:if isTrue="{!v.Quote.Contract__c}">
+                <div class="slds-form-element__row slds-grid slds-gutters slds-grid_align-spread">
+                    <div class="slds-form-element slds-col">
+                        <lightning:select disabled="{!v.isCurrentUserReadOnlyProfile}" class="input" value="{!v.Quote.Initial_Term__c}" name="select2" label="{!v.translationsMap.Initial_Term_PI}">
+                           <aura:if isTrue="{!!v.Quote.Is_Phone_Product__c}">
+                            	<option value="12">12</option>
+                           </aura:if>
+                           <option value="24">24</option>
+                           <option value="36">36</option>
+                           <option value="48">48</option>
+                            <option value="60">60</option>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-form-element slds-col">
+                        <!-- disabled="{!or(v.Quote.Is_Phone_Product__c,v.isCurrentUserReadOnlyProfile)} -->
+                        <lightning:select class="input" value="{!v.Quote.Renewal_Term__c}" name="select3" label="{!v.translationsMap.Renewal_Term_PI}" disabled="{!v.isCurrentUserReadOnlyProfile}">
+                           <aura:if isTrue="{!or(not(v.Quote.Is_Phone_Product__c), v.Quote.Opportunity__r.Brand_Name__c == 'Rainbow Office')}">
+                           	<option value="12">12</option>
+                            </aura:if>
+                           <option value="24">24</option>
+                           <option value="36">36</option>
+                           <option value="48">48</option>
+                           <option value="60">60</option>
+                        </lightning:select>
+                    </div>
+                    <div class="slds-form-element slds-col">
+                        <label class="slds-form-element__label" for="input-02">Shipping Address</label>
+                        <div class="slds-form-element__control input">
+                            <lightning:input disabled="{!v.isCurrentUserReadOnlyProfile}" type="text" value="{!v.Quote.Shipping_Address__c}" name="input1" variant="label-hidden" />
+                        </div>
+                    </div>             
+                </div>
+            </aura:if>
+                
+            <div class="slds-form-element__row slds-grid slds-gutters slds-grid_align-spread">
+               <aura:if isTrue="{!v.Quote.Contract__c}">
+                   <div class="slds-form-element slds-col">
+                        <!-- Added help text for BZS-5042 -->
+                        <label class="slds-form-element__label" for="input-02">{!v.translationsMap.Expected_Service_Start_Date_PI}
+                        <lightning:helptext content="{!v.translationsMap.Contract_Help_Text_PI}"/></label>
+                        <div class="slds-form-element__control input">
+                            <lightning:input disabled="{!v.isCurrentUserReadOnlyProfile}" type="date" min="{!v.currentDate}" value="{!v.Quote.Start_Date__c}" name="input1" variant="label-hidden" />
+                        </div>
+                    </div>  
+                    <div class="slds-form-element slds-col">
+                        <label class="slds-form-element__label" for="input-02">{!v.translationsMap.End_Date_PI}</label>
+                        <div class="slds-form-element__control input">
+                            <lightning:input disabled="true" type="date" value="{!v.Quote.End_Date__c}" name="input1" variant="label-hidden" />
+                        </div>
+                    </div>
+                </aura:if>
+                
+                <div class="slds-form-element slds-col">
+                    <label class="slds-form-element__label" for="input-02"></label>
+                    <div class="slds-form-element__control input">
+                    </div>
+                </div>
+              </div>
+        </fieldset>
+    </div>
+    <aura:if isTrue="{!v.showFavModel}">
+             
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Add Favourite</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <lightning:input type="text" name="input1" label="Name" value="{!v.cloneQuoteName}"/>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="{!v.translationsMap.Cancel}"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button variant="brand"
+                                          label="{!v.translationsMap.Save}"
+                                          title="Save"
+                                          onclick="{!c.addToFavourite}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    <aura:if isTrue="{!v.showPartnerDiscount}">
+             
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closePartnerDiscountModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">
+                             {!v.translationsMap.Non_Standard_Request_PI}
+                        </h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-text-color_error">
+                           <!-- Discount may delay process-->
+                            {!v.translationsMap.Special_discount_request_may_delay_PI}
+                        </div>
+                        <lightning:input type="number" name="txtDiscount" label="Discount" min="1" max="100" value="{!v.discount}" style="width:200px;" />
+                        <lightning:select value="{!v.discountType}" name="selectDiscount" label="Discount Type" class="slds-size_1-of-3">
+                            <option value="%">%</option>
+                            <option value="Amt">{!v.Quote.CurrencyIsoCode}</option>
+                        </lightning:select>
+                        <lightning:textarea type="text" name="txtDiscountDetils" label="{!v.translationsMap.Non_Standard_Request_Justification_PI}" required="true" class="height: 500px;" value="{!v.discountDetails}"/>
+                        <!-- JIRA 5042 begins -->
+                        <lightning:helptext content="A special offer which has been made available for a limited time such as a discount on licenses/phones - if you do not know whether to select Promotion or Campaign with your code please use the portal help function."/>
+                    	<lightning:input type="toggle" label="{!v.translationsMap.Promotion_PI}" name="chkPromotion" checked="{!v.promotion}" messageToggleActive="" messageToggleInactive=""/>
+                        <lightning:helptext content="A special offer which is part of broader campaign - if you do not know whether to select Promotion or Campaign with your code please use the portal help function."/>
+                        <lightning:input type="toggle" label="{!v.translationsMap.Campaign_PI}" name="chkCampaign"  checked="{!v.campaign}"  messageToggleActive="" messageToggleInactive=""/>
+                        <!-- JIRA 5042 ends -->
+                        <lightning:input type="text" name="txtPromoCode" label="{!v.translationsMap.Enter_your_code_PI}" value="{!v.promoCode}" style="width:200px;"/>
+                    </div>
+                    <!--Modal/Popup Box Footer Starts here-->
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="{!v.translationsMap.Cancel}"
+                                          title="Cancel"
+                                          onclick="{! c.closePartnerDiscountModel }"/>
+                        <lightning:button variant="brand"
+                                          label="{!v.translationsMap.Submit}"
+                                          title="Submit"
+                                          onclick="{!c.submitQuote}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </aura:if>
+    <div aura:id="partnerContractDiv"></div> <!-- T1 -->
+        </div>
+    <!-- Added modal popup for Longform quote for ACO - start-->
+    <aura:if isTrue="{!v.showLongFormModal}">
+       <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+           <div class="slds-modal__container">
+               <header class="slds-modal__header">
+                   <lightning:buttonIcon iconName="utility:close"
+                                         onclick="{! c.closeLongFormModal }"
+                                         alternativeText="close"                                              
+                                         class="slds-modal__close"/>
+                   <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.Quote_PDF_PI}</h2>
+               </header>
+               <div class="slds-modal__content slds-p-around_medium nonstandardrequestwrap" id="modal-content-id-1">
+                   <p>Please choose one option:</p>
+                   <aura:if isTrue="{!v.isCurrentUserReadOnlyProfile}">
+                       <div class="actionbuttonswrap">
+                           <a aria-live="assertive"
+                              class="slds-button slds-button_brand slds-not-selected"
+                              href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id+'&amp;Longform=Y' : v.baseUrlComm+'/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id+'&amp;Longform=Y'}"
+                              onclick="{!c.closeLongFormModal}"
+                              download="true">Proposal</a>
+                           <a aria-live="assertive"
+                              class="slds-button slds-button_brand slds-not-selected"
+                              href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id : v.baseUrlComm+'/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id}"
+                              onclick="{!c.closeLongFormModal}"
+                              download="true">Short Quote Form</a>
+                       </div>
+                   </aura:if>
+                   <aura:if isTrue="{!!v.isCurrentUserReadOnlyProfile}">
+                       <div class="actionbuttonswrap">
+                           <a aria-live="assertive"
+                              class="slds-button slds-button_brand slds-not-selected"
+                              href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id+'&amp;Longform=Y' : v.baseUrlComm+'/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id+'&amp;Longform=Y'}"
+                              onclick="{!c.closeLongFormModal}"
+                              download="true">Proposal</a>
+                           <a aria-live="assertive"
+                              class="slds-button slds-button_brand slds-not-selected"
+                              href="{!v.currentUser.UserType == 'Standard' ? '/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id : v.baseUrlComm+'/apex/Quote_PartnerQuotePDF?Id='+v.Quote.Id}"
+                              onclick="{!c.closeLongFormModal}"
+                              download="true">Short Quote Form</a>
+                       </div>
+                   </aura:if>
+               </div>
+           </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    <!-- Added modal popup for Longform quote for ACO - end-->
+</aura:component>

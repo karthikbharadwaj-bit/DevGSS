@@ -1,0 +1,45 @@
+<template>
+    <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+    </template>
+
+    <template if:true={contentVersion}>
+        <div class="slds-box slds-m-bottom_medium">
+            <!-- PDF Preview Button -->
+            <template if:true={isPdfFile}>
+                <div class="slds-text-align_center">
+                    <lightning-button 
+                        label="Preview PDF" 
+                        onclick={handlePdfPreview}
+                        variant="brand"
+                        icon-name="utility:preview">
+                    </lightning-button>
+                </div>
+            </template>
+            
+            <!-- HTML Content -->
+            <template if:true={isHtmlFile}>
+                <div lwc:dom="manual" class="html-preview">
+                    <!-- HTML content will be inserted here -->
+                </div>
+            </template>
+            
+            <!-- Other File Types -->
+            <template if:true={isOtherFileType}>
+                <div lwc:dom="manual" class="file-preview">
+                    <!-- Other file content will be inserted here -->
+                </div>
+            </template>
+        </div>
+    </template>
+
+    <template if:true={noFileAttached}>
+        <div class="no-files-message">
+            <p>No file is attached for preview.</p>
+        </div>
+    </template>
+
+    <template if:true={error}>
+        <p>{error}</p>
+    </template>
+</template>

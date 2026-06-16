@@ -1,0 +1,588 @@
+<aura:component >
+    <aura:attribute name="detailComments" type="String"/>
+    <aura:attribute name="approvalComments" type="String"/>
+    <aura:attribute name="objApprovalRec" type="Approval__c" default="{'sobjectType': 'Approval__c','Standard_Terms__c' : 'true'}"/>
+    <aura:attribute name="partnerQuoteId" type="String" />
+    <aura:attribute name="IsOpenInCommunity" type="Boolean" />
+    <aura:attribute access="public" name="sObjectAttachedFiles" type="List" default="[]"/>
+    <aura:attribute name="isStandard" type="Boolean" default="true"/>
+    
+     <!--Added by Ishwarya to get respective Community Details-->
+     <aura:attribute name="communityDetailsRecord" type="Object"/>
+     <aura:attribute name="baseURL" type="string"/>
+    
+     <aura:attribute name="translationsMap" type="Map" />
+
+    <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+        <!--<div class="slds-size- -1-of-1 slds-grid">
+            All Standard Terms &nbsp; 
+            <lightning:input variant="label-hidden" name="testBoolean" label="Test Boolean" 
+                             type="radio" checked="{!v.objApprovalRec.Standard_Terms__c}" onclick="{!c.checkStandardTerms}" />
+		</div>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OR
+        <br/> -->
+        <div class="slds-size--1-of-1 slds-grid">
+           {!v.translationsMap.Word_document_s_attached} &nbsp; 
+            <lightning:input variant="label-hidden" name="testBoolean" label="Test Boolean" 
+                             type="checkbox" aura:id="RELATED_OPTIONS" checked="{!v.objApprovalRec.document_attached__c}" 
+                             />
+            <!--onclick="{!c.checkWorkDocumentAttached}" -->
+		</div>
+        <br/>
+        <aura:if isTrue="{!v.objApprovalRec.document_attached__c}">
+            <div class="slds-size--1-of-1 slds-grid">
+                Request for RingCentral approval(s) &nbsp; 
+                <lightning:input variant="label-hidden" name="testBoolean" label="Test Boolean" 
+                                 type="checkbox" aura:id="RELATED_OPTIONS" checked="{!v.objApprovalRec.RC_Approvals__c}" />
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <span>Request for Ringcentral to generate final documents for sign <br/> 
+                    <p style="color:red">(By clicking on this box, {!v.communityDetailsRecord.Portal_Main_Label__c} represents and warrant that all<br/>
+                    documents are either standard (unmodified) or all revisions and<br/>
+                    deviations have been fully disclosed to and duly approved by <br/>
+                    RingCentral.)</p> </span>  &nbsp; <lightning:input variant="label-hidden" name="testBoolean" label="Test Boolean" type="checkbox" checked="{!v.objApprovalRec.RC_final_documents_for_sign__c}" />
+            </div>
+        </aura:if>
+    </div>
+    <aura:if isTrue="{!v.objApprovalRec.document_attached__c}">
+        <br/>
+        <div style="font-size:120%">Comments</div> <!--Detail -->
+                <lightning:textarea value="{!v.detailComments}"/>
+       <!-- <br/>
+        <div style="font-size:120%">Approval comments</div>
+                <lightning:textarea value="{!v.approvalComments}"/> -->
+        <br/>
+        <h3 style="background-color: #D3D3D3" class="slds-section-title--divider">Finalized Contract Info ({!v.communityDetailsRecord.Portal_Main_Label__c} Legal Use Only)</h3>
+        <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="RC Entity" value="{!v.objApprovalRec.RC_Entity__c}" >
+                                <option value="">None</option>
+                                <option value="USA">USA</option>
+                                <option value="Canada">Canada</option>
+                                <option value="France">France</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Commercial MSA" value="{!v.objApprovalRec.Commercial_MSA__c}">
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard  w TOS online">Non-Standard w TOS online</option>
+                                <option value="Non-Standard w TOS hardwired">Non-Standard w TOS hardwired</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="NDA">NDA</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="NDA" label="" type="toggle" checked="{!v.objApprovalRec.NDA__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                   <!-- <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Participant Agreement" value="{!v.objApprovalRec.Participant_Agreement__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                        </div>
+                    </div> -->
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="NDA">Evaluation Agreement</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="NDA" label="" type="toggle" checked="{!v.objApprovalRec.POC__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--<br/>
+             <div class="slds-size- -1-of-1 slds-grid">
+                <div class="slds-size- -6-of-12 slds-grid">
+                </div>
+                <div class="slds-size- -6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Order Form" value="{!v.objApprovalRec.Order_Form__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/> 
+            <div class="slds-size- -1-of-1 slds-grid">
+                <div class="slds-size- -6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="NDA">Amendment No</label>
+                        <div class="slds-form-element__control">
+                            <lightning:input variant="label-hidden" type="number" value="{!v.objApprovalRec.Amendment__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size- -6-of-12 slds-grid">
+                </div>
+            </div> -->
+        </div> 
+        <br/>
+        <h3 style="background-color: #D3D3D3" class="slds-section-title--divider">Finalized Attachments ({!v.communityDetailsRecord.Portal_Main_Label__c} Legal Use Only)</h3>
+        <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Enterprise Support" value="{!v.objApprovalRec.SOW__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - SLA-Office" value="{!v.objApprovalRec.SLA__c}" >
+                                <option value="">None</option>
+                                <option value="">Standard</option>
+                                <option value="">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- <br/>
+            <div class="slds-size- -1-of-1 slds-grid">
+                <div class="slds-size- -6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Rooms in a Box" value="{!v.objApprovalRec.Rooms_in_a_Box__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div>
+                </div>
+                <div class="slds-size- -6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - SLA-Contact Center" value="{!v.objApprovalRec.SLA_Contact_Center__c}" >
+                                <option value="">None</option>
+                                <option value="">Standard</option>
+                                <option value="">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size- -1-of-1 slds-grid">
+                <div class="slds-size- -6-of-12 slds-grid">
+                 <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment RC Meetings" value="{!v.objApprovalRec.Service_Attachment_Office__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size- -6-of-12 slds-grid">
+                </div>
+            </div> --> 
+            <br/> 
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment Office" value="{!v.objApprovalRec.Service_Attachment__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - Security Addendum" value="{!v.objApprovalRec.Security_Addendums__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- <br/>
+            <div class="slds-size- -1-of-1 slds-grid">
+                <div class="slds-size- -6-of-12 slds-grid">
+                     <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Contact Center" value="{!v.objApprovalRec.Service_Attachment_CC__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                        </div>
+                    </div> 
+                </div>
+                <div class="slds-size- -6-of-12 slds-grid">
+                     <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - Cloud Connect" value="{!v.objApprovalRec.Cloud_Connects__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div> 
+                </div>
+            </div> -->
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Prof Services" value="{!v.objApprovalRec.ProServ_Agreement__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - Business Associate Agreement" value="{!v.objApprovalRec.BAAs__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <!--<div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Engage Digital" value="{!v.objApprovalRec.Service_Attachment_Engage_Digital__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div> -->
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - Data Processing Addendum" value="{!v.objApprovalRec.Model_Clauses__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <!-- <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Service Attachment - Engage Voice" value="{!v.objApprovalRec.Service_Attachment_Engage_Voice__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div> -->
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <!-- <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Attachment - Model Clauses" value="{!v.objApprovalRec.Model_Clauses_New__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                         </div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+        <br/>
+        <h3 style="background-color: #D3D3D3" class="slds-section-title--divider">Modifications ({!v.communityDetailsRecord.Portal_Main_Label__c} Legal Use Only)</h3>
+        <div class="slds-form--stacked slds-p-around--medium slds-m-bottom--x-small">
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Payment Terms" value="{!v.objApprovalRec.Payment_Terms__c}" >
+                                <option value="">None</option>
+                                <option value="45">45</option>
+                                <option value="60">60</option>
+                                <option value="other">other</option>
+                            </lightning:select>
+                            <!-- <lightning:input aura:id="{!IF(index == 0,country,'dup')}" required="true" variant="label-hidden" value="{!addr.Country__c}" type="text" /> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Limitation of Liability" value="{!v.objApprovalRec.Limitation_of_Liability_Changes__c}" >
+                                <option value="">None</option>
+                                <option value="To Excluded Damages">To Excluded Damages</option>
+                                <option value="To Overall Cap to Direct Damages">To Overall Cap to Direct Damages</option>
+                                <option value="Higher Cap for (Indemnity/Confidentiality/Data Privacy)">Higher Cap for (Indemnity/Confidentiality/Data Privacy)</option>
+                                <option value="Other">Other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Elasticity" value="{!v.objApprovalRec.Elasticity__c}" >
+                                <option value="">None</option>
+                                <option value="Elasticity - 10% - 12 mos">Elasticity - 10% - 12 mos</option>
+                                <option value="Elasticity - 10% - 6 mos">Elasticity - 10% - 6 mos</option>
+                                <option value="Elasticity - 20% - 12 mos">Elasticity - 20% - 12 mos</option>
+                                <option value="Elasticity - Other">Elasticity - Other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="CustInd">Non-Standard Customer Indemnity</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="CustInd" label="" type="toggle" checked="{!v.objApprovalRec.Customer_Indem__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Trial Period" value="{!v.objApprovalRec.Trial_Period_Out_clause__c}" >
+                                <option value="">None</option>
+                                <option value="45">45</option>
+                                <option value="60">60</option>
+                                <option value="90">90</option>
+                                <option value="other">other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="RCInd">Non-Standard RingCentral Indemnity</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="RCInd" label="" type="toggle" checked="{!v.objApprovalRec.NS_RC_Indemnity__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="FSCA">Free Services Credit Amount</label>
+                        <div class="slds-form-element__control">
+                            <lightning:input variant="label-hidden" type="number" value="{!v.objApprovalRec.Free_Services_Credit_Amount__c}"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Non-Standard Auto-Renewal" value="{!v.objApprovalRec.NS_Autorenewal__c}" >
+                                <option value="">None</option>
+                                <option value="Month-to-month Renewal Term">Month-to-month Renewal Term</option>
+                                <option value="Other">Other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="StepUp">Step Up</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="StepUp" label="" type="toggle" checked="{!v.objApprovalRec.Standard_Step_Up__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Non-Standard Customer Termination Rights" value="{!v.objApprovalRec.NS_Customer_Term_Rights__c}" >
+                                <option value="">None</option>
+                                <option value="Convenience">Convenience</option>
+                                <option value="Extended Chronical Failure (SLA)">Extended Chronical Failure (SLA)</option>
+                                <option value="Change in Control">Change in Control</option>
+                                <option value="Other">Other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Price Protection" value="{!v.objApprovalRec.Price_Protection__c}" >
+                                <option value="">None</option>
+                                <option value="CPI+3% for first Renewal Term only">CPI+3% for first Renewal Term only</option>
+                                <option value="CPI+3% beyond first Renewal Term">CPI+3% beyond first Renewal Term</option>
+                                <option value="Limit rights to increase, CRFs or E911 Fee">Limit rights to increase, CRFs or E911 Fee</option>
+                                <option value="other">other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="AS">Non-Standard Assignment</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="AS" label="" type="toggle" checked="{!v.objApprovalRec.NS_Assignment__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Venue &amp; Choice of Law" value="{!v.objApprovalRec.Value_Choice_of_Law__c}" >
+                                <option value="">None</option>
+                                <option value="New York">New York</option>
+                                <option value="Delaware">Delaware</option>
+                                <option value="other">other</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <label class="slds-form-element__label" for="FF">Commitment to Future Functionality</label>
+                        <div class="slds-form-element__control">
+                            <div style="width:100%">  
+                                <div style="float:left">No</div> 
+                                <div style="float:left">
+                                    <lightning:input name="FF" label="" type="toggle" checked="{!v.objApprovalRec.Commitment_to_Future_Functionality__c}"
+                                                     messageToggleActive="" messageToggleInactive=""/>
+                                </div>
+                                <div style="float:left">&nbsp;Yes</div>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br/>
+            <div class="slds-size--1-of-1 slds-grid">
+                <div class="slds-size--6-of-12 slds-grid">
+                    <div class="slds-form-element">
+                        <div class="slds-form-element__control">
+                            <lightning:select class="select-auto-width" label="Insurance Clause" value="{!v.objApprovalRec.Insurance_Clause__c}" >
+                                <option value="">None</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Non-Standard">Non-Standard</option>
+                            </lightning:select>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-size--6-of-12 slds-grid">
+                </div>
+            </div>
+            <br/>
+            <h3 style="background-color: #D3D3D3" class="slds-section-title--divider">Document Upload</h3>
+            <c:Quote_Attachment IsOpenInCommunity="{!v.IsOpenInCommunity}" sObjectAttachedFiles="{!v.sObjectAttachedFiles}" partnerQuoteId="{!v.partnerQuoteId}" sObjectId="{!v.objApprovalRec.Id}" sObjectName="Partner_Contract__c" showUploadFile="true"/>
+        </div>
+    </aura:if>
+	
+</aura:component>

@@ -1,0 +1,172 @@
+<apex:page showHeader="true" sidebar="true" standardController="Case" extensions="CaseTOPartnerLead" lightningStylesheets="true" >
+    <apex:slds />
+    <head>
+        <script>
+            function hideOverlay() {
+                try {document.getElementById('loadingPanel').style.display = 'none';} catch(x){}
+            }
+            function showOverlay() {
+                try {document.getElementById('loadingPanel').style.display = 'block';} catch(x){}
+            }
+            function cancelButton(event, caseId) {
+                event.preventDefault();
+                document.location = '/' + caseId;
+            }
+            function hideOverlay1() {
+                try {document.getElementById('overLay1').style.display = 'none';
+                } catch(x){}
+            }
+            function showOverlay1() {
+                try {
+                    document.getElementById('overLay1').style.display = 'block';
+                } catch(x){}
+            }
+            function hideOverlayoncomplete() {
+                document.getElementById('overLay1').style.display = 'none';
+            }
+             function removeClassNative(el, _className) {
+                if (hasClass(el, _className)) {
+                    if (el.classList) {
+                        el.classList.remove(_className);
+                    } else {
+                        var regcss = new RegExp(_className, "g");
+                        el.className = el.className.replace(regcss, "");
+                    }
+                }
+            }
+            function goBack(event) {
+                event.preventDefault();
+                window.history.back();
+            }
+            function hasClass(el, _className) {
+                if (el.classList) {
+                    return el.classList.contains(_className);
+                } else {
+                    var regcss = new RegExp(_className, "g");
+                    return regcss.test(el.className);
+                }
+            }
+            function addClassNative(el, _className) {
+                if (!hasClass(el, _className)) {
+                    if (el.classList) {
+                        el.classList.add(_className);
+                    } else {
+                        if (typeof el.className === "undefined" || el.className === null) {
+                            el.className = "";
+                        }
+                        el.className += (el.className ? " " : "") + _className;
+                    }
+                }
+            }
+        </script>
+        <style>
+            #overLay1 {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+            }
+        </style>
+    </head>
+    <body style="width:100%;height:100%;" >
+        <div class='slds-backdrop slds-backdrop_open'>
+            <div style="display:none;" id="loadingPanel">Please wait...</div>
+        </div>
+        <div class="slds-spinner_container" id="overLay1" style="display: none;">
+            <div role="status" class="slds-spinner slds-spinner_medium slds-spinner_brand">
+                <span class="slds-assistive-text">Loading</span>
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+        <apex:outputpanel rendered="{!isErrorOccured}" id="errorPanel">
+            <div role="alertdialog" tabindex="0" aria-labelledby="prompt-heading-id" aria-describedby="prompt-message-wrapper" class="slds-modal slds-fade-in-open slds-modal_prompt" aria-modal="true">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header slds-theme_error slds-theme_alert-texture">
+                        <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="{!'cancelButton(event,\"' + Case.Id + '\");'}">
+                            <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#close"></use>
+                            </svg>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 class="slds-text-heading_medium" id="prompt-heading-id">Error</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around_medium" id="prompt-message-wrapper">
+                        <p>Invalid Case URL</p>
+                    </div>
+                    <div class="slds-modal__footer slds-theme_default">
+                        <button class="slds-button slds-button_neutral" onclick="goBack(event);">Go back</button>
+                    </div>
+                </div>
+            </div>
+        </apex:outputpanel>
+        <apex:outputpanel rendered="{!!isErrorOccured}" id="mainPanel">
+            <div class="slds-scope">
+                <apex:form >
+                    <div role="dialog" tabindex="-1" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                        <div class="slds-modal__container">
+                            <div class="slds-modal__header">
+                                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick="{!'cancelButton(event,\"' + Case.Id + '\");'}">
+                                    <svg class="slds-button__icon slds-button__icon_large" aria-hidden="true">
+                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/_slds/icons/utility-sprite/svg/symbols.svg#close"></use>
+                                    </svg>
+                                    <span class="slds-assistive-text">Close</span>
+                                </button>
+                                <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Create Partner Lead</h2>
+                            </div>
+                            <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                                <apex:outputPanel rendered="{!!isShowMessage}">
+                                    <apex:outputpanel rendered="{!ISBLANK(Case.Resolution__c)}" >
+                                        Resolution field must be populated.
+                                    </apex:outputpanel>
+                                    <apex:outputpanel rendered="{!!Case.IsClosed && !ISBLANK(Case.Resolution__c)}" >
+                                        Are you sure you want to create Partner Lead ?
+                                    </apex:outputpanel>
+                                    <apex:outputpanel rendered="{!Case.IsClosed}" >
+                                        Partner Lead is already created.
+                                    </apex:outputpanel>
+                                </apex:outputPanel>
+                                <apex:outputText rendered="{!isShowMessage}" value="{!strMessage}" escape="false"/>
+                            </div>
+                            <div class="slds-modal__footer">
+                                <apex:outputpanel id="msgpanel" rendered="{!!isShowMessage}">
+                                    <apex:commandButton status="Ajaxstatus"
+                                                        action="/{!HTMLENCODE($CurrentPage.parameters.id)}"
+                                                        rendered="{!OR(Case.IsClosed, ISBLANK(Case.Resolution__c))}"
+                                                        value="Ok"
+                                                        styleClass="slds-button slds-button_brand"
+                                                        id="ok" />
+                                    <apex:commandButton status="Ajaxstatus"
+                                                        action="/{!HTMLENCODE($CurrentPage.parameters.id)}"
+                                                        value="Cancel"
+                                                        rendered="{!!Case.IsClosed && !ISBLANK(Case.Resolution__c)}"
+                                                        styleClass="slds-button slds-button_neutral"
+                                                        id="cancel" />
+                                    <apex:commandButton status="Ajaxstatus1"
+                                                        action="{!createPartnerLead}"
+                                                        value="Continue"
+                                                        rerender="mainPanel,errorPanel"
+                                                        oncomplete="hideOverlayoncomplete();return false;"
+                                                        id="validateuser"
+                                                        styleClass="slds-button slds-button_brand"
+                                                        rendered="{!!Case.IsClosed && !ISBLANK(Case.Resolution__c)}"/>
+                                    <apex:actionStatus id="Ajaxstatus" onStart="showOverlay();" onstop="hideOverlay();"/>
+                                    <apex:actionStatus id="Ajaxstatus1" onStart="showOverlay1();" onstop="hideOverlay1();"/>
+                                </apex:outputpanel>
+                                <apex:outputpanel id="msgbuttonpanel" rendered="{!isShowMessage}">
+                                    <apex:commandButton status="Ajaxstatus"
+                                                        action="/{!HTMLENCODE($CurrentPage.parameters.id)}"
+                                                        styleClass="slds-button slds-button_brand"
+                                                        value="Back to Case Detail"  />
+                                    <apex:actionStatus onStart="showOverlay();" onstop="hideOverlay();"/>
+                                </apex:outputpanel>
+                            </div>
+                        </div>
+                    </div>
+                </apex:form>
+            </div>
+        </apex:outputpanel>
+        <apex:detail subject="{!Case.Id}" relatedList="false" title="false" inlineEdit="true"/>
+    </body>
+</apex:page>

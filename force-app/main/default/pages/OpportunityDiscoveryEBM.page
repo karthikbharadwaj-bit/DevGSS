@@ -1,0 +1,794 @@
+<apex:page standardController="Opportunity" extensions="OpportunityDiscoveryControllerEBM">
+    <apex:outputpanel id="container">
+        <apex:form >
+            <script src="{!URLFOR($Resource.JqueryAccordion, 'JqueryAccordion/jquery-1.9.1.js')}"></script>
+            <style>
+                .textlabel {
+                    color: #084B8A;
+                    font-size: 13px
+                }
+                #innerheaderDiv {
+                    padding:10px !important;
+                    width: 50%;
+                    margin: 0px 28px;
+                }
+                .NewDiscoverySection{
+                    width: 1500px;
+                    margin: auto;
+                    border: 1px solid #A5A6A5;
+                    margin-bottom: 10px;
+                    -moz-border-radius: 11px;
+                    -webkit-border-radius: 11px;
+                    border-radius: 11px;
+                    box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -webkit-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -moz-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    background: white !important;
+                }
+                .btnDiv {
+                    width: 1500px;
+                    margin: auto;
+                    border: 1px solid #A5A6A5;
+                    margin-bottom: 10px;
+                    -moz-border-radius: 11px;
+                    -webkit-border-radius: 11px;
+                    border-radius: 11px;
+                    box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -webkit-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    -moz-box-shadow: 0px 13px 161px 55px #C7D6E9 inset;
+                    text-align: center;
+                }
+                /* -----------------------------------------New Tabbed panel controller style css---------------------- */
+                .tabbed-area{
+                }
+                .tabbed-area > ul{
+                    list-style:none;
+                    height: 27px;
+                    width: 1200px;
+                }
+                .tabbed-area > ul > li{
+                    float:left;
+                    margin: 0 2px 0 0;
+                    padding: 9px 10px 13px;
+                    display: inline-block !important;
+                    position: relative;
+                    box-shadow: 0px -42px 54px -20px #236FBD inset;
+                    -webkit-box-shadow: 0px -54px 54px -20px #236FBD inset;
+                    -moz-box-shadow: 0px -42px 54px -20px #236FBD inset;
+                    border-radius: 10px 10px 0px 0px;
+                    -webkit-border-radius: 10px 10px 0px 0px;
+                    -moz-border-radius: 10px 10px 0px 0px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                }
+                .tabbed-area > ul > li >a{
+                    padding-top:20px;
+                    text-align:center;
+                    color: white;
+                    text-decoration: none;
+                    font-size: 13px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                    font-weight: bolder;
+                }
+                .tabbed-area > ul > li:hover{
+                    background: white;
+                    cursor: pointer;
+                    box-shadow: 0px -42px 54px -20px rgba(73, 72, 72, 0.98) inset;
+                }
+                .tabbed-area > ul > li.tabActiveHeader{
+                    background: white;
+                    cursor: pointer;
+                    box-shadow: 0px -54px 54px -20px orange inset;
+                }
+                .tabbed-area > ul > li.tabActiveHeader > a {
+                    padding-top:20px;
+                    text-align:center;
+                    color: black;
+                    text-decoration: none;
+                    font-size: 13px;
+                    font-family: Arial,Helvetica,sans-serif;
+                    text-align: center;
+                    font-weight: bolder;
+                }
+                .tabContentWrapper{
+                    border: 1px solid #C1C9CA;
+                    width: 86%;
+                    padding: 20px;
+                    margin-left: 40px;
+                    min-height: 124px;
+                    border-top: 6px solid orange;
+                    margin-top: -3px;
+                    border-radius: 0px 15px 15px 0px;
+                }
+                .removeMargin{
+                    padding-left: 0px;
+                    -webkit-padding-start: 0px;
+                }
+                .lightInsight{
+                }
+                .errorTab{
+                    border-top: 3px solid red;
+                }
+                .blockHeader {
+                    width: 45%;
+                    padding: 7px 1px 5px 11px;
+                    box-shadow: 1px 0px 16px 1px gray;
+                }
+
+                .blockHeader > h3{
+                    font-size: 17px;
+                }
+                .fullwidthWithBorder{
+                    /*width: 96%;*/
+                    outline:none;
+                    margin-top: 11px;
+                    height: 125px;
+                    resize: none;
+                    box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -webkit-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -moz-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    font-size: 12px !important;
+                    line-height: 1 !important;
+                    border: 1px solid lightgray !important;
+                    border-radius: 10px !important;
+                    -webkit-border-radius: 10px !important;
+                    -moz-border-radius: 10px !important;
+                    box-sizing : border-box;
+                    padding : 5px;
+                }
+                .box-wrap{
+
+                    border: 1px solid #C1C9CA;
+                    width: 1360px;
+                    /* border-radius: 15px; */
+                    padding: 20px;
+                    margin-left: 40px;
+                    min-height: 124px;
+                    border-top: 6px solid orange;
+                    margin-top: -3px;
+                    border-radius: 0px 15px 15px 15px;
+                }
+                .footerNotesC {
+                    width: 1160px;
+                    padding: 20px;
+                }
+                #overlay {
+                    background: url("/resource/1398195934000/EmailValidation/loading.gif") no-repeat scroll center center rgba(177, 177, 177, 0.71);
+                    border: 0px solid #000000;
+                    bottom: 0;
+                    left: 0;
+                    opacity: 0.75;
+                    position: fixed;
+                    top: 0;
+                    visibility: hidden;
+                    width: 100%;
+                    border-radius: 15px;
+                    z-index: 1000;
+                }
+
+                .fixedTextAreaSize, .discoveryNotes, .managerNotes, .fullwidthWithBorder {
+                    width: 650px;
+                }
+
+                .mutualPlanSum, .rcExecAlignSum {
+                    width: 630px;
+                    outline:none;
+                    margin-top: 11px;
+                    resize: none;
+                    box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -webkit-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -moz-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    font-size: 12px !important;
+                    line-height: 1 !important;
+                    border: 1px solid lightgray !important;
+                    border-radius: 10px !important;
+                    -webkit-border-radius: 10px !important;
+                    -moz-border-radius: 10px !important;
+                    box-sizing : border-box;
+                    padding : 5px;
+                }
+
+                .currentSituation, .benefits, .problems, .decisionMaking, .impact, .competitiveLandscape, .idealSituation, .relationshipBuildingExtras, .discoveryNotesOld {
+                    outline:none;
+                    resize: none;
+                    width: 1300px;
+                    height: 600px;
+                    box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -webkit-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    -moz-box-shadow: 0px 0px 7px 0px lightblue inset;
+                    font-size: 12px !important;
+                    line-height: 1 !important;
+                    border: 1px solid lightgray !important;
+                    border-radius: 10px !important;
+                    -webkit-border-radius: 10px !important;
+                    -moz-border-radius: 10px !important;
+                    box-sizing : border-box;
+                    padding : 5px;
+                }
+
+                .hidden {
+                    display: none;
+                }
+                .rcExecAlignSum select {
+                    display:none;
+                }
+            </style>
+            <script>
+
+                //--------------------------------------Function to initiate tab nature-------------------------------------------
+                function initiateTabs(tabWrapper,options){
+                    var optionsJson = jQuery.parseJSON(options);
+                    if(optionsJson.activeTab != null){
+                        $(tabWrapper).children('.tabdiv').hide().eq(optionsJson.activeTab).show();
+                    }
+                    else{
+                        $(tabWrapper).children('.tabdiv').hide().eq(0).show();
+                    }
+                };
+                //-------------------------------------Function to check and show errors in discovery tab-------------------------
+                function CheckErrorTabs(){
+                    $.each($(".box-wrap").children(".tabdiv"),function(){
+                        var parent = $(this);
+                        $(this).find(".errorMsg").filter(function(){
+
+                            $(".box-wrap").siblings("ul").find("li[id*="+parent.attr('id')+"]").each(function(){
+                                $(this).addClass("errorTab");
+                                //     alert($(this).attr("id"));
+
+                            });
+                        });
+                    });
+                };
+                //-------------------------------------Function to check and show errors in discovery tab-------------------------
+                //-------------------------------------Function to check length of field on page level/7/3/2014----------------------------
+                function TextAreaLengthCheck(areaId,FieldName,validlength){
+
+                    $(areaId).keyup(function () {
+                        var maxLength = validlength;
+                        var text = $(this).val();
+                        var textLength = text.length;
+                        if (textLength > maxLength) {
+                            $(this).val(text.substring(0, (maxLength)));
+                            alert("Sorry, you are only " + maxLength + " characters allowed for "+FieldName);
+                        }
+                        else {
+                            //alert("Required Min. 500 characters");
+                        }
+                    });
+                };
+                //------------------------Methods to show and hide overlay on page----------------------------
+                function showOverlay() {
+                    var o = document.getElementById('overlay');
+                    o.style.visibility = 'visible';
+                }
+                function hideOverlay() {
+                    var o = document.getElementById('overlay');
+                    o.style.visibility = 'hidden';
+                }
+                //------------------------Method to  refresh parent page of current Inline page--------------
+                function parentRefresh(){
+                    //--------------------Accessing parent view url and reloading----------------------------
+                    window.top.location.href = '{!redirectUrl}';
+                }
+                //------------------------Method to confirm user action--------------------------------------
+                function ConfirmUserAction(msg){
+                    var action = confirm(msg);
+                    if(action){
+                        parentRefresh();
+                    }else{
+
+                        return false;
+                    }
+
+                }
+            </script>
+
+            <div class="btnDiv" id="readModeButton"   >
+                <apex:outputpanel rendered="{!viewMode == 'read'}">
+                    <apex:commandButton value="Edit" reRender="container" action="{!showEdit}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" />
+                </apex:outputpanel>
+                <apex:outputpanel rendered="{!viewMode == 'edit'}">
+                    <apex:commandButton value="Save" action="{!save}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="parentRefresh();"/>
+                    <apex:commandButton value="Cancel"  onClick="return ConfirmUserAction('Do you really want to continue without saving changes?')" status="renderMeStatus" style="padding: 8px 20px 8px 20px;"/>
+                </apex:outputpanel>
+
+            </div>
+            <!-- -------------------------New Discovery section starts------------------------- -->
+            <div  class="NewDiscoverySection">
+                <div class="pbHeader" id ="innerheaderDiv"  style="background: none;border: none;">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tbody>
+                        <tr>
+                            <td class="pbTitle" style="padding-left: 0px;">
+                                <h2 class="mainTitle" style="color: #084B8A;font-size: 15px;"></h2>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <apex:outputpanel style="padding-left: 40px;background: none;border: none;height:inherit !important;">
+
+                    <div style="margin-top: -10px;">
+
+                        <div class="tabbed-area" >
+
+                            <ul class="tabs group" id="tabsItems">
+                                <li id="#box0"><a>History tracking</a></li>
+                                <li class="tabActiveHeader" id="#box1"><a>Summary</a></li>
+                                <li id="#box2"><a>Current Situation</a></li>
+                                <li id="#box4"><a>Problems</a></li>
+                                <li id="#box6"><a>Impact</a></li>
+                                <li id="#box8"><a>Ideal Situation</a></li>
+                                <li id="#box3"><a>Benefits</a></li>
+                                <li id="#box5"><a>Decision Making</a></li>
+                                <li id="#box9"><a>Relationship Building Extras</a></li>
+                                <li id="#box7"><a>Competitive Landscape</a></li>
+                            </ul>
+
+                            <div class="box-wrap" id="sss">
+
+                                <!-- ###################################### Summary ###################################### -->
+                                <div id="box1" class="tabdiv">
+                                    <apex:outputpanel id="summary">
+                                        <apex:panelGrid columns="2" border="0" width="98%" style="margin-bottom: 10px;">
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Current Situation"/> <c:helpIcon helpText="Information about the company's current state. Tell me about your current communication solution"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes currentSituationSum"  value="{!lq.Current_Situation__c}" onchange="setValToElement($(this).val(), $('.currentSituation'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Benefits"/> <c:helpIcon helpText="How would their business be positively impacted by resolving these problems? What would it mean to your business if these problems were resolved?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes benefitsSum"  value="{!lq.Benefits__c}" onchange="setValToElement($(this).val(), $('.benefits'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Problems"/> <c:helpIcon helpText="What are the challenges they have with their current solution?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4" style="height: 200px;"  styleclass="fullwidthWithBorder notes problemsSum"  value="{!lq.Problems__c}" onchange="setValToElement($(this).val(), $('.problems'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Decision Making"/> <c:helpIcon helpText="What is their decision making progress? Who are the decision makers? What is their project time frame?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes decisionMakingSum"  value="{!lq.Decision_Making_Process__c}" onchange="setValToElement($(this).val(), $('.decisionMaking'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Impact"/> <c:helpIcon helpText="What are the impacts of the problems they are experiencing?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes impactSum"  value="{!lq.Impact__c}" onchange="setValToElement($(this).val(), $('.impact'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Competitive Landscape"/> <c:helpIcon helpText="What other solutions are they looking for? What are we replacing?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes competitiveLandscapeSum"  value="{!lq.Competitive_Landscape__c}" onchange="setValToElement($(this).val(), $('.competitiveLandscape'));" />
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Ideal Situation"/> <c:helpIcon helpText="What would be their ideal solution? How would they like their communication system to work?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes idealSituationSum"  value="{!lq.Ideal_Situation__c}" onchange="setValToElement($(this).val(), $('.idealSituation'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Relationship Building Extras"/> <c:helpIcon helpText="Any RBEs that were conducted"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 200px;" styleclass="fullwidthWithBorder notes relationshipBuildingExtrasSum"  value="{!lq.Relationship_Building_Extras__c}" onchange="setValToElement($(this).val(), $('.relationshipBuildingExtras'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Next Steps"/> <c:helpIcon helpText="Confirm the customer is willing to meet. What is the next ideal meeting time? How would they like to meet, who shoud attend?"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4" style="height: 120px;"  styleclass="fullwidthWithBorder discoveryNotes"  value="{!lq.NextSteps__c}" id="nxt"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Coaching Notes"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputTextarea rows="4"  style="height: 120px;" styleclass="fullwidthWithBorder managerNotes"  value="{!lq.CoachingNotes__c}" id="mngr"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel"  value="Mutual Plan"/> <c:helpIcon helpText="Information about the Mutual Plan."/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField styleclass="mutualPlanSum"  value="{!lq.Mutual_Plan__c}" onchange="setValToElement($(this).val(), $('.mutualPlan'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                            <apex:outputpanel >
+                                                <div>
+                                                    <apex:outputLabel styleclass="textlabel" value="RC Executive Alignment"/> <c:helpIcon helpText="Information about RC Executive Alignment"/>
+                                                </div>
+                                                <div>
+                                                    <apex:inputField styleclass="rcExecAlignSum" value="{!lq.RC_Executive_Alignment__c}" onchange="setValToElement($(this).val(), $('.rcExecAlign'));"/>
+                                                </div>
+                                            </apex:outputpanel>
+                                        </apex:panelGrid>
+                                    </apex:outputpanel>
+                                </div>
+
+                                <div id="box0" class="tabdiv">
+                                    <div >
+                                        <apex:pageBlock >
+                                            <apex:pageBlockTable value="{!history}" var="historyItem" cellpadding="2" styleClass="tableBorder" rendered="true">
+                                                <apex:column >
+                                                    <apex:facet name="header">User Name</apex:facet>
+                                                    <apex:outputText >{!historyItem.changer}</apex:outputText>
+                                                </apex:column>
+                                                <apex:column >
+                                                    <apex:facet name="header">Modified field</apex:facet>
+                                                    <apex:outputText >{!historyItem.fieldName}</apex:outputText>
+                                                </apex:column>
+                                                <apex:column >
+                                                    <apex:facet name="header">Modified date</apex:facet>
+                                                    <apex:outputText value="{0, date, M/d/yyyy HH:mm:ss}">
+                                                        <apex:param value="{!historyItem.modifyDate + offset}"/>
+                                                    </apex:outputText>
+                                                </apex:column>
+                                            </apex:pageBlockTable>
+                                        </apex:pageBlock>
+                                    </div>
+                                </div>
+
+                                <!-- ###################################### Current Situation ###################################### -->
+                                <div id="box2" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Understand their Company, their Industry, Geography, Size of Company - Learn more about them and their team/department </li>
+                                                    <li>What are typical business problems that companies in their industry face that might be leading them to consider change? What is important to the business as a whole?</li>
+                                                    <li>What are their cultural priorities and views around internal and external communications?</li>
+                                                    <li>What does their current communications environment look like? (Legacy systems, on-prem, cloud technologies, PBX, Web Conferencing, IM, etc)</li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Current Situation Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Tell me about your current situation. How does your team currently communicate internally? (Voice, Collaboration, IM, Meetings, Conference calls, Contact Center)</li>
+                                                    <li>How is your team currently communicating externally? (Voice, Collaboration, IM, Meetings, Conference calls, Contact Center)</li>
+                                                    <li>Tell me about your office locations</li>
+                                                    <li>Say more about your role in this process? Elaborate on some of the other team members who will be involved?</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Current Situation"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes currentSituation"  value="{!lq.Current_Situation__c}" onchange="setValToElement($(this).val(), $('.currentSituationSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                                <!-- ###################################### Benefits ###################################### -->
+                                <div id="box3" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="benefits">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>The purpose of benefit questions is to prompt the customer to express what the benefits of their ideal solution would be. What will the business achieve or change with a better communications solution?</li>
+                                                    <li>Benefit questions focus the interaction on the value of a solution, not the problem. Get the Customer to tell you what the value of a solution means to them. </li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Benefit Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>What would some of the benefits be of creating this ideal situation?</li>
+                                                    <li>If we could do this, what gains would you realize as a result of solving the problems you currently have?</li>
+                                                    <li>How would an improved business communications system be of benefit?</li>
+                                                    <li>Why would you benefit from this communications upgrade?</li>
+                                                    <li>How would that make life easier for your employees? For your customers?</li>
+                                                    <li>What’s the benefit of…</li>
+                                                    <li>What would be some examples of how this solution could benefit your…</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Benefits"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes benefits"  value="{!lq.Benefits__c}" onchange="setValToElement($(this).val(), $('.benefitsSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                                <!-- ###################################### Problems ###################################### -->
+                                <div id="box4" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="problems">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Business Drivers: Deeper understanding of business drivers and pain points. (Check the Industry Tab in SFDC for pain points)</li>
+                                                    <li>What is the business problem(s) that need solving? </li>
+                                                    <li>What Is driving the decision? (Impending Changes, Improvement of Productivity, Minimizing Risks). </li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Problem Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>What do you like about your current solution? What do you dislike about your current solution? </li>
+                                                    <li>What would you like to see altered or improved?</li>
+                                                    <li>Elaborate on that problem a bit more for me.Tell me more about that pain point</li>
+                                                    <li>What has changed recently in your environment that spurred interest in making this a project?</li>
+                                                    <li>When it comes to the executive team, how do they feel about these issues?</li>
+                                                </ul>
+                                            </div><br/>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Problems"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="discoveryNotes problems"  value="{!lq.Problems__c}" onchange="setValToElement($(this).val(), $('.problemsSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+
+                                <!-- ###################################### Decision Making ###################################### -->
+                                <div id="box5" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="decisionMaking">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>The decision making process and the people involved in making the decision</li>
+                                                    <li>What makes up their entire evaluation criteria?</li>
+                                                    <li>Are they formalizing the decision process with an RFP? If so, who is writing it? Can it be influenced before publication?</li>
+                                                    <li>What is your Give-Get strategy for this opportunity?</li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Decision Making Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Tell me more about the players that will be involved in the decision making process?</li>
+                                                    <li>Elaborate on the economic buyer?</li>
+                                                    <li>Say more about the steps in your decision making process? How did you come up with your decision making process?</li>
+                                                    <li>How will the budgetary/finance issues be handled?</li>
+                                                    <li>Tell me more about your internal budget approval process?</li>
+                                                    <li>Describe the implementation timeline and how that relates to a decision date</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Decision Making"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes decisionMaking"  value="{!lq.Decision_Making_Process__c}" onchange="setValToElement($(this).val(), $('.decisionMakingSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                                <!-- ###################################### Impact ###################################### -->
+                                <div id="box6" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="impact">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Business Drivers: Deeper understanding of business drivers, pain, and THEIR IMPACT. (Check the Industry Tab in SFDC for pain points)</li>
+                                                    <li>What is the business impact of the problems the company is experiencing?</li>
+                                                    <li>What is the business impact of the communication features lacking ?</li>
+                                                </ul>
+                                            </div><br/>
+
+
+                                            <div class="blockHeader textlabel"><h3>Impact Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>What is the impact of solving ______ problem? What is the impact of not solving ______ problem? </li>
+                                                    <li>How would you quantify ? How does that affect your employees/customers? </li>
+                                                    <li>What will happen if nothing changes?  </li>
+                                                    <li>What will be the consequences of this problem continuing?  How are you measuring it?</li>
+                                                    <li>How are you quantifying the pain and the potential ROI of solving it?</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Impact"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes impact"  value="{!lq.Impact__c}" onchange="setValToElement($(this).val(), $('.impactSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                                <!-- ###################################### Competitive Landscape ###################################### -->
+                                <div id="box7" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="competitiveLandscape">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>What does the Competitive Landscape look like?</li>
+                                                    <li>Who is the primary competitor in this deal? Is it the current installed provider?</li>
+                                                    <li>Who are the other competitors involved</li>
+                                                    <li>What is the competitive strategy to deal with the competition?</li>
+                                                    <li>What other solutions being considered? Why?</li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Discovery Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Tell me about the competitive landscape for this project</li>
+                                                    <li>Elaborate on the other companies you are speaking with</li>
+                                                    <li>What possible obstacles might cause this project to be delayed or die?</li>
+                                                    <li>What are the must-haves in your relationship with your next provider?</li>
+                                                    <li>What is your thinking behind comparing the multiple vendors?</li>
+                                                    <li>How did you come up with the vendors you are exploring?</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Competitive Landscape" />
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="8"  styleclass="competitiveLandscape"  value="{!lq.Competitive_Landscape__c}" onchange="setValToElement($(this).val(), $('.competitiveLandscapeSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                                <!-- ###################################### Ideal Situation ###################################### -->
+                                <div id="box8" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="idealSituation">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>When obtaining prospect wish lists, the rule of thumb is to get the entire list first, then start to layer with open-ended questions.</li>
+                                                    <li>Capabilities beyond just the features (flexibility, manageability...)?</li>
+                                                    <li>Vendor attributes (service, support, responsiveness)</li>
+                                                </ul>
+                                            </div><br/>
+                                            <div class="blockHeader textlabel"><h3>Ideal Situation Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Ideally, how would you draw up your communications capabilities for the future? </li>
+                                                    <li>Describe for me what an ideal solution would look like for your company.</li>
+                                                    <li>If you could wave a magic wand, how would you ideally like to communicate with employees and customers?</li>
+                                                    <li>What are your thoughts on…</li>
+                                                    <li>In a perfect world, what would that look like?</li>
+                                                </ul>
+                                            </div>
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Ideal Situation"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes idealSituation"  value="{!lq.Ideal_Situation__c}" onchange="setValToElement($(this).val(), $('.idealSituationSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+
+                                <!-- ###################################### Relationship Building Extras ###################################### -->
+                                <div id="box9" class="tabdiv">
+                                    <apex:panelGrid columns="1"  border="0" columnClasses="panelgridFull" style="width:98%" id="relBuildingExtras">
+                                        <apex:outputpanel >
+                                            <div class="blockHeader textlabel"><h3>RBE</h3></div> <br/>
+                                            <!--<div class="blockHeader textlabel"><h3>What to look for</h3></div> <br/>-->
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Your success hinges largely on strong client relationships. Exceptional client service constitutes a core value for the business, and we always aim to become a trusted partner of our clients, rather than viewing ourselves as a vendor. Differentiate yourself from the competition through strong relationships, and become a trusted partner – not just a sales rep</li>
+                                                    <li>Get to know their industry and company</li>
+                                                    <li>Get to know the person, their interests, their personality, their family</li>
+                                                    <li>Go the extra mile</li>
+                                                    <li>Add a personal touch</li>
+                                                    <li>Be more than just a sales rep</li>
+                                                    <li>Be more than just an email address</li>
+                                                    <li>Remember: People buy from people</li>
+                                                </ul>
+                                            </div><br/>
+                                            <!--<div class="blockHeader textlabel"><h3>Motivation Questions</h3></div> <br/>
+                                            <div>
+                                                <ul class="removeMargin textlabel lightInsight">
+                                                    <li>Can you please give me an overview of your company?</li>
+                                                    <li>Can you tell me about your organization?</li>
+                                                    <li>Who are the people leading the investigation of new solutions?</li>
+                                                    <li>Can you share what led you to contact RingCentral and begin these communications?</li>
+                                                    <li>How can we help you?</li>
+                                                </ul>
+                                            </div>
+                                            <apex:outputLabel styleclass="textlabel"  value="Motivation Notes"/>
+                                            <apex:inputTextarea rows="8"   styleclass="fullwidthWithBorder"  value="{!wrpNotes.sMotivations2}"/> -->
+                                            <div>
+                                                <apex:outputLabel styleclass="textlabel"  value="Relationship Building Extras"/>
+                                            </div>
+                                            <div>
+                                                <apex:inputTextarea rows="4"   styleclass="notes relationshipBuildingExtras"  value="{!lq.Relationship_Building_Extras__c}"  onchange="setValToElement($(this).val(), $('.relationshipBuildingExtrasSum'));"/>
+                                            </div>
+                                        </apex:outputpanel>
+                                    </apex:panelGrid>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputpanel>
+            </div>
+
+            <apex:outputpanel rendered="{!viewMode == 'read'}" >
+                <script>
+                    $(".NewDiscoverySection").find("input,select,textarea").prop('disabled',true);
+                </script>
+            </apex:outputpanel>
+            <apex:actionStatus id="renderMeStatus" onStart="showOverlay();" onstop="jsLoad();hideOverlay();"/>
+
+
+            <!-- -------------------------New Discovery section ends------------------------- -->
+            <div class="btnDiv" id="readModeButton"   >
+                <apex:outputpanel rendered="{!viewMode == 'read'}">
+                    <apex:commandButton value="Edit" reRender="container" action="{!showEdit}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" />
+                </apex:outputpanel>
+                <apex:outputpanel rendered="{!viewMode == 'edit'}">
+                    <apex:commandButton value="Save" action="{!save}" status="renderMeStatus" style="padding: 8px 20px 8px 20px;" oncomplete="parentRefresh();"/>
+                    <apex:commandButton value="Cancel"  onClick="return ConfirmUserAction('Do you really want to continue without saving changes?')" status="renderMeStatus" style="padding: 8px 20px 8px 20px;"/>
+                </apex:outputpanel>
+
+            </div>
+
+            <script>
+                function jsLoad(){
+                    initiateTabs('.box-wrap','{"activeTab" : 0}');
+                    $("#tabsItems").find("li").on('click',function(){
+
+                        var targetId = $(this).attr('id');
+                        $(".box-wrap").children('.tabdiv').hide();
+                        $(targetId).show();
+                        $(this).siblings().removeClass('tabActiveHeader');
+                        $(this).addClass('tabActiveHeader');
+                    });
+
+                    CheckErrorTabs();
+                    <!-- ---------------------------------------------As/Simplion/7/3/2014-------------------- -->
+                    TextAreaLengthCheck('.discoveryNotes','Discovery Notes',32000);
+                    TextAreaLengthCheck('.discoveryNextStep','Next Step',32000);
+                    TextAreaLengthCheck('.notes','Manger Notes',32000);
+                }
+
+                jsLoad();
+
+                function setFocusOnLoad() {
+                    $('.discoveryNotes').blur();
+                    $('.discoveryNextStep').blur();
+                    $('.notes').blur();
+                }
+                <!-- ---------------------------------------------As/Simplion/7/3/2014-------------------- -->
+                //sets given value to the given element. Needed to dynamically change text from current situation inputTextarea on Sum page to current situation inputTextarea on current situation page.
+                function setValToElement(value, field) {
+                    $(field).val(value);
+                }
+            </script>
+
+        </apex:form>
+    </apex:outputpanel>
+    <div id="overlay"></div>
+</apex:page>

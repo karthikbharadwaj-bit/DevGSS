@@ -1,0 +1,940 @@
+<aura:component controller="QuotingToolQuoteApexController">
+    <!-- Documentation: https://aquiva.atlassian.net/wiki/spaces/RC/pages/136216597/Quote+Summary+Fields -->
+    <ltng:require scripts="{! $Resource.RCHelper + '/RC.js' }"/>
+    <!-- Shared Attributes -->
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="quote" type="Quote" description="Quote attribute stored locally in this component"/>
+    <aura:attribute name="isSummaryChanged" type="Boolean" default="false" description="Indicates that there is unsaved chages in summary"/>
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="isExpDateValid" type="Boolean" default="false" description="Indicates that expiration date is valid"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+    <aura:attribute name="areaCodeItems" type="List" description="Saved area code items"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute name="stage" type="Integer" />
+    <aura:attribute name="quoteLineItems" type="List" />
+    <aura:attribute name="rendered" type="Boolean" default="false" />
+    <aura:attribute name="disabledQuote" type="Boolean" />
+    <aura:attribute name="showQuoteTypeDisabledTooltip" type="Boolean" default="false"/>
+    <aura:attribute name="renderNumberOfProServPhases" type="Boolean" default="true" />
+    <aura:attribute name="renderNumberOfHardwareShipmentPhases" type="Boolean" default="true" />
+    <aura:attribute name="renderTotalProjectHoursQuoted" type="Boolean" default="true" />
+    <aura:attribute name="reapproval" type="Boolean" default="false" />
+    <aura:attribute name="numberOfHardwareShipmentPhasesDisabled" type="Boolean" default="true" />
+    <aura:attribute name="totalProjectHoursQuotedDisabled" type="Boolean" default="true" />
+    <aura:attribute name="numberOfProServPhasesDisabled" type="Boolean" default="true" />
+    <aura:attribute name="faxAreaCodeObj" type="Map" description="Selected Fax Area Code Object"/>
+    <aura:attribute name="mainAreaCodeObj" type="Map" description="Selected Main Area Code Object"/>
+    <aura:attribute name="areaCodeMainLookUpParams" type="Map" default="{}" description="Params for area codes filtering"/>
+    <aura:attribute name="areaCodeFaxLookUpParams" type="Map" default="{}" description="Params for area codes filtering"/>
+    <aura:attribute name="popoverFreeze" type="Boolean" default="false" />
+    <aura:attribute name="extendedInputTerms" type="Boolean" default="false" />
+    <aura:attribute name="creditAmountLabel" type="String" default="Free months discount"/>
+    <aura:attribute name="paramsToSendToApex" type="Map" default="{'filterByProservProfile':'filterByProservProfile'}" description="Params to pass"/>
+
+    <!-- Form attributes -->
+    <aura:attribute name="status" type="String" default="" />
+    <aura:attribute name="proServForecastCategory" type="String" default="" />
+    <aura:attribute name="proServOfferType" type="String" default="" />
+    <aura:attribute name="proServProjectComplexity" type="String" default="" />
+    <aura:attribute name="proServSOWType" type="String" default="" />
+    <aura:attribute name="proServTE" type="String" default="" />
+    <aura:attribute name="totalProjectHoursQuoted" type="String" default="" />
+    <aura:attribute name="numberOfProServUsers" type="String" default="" />
+    <aura:attribute name="signedSOW" type="String" default="" />
+    <aura:attribute name="signedCOD" type="String" default="" />
+    <aura:attribute name="signedCODDisabled" type="Boolean" default="false" />
+    <aura:attribute name="proServStatus" type="String" default="" />
+    <aura:attribute name="numberOfProServPhases" type="String" default="" />
+    <aura:attribute name="numberOfHardwareShipmentPhases" type="String" default="" />
+    <aura:attribute name="nameQuote" type="String" />
+    <aura:attribute name="quoteType" type="String" default="Quote" />
+    <aura:attribute name="iTerm" type="String" default="" />
+    <aura:attribute name="rTerm" type="String" default="" />
+    <aura:attribute name="autoRenewal" type="Boolean" default="" />
+    <aura:attribute name="specialTerms" type="String" default="" />
+    <aura:attribute name="justification" type="String" default="" />
+    <aura:attribute name="quoteDescription" type="String" default="" />
+    <aura:attribute name="originalSOWQuoteNumber" type="String" default="" />
+    <aura:attribute name="expirationDate" type="Date" />
+    <aura:attribute name="proServForecastedCloseDate" type="Date" />
+    <aura:attribute name="startDate" type="Date" />
+    <aura:attribute name="endDate" type="Date" />
+    <aura:attribute name="mainAreaCode" type="String"/>
+    <aura:attribute name="faxAreaCode" type="String"/>
+    <aura:attribute name="isMainPhoneVanity" type="Boolean" default="false"/>
+    <aura:attribute name="isFaxPhoneVanity" type="Boolean" default="false"/>
+    <aura:attribute name="proServProjectManager" type="String"/>
+    <aura:attribute name="proServSalesRep" type="String"/>
+    <aura:attribute name="freeMonthDiscount" type="Double"/>
+    <aura:attribute name="shippingLocation" type="Map"/>
+    <aura:attribute name="isAreaCodeLineItemsMissed" type="Boolean" default="false"/>
+    <aura:attribute name="provisioningDetails" type="String"/>
+    <aura:attribute name="selfProvisioned" type="Boolean" default="" />
+    <aura:attribute name="ASAOwner" type="String"/>
+    <aura:attribute name="PSSegment" type="String"/>
+    <aura:attribute name="UIDfrombiz" type="String"/>
+    <aura:attribute name="psMonthlyRecurringServicesValueARR" type="String"/>
+
+
+    <!-- Picklist values -->
+    <aura:attribute name="termVals" type="String[]" default="12,24,36" />
+    <aura:attribute name="quoteTypeValues" type="String[]" />
+    <aura:attribute name="initialTermMonthsValues" type="String[]" />
+    <aura:attribute name="specialTermsValues" type="String[]" />
+    <aura:attribute name="termMonthsValues" type="String[]" />
+    <aura:attribute name="statusValues" type="String[]" />
+    <aura:attribute name="proServStatusValues" type="String[]" />
+    <aura:attribute name="proServForecastCategoryValues" type="String[]" />
+    <aura:attribute name="proServOfferTypeValues" type="String[]" />
+    <aura:attribute name="proServProjectComplexityValues" type="String[]" />
+    <aura:attribute name="proServSOWTypeValues" type="String[]" />
+    <aura:attribute name="TEValues" type="String[]" />
+    <aura:attribute name="signedSOWValues" type="String[]" />
+    <aura:attribute name="ASAOwnerValues" type="String[]" />
+    <aura:attribute name="PSSegmentValues" type="String[]" />
+
+    <!-- hanlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="c:QuotingToolSaveClickEvent" action="{!c.querySaveQuote}" />
+    <aura:handler event="c:QuotingToolModalResponseEvent" action="{!c.confirmSaveQuote}" />
+    <aura:handler event="c:QuotingToolDiscardQuoteEvent" action="{!c.discardQuoteChanges}" />
+    <aura:handler event="c:QuotingToolNotificationActionEvent" action="{!c.notificationAction}" />
+
+    <!-- Attribute change handlers -->
+    <aura:handler name="change" value="{!v.startDate}" action="{!c.startDateChanged}" />
+    <aura:handler name="change" value="{!v.iTerm}" action="{!c.iTermChanged}" />
+    <aura:handler name="change" value="{!v.rTerm}" action="{!c.changeRenewalTerm}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.faxAreaCodeObj}" action="{!c.faxAreaCodeObjChanged}" />
+    <aura:handler name="change" value="{!v.mainAreaCodeObj}" action="{!c.mainAreaCodeObjChanged}" />
+    <aura:handler name="change" value="{!v.Wizard.currentQuote}" action="{!c.wizardChanged}" />
+    <aura:handler name="change" value="{!v.proServSalesRep}" action="{!c.proServSalesRepChanged}" />
+    <aura:handler name="change" value="{!v.areaCodeItems}" action="{!c.areaCodeItemsChanged}" />
+    <aura:handler name="change" value="{!v.signedSOW}" action="{!c.activateSave}" />
+    <aura:handler name="change" value="{!v.signedCOD}" action="{!c.activateSave}" />
+
+    <!-- registered events -->
+    <aura:registerEvent name="updQuote" type="c:QuotingToolUpdateQuoteEvent" />
+    <aura:registerEvent name="askChange" type="c:QuotingToolModalRequestEvent" />
+    <aura:registerEvent name="termsChange" type="c:QuotingToolTermsChangeEvent" />
+
+    <!-- Methods -->
+    <aura:method name="save" action="{! c.querySaveQuote }" description="Save changes made by user"/>
+    <aura:method name="discard" action="{! c.discardQuoteChanges }" description="Discard changes made by user"/>
+    <aura:method name="refreshQuoteSummaryTabInputValues" action="{!c.refreshQuoteSummaryTabInputValues}"/>
+
+    <section class="{! join(' ', 'slds-p-horizontal--small', v.Tabs.summary.isOpen ? '' : 'hidden') }"
+            aura:id="quoteSummary">
+
+        <lightning:layout>
+
+            <lightning:layoutItem class="slds-p-right--x-small" size="12" mediumDeviceSize="6">
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="blockA">
+
+                    <!-- Quote/Approval ID -->
+                    <lightning:layoutItem class="slds-p-right_x-small" size="4" aura:id="quoteNumberBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label">Current Quote Number</label>
+                            <div class="slds-input slds-is-disabled">{! v.Wizard.currentQuote.record.QuoteNumber }</div>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Pro Serv Status -->
+                    <lightning:layoutItem class="slds-p-left--x-small slds-hide" size="6" aura:id="proServStatusBlock">
+                        <lightning:input label="Status" value="{!v.proServStatus}" disabled="true" name="proServStatus"/>
+                    </lightning:layoutItem>
+
+                    <!-- Name -->
+                    <lightning:layoutItem class="slds-p-left_x-small" size="8"  aura:id="quoteNameBlock">
+                        <div class="slds-form-element" aura:id="quoteNameDisplay">
+                            <label class="slds-form-element__label">Name</label>
+                            <div class="slds-input slds-is-relative">
+                                <aura:if isTrue="{! not(v.state.isUserRelayware) }">
+                                    <a href="{!'/'+v.Wizard.currentQuote.record.Id}" target="blank">{!v.Wizard.currentQuote.record.Name}</a>
+                                    <aura:set attribute="else">
+                                            {! v.Wizard.currentQuote.record.Name }
+                                    </aura:set>
+                                </aura:if>
+
+                                <span class="edit-icon">
+                                    <a href="javascript:void(0);"
+                                       onclick="{!c.showQuoteNameInput}"
+                                       aura:id="quoteNameEditLink">
+                                        <lightning:icon class="slds-form-element"
+                                                        iconName="utility:edit"
+                                                        size="xx-small"
+                                                        title="Edit"
+                                                        alternativeText="Edit"/>
+                                    </a>
+                                </span>
+
+                            </div>
+                        </div>
+                        <div class="slds-form-element hidden" aura:id="quoteNameInput">
+                            <div class="slds-form-element__control">
+                                <lightning:input type="text"
+                                                 placeholder="Name"
+                                                 label="Name"
+                                                 value="{!v.nameQuote}"
+                                                 aura:id="quoteName"
+                                                 onchange="{!c.activateSave}"/>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+                <lightning:layout class="slds-p-bottom_small" aura:id="originalSOWQuoteNumberBlock">
+                    <!-- Original SOW Quote Number -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="originalSOWQuoteNumberLayout">
+                        <div class="slds-form-element__control">
+                            <lightning:input type="text"
+                                             placeholder=""
+                                             label="Original SOW Quote Number"
+                                             required="true"
+                                             value="{!v.originalSOWQuoteNumber}"
+                                             aura:id="originalSOWQuoteNumber"
+                                             onchange="{!c.activateSave}"/>
+                        </div>
+                    </lightning:layoutItem>
+                    <!-- ProServ Forecasted Close Date -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="6" aura:id="proServForecastedCloseDateBlock2">
+                        <lightning:input type="date"
+                                         aura:id="proServForecastedCloseDate2"
+                                         label="ProServ Forecasted Close Date"
+                                         value="{!v.proServForecastedCloseDate}"
+                                         required="true"
+                                         onchange="{!c.activateSave}"
+                                         name="proServForecastedCloseDate2" />
+                    </lightning:layoutItem>
+
+                    <!-- Number of ProServ Users -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="6" aura:id="numberOfProServUsersBlock">
+                        <lightning:input label="ProServ Users"
+                                            value="{!v.numberOfProServUsers}"
+                                            onchange="{!c.activateSave}"
+                                            aura:id="numberOfProServUsers"
+                                            name="numberOfProServUsers"
+                                            required="true"
+                                            messageWhenRangeOverflow="ProServ Users should be less than 6 digits long"
+                                            messageWhenRangeUnderflow="ProServ Users can't be negative"
+                                            type="Number"
+                                            min="0"
+                                            max="999999"
+                                            step="1"
+                        />
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <lightning:layout class="slds-p-bottom_small" aura:id="blockB">
+
+                    <!-- Expiration Date -->
+                    <lightning:layoutItem class="slds-p-right--x-small is-required" size="4" aura:id="expirationDateBlock">
+                        <div class="slds-form-element__control">
+                            <ui:inputDate label="Expiration Date"
+                                          class="slds-input"
+                                          labelClass="slds-form-element__label"
+                                          value="{!v.expirationDate}"
+                                          displayDatePicker="true"
+                                          aura:id="expirationDate"
+                                          blur="{!c.activateSave}"
+                                          change="{!c.onUserChangeExpirationDate}"
+                                          mouseover="{!c.modifyDatepicker}"/>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Stage -->
+                    <lightning:layoutItem class="slds-p-horizontal--x-small" size="4" aura:id="quoteTypeBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label">Stage</label>
+                            <div class="slds-select_container"
+                                 onmouseover="{!c.showPopover}"
+                                 onmouseout="{!c.hidePopover}"
+                                 data-name="quoteTypeDiv"
+                                 aura:id="quoteTypeDiv">
+                                <ui:inputSelect class="slds-select"
+                                                aura:id="quote-type"
+                                                value="{!v.quoteType}"
+                                                change="{!c.changeQuoteType}">
+
+                                    <aura:iteration items="{!v.quoteTypeValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Agreement Status -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="4" aura:id="agreementStatusBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="">Agreement Status</label>
+                            <div class="slds-select_container">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.status}"
+                                                aura:id="agreementStatus"
+                                                change="{!c.activateSave}">
+
+                                    <aura:iteration items="{!v.statusValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- ProServ Offer Type -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="6" aura:id="proServOfferTypeBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="">ProServ Offer Type</label>
+                            <div class="slds-select_container">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.proServOfferType}"
+                                                aura:id="proServOfferType"
+                                                change="{!c.activateSave}">
+
+                                    <ui:inputSelectOption text="" label="--None--" />
+                                    <aura:iteration items="{!v.proServOfferTypeValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="blockC">
+
+                    <!-- Initial Term -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="4" aura:id="initialTermBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="initialTerm">Initial Term</label>
+
+                            <aura:if isTrue="{!!v.extendedInputTerms}">
+                                <div class="slds-select_container iTerm">
+                                    <ui:inputSelect class="slds-select" value="{!v.iTerm}" aura:id="initialTerm" change="{!c.userChangedInitialTerm}">
+                                        <ui:inputSelectOption text="" label="--None--" />
+                                        <aura:iteration items="{!v.initialTermMonthsValues}" var="option">
+                                            <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                        </aura:iteration>
+                                    </ui:inputSelect>
+                                </div>
+
+                            <aura:set attribute="else">
+                                <ui:inputNumber class="slds-input" aura:id="initialTerm" value="{!v.iTerm}" change="{!c.userChangedInitialTerm}" disabled="true" />
+                            </aura:set>
+
+                            </aura:if>
+
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Renewal Term -->
+                    <lightning:layoutItem class="slds-p-horizontal--x-small" size="4" aura:id="renewalTermBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="renewalTerm">Renewal Term</label>
+
+                            <aura:if isTrue="{!!v.extendedInputTerms}">
+
+                                <div class="slds-select_container"
+                                     aura:id="renewalTermDiv"
+                                     data-name="renewalTermDiv"
+                                     onmouseover="{!c.showPopover}"
+                                     onmouseout="{!c.hidePopover}">
+                                    <ui:inputSelect class="slds-select" value="{!v.rTerm}" aura:id="renewalTerm" change="{!c.userChangedRenewalTerm}">
+                                        <ui:inputSelectOption text="" label="--None--" />
+                                        <aura:iteration items="{!v.termMonthsValues}" var="option">
+                                            <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                        </aura:iteration>
+                                    </ui:inputSelect>
+                                </div>
+
+                            <aura:set attribute="else">
+                                <div aura:id="renewalTermDiv"
+                                     data-name="renewalTermDiv"
+                                     onmouseover="{!c.showPopover}"
+                                     onmouseout="{!c.hidePopover}">
+
+                                     <ui:inputNumber class="slds-input" aura:id="renewalTerm" value="{!v.rTerm}" change="{!c.userChangedRenewalTerm}" />
+                                </div>
+                            </aura:set>
+
+                            </aura:if>
+
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Auto Renewal -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="4" aura:id="autoRenewalBlock">
+                        <div class="slds-form-element p-checkbox">
+                            <lightning:input type="checkbox"
+                                             label="Auto Renewal"
+                                             name="autoRenewal"
+                                             class="slds-truncate"
+                                             checked="{!v.autoRenewal}"
+                                             onchange="{!c.activateSave}"
+                                             aura:id="auto-renewal"/>
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="blockD">
+
+                    <!-- Start Date -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="startDateBlock">
+                        <div class="slds-form-element">
+                            <ui:inputDate label="Start Date"
+                                          class="slds-input"
+                                          labelClass="slds-form-element__label"
+                                          value="{!v.startDate}"
+                                          displayDatePicker="true"
+                                          aura:id="startDate"
+                                          blur="{!c.activateSave}"
+                                          mouseover="{!c.modifyDatepicker}"
+                                          updateOn="change"
+                                          change="{! c.onUserChangeStartDate }" />
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- End Date -->
+                    <lightning:layoutItem class="slds-p-left--x-small" size="6">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label">End Date</label>
+                            <div class="slds-input" disabled="true">
+                                <ui:outputDate aura:id="endDate" value="{!v.endDate}" />
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="specialTermsBlock">
+                    <!-- Special Terms -->
+                    <lightning:layoutItem class="slds-p-bottom--small flex" >
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label">Special Terms</label>
+                            <div class="slds-select_container"
+                                 aura:id="specialTermsDiv"
+                                 data-name="specialTermsDiv"
+                                 onmouseover="{!c.showPopover}"
+                                 onmouseout="{!c.hidePopover}">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.specialTerms}"
+                                                aura:id="specialTerms"
+                                                change="{!c.changeSpecialTerms}">
+
+                                    <ui:inputSelectOption text="" label="--None--" />
+                                    <aura:iteration items="{!v.specialTermsValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+                    <aura:renderIf isTrue = "{! !empty(v.Wizard.currentQuote.record.Credit_Amount__c) }">
+                        <!-- Credit Amount -->
+                        <lightning:layoutItem class="slds-p-left--medium" size="4" aura:id = "creditAmountBlock">
+                            <div class="slds-form-element">
+                                <label class="slds-form-element__label">{!v.creditAmountLabel} </label>
+
+                                <span onmouseover="{!c.showPopover}"
+                                      onmouseout="{!c.hidePopover}"
+                                      data-name="freeMonthsDiscountToolTip"
+                                      aura:id="freeMonthsDiscountToolTip">
+
+                                    <lightning:icon iconName="utility:info"
+                                                    size="xx-small"
+                                                    alternativeText="Tells if taxes are included or not"/>
+
+                                </span>
+                                <div class="slds-input testdisabled" aura:id="creditAmount" disabled="true">
+                                    <c:outputCurrency value="{! v.freeMonthDiscount }"
+                                                      currencyCode="{! v.Wizard.currentQuote.record.CurrencyIsoCode }" />
+                                </div>
+                            </div>
+                        </lightning:layoutItem>
+                    </aura:renderIf>
+                </lightning:layout>
+
+                <!-- Justification/Description -->
+                <aura:if isTrue="{! not(v.Wizard.currentQuote.isCCorProServ) }">
+                    <lightning:layout class="slds-p-bottom--small" aura:id="justificationBlock">
+                        <div class=" slds-size--12-of-12" aura:id="justificationDiv">
+                            <lightning:textarea label="Justification/Description"
+                                                value="{!v.justification}"
+                                                onchange="{!c.activateSave}"
+                                                aura:id="justification"
+                                                name="justification"/>
+                        </div>
+                    </lightning:layout>
+                </aura:if>
+
+                <lightning:layout class="slds-p-bottom--small slds-hide" aura:id="proServPhasesBlock">
+
+                    <!-- Number of ProServ Phases -->
+                    <lightning:layoutItem class="slds-p-right--small" size="6" aura:id="numberOfProServPhasesBlock">
+                        <aura:if isTrue="{!v.renderNumberOfProServPhases}">
+                            <lightning:input label="{! v.state.isProServQuote ? 'Number of ProServ Phases' : 'Number of CC ProServ Phases' }"
+                                             value="{!v.numberOfProServPhases}"
+                                             onchange="{!c.activateSave}"
+                                             aura:id="numberOfProServPhases"
+                                             name="numberOfProServPhases"
+                                             disabled="{!v.numberOfProServPhasesDisabled}"
+                                             messageWhenRangeOverflow="Number of ProServ Phases should be less than 31"
+                                             messageWhenRangeUnderflow="Number of ProServ Phases can't be negative"
+                                             type="Number"
+                                             min="0"
+                                             max="30"
+                                             step="1"
+                            />
+                        </aura:if>
+                    </lightning:layoutItem>
+
+                    <!-- Number of Hardware Shipment Phases -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="numberOfHardwareShipmentPhasesBlock">
+                        <aura:if isTrue="{!v.renderNumberOfHardwareShipmentPhases}">
+                            <lightning:input label="Number of Hardware Shipment Phases"
+                                             value="{!v.numberOfHardwareShipmentPhases}"
+                                             onchange="{!c.activateSave}"
+                                             aura:id="numberOfHardwareShipmentPhases"
+                                             name="numberOfHardwareShipmentPhases"
+                                             disabled="{!v.numberOfHardwareShipmentPhasesDisabled}"
+                                             messageWhenRangeOverflow="Number of Hardware Shipment Phases should be less than 31"
+                                             messageWhenRangeUnderflow="Number of Hardware Shipment Phases can't be negative"
+                                             type="Number"
+                                             min="0"
+                                             max="30"
+                                             step="1"
+                            />
+                        </aura:if>
+                    </lightning:layoutItem>
+
+                    <!-- ProServ Forecasted Close Date -->
+                    <lightning:layoutItem class="slds-p-left--x-small is-required" size="6" aura:id="proServForecastedCloseDateBlock">
+                        <div class="slds-form-element__control">
+                            <ui:inputDate label="ProServ Forecasted Close Date"
+                                          class="slds-input"
+                                          labelClass="slds-form-element__label"
+                                          value="{!v.proServForecastedCloseDate}"
+                                          displayDatePicker="true"
+                                          aura:id="proServForecastedCloseDate"
+                                          blur="{!c.activateSave}"
+                                          change="{!c.onPsForecastedCloseDateChange}"
+                                          mouseover="{!c.modifyDatepicker}"/>
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small slds-hide"  aura:id="proServTEBlock">
+
+                    <!-- T&E -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="">T&amp;E</label>
+                            <div class="slds-select_container">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.proServTE}"
+                                                aura:id="proServTE"
+                                                change="{!c.activateSave}">
+
+                                    <ui:inputSelectOption text="" label="--None--" />
+                                    <aura:iteration items="{!v.TEValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- ProServ Forecast Category -->
+                    <lightning:layoutItem class="slds-p-left--x-small is-required" size="6">
+                        <div class="slds-form-element" aura:id="proServForecastCategoryBlock">
+                            <label class="slds-form-element__label" for="">ProServ Forecast Category</label>
+                            <div class="slds-select_container">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.proServForecastCategory}"
+                                                aura:id="proServForecastCategory"
+                                                change="{!c.onPsForecastCategoryChange}">
+
+                                    <ui:inputSelectOption text="" label="--None--" />
+                                    <aura:iteration items="{!v.proServForecastCategoryValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small">
+
+                    <!-- Total Project Hours Quoted -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="totalProjectHoursQuotedBlock">
+                        <aura:if isTrue="{!v.renderTotalProjectHoursQuoted}">
+                            <lightning:input label="Quoted Hours"
+                                             value="{!v.totalProjectHoursQuoted}"
+                                             aura:id="totalProjectHoursQuoted"
+                                             name="totalProjectHoursQuoted"
+                                             disabled="{!v.totalProjectHoursQuotedDisabled}"
+                                             type="Number"
+                                             step="1"
+                            />
+                        </aura:if>
+                    </lightning:layoutItem>
+
+                    <!-- Signed SOW -->
+                    <lightning:layoutItem class="slds-p-left_x-small" size="6" aura:id="signedSOWBlock">
+                        <div class="slds-form-element slds-is-relative" aura:id="signedSOWBlockDisplay">
+                            <c:PermissionBasedInput aura:id="signedSOW"
+                                                    recordValue="{!v.signedSOW}"
+                                                    inputValue="{!v.signedSOW}"
+                                                    label="{! v.Wizard.currentQuote.record.Brand__c == 'RingCentral with Verizon' ? 'SOW Link' : 'Signed SOW' }"
+                                                    placeholder="Link to signed SOW"
+                                                    variant=""
+                                                    pattern="(https?:\/\/)?[0-9A-Za-z_\-]+(\..{2,})+"
+                                                    patternMismatchMessage="Incorrect URL"
+                                                    isUserHasEditPermission="{!v.Wizard.user.isMayEditSignedSOW}"
+                                                    isInputDisabled="{!v.Wizard.isSOWAutoPopulated
+                                                                      || v.Wizard.isSignedSOWInputDisabled
+                                                                      || v.Wizard.currentQuote.isSold}"/>
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small">
+
+                    <!-- ProServ Project Complexity -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="proServProjectComplexityBlock">
+                        <lightning:combobox name="proServProjectComplexity"
+                                            aura:id="proServProjectComplexity"
+                                            label="ProServ Project Complexity"
+                                            value="{!v.proServProjectComplexity}"
+                                            placeholder="--None--"
+                                            required="true"
+                                            options="{!v.proServProjectComplexityValues}"
+                                            onchange="{! c.activateSave }"/>
+                    </lightning:layoutItem>
+
+                    <!-- ProServ SOW Type -->
+                    <lightning:layoutItem class="slds-p-left--x-small slds-hide" size="6" aura:id="proServSowTypeBlock">
+                        <div class="slds-form-element">
+                            <label class="slds-form-element__label" for="">ProServ SOW Type</label>
+                            <div class="slds-select_container">
+                                <ui:inputSelect class="slds-select"
+                                                value="{!v.proServSOWType}"
+                                                aura:id="proServSOWType"
+                                                change="{!c.activateSave}">
+
+                                    <ui:inputSelectOption text="" label="--None--" />
+                                    <aura:iteration items="{!v.proServSOWTypeValues}" var="option">
+                                        <ui:inputSelectOption text="{!option.value}" label="{!option.label}" />
+                                    </aura:iteration>
+
+                                </ui:inputSelect>
+                            </div>
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+                <aura:if isTrue="{! v.Wizard.currentQuote.isCCorProServ }">
+                    <lightning:layout class="slds-p-bottom--small">
+                        <!-- PS Monthly Recurring Services Value ARR -->
+                        <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="psMonthlyRecurringServicesValueARRBlock">
+                            <lightning:input label="PS Monthly Recurring Services Value (ARR)"
+                                value="{!v.psMonthlyRecurringServicesValueARR}"
+                                onchange="{!c.activateSave}"
+                                aura:id="psMonthlyRecurringServicesValueARR"
+                                name="psMonthlyRecurringServicesValueARR"
+                                required="false"
+                                type="number"
+                                formatter="decimal"
+                                step="0.01"
+                            />
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </aura:if>
+
+                <aura:if isTrue="{! v.Wizard.currentQuote.record.Brand__c == 'RingCentral with Verizon' }">
+                    <lightning:layout class="slds-p-bottom--small">
+                        <lightning:layoutItem class="slds-p-right--x-small" size="6" aura:id="UIDfrombiz">
+                            <div class="slds-form-element slds-is-relative" aura:id="UIDfrombizBlockDisplay">
+                                <lightning:input label="UID from .biz"
+                                                value="{!v.UIDfrombiz}"
+                                                onchange="{!c.activateSave}"
+                                                aura:id="UIDfrombizInput"
+                                                name="UIDfrombiz"
+                                                type="text"
+                                                disabled="{!v.Wizard.currentQuote.isSold}"
+                                />
+                            </div>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </aura:if>
+
+                <lightning:layout class="slds-p-bottom--small">
+                    <!-- Signed COD -->
+                    <lightning:layoutItem class="slds-p-right--x-small slds-hide" size="6" aura:id="signedCODBlock">
+                        <div class="slds-form-element slds-is-relative" aura:id="signedCODBlockDisplay">
+                            <c:PermissionBasedInput aura:id="signedCOD"
+                                                    recordValue="{!v.Wizard.currentQuote.record.Signed_COD__c}"
+                                                    inputValue="{!v.signedCOD}"
+                                                    label="Signed Change Order Document"
+                                                    required="false"
+                                                    placeholder="Link to signed Change Order Document"
+                                                    variant=""
+                                                    pattern="(https?:\/\/)?[0-9A-Za-z_\-]+(\..{2,})+"
+                                                    patternMismatchMessage="Incorrect URL"
+                                                    isUserHasEditPermission="true"
+                                                    isInputDisabled="{!v.signedCODDisabled}"/>
+                        </div>
+                    </lightning:layoutItem>
+                    <!-- Number of ProServ Users -->
+                    <lightning:layoutItem class="slds-p-left--x-small slds-col_bump-left" size="6" aura:id="numberOfProServUsersBlock2">
+                        <lightning:input label="ProServ Users"
+                                            value="{!v.numberOfProServUsers}"
+                                            onchange="{!c.activateSave}"
+                                            aura:id="numberOfProServUsers2"
+                                            name="numberOfProServUsers"
+                                            required="true"
+                                            messageWhenRangeOverflow="ProServ Users should be less than 6 digits long"
+                                            messageWhenRangeUnderflow="ProServ Users can't be negative"
+                                            type="Number"
+                                            min="0"
+                                            max="999999"
+                                            step="1"
+                        />
+                    </lightning:layoutItem>
+                </lightning:layout>
+            </lightning:layoutItem>
+
+            <lightning:layoutItem class="slds-p-left--x-small" size="12" mediumDeviceSize="6">
+
+                <lightning:layout class="slds-p-bottom_small" aura:id="proServUsersBlock">
+
+                    <!-- ProServ Sales Rep -->
+                    <lightning:layoutItem size="6" class="slds-p-right_x-small is-required" aura:id="proServArchitectField">
+                        <div class="slds-form-element" aura:id="proServSalesRepBlock">
+                            <c:Lookup placeholder="Start typing to search ProServ Sales Rep User"
+                                      label="ProServ Architect"
+                                      method="getUsers"
+                                      iconCollection="standard"
+                                      icon="user"
+                                      value="{! v.proServSalesRep }"
+                                      onchange="{! c.activateSave }"
+                                      aura:id="proServSalesRep"
+                                      params="{!v.paramsToSendToApex}"
+                            />
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- ProServ Project Manager -->
+                    <lightning:layoutItem size="6" class="slds-p-left_x-small slds-hide" aura:id="proServManagerField">
+                        <div class="slds-form-element">
+                            <c:Lookup placeholder="Start typing to search ProServ Project Manager User"
+                                      label="ProServ Project Manager"
+                                      method="getUsers"
+                                      iconCollection="standard"
+                                      icon="user"
+                                      value="{! v.proServProjectManager }"
+                                      onchange="{! c.activateSave }"
+                                      aura:id="proServProjectManager"
+
+                            />
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <lightning:layout class="slds-p-bottom_small" aura:id="proServASABlock">
+                    <lightning:layoutItem size="6" class="slds-p-left_x-small slds-hide" aura:id="proServASAOwnerField">
+                        <lightning:combobox name="proServASAOwner"
+                                            aura:id="proServASAOwner"
+                                            label="ASA Owner"
+                                            value="{!v.ASAOwner}"
+                                            placeholder="--None--"
+                                            options="{!v.ASAOwnerValues}"
+                                            onchange="{! c.activateSave }"/>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem size="6" class="slds-p-left_x-small slds-hide" aura:id="PSSegmentField">
+                        <lightning:combobox name="PSSegment"
+                                            aura:id="PSSegment"
+                                            label="PS Team"
+                                            value="{!v.PSSegment}"
+                                            placeholder="--None--"
+                                            options="{!v.PSSegmentValues}"
+                                            onchange="{! c.activateSave }"/>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="mainAreaCodeComboBlock">
+
+                    <!-- Main Area Code -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="10" aura:id="mainAreaCodeBlock">
+                        <div class="slds-form-element">
+                            <c:Lookup placeholder="Start typing to search Main Area Code"
+                                      label ="Main Area Code"
+                                      method="getAreaCodes"
+                                      iconCollection="custom"
+                                      icon="custom64"
+                                      value="{!v.mainAreaCode}"
+                                      onchange="{!c.userChangedMainAreaCode}"
+                                      selectedValue="{!v.mainAreaCodeObj}"
+                                      params="{!v.areaCodeMainLookUpParams}"
+                                      aura:id="mainAreaCode"/>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Is Main Area Code Vanity ? -->
+                    <lightning:layoutItem class="slds-p-left--medium" size="2" aura:id="isMainPhoneVanityBlock">
+                        <div class="slds-form-element p-checkbox slds-grid">
+                            <lightning:input type="checkbox"
+                                             label="Vanity"
+                                             name="mainPhoneVanity"
+                                             class="slds-truncate"
+                                             onchange="{!c.activateSave}"
+                                             checked="{!v.isMainPhoneVanity}"
+                                             aura:id="isMainPhoneVanity"/>
+
+                            <span class="slds-grid slds-grid_vertical-align-center"
+                                  onmouseover="{!c.showPopover}"
+                                  onmouseout="{!c.hidePopover}"
+                                  data-name="isMainPhoneVanityTooltip"
+                                  aura:id="isMainPhoneVanityTooltip">
+
+                                <lightning:icon iconName="utility:info"
+                                                size="xx-small"
+                                                alternativeText="Why 'Is Vanity?' is disabled?"/>
+
+                            </span>
+
+                        </div>
+                    </lightning:layoutItem>
+
+                </lightning:layout>
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="faxAreaCodeComboBlock">
+
+                    <!-- Fax Area Code -->
+                    <lightning:layoutItem class="slds-p-right--x-small" size="10" aura:id="faxAreaCodeBlock">
+                        <div class="slds-form-element">
+                            <c:Lookup placeholder="Start typing to search Fax Area Code"
+                                      label="Fax Area Code"
+                                      method="getAreaCodes"
+                                      iconCollection="custom"
+                                      icon="custom64"
+                                      value="{!v.faxAreaCode}"
+                                      onchange="{!c.userChangedFaxAreaCode}"
+                                      selectedValue="{!v.faxAreaCodeObj}"
+                                      params="{!v.areaCodeFaxLookUpParams}"
+                                      aura:id="faxAreaCode"/>
+                        </div>
+                    </lightning:layoutItem>
+
+                    <!-- Is Fax Area Code is Vanity ? -->
+                    <lightning:layoutItem class="slds-p-left--medium" size="2" aura:id="isFaxPhoneVanityBlock">
+                        <div class="slds-form-element p-checkbox slds-grid">
+                            <lightning:input type="checkbox"
+                                             class="slds-truncate"
+                                             label="Vanity"
+                                             name="FaxPhoneVanity"
+                                             onchange="{!c.activateSave}"
+                                             checked="{!v.isFaxPhoneVanity}"
+                                             aura:id="isFaxPhoneVanity"/>
+
+                            <span class="slds-grid slds-grid_vertical-align-center"
+                                  onmouseover="{!c.showPopover}"
+                                  onmouseout="{!c.hidePopover}"
+                                  data-name="isFaxPhoneVanityTooltip"
+                                  aura:id="isFaxPhoneVanityTooltip">
+
+                                <lightning:icon iconName="utility:info"
+                                                size="xx-small"
+                                                alternativeText="Why 'Is Vanity?' is disabled?"/>
+
+                            </span>
+
+                        </div>
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+
+                <lightning:layout class="slds-p-bottom--small" aura:id="shippingLocationBlock">
+                    <lightning:layoutItem size="12">
+                        <!-- Shipping Location -->
+                        <c:ShippingLocationInput label="Shipping Address"
+                                                 account="{! v.Wizard.currentQuote.record.Account }"
+                                                 value="{! v.shippingLocation }"
+                                                 onchange="{! c.activateSave }"
+                                                 aura:id="shippingLocation" />
+                    </lightning:layoutItem>
+                </lightning:layout>
+
+                <!-- Justification/Description on ProServ/CC ProServ Quote -->
+                <aura:if isTrue="{! v.Wizard.currentQuote.isCCorProServ }">
+                    <lightning:layout class="slds-p-bottom--small" aura:id="justificationBlock">
+                        <div class=" slds-size--12-of-12" aura:id="justificationDiv">
+                            <lightning:textarea label="Justification/Description"
+                                                value="{!v.justification}"
+                                                onchange="{!c.activateSave}"
+                                                aura:id="justification"
+                                                name="justification"/>
+                        </div>
+                    </lightning:layout>
+                </aura:if>
+
+                <!-- Self-Provisioned -->
+                <aura:if isTrue="{! not(v.Wizard.currentQuote.isCCorProServ) }">
+                    <lightning:layout class="slds-p-vertical_x-large" aura:id="selfProvisionedBlock">
+                        <lightning:layoutItem size="4">
+                            <div class="slds-form-element">
+                                <lightning:input type="checkbox"
+                                                label="Self-Provisioned"
+                                                name="selfProvisioned"
+                                                class="slds-truncate"
+                                                checked="{!v.selfProvisioned}"
+                                                onchange="{!c.activateSave}"
+                                                aura:id="self-provisioned"/>
+                            </div>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </aura:if>
+
+                <!-- Provisioning Details -->
+                <lightning:layout class="slds-p-bottom--small" aura:id="provisioningBlock">
+                    <div class=" slds-size--12-of-12" aura:id="provisioningDiv">
+                        <lightning:textarea name="provisioningDetails"
+                                            label="Provisioning Details"
+                                            value="{! v.provisioningDetails }"
+                                            onchange="{!c.activateSave}"
+                                            aura:id="provisioning"/>
+                    </div>
+                </lightning:layout>
+
+            </lightning:layoutItem>
+
+        </lightning:layout>
+
+        <!-- Quote Description -->
+        <lightning:layout class="slds-p-bottom--small slds-hide" aura:id="quoteDescriptionBlock">
+            <lightning:layoutItem size="12">
+                <lightning:textarea class="textarea-vsize--2"
+                                    value="{!v.quoteDescription}"
+                                    label="Quote Description"
+                                    name="quoteDescription"
+                                    aura:id="quoteDescription"
+                                    onchange="{!c.activateSave}" />
+            </lightning:layoutItem>
+        </lightning:layout>
+
+    </section>
+
+</aura:component>

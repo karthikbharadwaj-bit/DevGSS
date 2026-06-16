@@ -1,0 +1,160 @@
+<aura:component controller="QuotePlanAndPricingController"  extends="c:Quote_BaseComponent">
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="selectedCategory" type="String" default="" />
+    <aura:attribute name="ProductEdition" type="Product_Package__c" />
+    <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+    <aura:attribute name="ShowAddMoreButton" type="Boolean" default="false" />
+    <aura:attribute name="Total" type="Decimal" default="0.00" />
+    <aura:attribute name="oneTimeTotal" type="Decimal" default="0.00" />
+    <aura:attribute name="reccuringTotal" type="Decimal" default="0.00" />
+    <aura:attribute name="Step" type="String"/>
+    <aura:attribute name="NoOfSeats" type="Integer"/>
+    <aura:attribute name="PricingYearly" type="Boolean" />
+    <aura:attribute name="spinner" type="Boolean" default="false" />
+    <aura:attribute name="callUpdatePricingEvent" type="Boolean" default="false" />
+    <aura:attribute name="ReloadDataOnLineDelete" type="Boolean" />
+    <aura:attribute name="isProductSelectedFROMPYNTab" type="Boolean" default="false" />
+    <aura:attribute name="Mode" type="String" default="Full" />
+    <aura:attribute name="BrandName" type="string" />
+    <aura:handler name="init" value="{!this}" action="{!c.loadData}"/>
+    <aura:handler name="change" value="{!v.SelectedProductList}" action="{!c.doTotal}"/>
+    
+    <aura:registerEvent name="evtUpdatePricing" type="c:Quote_UpdatePricing" />
+    <aura:if isTrue="{!v.Mode == 'Compact'}">
+        <div class="">
+            <div class="">
+                <lightning:input name="PaymentTerm" label="" type="toggle" checked="{!v.PricingYearly}"
+                                 messageToggleActive="Payment Term" messageToggleInactive="Payment Term" onchange="{!c.updatePaymentTermAndPricing}" />    
+                <lightning:input disabled="{!v.BrandName == 'Unify Office'}" name="" label="" type="toggle" checked="{!v.Quote.Contract__c}"
+                                 messageToggleActive="Contract?" messageToggleInactive="Contract?" onchange="{!c.updatePaymentTermAndPricing}" />
+                
+            </div>
+        </div>
+    </aura:if>
+    <aura:if isTrue="{!v.Mode == 'Full'}">
+        <div class="">
+            <div class="slds-grid slds-grid_pull-padded-small togglewrap">
+                <div class="slds-col slds-col_bump-right">
+                    <div class="slds-grid durationtoggle slds-grid_vertical-align-center">
+                        <div class="" style="text-align:right;">
+                            Monthly
+                        </div>
+                        <div class="">
+                            <lightning:input name="PaymentTerm" label="" type="toggle" checked="{!v.PricingYearly}"
+                                             messageToggleActive="" messageToggleInactive="" onchange="{!c.updatePaymentTermAndPricing}" />
+                        </div>
+                        <div class="">
+                            Yearly
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-col slds-grow-none">
+                    <div class="slds-grid slds-grid_vertical-align-center contractoggle">
+                        <div class="" style="text-align:right;">
+                            Contract?
+                        </div>
+                        <div class="">
+                            <lightning:input  name="" label="" type="toggle" checked="{!v.Quote.Contract__c}"
+                                             messageToggleActive="" messageToggleInactive="" onchange="{!c.updatePaymentTermAndPricing}" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-grid slds-grid_pull-padded-small togglewrap">
+                <div class="slds-col slds-col_bump-right">
+                    <h2>
+                        Selected Products
+                    </h2>
+                </div>
+                <!-- <div class="slds-col slds-grow-none">
+                    <br/>
+                    <div class="slds-grid slds-grid_vertical-align-center contractoggle">
+                        <div class="" style="text-align:right;">
+                            POC?
+                        </div>
+                        <div class="">
+                            <lightning:input name="" label="" type="toggle" checked="{!v.Quote.POC__c}"
+                                             messageToggleActive="" messageToggleInactive="" onchange="{!c.updatePaymentTermAndPricing}" />
+                        </div>
+                    </div>
+                </div> -->
+            </div>
+            <table class="slds-table slds-no-row-hover slds-table_fixed-layout">
+                <thead>
+                    <tr>
+                        <th> 
+                            Name
+                        </th>
+                        <th style="text-align:right;">
+                            Price
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <aura:iteration items="{!v.SelectedProductList}" var="eachProduct" indexVar="index">
+                        <aura:if isTrue="{!eachProduct.rowType == 'Header'}">
+                            <tr class="bdr-btm">
+                                <td colspan="2" class="headingrow">
+                                    <b>{!eachProduct.productCategory}</b>   
+                                </td>
+                            </tr>
+                        </aura:if>
+                        <aura:if isTrue="{!and(eachProduct.rowType == 'Record', not(eachProduct.isProductHidden))}">
+                            <tr class="bdr-btm">
+                                <td>
+                                    <div class="slds-size--1-of-1 slds-grid">
+                                        <div class="slds-size--8-of-8">
+                                            <div class="slds-grid slds-has-flexi-truncate">
+                                                <p class="slds-truncate" title="{!eachProduct.objCatalogue.Display_Name__c}">
+                                                    {!eachProduct.objCatalogue.Display_Name__c}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td  style="text-align:right;">
+                                    <lightning:formattedNumber value="{!eachProduct.netPrice}" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                                </td>
+                            </tr>
+                        </aura:if>
+                    </aura:iteration>
+                    <tr class="totalpricewrap" style="height:8px;">
+                        <td>
+                            Total One - Time Payment*:
+                        </td>
+                        <td style="text-align:right;">
+                            <lightning:formattedNumber value="{!v.oneTimeTotal}" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                        </td>
+                    </tr>
+                    <tr class="totalpricewrap">
+                        <td>
+                            Total
+                            <aura:if isTrue="{!v.PricingYearly}">
+                                Yearly
+                                <aura:set attribute="else">
+                                    Monthly
+                                </aura:set>
+                            </aura:if>
+                            Price*:
+                        </td>
+                        <td style="text-align:right;">
+                            <lightning:formattedNumber value="{!v.reccuringTotal}" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            
+            <aura:if isTrue="{!v.ShowAddMoreButton}">
+                <div class="addproductsbtnwrap"><button class="slds-button slds-button_brand addproductsbtn" onclick="{!c.addMoreProducts}">Add Products
+                    <lightning:icon iconName="utility:forward" variant="utility" alternativeText="" /></button></div>
+            </aura:if>
+            <aura:if isTrue="{!empty(v.SelectedProductList)}">
+                No Products selected.
+            </aura:if>        </div>
+        <aura:if isTrue="{!v.spinner}">
+            <br/><br/><br/>
+            <c:SpinnerComponent/>
+        </aura:if>
+    </aura:if>
+</aura:component>

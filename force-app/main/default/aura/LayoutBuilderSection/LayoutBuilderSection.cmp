@@ -1,0 +1,26 @@
+<aura:component>
+
+    <!-- attributes -->
+    <aura:attribute name="metadata" type="Object" />
+    <aura:attribute name="columns" type="Aura.Component[]"/>
+    <aura:attribute name="record" type="Object"/>
+    <aura:attribute name="enabledPages" type="String[]"/>
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+
+    <div class="slds-section slds-is-open" aura:id="section">
+        <h3 class="{! v.metadata.editHeading &amp;&amp; v.metadata.detailHeading ? 'slds-section__title' : 'slds-hide'}">
+            <lightning:button iconName="utility:switch"
+                              class="slds-section__title-action"
+                              label="{! v.metadata.label }"
+                              onclick="{! c.toggleSection }"/>
+        </h3>
+        <div aria-hidden="false" class="slds-section__content">
+            <lightning:layout class="slds-gutters">
+                    {! v.columns }
+            </lightning:layout>
+        </div>
+    </div>
+
+</aura:component>

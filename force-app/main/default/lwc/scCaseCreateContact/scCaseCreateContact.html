@@ -1,0 +1,190 @@
+<template>
+    <div class="sc-case-contact__header">{title}</div>
+    <div class="sc-case-contact__body">
+        <div class="sc-case-contact__is-correct">
+            <lightning-radio-group
+                name="isCorrect"
+                label={labels.correct}
+                options={options}
+                value={isCorrect}
+                required
+                message-when-value-missing={labels.missing.correct}
+                onchange={isCorrectChange}
+                disabled={loading}
+                type="radio"
+            ></lightning-radio-group>
+            <c-placeholder-loading if:true={loading} width="52px" height="17px"></c-placeholder-loading>
+            <c-placeholder-loading if:true={loading} width="52px" height="17px"></c-placeholder-loading>
+        </div>
+        <ul class="info-fields">
+            <li class="info-fields__item">
+                <template if:false={isIncorrect}>
+                    <label>{labels.firstName}</label>
+                    <span title={firstName} if:false={loading}>{firstName}</span>
+                    <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                </template>
+                <lightning-input
+                    type="text"
+                    label={labels.firstName}
+                    name="firstName"
+                    value={firstName}
+                    if:true={isIncorrect}
+                    onchange={handleInfoChange}
+                    required
+                ></lightning-input>
+            </li>
+            <li class="info-fields__item">
+                <template if:false={isIncorrect}>
+                    <label>{labels.lastName}</label>
+                    <span title={lastName} if:false={loading}>{lastName}</span>
+                    <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                </template>
+                <lightning-input
+                    type="text"
+                    label={labels.lastName}
+                    name="lastName"
+                    value={lastName}
+                    if:true={isIncorrect}
+                    onchange={handleInfoChange}
+                    required
+                ></lightning-input>
+            </li>
+            <li class="info-fields__item">
+                <lightning-combobox
+                    name="timezone"
+                    label={labels.addTimezone}
+                    placeholder={labels.timezonePlaceholder}
+                    options={TimezonePicklistValues.data.values}
+                    required
+                    onchange={handleChangeTimezone}
+                    value={timezone}
+                    if:false={loading}
+                    message-when-value-missing={labels.missing.default}
+                ></lightning-combobox>
+            </li>
+            <li class="info-fields__item">
+                <label>
+                    {labels.email}
+                    <lightning-helptext
+                        class="sc-case-contact__email-help"
+                        content={labels.emailHelp}
+                    ></lightning-helptext>
+                </label>
+
+                <template if:false={isLongEmail}>
+                    <span if:false={loading}>
+                        {email}
+                    </span>
+                    <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                </template>
+                <template if:true={isLongEmail}>
+                    <div class="sc-case-contact__email-short">
+                        <lightning-button-icon
+                            icon-name="utility:copy"
+                            variant="bare"
+                            alternative-text={labels.copyToClipboard}
+                            onclick={copyEmail}
+                        ></lightning-button-icon>
+                        <span title={email}>
+                            {email}
+                        </span>
+                        <input class="sc-case-contact__email-input" value={email} />
+                    </div>
+                </template>
+            </li>
+            <li class="info-fields__item info-fields__item_inline">
+                <div class="flex-1">
+                    <template if:false={isIncorrect}>
+                        <label>{labels.phone}</label>
+                        <span title={phone} if:false={loading}>{phone}</span>
+                        <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                    </template>
+
+                    <lightning-input
+                        type="tel"
+                        label={labels.phone}
+                        name="phone"
+                        pattern="\d{0,94}"
+                        message-when-pattern-mismatch={labels.missing.numbers}
+                        value={phone}
+                        if:true={isIncorrect}
+                        onchange={handleInfoChange}
+                        required
+                    ></lightning-input>
+                </div>
+                <div>
+                    <template if:false={isIncorrect}>
+                        <label>{labels.extension}</label>
+                        <span title={extension} if:false={loading}>{extension}</span>
+                        <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                    </template>
+
+                    <lightning-input
+                        type="phone"
+                        label={labels.extension}
+                        name="extension"
+                        class="ext"
+                        pattern="\d{0,5}"
+                        message-when-pattern-mismatch={labels.missing.fiveNumbers}
+                        onchange={handleInfoChange}
+                        value={extension}
+                        if:true={isIncorrect}
+                    ></lightning-input>
+                </div>
+            </li>
+            <li class="info-fields__toggle info-fields__item info-fields__item_inline">
+                <label class="flex-1 toggle-label">{labels.callbackNumberIs}</label>
+                <lightning-input
+                    type="toggle"
+                    label=""
+                    name="validNumber"
+                    message-toggle-active="Yes"
+                    message-toggle-inactive="No"
+                    checked={isCorrectPhone}
+                    disabled={loading}
+                    onchange={callbackPhoneIsCorrectChange}
+                ></lightning-input>
+            </li>
+            <li class="info-fields__item info-fields__item_inline">
+                <template if:true={isCorrectPhone}>
+                    <div class="flex-1">
+                        <label>{labels.callbackPhone}</label>
+                        <span title={cbPhone} if:false={loading}>{cbPhone}</span>
+                        <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                    </div>
+                    <div>
+                        <label>{labels.extension}</label>
+                        <span title={cbPhoneExt} if:false={loading}>{cbPhoneExt}</span>
+                        <c-placeholder-loading if:true={loading}></c-placeholder-loading>
+                    </div>
+                </template>
+                <template if:false={isCorrectPhone}>
+                    <div class="flex-1">
+                        <lightning-input
+                            type="tel"
+                            label={labels.callbackPhone}
+                            name="callbackPhone"
+                            pattern="\d{0,94}"
+                            message-when-pattern-mismatch={labels.missing.numbers}
+                            required
+                            value={cbPhone}
+                            onchange={handleInfoChange}
+                        ></lightning-input>
+                    </div>
+                    <div>
+                        <lightning-input
+                            type="tel"
+                            label={labels.extension}
+                            name="callbackExtension"
+                            class="ext"
+                            pattern="\d{0,5}"
+                            message-when-pattern-mismatch={labels.missing.fiveNumbers}
+                            value={cbPhoneExt}
+                            onchange={handleInfoChange}
+                        ></lightning-input>
+                    </div>
+                </template>
+            </li>
+        </ul>
+    </div>
+</template>

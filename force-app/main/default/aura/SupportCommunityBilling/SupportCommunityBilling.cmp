@@ -1,0 +1,45 @@
+<aura:component description="SupportCommunityBilling" implements="forceCommunity:availableForAllPageTypes" >
+    <aura:attribute name="adminPortalLink" type="String" default="#"/>
+    <aura:attribute name="nextBillingDate" type="String" default=""/>
+    <aura:attribute name="billingCycle" type="String" default=""/>
+    <aura:attribute name="paymentSchedule" type="String" default=""/>
+    <aura:attribute name="servicePlan" type="String" default=""/>
+    <aura:attribute name="numberOfDigitalLines" type="String" default=""/>
+    <aura:attribute name="isGuest" type="Boolean" default="true"/>
+    <div>
+        <div class="cSupportCommunityBilling__column">
+            <div class="cSupportCommunityBilling__row">
+                <span class="label">{!$Label.c.SC_nextBillingDate + ': '}</span>
+                <span class="value">{!v.nextBillingDate}</span>
+            </div>
+            <div class="cSupportCommunityBilling__row">
+                <span class="label">{!$Label.c.SC_billingCycle + ': '}</span>
+                <span class="value">{!v.billingCycle}</span>
+            </div>
+            <div class="cSupportCommunityBilling__row">
+                <span class="label">{!$Label.c.SC_paymentSchedule + ': '}</span>
+                <span class="value">{!v.paymentSchedule}</span>
+            </div>
+            <div class="cSupportCommunityBilling__row">
+                <span class="label">{!$Label.c.SC_servicePlan + ': '}</span>
+                <span class="value">{!v.servicePlan}</span>
+            </div>
+            <div class="cSupportCommunityBilling__row">
+                <span class="label">{!$Label.c.SC_numberOfDigitalLines + ': '}</span>
+                <span class="value">{!v.numberOfDigitalLines}</span>
+            </div>
+        </div>
+        <div class="cSupportCommunityBilling__column">
+            <div class="cSupportCommunityBilling__row cSupportCommunityBilling__row_centered">
+                <div>{!$Label.c.SC_moreBillingInfo}</div>
+                <aura:if isTrue="{!v.isGuest}">
+                    <div>{!$Label.c.SC_moreInfoContact}</div>
+                    <aura:set attribute="else">
+                        <div>{!$Label.c.SC_moreInfoLogin + '&nbsp;'} <a href="{!v.adminPortalLink}">{!$Label.c.SC_adminPortal}</a>.</div>
+                    </aura:set>
+                </aura:if>
+            </div>
+
+        </div>
+    </div>
+</aura:component>

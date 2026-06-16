@@ -1,0 +1,1074 @@
+<!--
+* Created By     : Girish
+* Created Date   : 11-Dec-2019
+* Description    : Component for Partners tab in community - Partner_Details
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+*/-->
+
+<aura:component implements="force:lightningQuickAction,force:hasRecordId" access="global"
+                controller="Partner_Customer_Controller">
+    <!--style to incraee width-->
+    <aura:html tag="style">
+        .slds-modal__container{ 
+        min-width: 90vw;
+        } 
+        .modal-dialog{
+        overflow-y: initial !important
+        }
+        .slds-modal__footer{ 
+        display: inline !important; 
+        }
+        
+    </aura:html>
+    
+    
+    <aura:attribute name="isActive" type="Boolean" default="false" required="true" />
+    <aura:attribute name="accountId" type="String"></aura:attribute>
+    <aura:attribute name="showChangeRequestCMP" type="Boolean"/>
+    <aura:attribute name="showOppNewBtn" type="Boolean" default="false"/>
+    <aura:attribute name="isReadOnly" type="Boolean" default="false"/>
+    <aura:attribute name="objAccountChecklist" type="Account_Checklist__c" default="{'sobjectType':'Account_Checklist__c'}"/>
+    <aura:attribute name="selectedAccount" type="Object"/>
+    <aura:attribute name="selectedAccountId" type="String"/>      
+    <aura:attribute name="AccountRecord" type="Account"/>
+    <aura:attribute name="Message" type="boolean" default="false" description="use for display no record found message"/>
+    <aura:attribute name="toggleShowHide" type="boolean" default="false"/>
+    <aura:attribute name="isNewContact" type="boolean" default="false"/>
+    <aura:attribute name="spinner" type="boolean" default="FALSE"/>
+    <aura:attribute name="taxRecordId" type="String" description="Record to which the files should be attached" />
+    <aura:attribute name="contact" type="Contact"
+                    default="{
+                             'SObjectType': 'Contact',
+                             'FirstName': '',
+                             'LastName': '',
+                             'Email': '',
+                             'Phone': '',
+                             'RC_Customer_Role__c':'',
+                             'Target_Account_Primary_Member__c':'false'
+                             }">   </aura:attribute>
+    <aura:attribute name="editcontact" type="Contact"
+                    default="{
+                             'SObjectType': 'Contact',
+                             'FirstName': '',
+                             'LastName': '',
+                             'Email': '',
+                             'Phone': '',
+                             'RC_Customer_Role__c':'',
+                             'Target_Account_Primary_Member__c':'false',
+                             'contactId':'',
+                             'Id':''
+                             }">  
+    </aura:attribute>
+    
+    <!-- attributes -->
+    <aura:attribute name="contactData" type="Object"/>
+    <aura:attribute name="contactColumns" type="List"/>
+    <aura:attribute name="allAccountCheckList" type="List"/>
+    <aura:attribute name="obj" type="Account_Change_Request__c" default="{'sobjectType':'Account_Change_Request__c'}"/>
+    <aura:attribute name="selaccountcheckListRec" type="Account_Change_Request__c"/>
+    <aura:attribute name="acctContactRoleColumns" type="List"/>    
+    <aura:attribute name="acctCheckListColumns" type="List"/>
+    <aura:attribute name="contactsList" type="List"/>
+    <aura:attribute name="casesList" type="List"/>
+    <aura:attribute name="primaryContactExists" type="boolean" default="false"/>
+    <aura:attribute name="accountContactsList" type="List"/> 
+    <aura:attribute name="opportunityList" type="List"/>
+    <aura:attribute name='contractList' type="List"/>
+    <aura:attribute name='attachmentList' type="List"/>
+    <aura:attribute name='showAttachments' type="boolean" default="false"/>
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="OpportunityURLLink" type="string"/>
+    <aura:attribute name="paymentMethod" type="boolean" default="false"/>
+    
+    <aura:handler name="goBackEvent" event="c:Partner_OpportunitiesGoBackEvent" action="{!c.handleGoBackComponentEvent}"/>
+    <aura:registerEvent name="goBackCustomerTabEvent" type="c:Partner_OpportunitiesGoBackEvent"/>
+    <!-- Account checklist attributes -->
+    <aura:attribute name="recordId" type="Id" default="" />
+    <aura:attribute name="numCols" type="String" default="1"/>
+    <aura:attribute name="fieldsAccChecklist" type="String[]"
+                    default="['Credit_Check__c','Tax_Exemptions__c','Invoice_Credit_Card__c','Account__c']" />
+    <aura:attribute name="disabled" type="boolean" default="false"/>
+    <aura:attribute name="creditCheck" type="boolean" default="false"/>
+    <aura:attribute name="taxExemptions" type="boolean" default="false"/>
+    <aura:attribute name="invoiceCard" type="boolean" default="false"/>
+    <aura:attribute name="showOppList" type="boolean" default="false"/>
+    <aura:attribute name="showOppDetail" type="boolean" default="false"/>
+    <aura:attribute name="showNewOpp" type="boolean" default="false"/>
+    <aura:attribute name="ShowOnlyAvaya" type="boolean" default="false"/>  
+    
+    <aura:attribute name="fieldsContact" type="String[]" default="['AccountId']" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.showChangeRequestCMP}" action="{!c.doInit}" />
+    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="showCustomerListView" type="boolean" default="false"/>
+    <aura:attribute name="isEditContact" type="boolean" default="false"/>
+    
+    <aura:attribute name="ContractsMessage" type="boolean" default="false"/>
+    <aura:attribute name="CasesMessage" type="boolean" default="false"/>
+    <aura:attribute name="contractsFilesList" type="List"/>
+    <aura:attribute name="ShowContractsFiles" type="boolean" default="false"/>  
+    <aura:attribute name="isReadOnlyProfile" type="boolean" default="true" />
+    
+    <aura:attribute name="partnerCommunity" type="List"/>
+    <aura:attribute name="ShowOnlyRC" type="boolean" default="false"/>
+    <aura:attribute name="PaidAcct" type="boolean" default="false"/>
+    <aura:attribute name="communityDetailsRecord" type="Object"/>
+    <aura:attribute name="ShowOnlyAtos" type="boolean" default="false"/><!-- Atos 3.0 -->
+    <aura:attribute name="ShowBI" type="boolean" default="false"/><!--ACO 4.0 --> 
+    <aura:attribute name="isAle" type="boolean" default="false"/> 
+    
+    <aura:attribute name="accFieldsMap" type="Map" />
+    <aura:attribute name="contactFieldsMap" type="Map" />
+    <aura:attribute name="OppFieldsMap" type="Map" />
+    <aura:attribute name="AccChangeFieldsMap" type="Map" />
+    <aura:attribute name="contractFieldsMap" type="Map" />
+    <aura:attribute name="casesFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    <aura:attribute name="PRMSpecificTranslationsMap" type="Map" />
+    <aura:attribute name="showMitelShare" type="boolean" /><!--PBC-9705 P2CSharing-->
+
+    <lightning:card variant="Narrow" title="{!v.translationsMap.Customer_Details}" iconName="standard:account">
+        <aura:set attribute="actions">
+            <!-- Commented temporarily <aura:if isTrue="{!v.PaidAcct}">
+                <lightning:button variant="brand" label="View Entitlements" onclick="{!c.entitlementsView}"/>
+            </aura:if> Commented temporarily-->
+            <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <aura:if isTrue="{!!v.isReadOnlyProfile}">
+                    <lightning:button variant="brand" label="{!v.translationsMap.Change_Account_Request}" onclick="{!c.gotoChangeAccountRequest}"/>
+                </aura:if>
+            </aura:if>
+            <lightning:button variant="brand" label="{!v.translationsMap.Go_Back}" iconName="action:recall" iconPosition="left" onclick="{!c.goBackToCustomers}"/>
+        </aura:set>
+        <!--<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01"
+             aria-modal="true" aria-describedby="modal-content-id-1" 
+             class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">  -->                                                         
+        
+        <!-- Modal/Popup Box Header Starts here-->
+        <!--<header class="slds-modal__header">
+                    <lightning:buttonIcon iconName="utility:close"
+                                          onclick="{! c.closeModal }"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/> 
+                    <h2 id="modal-heading-01"
+                        class="slds-text-heading_medium slds-hyphenate">Customer Details</h2>
+                </header>-->                                                                           
+        <div id="customerDetailsSection">     
+            <!-- TAB SECTION ON MODAL STARTS  -->                            
+            <aura:if isTrue="{!v.spinner}">                                
+                <div class="slds-is-relative">
+                    <div class="spinnerHolder">
+                        <lightning:spinner alternativeText="Loading..." 
+                                           aura:id="loadingSpinner" variant="brand"
+                                           size="medium"/>
+                    </div>
+                </div>
+            </aura:if>
+            <aura:if isTrue="{!v.showChangeRequestCMP}">
+               <!--<c:Quote_AccountChangeRequest paymentMethod="{!v.paymentMethod}" objAccountChecklist="{!v.selaccountcheckListRec}" isReadOnly ="{!v.isReadOnly}"  accountId="{!v.accountId}" showChangeRequestCMP="{!v.showChangeRequestCMP}"/>-->
+                <!-- added communityDetailsRecord for ALE -->
+                <c:Quote_AccountChangeRequest objAccountChecklist="{!v.selaccountcheckListRec}" isReadOnly ="{!v.isReadOnly}"  accountId="{!v.accountId}" showChangeRequestCMP="{!v.showChangeRequestCMP}" partnerCommunity="{!v.communityDetailsRecord.Brand_Name__c}" />
+                
+            </aura:if>
+            <!-- TAB SECTION ON MODAL STARTS  -->
+            <lightning:tabset>
+                <lightning:tab>
+                    <aura:set attribute="label">
+                        {!v.translationsMap.Details}
+                    </aura:set>
+                    <!--<lightning:card title="Customer Details"
+                            iconName="standard:account">--> 
+                    <div class="slds-grid slds-wrap">  
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.Name}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>{!v.AccountRecord.Name}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.Current_Owner__c}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                            <span>{!v.AccountRecord.Current_Owner__r.Name}</span>
+                        </div> 
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Street}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.BillingStreet}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7  slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_City}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.BillingCity}</span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_State_Province}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.BillingState}</span>
+                        </div> 
+                        <div class="slds-col slds-size_1-of-7  slds-border_top">
+                            <span></span>
+                        </div>
+                        
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Country}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.BillingCountry}</span>
+                        </div> 
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.translationsMap.Billing_Postal_Code}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.BillingPostalCode}</span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7  slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.RC_User_ID__c}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.RC_User_ID__c}</span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.AccountNumber}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <aura:if isTrue="{!v.AccountRecord.RC_Account_Status__c=='Paid' || v.AccountRecord.RC_Account_Status__c=='PoC'}"><!--Changes added for BZS-5469-->
+                                <span>{!v.AccountRecord.RC_Account_Number__c}</span>
+                                <aura:set attribute="else">
+                                    <span>{!v.AccountRecord.AccountNumber}</span>
+                                </aura:set>
+                            </aura:if>
+                        </div> 
+                        <div class="slds-col slds-size_1-of-7  slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.RC_Account_Status__c}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.RC_Account_Status__c}</span>
+                        </div>
+                        
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.Number_of_DL_s__c}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.Number_of_DL_s__c}</span>
+                        </div> 
+                        <div class="slds-col slds-size_1-of-7  slds-border_top">
+                            <span></span>
+                        </div>
+                        <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                            <span>{!v.accFieldsMap.RC_Upgrade_Date__c}</span>
+                        </div>                        
+                        <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                            <span>{!v.AccountRecord.RC_Upgrade_Date__c}</span>
+                            
+                            </div>
+                        <aura:if isTrue="{!v.ShowOnlyRC}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                <span>Partner Contact</span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                <span>{!v.AccountRecord.Partner_Contact__r.Name}</span>
+                            </div>
+                            <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                <span></span>
+                            </div>
+                            <!--Added for Edu Packages starts-->
+                            <div class="slds-col slds-size_1-of-7 slds-var-p-around_x-small slds-border_top alignRight" style="color: gray">
+                                <span>Sector </span>
+                            </div>
+                            <div class="slds-col slds-size_2-of-7 slds-var-p-around_x-small slds-border_top">
+                                <span>{!v.AccountRecord.Sector__c}</span>
+                            </div>
+                            <!--Added for edu packages end-->
+                        </aura:if>
+    
+                        <aura:if isTrue="{!and(v.ShowOnlyAvaya,!v.ShowOnlyRC)}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.accFieldsMap.Sales_Notes__c}</span>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                <span>{!v.AccountRecord.Sales_Notes__c}</span>
+                            </div>
+                        </aura:if>
+                        <!-- ACO 4.0 starts-->
+                        <!--<aura:if isTrue="{!and(v.ShowOnlyAvaya,!ShowOnlyRC)}">
+                            <div class="slds-col slds-size_4-of-7  slds-border_top">
+                                <span></span>
+                            </div>
+                        </aura:if>-->
+                        <aura:if isTrue="{!and(v.ShowOnlyAvaya,v.ShowOnlyAtos)}">
+                            <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                        </aura:if>
+                        <aura:if isTrue="{!and(v.ShowBI,v.ShowOnlyAvaya)}">
+                            <aura:if isTrue="{!!v.ShowOnlyAtos}"><!--ACO 4.0-->
+                                 <div class="slds-col slds-size_1-of-7 slds-border_top"></div>
+                            </aura:if>
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.accFieldsMap.BusinessIdentity__c}</span> 
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                <span>{!v.AccountRecord.BusinessIdentity__c}</span>
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!and(v.ShowBI,!v.ShowOnlyAvaya)}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                <span>{!v.accFieldsMap.BusinessIdentity__c}</span> 
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                <span>{!v.AccountRecord.BusinessIdentity__c}</span>
+                            </div>
+                            <div class="slds-col slds-size_4-of-7 slds-border_top"></div>
+                        </aura:if>
+                        <!--Comment for ACO 4.0 live--><!--<aura:if isTrue="{!and(!v.ShowOnlyAtos,v.ShowOnlyAvaya)}">
+                             <div class="slds-col slds-size_4-of-7 slds-border_top"></div>
+                        </aura:if>--><!--Comment for ACO 4.0 live-->
+                        <!-- ACO 4.0 ends -->
+                        <!--<aura:if isTrue="{!v.ShowOnlyRC}">-->
+                        <aura:if isTrue="{!or(v.ShowOnlyRC,v.ShowOnlyAtos)}">
+                            <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                <span>Channel Manager</span>
+                            </div>                        
+                            <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                <span>{!v.AccountRecord.Inside_Sales_Rep__r.Full_Name__c}</span>
+                            </div>                            
+                            <aura:if isTrue="{!v.AccountRecord.Type_of_Customer_or_Prospect__c != null}">
+                                <div class="slds-col slds-size_1-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                                <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                                    <span>What Type of Mitel Customer or Prospect?</span>
+                                </div>                        
+                                <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                                    <span>{!v.AccountRecord.Type_of_Customer_or_Prospect__c}</span>
+                                </div>
+                                <aura:if isTrue="{!v.showMitelShare}"> <!--PBC-9705 P2CSharing-->
+                                    <div class="slds-col slds-size_1-of-7 slds-var-p-around_x-small  slds-border_top alignRight"
+                                         style="color:gray;">
+                                        <span>Do you agree to share data for this deal with Mitel?</span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-7 slds-var-p-around_x-small  slds-border_top">
+                                        <span>{!v.AccountRecord.Mitel_Data_Sharing__c}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                </aura:if>
+                                <aura:set attribute="else">
+                                    <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                        <span></span>
+                                    </div>
+                                </aura:set>
+                            </aura:if>
+                        </aura:if>
+                        <!--Added for Edu Packages starts-->
+                        <aura:if isTrue="{!v.ShowBI}">
+                            <aura:if isTrue="{!and(!v.ShowOnlyAtos,!v.isAle)}">
+                                <div class="slds-col slds-size_1-of-7 slds-var-p-around_x-small slds-border_top alignRight" style="color: gray">
+                                    <span>Sector </span>
+                                </div>
+                                <div class="slds-col slds-size_2-of-7 slds-var-p-around_x-small slds-border_top">
+                                    <span>{!v.AccountRecord.Sector__c}</span>
+                                </div>
+                                <div class="slds-col slds-size_4-of-7 slds-border_top">
+                                    <span></span>
+                                </div>
+                            </aura:if>
+                        </aura:if>
+			            <!--Added for edu packages end-->
+                    </div>                    
+                </lightning:tab>
+                
+                <lightning:tab>
+                    <aura:set attribute="label">
+                        {!v.translationsMap.Contacts}
+                    </aura:set>
+                    <aura:if isTrue="{!v.showCustomerListView}">
+                        <lightning:card title="{!v.translationsMap.Contacts}"
+                                        iconName="standard:contact"> 
+                            <aura:set attribute="actions">
+                                <aura:if isTrue="{!!v.isReadOnlyProfile}">
+                                    <lightning:button label="{!v.translationsMap.New}" variant="brand" iconName="action:new" iconPosition="left" onclick="{!c.newContact}"/>
+                                </aura:if>
+                            </aura:set>
+                            
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            {!v.translationsMap.Edit}
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Contact_Name}">
+                                                {!v.translationsMap.Contact_Name}
+                                                </div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Role}">
+                                                {!v.translationsMap.Role}
+                                                </div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Phone}">
+                                                {!v.translationsMap.Phone}
+                                                </div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Email}">
+                                                {!v.translationsMap.Email}
+                                                </div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Is_Primary}">
+                                                {!v.translationsMap.Is_Primary}
+                                                </div></strong>
+                                        </th> 
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.accountContactsList}" var="contact"> 
+                                        <tr>
+                                            <td>
+                                                <div class="" title="{!v.translationsMap.Edit}">
+                                                    <lightning:buttonIcon iconName="utility:edit" variant="bare" onclick="{! c.editContactDetails }" disabled="{!v.isReadOnlyProfile}" value="{!contact}"/>
+                                                </div>
+                                            </td>
+                                            <th scope="row" data-label="Contact Name">
+                                                <div class="slds-truncate" title="{!contact.Contact_Name}">
+                                                    {!contact.Contact_Name}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Parent Partner">
+                                                <div class="slds-truncate" title="{!contact.Contact_Role}">
+                                                    {!contact.Contact_Role}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Phone">
+                                                <div class="slds-truncate" title="{!contact.Phone_Number}">
+                                                    {!contact.Phone_Number}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Billing City">
+                                                <div class="slds-truncate" title="{!contact.Email_Address}">
+                                                    {!contact.Email_Address}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Brand Name">
+                                                <div class="slds-truncate" title="{!contact.Is_Primary}">
+                                                    <ui:outputCheckbox value="{!contact.Is_Primary}"/>
+                                                </div>
+                                            </th>
+                                            
+                                        </tr>
+                                    </aura:iteration> 
+                                </tbody>
+                            </table>
+                            
+                            <!--</div>-->
+                            
+                        </lightning:card> 
+                    </aura:if>
+                    <aura:if isTrue="{!v.isNewContact}"> 
+                        <lightning:card title="{!v.translationsMap.New_Contact}" iconName="standard:contact"> 
+                            
+                            <div class="slds-is-relative">
+                                <div class="spinnerHolder">
+                                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                                </div>
+                            </div> 
+                            
+                            <lightning:recordEditForm
+                                                      aura:id="newContactFormSection"
+                                                      objectApiName="Contact">
+                                <div class="slds-grid slds-wrap"> 
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.First_Name}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="FirstName" value="{!v.contact.FirstName}" variant="label-hidden" required="true" aura:id="firstNameNew"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight"  style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Last_Name}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="LastName" value="{!v.contact.LastName}" variant="label-hidden" required="true" aura:id="lastNameNew"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" required="true" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Email}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="Email"  value="{!v.contact.Email}" variant="label-hidden" required="true" aura:id="contactEmail"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Phone}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="Phone" value="{!v.contact.Phone}" variant="label-hidden" aura:id="phoneNumberforContact" required="true"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;margin-top:11px;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Role}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-horizontal_x-small">
+                                        <span>
+                                            <!--<lightning:inputField fieldName="RC_Customer_Role__c" required="true" variant="label-hidden"/>-->
+                                            <lightning:select variant="label-hidden" 
+                                                              value="{!v.contact.RC_Customer_Role__c}" aura:id="partnerRoleType"	>
+                                                <aura:iteration items="{!v.selectedAccount.contactRoles}" var="option">
+                                                    <option text="{!option}" value="{!option}"/>
+                                                </aura:iteration> </lightning:select> </span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <span>{!v.translationsMap.Is_Primary_Contact}?:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <lightning:input type="checkbox" variant="label-hidden"
+                                                         disabled ="{!v.primaryContactExists}"
+                                                         fieldLevelHelp = "{!v.translationsMap.Help_Text_Primary_Contact}"
+                                                         checked="{!v.contact.Target_Account_Primary_Member__c}"
+                                                         name="isPrimary"/>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6 "></div>
+                                </div>
+                                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                                    <lightning:button variant="brand" label="{!v.translationsMap.Submit}" name="Submit" type="button" iconName="action:check" iconPosition="left" onclick="{!c.createContact}"/>
+                                    <lightning:button variant="brand" type="cancel" name="Cancel" label="{!v.translationsMap.Cancel}" iconName="action:close" iconPosition="left" onclick="{!c.cancelContact}"/>            
+                                </div>
+                            </lightning:recordEditForm>
+                        </lightning:card>
+                    </aura:if>
+                    <aura:if isTrue="{!v.isEditContact}">
+                        <lightning:card title="{!v.translationsMap.Edit_Contact}" iconName="standard:contact"> 
+                            
+                            <div class="slds-is-relative">
+                                <div class="spinnerHolder">
+                                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+                                </div>
+                            </div> 
+                            
+                            <lightning:recordEditForm
+                                                      aura:id="newContactFormEditSection"
+                                                      objectApiName="Contact">
+                                <div class="slds-grid slds-wrap"> 
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.First_Name}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="FirstName" value="{!v.editcontact.FirstName}" variant="label-hidden" required="true" aura:id="firstNameEdit"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight"  style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Last_Name}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="LastName" value="{!v.editcontact.LastName}" variant="label-hidden" required="true" aura:id="lastNameEdit"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" required="true" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Email}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="Email"  value="{!v.editcontact.Email}" variant="label-hidden" required="true" aura:id="contactEmailEdit"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Phone}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <span><lightning:inputField fieldName="Phone" value="{!v.editcontact.Phone}" variant="label-hidden" aura:id="phoneNumberforContactEdit" required="true"/></span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;margin-top:11px;">
+                                        <abbr class="slds-required slds-float_right">* </abbr>
+                                        <span>{!v.translationsMap.Role}:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-horizontal_x-small">
+                                        <span>
+                                            <!--<lightning:inputField fieldName="RC_Customer_Role__c" required="true" variant="label-hidden"/>-->
+                                            <lightning:select variant="label-hidden" 
+                                                              value="{!v.editcontact.RC_Customer_Role__c}" aura:id="partnerRoleTypeEdit"	>
+                                                <aura:iteration items="{!v.selectedAccount.contactRoles}" var="option">
+                                                    <option text="{!option}" value="{!option}"/>
+                                                </aura:iteration> </lightning:select> </span>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6"></div>
+                                    <div class="slds-col slds-size_1-of-6 slds-p-horizontal_x-small slds-p-top_medium alignRight" style="color:gray;">
+                                        <span>{!v.translationsMap.Is_Primary_Contact}?:</span>
+                                    </div>                        
+                                    <div class="slds-col slds-size_2-of-6 slds-p-vertical_medium slds-p-horizontal_x-small">
+                                        <lightning:input type="checkbox" variant="label-hidden"
+                                                         
+                                                         fieldLevelHelp = "{!v.translationsMap.Help_Text_Primary_Contact}"
+                                                         checked="{!v.editcontact.Target_Account_Primary_Member__c}"
+                                                         name="isPrimary"/>
+                                    </div>
+                                    <div class="slds-col slds-size_2-of-6 "></div>
+                                </div>
+                                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                                    <lightning:button variant="brand" label="{!v.translationsMap.Update}" name="Update" type="button" iconName="action:check" iconPosition="left" onclick="{!c.updateContact}"/>
+                                    <lightning:button variant="brand" type="cancel" name="Cancel" label="{!v.translationsMap.Cancel}" iconName="action:close" iconPosition="left" onclick="{!c.cancelContact}"/>            
+                                </div>
+                            </lightning:recordEditForm>
+                        </lightning:card>
+                        
+                    </aura:if>
+                </lightning:tab>
+                <lightning:tab onactive="{!c.getOpportunityList}">
+                    <aura:set attribute="label">
+                        {!v.translationsMap.Opportunities}
+                    </aura:set>
+                    <aura:if isTrue="{!v.showOppList}">
+                        <lightning:card title="{!v.translationsMap.Opportunities}"
+                                        iconName="standard:opportunity"> 
+                            <aura:set attribute="actions">
+                                 <!--< Removed if {!!v.ShowOnlyRC for 11156 >-->
+                                    <aura:if isTrue="{!!v.isReadOnlyProfile}">
+                                        <aura:if isTrue="{!v.showOppNewBtn}">
+                                            <lightning:button label="{!v.translationsMap.New}" variant="brand" iconName="action:new" iconPosition="left" onclick="{!c.newOpportunity}"/>
+                                        </aura:if>
+                                    </aura:if>
+                                
+                            </aura:set>
+                            
+                            <!--<div class="slds-m-around_xx-small">-->        
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Opportunity_Name}">{!v.translationsMap.Opportunity_Name}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.OppFieldsMap.Tier_Name__c}">{!v.OppFieldsMap.Tier_Name__c}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.OppFieldsMap.StageName}">{!v.OppFieldsMap.StageName}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.OppFieldsMap.CloseDate}">{!v.OppFieldsMap.CloseDate}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Forecasted_Users}">{!v.translationsMap.Forecasted_Users}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.OppFieldsMap.CreatedDate}">{!v.OppFieldsMap.CreatedDate}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <!--<aura:if isTrue="{!$Label.c.AVAYACLOUDOFFICE== v.partnerCommunity}">
+                                            <strong><div class="slds-truncate" title="RC-ACO-Account Executive">RC-ACO-Account Executive</div></strong>
+                                            </aura:if>
+                                             <aura:if isTrue="{!v.partnerCommunity=='ATOS'}">-->
+                                                 <strong><div class="slds-truncate">{!v.PRMSpecificTranslationsMap.Account_Executive}</div></strong>
+                                          
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <aura:iteration items="{!v.opportunityList}" var="opportunity"> 
+                                        <tr>
+                                            <th scope="row" data-label="Opportunity Name">                                                       
+                                                <!-- onclick="{!c.onselectOpp}" -->
+                                                <div class="slds-truncate" title="{!opportunity.Name}"
+                                                     data-value="{!opportunity.Id}" 
+                                                     data-record="{!opportunity.Type}"
+                                                     data-account="{!opportunity.AccountId}">
+                                                    <!--<a href="{!'/partner/s/partneropportunities?id='+opportunity.Id}">
+                                                        {!opportunity.Name}
+                                                    </a>  -->
+                                                    <a href="{!v.OpportunityURLLink +opportunity.Id}">
+                                                        {!opportunity.Name}
+                                                    </a> 
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Tier Name">
+                                                <div class="slds-truncate" title="{!opportunity.Tier_Name__c}">
+                                                    {!opportunity.Tier_Name__c}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Stage">
+                                                <div class="slds-truncate" title="{!opportunity.StageName}">
+                                                    {!opportunity.StageName}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Closed Date">
+                                                <div class="slds-truncate" title="{!opportunity.CloseDate}">
+                                                    <lightning:formattedDateTime value="{!opportunity.CloseDate}"
+                                                                                 month="numeric"
+                                                                                 day="numeric"
+                                                                                 year="numeric"
+                                                                                 />
+                                                </div>
+                                            </th>
+                                                    <th scope="row" data-label="Forecasted Users">
+                                                        <div class="slds-truncate" title="{!opportunity.Forecasted_Users__c}">
+                                                            {!opportunity.Forecasted_Users__c}
+                                                        </div>
+                                                    </th>
+                                            <th scope="row" data-label="Created Date">
+                                                <div class="slds-truncate">
+                                                    <lightning:formattedDateTime value="{!opportunity.CreatedDate}"
+                                                                                 month="numeric"
+                                                                                 day="numeric"
+                                                                                 year="numeric"
+                                                                                 hour="2-digit"
+                                                                                 minute="2-digit"
+                                                                                 timeZone="{!$Locale.timezone}"/>
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Opportunity Owner">
+                                                <div class="slds-truncate" title="{!opportunity.Owner.Name}">
+                                                    {!opportunity.Owner.Name}
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </aura:iteration>
+                                </tbody>
+                            </table>
+                            <!--</div>-->
+                        </lightning:card>
+                    </aura:if>  
+                    <aura:if isTrue="{!v.showOppDetail}">
+                        <div aura:id="oppDetailDiv"></div>                            
+                    </aura:if>
+                    <aura:if isTrue="{!v.showNewOpp}">                            
+                        <div aura:id="oppNewDiv"></div>
+                    </aura:if>
+                </lightning:tab>
+                <aura:if isTrue="{!!v.ShowOnlyRC}">
+                <lightning:tab>
+                    <aura:set attribute="label">
+                        {!v.translationsMap.Account_Change_Requests}
+                    </aura:set>
+                    <lightning:card title="{!v.translationsMap.Account_Change_Requests}" iconName="standard:multi_select_checkbox">
+                        <aura:set attribute="actions">
+                        </aura:set>
+                        <aura:if isTrue="{!not(empty(v.selectedAccount.accountCheckLists))}"> 
+                            <aura:set attribute="else">
+                                <div class="errorMessageDiv">
+                                    <div class="slds-is-relative errorMessageDiv">
+                                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                            <div class="slds-notify__content">
+                                                <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_to_display}</h2>
+                                            </div>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </aura:set>
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer"> 
+                                <thead>
+                                    <tr>                                            
+                                        <th scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Name}">{!v.translationsMap.Name}</div>
+                                        </th>
+                                        <th scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Status}">{!v.translationsMap.Status}</div>
+                                        </th> 
+                                        <th scope="col">
+                                            <div class="slds-truncate" title="{!v.translationsMap.Submitted_By}">{!v.translationsMap.Submitted_By}</div>
+                                        </th>
+                                        <th scope="col" >
+                                            <div class="slds-truncate" title="{!v.translationsMap.Date_Submitted}">{!v.translationsMap.Date_Submitted}</div>
+                                        </th>
+                                    </tr>
+                                </thead>   
+                                <tbody> 
+                                    <aura:iteration items="{!v.selectedAccount.accountCheckLists}" var="accChkLst" indexVar="index">                                    		                                           
+                                        <tr>                                                
+                                            <td><a data-index="{!index}" onclick="{!c.openAccountChecklistForm}">{!accChkLst.accChecklistRec.Name}</a></td>
+                                            <td>{!accChkLst.accChecklistRec.Status__c}</td>
+                                            <td>{!accChkLst.accChecklistRec.CreatedBy.Name}</td>
+                                            <td>{!accChkLst.submittedDate}</td>
+                                        </tr>
+                                    </aura:iteration>
+                                    
+                                </tbody>
+                            </table>
+                        </aura:if>
+                        
+                        
+                    </lightning:card>  
+                </lightning:tab>
+                </aura:if>
+                <lightning:tab>
+                    <aura:set attribute="label">
+                        {!v.translationsMap.Contracts}
+                    </aura:set>
+                    <lightning:card title="{!v.translationsMap.Contracts}" iconName="standard:contract">
+                        <aura:if isTrue="{!v.ContractsMessage}">
+                            <div class="errorMessageDiv">
+                                <div class="slds-is-relative errorMessageDiv">
+                                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                        <div class="slds-notify__content">
+                                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_to_display}</h2>
+                                        </div>
+                                    </div>
+                                </div>  
+                            </div>
+                        </aura:if>
+                        <aura:if isTrue="{!!v.ContractsMessage}">
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Contract_Number}">{!v.translationsMap.Contract_Number}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.contractFieldsMap.Status}">{!v.contractFieldsMap.Status}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.contractFieldsMap.Source__c}">{!v.contractFieldsMap.Source__c}</div></strong>
+                                        </th>
+                                        <th scope="col">
+                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Attachments}">{!v.translationsMap.Attachments}</div></strong>
+                                        </th>                                 
+                                    </tr>
+                                </thead> 
+                                <tbody>                            
+                                    <aura:iteration items="{!v.contractList}" var="contract"> 
+                                        <tr>
+                                            <th scope="row" data-label="Envelope">
+                                                <div class="slds-truncate" title="{!contract.Name}">
+                                                    {!contract.ContractNumber}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Sender">
+                                                <div class="slds-truncate" title="{!contract.dsfs__Sender__c}">
+                                                    {!contract.Status}
+                                                </div>                            
+                                            </th>
+                                            <th scope="row" data-label="Subject">
+                                                <div class="slds-truncate" title="{!contract.dsfs__Subject__c}">
+                                                    {!contract.Source__c}
+                                                </div>
+                                            </th>
+                                            <th scope="row" data-label="Attachments">
+                                                <div class="slds-truncate" title="{!v.translationsMap.Download_Attachments}"
+                                                     onclick="{!c.onSelectedDoc}"
+                                                     data-value="{!contract.Id}">
+                                                    <a href="javascript:void(0)" >
+                                                        {!v.translationsMap.Download_Attachments}
+                                                    </a>                                
+                                                </div>
+                                            </th>
+                                        </tr>
+                                    </aura:iteration>                        
+                                </tbody>                        
+                            </table> 
+                        </aura:if>
+                    </lightning:card>
+                </lightning:tab>
+                  <aura:if isTrue="{!v.ShowOnlyRC}">
+                    <lightning:tab>
+                        <aura:set attribute="label">
+                            {!v.translationsMap.Cases}
+                        </aura:set>
+                        <lightning:card title="{!v.translationsMap.Cases}" iconName="standard:case"> 
+                            <aura:if isTrue="{!v.CasesMessage}">  
+                                <div class="errorMessageDiv">
+                                    <div class="slds-is-relative errorMessageDiv">
+                                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                            <div class="slds-notify__content">
+                                                <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_to_display}</h2>
+                                            </div>
+                                        </div>
+                                    </div>  
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{!!v.CasesMessage}">
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" style="width:14rem;">
+                                                <strong><div class="slds-truncate" title="{!v.casesFieldsMap.CaseNumber}">{!v.casesFieldsMap.CaseNumber}</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="{!v.translationsMap.Status}">{!v.translationsMap.Status}</div></strong>
+                                            </th>  
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="{!v.translationsMap.Contact_Name}">{!v.translationsMap.Contact_Name}</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="{!v.translationsMap.Date_Time_Opened}">{!v.translationsMap.Date_Time_Opened}</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="{!v.casesFieldsMap.Brand_Account__c}">{!v.casesFieldsMap.Brand_Account__c}</div></strong>
+                                            </th>
+                                            <th scope="col">
+                                                <strong><div class="slds-truncate" title="{!v.translationsMap.Owner}">{!v.translationsMap.Owner}</div></strong>
+                                            </th>                                        
+                                        </tr>
+                                    </thead>                                                                        
+                                    <tbody>                            
+                                        <aura:iteration items="{!v.casesList}" var="cases"> 
+                                            <tr>
+                                                <th scope="row" data-label="Case Number" style="width:14rem;">
+                                                    <div class="slds-truncate" title="{!cases.CaseNumber}">
+                                                        {!cases.CaseNumber}
+                                                    </div>
+                                                </th> 
+                                                <th scope="row" data-label="Status">
+                                                    <div class="slds-truncate" title="{!cases.Status}">
+                                                        {!cases.Status}
+                                                    </div>
+                                                </th>       
+                                                <th scope="row" data-label="Contact_Name__c">
+                                                    <div class="slds-truncate" title="{!cases.Contact_Name__c}">
+                                                        {!cases.Contact_Name__c}
+                                                    </div>
+                                                </th>
+                                                <th scope="row" data-label="Created Date">
+                                                    <div class="slds-truncate">
+                                                        <lightning:formattedDateTime value="{!cases.CreatedDate}"
+                                                                                 month="long"
+                                                                                 day="2-digit"
+                                                                                 year="2-digit"
+                                                                                 hour="2-digit"
+                                                                                 minute="2-digit" timeZone="America/New_York"/>
+                                                        {!cases.CreatedDate}
+                                                                    
+                                                    </div>
+                                                </th>
+                                                <th scope="row" data-label="Brand_Account__c">
+                                                    <div class="slds-truncate" title="{!cases.Brand_Account__c}">
+                                                        {!cases.Brand_Account__c}
+                                                    </div>
+                                                </th>
+                                                <th scope="row" data-label="Owner.Name">
+                                                    <div class="slds-truncate" title="{!cases.Owner.Name}">
+                                                        {!cases.Owner.Name}
+                                                    </div>
+                                                </th>                                                
+                                            </tr>
+                                        </aura:iteration>                        
+                                    </tbody>                                     
+                                </table>   
+                            </aura:if>
+                        </lightning:card>
+                    </lightning:tab>
+                </aura:if>
+                
+              <!--  </aura:if> -->
+            </lightning:tabset>    
+            <!-- TAB SECTION ON MODAL ENDS  -->                           
+        </div>
+        
+    </lightning:card>
+    <aura:if isTrue="{!v.showAttachments}">
+        <section role="dialog" tabindex="-1" aria-labelledby="Download Attachments" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-fade-in-open">
+            <div class="slds-modal__container" style="min-width: 60vw;">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">{!v.translationsMap.Download_Attachments}</h2>
+                </header>
+                
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <aura:if isTrue="{!v.ShowContractsFiles}">
+                        <div class="errorMessageDiv">
+                            <div class="slds-is-relative errorMessageDiv">
+                                <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                                    <div class="slds-notify__content">
+                                        <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_to_display}</h2>
+                                    </div>
+                                </div>
+                            </div>  
+                        </div>
+                    </aura:if>
+                    <aura:if isTrue="{!!v.ShowContractsFiles}">
+                        
+                        <aura:iteration items="{!v.attachmentList}" var="attachment">
+                          
+                                <div class="slds-col slds-size_1-of-1 slds-p-top_small" style="margin-left: 30px">
+                                    <a aria-live="assertive"
+                                       class="slds-text-link"
+                                       href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+attachment.Id}"
+                                       download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!attachment.Name}</a>
+                                </div>
+                          
+                           <!-- <aura:if isTrue="{!v.isReadOnlyProfile}">
+                                <div class="slds-col slds-size_1-of-1 slds-p-top_small" style="margin-left: 30px">
+                                    {!attachment.Name}
+                                </div>
+                            </aura:if>-->
+                        </aura:iteration>
+                        
+                        
+                        <aura:iteration items="{!v.contractsFilesList}" var="file"> 
+                            
+                                <div class="slds-col slds-size_1-of-1 slds-p-top_small" style="margin-left: 30px">                           
+                                    <div class="slds-truncate" title="{!file.Title}">
+                                        <a href="" id="{!file.Id}" onclick="{!c.previewFile}">
+                                            {!file.Title}
+                                        </a> 
+                                        
+                                    </div>
+                                </div>  
+                           
+                           <!-- <aura:if isTrue="{!v.isReadOnlyProfile}">
+                                <div class="slds-col slds-size_1-of-1 slds-p-top_small" style="margin-left: 30px">                           
+                                    <div class="slds-truncate" title="{!file.Title}">
+                                        {!file.Title}
+                                    </div>
+                                </div> 
+                            </aura:if>-->
+                        </aura:iteration>
+                    </aura:if>
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral" label="{!v.translationsMap.Cancel}" title="{!v.translationsMap.Cancel}"  onclick="{!c.closeModal}"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>

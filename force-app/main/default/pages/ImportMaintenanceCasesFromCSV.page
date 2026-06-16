@@ -1,0 +1,43 @@
+<apex:page sidebar="false" title="Import Maintenance Cases" tabStyle="Import_Maintenance_Cases__tab">
+    <style type="text/css">
+        .loading-page{
+            min-height: 34.55rem;
+        }
+        .noSidebarCell, #bodyTable{
+            padding: 0;
+        }
+        .noSidebarCell, .bodyDiv .outerNoSidebar {
+            padding: 0;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .noTableFooter {
+            margin-left: 0;
+        }
+
+        #lightning {
+            overflow: hidden;
+            min-height: 7rem;
+            max-width: calc(100vw - 40px);
+        }
+    </style>
+    <apex:includeLightning />
+    <div id="lightning"></div>
+    <div class="slds-scope loading-page" id="appLoadingContent">
+        <div class="slds-spinner_container">
+            <div class="slds-spinner slds-spinner--medium" aria-hidden="false" role="progressbar">
+                <div class="slds-spinner__dot-a"></div>
+                <div class="slds-spinner__dot-b"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var appLoadingContent = document.getElementById('appLoadingContent');
+        $Lightning.use("c:importMaintenanceCases", function() {
+            $Lightning.createComponent("c:imCases", {}, "lightning", function(component) {
+                appLoadingContent.style.display="none";
+            });
+        });
+    </script>
+</apex:page>

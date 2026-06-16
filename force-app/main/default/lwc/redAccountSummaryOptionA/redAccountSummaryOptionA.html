@@ -1,0 +1,66 @@
+<template>
+    <div class="option-label">Option A — Compact Accent Card</div>
+    <div class="accent-card">
+        <div class="accent-bar"></div>
+        <div class="card-inner">
+            <div class="card-header">
+                <span class="ai-badge">✦ AI Summary</span>
+                <span class="powered">Powered by AI ✨</span>
+            </div>
+
+            <template if:false={hasFetched}>
+                <div class="fetch-row">
+                    <button class="fetch-btn" onclick={handleFetch} disabled={isLoading}>
+                        <template if:true={isLoading}>Loading…</template>
+                        <template if:false={isLoading}>Generate Summary</template>
+                    </button>
+                </div>
+            </template>
+
+            <template if:true={hasFetched}>
+                <template if:true={isLoading}>
+                    <div class="loading-row">
+                        <lightning-spinner size="small" alternative-text="Loading"></lightning-spinner>
+                        <span>Fetching from AI…</span>
+                    </div>
+                </template>
+                <template if:false={isLoading}>
+                    <ul class="compact-list">
+                        <template for:each={bulletPoints} for:item="p">
+                            <li key={p}>{p}</li>
+                        </template>
+                    </ul>
+                    <div class="action-row">
+                        <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                            title="Like" alternative-text="Like" onclick={submitLike}
+                            selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                        </lightning-button-icon-stateful>
+                        <lightning-button-icon-stateful icon-name="utility:dislike" selected-icon-name="utility:dislike"
+                            title="Dislike" alternative-text="Dislike" onclick={submitDislike}
+                            selected={summaryIsDisliked} variant={dislikeVariant} disabled={summaryBusy}>
+                        </lightning-button-icon-stateful>
+                        <lightning-button-icon-stateful icon-name={copyIcon} selected-icon-name="utility:copy"
+                            title="Copy" alternative-text="Copy" onclick={handleCopy}>
+                        </lightning-button-icon-stateful>
+                        <template if:false={summaryReviewed}>
+                            <a href="javascript:void(0);" onclick={toggleFeedback} class="feedback-link">Give Feedback</a>
+                        </template>
+                        <template if:true={summaryReviewed}>
+                            <span class="thanks">✓ Thanks!</span>
+                        </template>
+                    </div>
+                    <template if:true={showFeedback}>
+                        <div class="feedback-row">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…"
+                                value={feedback} oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="fb-actions">
+                                <lightning-button variant="brand" label="Send" onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button variant="neutral" label="Cancel" onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </template>
+        </div>
+    </div>
+</template>

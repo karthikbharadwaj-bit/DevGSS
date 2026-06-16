@@ -1,0 +1,55 @@
+<apex:page standardController="Account" extensions="EntitlementsViewController" showHeader="true" sidebar="false"
+           title="{! acc.Name + ' Entitlements View'}">
+
+    <apex:includeScript value="{!$Resource.JSPolyfils + '/JSPolyfils.js'}" />
+    <apex:includeScript value="{!$Resource.RCHelper + '/RCPage.js'}" />
+
+    <apex:includeLightning />
+
+    <style type="text/css">
+        .noSidebarCell {
+            padding: 0;
+        }
+
+        #spinner__wrapper {
+            min-height: 15rem;
+        }
+
+        #entitlement-view{
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            height: 20rem;
+            transition: opacity .3s ease;
+        }
+    </style>
+    <div id="spinner__wrapper">
+        <!-- spinner -->
+        <div class="slds-scope" id="spinner">
+            <div class="slds-spinner_container">
+                <div class="slds-spinner slds-spinner--medium wizard-loader__spinner" aria-hidden="false" role="alert">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="entitlement-view"></div>
+    <script>
+        $Lightning.use("c:EntitlementsViewApp", function () {
+            $Lightning.createComponent("c:EntitlementsView",
+                    {
+                        accId: '{!acc.Id}',
+                        billingId: '{!acc.Billing_ID__c}'
+                    },
+                    "entitlement-view",
+                    function () {
+                        document.getElementById('entitlement-view').style.opacity = '1';
+                        RCPage.setFullHeightForContent('entitlement-view', true);
+                        const spinner = document.querySelector('#spinner__wrapper');
+                        spinner.parentNode.removeChild(spinner);
+                    });
+        });
+    </script>
+
+</apex:page>

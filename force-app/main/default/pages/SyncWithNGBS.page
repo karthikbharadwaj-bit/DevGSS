@@ -1,0 +1,36 @@
+<apex:page sidebar="false" showheader="false" standardController="Opportunity" showQuickActionVfHeader="false">
+    <!-- <apex:includeScript value="{!$Resource.ConvertLeadDependencies + '/CLPage.js'}"/> -->
+    <script type='text/javascript' src='/canvas/sdk/js/publisher.js'></script>
+
+    <style>
+      html,
+      body,
+      .slds-scope {
+        height: 100%;
+        padding: 0 !important;
+      }
+    </style>
+
+    <apex:includeLightning />
+
+    <div id="lightning">
+        <!-- spinner -->
+        <div class="slds-scope" id="spinner">
+            <div class="slds-spinner_container wizard-loader">
+                <div class="slds-spinner slds-spinner--medium wizard-loader__spinner" aria-hidden="false" role="alert">
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Init LWC App
+        $Lightning.use('c:ConvertLeadApp', () => $Lightning.createComponent('c:snMain', {opportunityId: '{!Opportunity.Id}'}, 'lightning', () => {
+            const spinner = document.querySelector('#spinner');
+            spinner.parentNode.removeChild(spinner);
+        }));
+        window.addEventListener("close", e => Sfdc.canvas.publisher.publish({ name: "publisher.close", payload:{ refresh: "true" }}) );
+    </script>
+</apex:page>

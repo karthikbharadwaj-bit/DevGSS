@@ -1,0 +1,225 @@
+<aura:component controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+    <aura:attribute name="Quote" type="Partner_Quote__c" />
+    <aura:attribute name="ProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+    <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" default="[]"/>
+    <aura:attribute name="ReloadDataOnLineDelete" type="Boolean" />
+    <aura:attribute name="Type" type="String" default="Parent" />
+    <aura:attribute name="Spinner" type="Boolean" />
+    <aura:attribute name="ProductNameWidth" type="String"  />
+    <aura:attribute name="currentUser" type="User" />
+    <aura:attribute name="isSuperUser" type="Boolean" default="false"/>
+    <aura:attribute name="hideDiscount" type="Boolean" default="false"/>
+    <aura:attribute name="selectedCategory" type="String" />
+    <aura:attribute name="mapOfPackageToPromoDetail" type="Map" />
+    <aura:attribute name="isPromoCodeAppliedApproved" type="Boolean" default="false"/>
+    <aura:attribute name="mapOfPromoToListAssociatedDetail" type="Map" />
+    <aura:attribute name="isSpeciaPermissionAvail" type="Boolean"/>
+    <aura:handler name="change" value="{!this}" action="{!c.calculateAll}"/>
+    <aura:registerEvent name="evtSelectProduct" type="c:Quote_SelectProduct" />
+    <aura:if isTrue="{!v.selectedCategory != 'Implementation'}">
+        <aura:iteration items="{!v.ProductList}" var="eachProduct" indexVar="index">
+            <aura:if isTrue="{!eachProduct.rowType == 'Rule Header'}">
+                <tr>
+                    <aura:if isTrue="{!eachProduct.hierarchyLevel == 0}">
+                        <td colspan="13" class="headingrow">
+                            <div >
+                                <b>{!eachProduct.productCategory}</b>    
+                            </div>
+                        </td>
+                    </aura:if>
+                    <aura:if isTrue="{!eachProduct.hierarchyLevel == 1}">
+                        <td colspan="13" class="headingrow">
+                            <div >
+                                <b>{!eachProduct.productCategory}</b>     
+                            </div>
+                        </td>
+                    </aura:if>
+                </tr>
+            </aura:if>
+            <aura:if isTrue="{!eachProduct.rowType == 'Header'}">
+                <tr>
+                    <td colspan="13" class="headingrow">
+                        <b>{!eachProduct.productCategory}</b>   
+                    </td>
+                </tr>
+            </aura:if>
+            <aura:if isTrue="{!and(eachProduct.rowType == 'Header Product', not(eachProduct.isProductHidden))}">
+                <tr>
+                    <td colspan="13" class="headingrow">                        
+                        <b>{!eachProduct.objCatalogue.Display_Name__c} </b>
+                        <!-- BZS-5042 jira issue - help text -->
+                        <aura:if isTrue="{!eachProduct.objCatalogue.Display_Name__c == 'Global Office DigitalLine'}">
+                            <br /><br />
+                            <div class="helpTextWrap">
+                                Local number and 1000 inclusive minutes in the countries as specified below beside each option. 
+                                <br />Exceptions apply to the inclusion of minutes as per <a href="https://www.ringcentral.ie/office/features/global-office-communications/solutions.html">https://www.ringcentral.ie/office/features/global-office-communications/solutions.html</a>
+                            </div>
+                        </aura:if>
+                    </td>
+                </tr>
+            </aura:if>
+            <aura:if isTrue="{!and(eachProduct.rowType == 'Record', not(eachProduct.isProductHidden))}">
+                <tr>
+                    <td colspan="4">
+                        <div>
+                            <div class="slds-grid slds-has-flexi-truncate" >
+                                <p class="slds-truncate" title="{!eachProduct.objCatalogue.Display_Name__c}">
+                                    <aura:if isTrue="{!eachProduct.hierarchyLevel == 1}">
+                                        <lightning:icon iconName="utility:level_down" alternativeText=">" size="x-small"/>
+                                    </aura:if>
+                                    <aura:if isTrue="{!eachProduct.objCatalogue.Help_Text__c != null}">
+                                        <lightning:helptext content="{!eachProduct.objCatalogue.Help_Text__c}" />
+                                    </aura:if>
+                                    {!eachProduct.objCatalogue.Display_Name__c}
+                                    <aura:if isTrue="{!eachProduct.errorMsg != null}">
+                                        &nbsp;&nbsp; <lightning:icon iconName="utility:warning" alternativeText="{!eachProduct.errorMsg}" size="small" title="{!eachProduct.errorMsg}" variant="error"/>
+                                    </aura:if>
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="slds-text-align_left">
+                        <div class="slds-truncate" title="{!eachProduct.objCatalogue.Plan__c}">
+                        {!eachProduct.objCatalogue.Plan__c}	
+                        </div>
+                    </td>
+                    <td class="slds-text-align_right">
+                        <!-- <lightning:formattedNumber value="{!eachProduct.listPrice}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/> -->	
+                        <lightning:formattedNumber value="{!eachProduct.listPrice}" minimumFractionDigits="2" maximumFractionDigits="2"/>
+                    </td>
+                    <td>
+                        <aura:if isTrue="{!eachProduct.doUpdate}">
+                            <lightning:icon iconName="utility:warning" title="Please click Add/Update to save changes!" size="x-small" variant="error"/>
+                            
+                        </aura:if>
+                    </td>
+                    <aura:if isTrue="{!v.Quote.Subscription__c != null}">
+                        <td class="slds-text-align_right">
+                            {!eachProduct.subscriptionQuantity}
+                        </td>
+                    </aura:if>
+                    <td name="{!'Quantity-' + index}" class="slds-text-align_center">
+                        <div class="slds-grid slds-grid--vertical-align-center">
+                            <lightning:input name="txtQuantity" value="{!eachProduct.quantity}"  onblur="{!c.doCalculation}" variant="label-hidden" disabled="{!eachProduct.isQuantityDisabled}" class='inputpadng' />
+                        </div>
+                    </td>
+                    <aura:if isTrue="{!v.hideDiscount}">
+                        <td name="{!'Discount-' + index}" class="slds-text-align_center">
+                            <lightning:input name="txtDiscount" value="{!eachProduct.partnerDiscount}" variant="label-hidden" disabled="{!eachProduct.isDiscountDisabled}"  onblur="{!c.doCalculation}" class='inputpadng'/>
+                        </td>
+                        <td name="{!'Discount Type-' + index}" class="slds-text-align_center">
+                            <lightning:select name="txtDiscountType" value="{!eachProduct.discountType}" variant="label-hidden" disabled="{!eachProduct.isDiscountDisabled}"  onblur="{!c.doCalculation}" class="slds-form_inline" label="Select Discount Type" >
+                                <option value="%">%</option>
+                                <option value="Amt">{!v.Quote.CurrencyIsoCode}</option>
+                            </lightning:select>                            
+                        </td>
+                    </aura:if>                
+                    <td class="slds-text-align_right" style="padding:0px;">
+                        <!-- <lightning:formattedNumber value="{!eachProduct.netPrice}" style="currency" currencyCode="{!v.Quote.CurrencyIsoCode}" currencyDisplayAs="code"/> -->
+                        <lightning:formattedNumber value="{!eachProduct.netPrice}" minimumFractionDigits="2" maximumFractionDigits="2"/>
+                    </td>
+                    <td class="slds-text-align_right" style="padding-right:0px;">
+                        <aura:if isTrue="{!eachProduct.showAddButton}">
+                            <button class="{!(eachProduct.doUpdate == true ? 'slds-button slds-button_brand add-btn-pu' :'slds-button slds-button_brand add-btn')}" onclick="{!c.updateCart}" disabled="{!eachProduct.isDisabled}" id="{!index}" title="{!eachProduct.buttonTip}">
+                                {!eachProduct.buttonText}
+                            </button>    
+                        </aura:if>
+                    </td>
+                    <td class="removebtnwrap slds-text-align_right">
+                        <aura:if isTrue="{!eachProduct.showAddButton}">                            
+                            <aura:if isTrue="{!and(eachProduct.buttonText == 'Update', not(eachProduct.isDisabled))}">
+                                <button class="slds-button slds-button_icon remove-btn" title="Delete" onclick="{!c.deleteQuoteLine}" id="{!index}">
+                                    Remove
+                                </button>
+                            </aura:if>
+                        </aura:if>
+                    </td>
+		    		<aura:if isTrue="{!!v.hideDiscount}">
+                        <td></td>
+                        <td></td>
+                    </aura:if>                
+		    </tr>
+            </aura:if>
+        </aura:iteration>
+        <aura:set attribute="else">
+        	<aura:iteration items="{!v.ProductList}" var="eachProduct" indexVar="index">
+                <tr>
+                    <td colspan="4">
+                        <aura:if isTrue="{!eachProduct.objCatalogue.Help_Text__c != null}">
+                            <lightning:helptext content="{!eachProduct.objCatalogue.Help_Text__c}" />
+                        </aura:if>
+                        &nbsp;
+                        {!eachProduct.objCatalogue.Display_Name__c}
+                        <!--<aura:if isTrue="{!and(eachProduct.objCatalogue.Recommended_for_Of_Licneses__c == 'LTE100', not(v.Quote.Licenses_greater_than_100__c))}">
+                        	&nbsp;<b>[Recommended]</b>
+                        </aura:if>
+                        <aura:if isTrue="{!and(eachProduct.objCatalogue.Recommended_for_Of_Licneses__c == 'GT100', v.Quote.Licenses_greater_than_100__c)}">
+                        	&nbsp;<b>[Recommended]</b>
+                        </aura:if> -->
+                        
+                    </td>
+                   <!-- <td  class="slds-text-align_center">
+                        <aura:if isTrue="{!eachProduct.showImplementationNumberFields}">
+                            <lightning:select name="lstNumberOfEmployee" variant="label-hidden" value="{!eachProduct.objQuoteLine.Number_of_Employees__c}">
+                                <option value="10-49">10-49</option>
+                                <option value="50-99">50-99</option>
+                                <option value="100+">100+</option>
+                            </lightning:select>
+                        </aura:if>
+                    </td> -->
+                    <td class="slds-text-align_center selectwrap">
+                        <aura:if isTrue="{!eachProduct.showImplementationNumberFields}">
+                            <lightning:select name="lstNumberOfEmployee" variant="label-hidden" value="{!eachProduct.objQuoteLine.Number_of_Forecasted_ACO_Users__c}">
+							<aura:if isTrue="{!v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office'}"><!--Added for pbc-10937-->
+                                    <aura:if isTrue="{!eachProduct.objCatalogue.Display_Name__c == 'IS Delivery by RingCentral'}">
+										<option value="1-9">1-9</option>
+										<option value="10-49">10-49</option>
+										<option value="50-99">50-99</option>
+										<aura:set attribute="else">
+                                            <option value="100+">100+</option>
+                                        </aura:set>
+                                    </aura:if>
+                                    <aura:set attribute="else">
+                                        <option value="1-9">1-9</option>
+                                        <option value="10-49">10-49</option>
+                                        <option value="50-99">50-99</option>
+                                        <option value="100+">100+</option>
+                                    </aura:set>
+                                </aura:if>
+                            </lightning:select>
+                        </aura:if>
+                    </td>
+                    <td class="slds-text-align_center selectwrap">
+                        <aura:if isTrue="{!eachProduct.showImplementationNumberFields}">
+						<aura:if isTrue="{!!v.Quote.Opportunity__r.Brand_Name__c == 'Unify Office'}"><!--Added for pbc-10937-->
+                            <lightning:select name="lstLocation" variant="label-hidden" value="{!eachProduct.objQuoteLine.Location__c}">
+                                <option value="1-9">1-9</option>
+                                <option value="10-49">10-49</option>
+                                <option value="50-99">50-99</option>
+                                <option value="100+">100+</option>
+                            </lightning:select>
+							</aura:if>
+                        </aura:if>
+                    </td>
+                    
+                    <td class="slds-text-align_center">
+                        <aura:if isTrue="{!eachProduct.showAddButton}">
+                            <button class="{!(eachProduct.doUpdate == true ? 'slds-button slds-button_brand add-btn-pu' :'slds-button slds-button_brand add-btn')}" onclick="{!c.updateCart}" disabled="{!eachProduct.isDisabled}" id="{!index}" title="{!eachProduct.buttonTip}">
+                                {!eachProduct.buttonText}
+                            </button>    
+                        </aura:if>
+                    </td>
+                    <td class="removebtnwrap">
+                        <aura:if isTrue="{!eachProduct.showAddButton}">                            
+                            <aura:if isTrue="{!and(eachProduct.buttonText == 'Update', not(eachProduct.isDisabled))}">
+                                <button class="slds-button slds-button_icon remove-btn" title="Delete" onclick="{!c.deleteQuoteLine}" id="{!index}">
+                                    Remove
+                                </button>
+                            </aura:if>
+                        </aura:if>
+                    </td>
+               	</tr>
+            </aura:iteration>
+    	</aura:set>
+    </aura:if>
+</aura:component>

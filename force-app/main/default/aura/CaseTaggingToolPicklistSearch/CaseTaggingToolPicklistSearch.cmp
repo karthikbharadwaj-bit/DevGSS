@@ -1,0 +1,200 @@
+<aura:component >
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{!v.values}" action="{!c.valuesChange}"/>
+    <aura:handler name="change" value="{!v.searchQuery}" action="{!c.searchQueryChange}"/>
+    <aura:handler name="change" value="{!v.required}" action="{!c.requiredChange}"/>
+    <aura:handler name="change" value="{!v.errors}" action="{!c.errorsChange}"/>
+    <!-- attributes -->
+    <aura:attribute name="searchLabel" type="String" default="Search"/>
+    <aura:attribute name="fieldsLabel" type="List"/>
+    <aura:attribute name="name" type="String"/>
+    <aura:attribute name="required" type="Boolean"/>
+    <aura:attribute name="readonly" type="Boolean"/>
+    <aura:attribute name="picklistsData" type="List"/>
+    <aura:attribute name="values" type="List"/>
+    <aura:attribute name="isValid" type="Boolean"/>
+    <aura:attribute name="errors" type="List"/>
+
+    <aura:attribute name="searchQuery" type="String" default=""/>
+    <aura:attribute name="searchResults" type="List"/>
+    <aura:attribute name="searchTimeout" type="Integer"/>
+    <aura:attribute name="expandIndexP1" type="String"/>
+    <aura:attribute name="expandIndexP2" type="String"/>
+    <aura:attribute name="valuePillsStyle" type="String" default="width: calc( 100% - 2.3rem );"/>
+    <aura:attribute name="valueInputStyle" type="String"/>
+    <aura:attribute name="maxDepth" type="Integer"/>
+    <aura:attribute name="currentDepth" type="Integer" default="3"/>
+    <aura:attribute name="onchange" type="Aura.Action" default="{!c.doNothing}" description="Callback when user selected new value"/>
+    <aura:attribute name="tabName" type="String"/>
+    <aura:attribute name="isFocused" type="Boolean"/>
+    <aura:attribute name="suggestionsForHash" type="String"/>
+
+    <aura:method name="checkIsValid" action="{! c.checkIsValid }" description="Revalidate input"/>
+
+    <style>
+        /*
+         *  Expand/Collapse suggestion values in cell group
+         */
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .cell-group-1{
+            display: flex;
+        }
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .cell-group-1 .cell-1{
+            opacity:1;
+        }
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .cell-group-1 .cell-1 .cell-icon-more-1-expand{
+            display:none;
+        }
+
+
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2,
+        div.cCaseTaggingToolPicklistSearch .lookup--init-2 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2{
+            display: flex;
+        }
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2 .cell-2,
+        div.cCaseTaggingToolPicklistSearch .lookup--init-2 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2 .cell-2{
+            opacity:1;
+        }
+        div.cCaseTaggingToolPicklistSearch .lookup--init-1 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2 .cell-2 .cell-icon-more-2-expand,
+        div.cCaseTaggingToolPicklistSearch .lookup--init-2 .p1-{!v.expandIndexP1} .p2-{!v.expandIndexP2} .cell-group-2 .cell-2 .cell-icon-more-2-expand{
+            display:none;
+        }
+    </style>
+    <div style="margin-bottom: 2rem">
+        <div class="slds-form-element slds-lookup lookup lookup--init-1" data-select="single" style="margin-bottom: 1rem" aura:id="searchLookupWrapper">
+            <div class="lookup-bg" onclick="{!c.endSearch}"></div>
+            <div class="lookup-el">
+                <div class="slds-form-element__control slds-grid">
+                    <div class="slds-input-has-icon slds-input-has-icon--right slds-grow" aura:id="searchLookupInputContainer">
+
+                        <!-- User Input -->
+                        <aura:if isTrue="{!not(v.readonly)}">
+                            <lightning:buttonIcon class="slds-input__icon lookup-search-icon"
+                                                  iconName="{! and(empty(v.searchQuery),empty(v.values)) ? 'utility:search' : 'utility:close' }"
+                                                  variant="bare"
+                                                  alternativeText="{! and(empty(v.searchQuery),empty(v.values)) ? 'Search' : 'Remove' }"
+                                                  onclick="{! and(empty(v.searchQuery),empty(v.values)) ? c.startSearch : c.removeSearch }"/>
+                        </aura:if>
+
+                        <!-- User Input -->
+                        <div class="slds-form-element" aura:id="searchLookupInput">
+                            <label class="slds-form-element__label">
+                                <abbr class="{! v.required ? 'slds-required' : 'slds-hide'}"
+                                      title="required">*</abbr>
+                                {! v.searchLabel }
+                            </label>
+                            <div class="slds-form-element__control">
+                                <input  class="slds-input"
+                                        value="{!v.searchQuery}"
+                                        oninput="{!c.searchInput}"
+                                        onfocus="{!c.startSearch}"
+                                        onkeydown="{!c.searchInputKey}"
+                                        disabled="{!v.readonly}"
+                                        style="{!v.valueInputStyle}"/>
+                            </div>
+                        </div>
+
+                        <!-- Errors -->
+                        <ul class="slds-hide" aura:id="searchLookupErrors">
+                            <aura:iteration items="{!v.errors}" var="err">
+                                <li class="slds-form-element__help">{!err}</li>
+                            </aura:iteration>
+                        </ul>
+
+                        <!-- Selected Values pills -->
+                        <div class="slds-grid pills" style="{!v.valuePillsStyle}" aura:id="valuePills">
+                            <aura:iteration items="{!v.values}" var="val" indexVar="valIndex">
+                                <span class="slds-pill slds-col slds-has-flexi-truncate value-pill">
+                                    <span class="slds-pill__label slds-truncate" title="{!val}">{!val}</span>
+                                    <aura:if isTrue="{!not(v.readonly)}">
+                                        <lightning:buttonIcon value="{!valIndex}"
+                                                              iconName="utility:close"
+                                                              variant="bare"
+                                                              onclick="{!c.removeValue}"
+                                                              alternativeText="Remove"/>
+                                    </aura:if>
+                                </span>
+                            </aura:iteration>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-lookup__menu lookup__tree">
+                    <ul class="slds-lookup__list slds-scrollable--y" role="listbox" style="max-height: calc((((1.5 * 0.8125rem) + (1.5 * 0.75rem) - 0.25rem) + (0.25rem * 2)) * 7);">
+
+                        <!-- Fields Labels -->
+                        <li>
+                            <div class="slds-grid">
+                                <aura:iteration items="{!v.fieldsLabel}" var="fl" indexVar="flIndex">
+                                    <div class="{!lessthanorequal(flIndex,sub(v.currentDepth,1)) ? 'slds-size--1-of-' + v.currentDepth : 'slds-hide' }">
+                                        <span class="slds-form-element__label" style="padding: .25rem .5rem;">{!fl}</span>
+                                    </div>
+                                </aura:iteration>
+                            </div>
+                        </li>
+
+                        <!-- Suggestions -->
+                        <!-- Column 1 -->
+                        <aura:iteration items="{!v.searchResults}" var="p1" indexVar="p1Index">
+                            <li class="bb" role="presentation">
+                                <div class="slds-grid">
+                                    <div class="{! 'slds-col slds-size--1-of-' + v.currentDepth}">
+                                        <span class="slds-lookup__item-action slds-truncate cell"
+                                              onclick="{!c.selectValue}"
+                                              data-value="{!p1.value}">
+                                            <ui:outputText value="{!p1.text}" />
+                                        </span>
+                                    </div>
+                                    <div class="{!'slds-col slds-size--'+ sub(v.currentDepth - 1) +'-of-'+v.currentDepth+' p1-'+p1Index}">
+
+                                        <!-- Column 2 -->
+                                        <aura:iteration items="{!p1.childs}" var="p2" indexVar="p2Index">
+                                            <div class="slds-grid cell-group-1">
+                                                <div class="slds-col slds-size--1-of-2 bb">
+                                                    <span class="slds-lookup__item-action slds-truncate cell cell-1"
+                                                          onclick="{!c.selectValue}"
+                                                          data-value="{!p2.value}"
+                                                          title="{!p2.text}">
+                                                        <ui:outputText value="{!p2.text}" />
+                                                        <aura:if isTrue="{!and(not(empty(p1.childs)), greaterthan(p1.childs.length,1))}">
+                                                            <span data-value="{!p1Index}"
+                                                                  onclick="{!c.expandGroup}"
+                                                                  class="cell-icon-more cell-icon-more-1 cell-icon-more-1-expand">▼</span>
+                                                        </aura:if>
+                                                    </span>
+                                                </div>
+                                                <div class="{!'slds-col slds-size--1-of-2 p2-'+p2Index}"
+                                                     style="{! if(greaterthan(v.currentDepth,2),'','display:none;')}">
+
+                                                    <!-- Column 3 -->
+                                                    <aura:iteration items="{!p2.childs}" var="p3" indexVar="p3Index">
+                                                        <div class="bb cell-group-2">
+                                                            <span class="slds-lookup__item-action slds-truncate cell cell-2"
+                                                                  onclick="{!c.selectValue}"
+                                                                  data-value="{!p3.value}"
+                                                                  title="{!p3.text}">
+                                                                <ui:outputText value="{!p3.text}" />
+                                                                <aura:if isTrue="{!and(not(empty(p2.childs)), greaterthan(p2.childs.length,1))}">
+                                                                    <span data-value="{!p1Index+','+p2Index}"
+                                                                          onclick="{!c.expandGroup}"
+                                                                          class="cell-icon-more cell-icon-more-2 cell-icon-more-2-expand">▼</span>
+                                                                </aura:if>
+                                                            </span>
+                                                        </div>
+                                                    </aura:iteration>
+
+                                                </div>
+                                            </div>
+                                        </aura:iteration>
+
+                                    </div>
+                                </div>
+                            </li>
+                        </aura:iteration>
+
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</aura:component>

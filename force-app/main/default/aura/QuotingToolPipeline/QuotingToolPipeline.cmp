@@ -1,0 +1,47 @@
+<aura:component >
+    <!-- Shared Attributes -->
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="currentCartItems" type="List" description="current items in Cart"/>
+    <aura:attribute name="Tabs" type="object" description="Tab Navigation Object"/>
+
+    <!-- Attribute Change Handlers -->
+    <aura:handler name="change" value="{!v.currentCartItems}" action="{!c.currentCartItemsChanged}" />
+
+    <div class="slds-tabs_path slds-grid">
+        <lightning:buttonIcon iconName="utility:left"
+                              class="slds-path__trigger slds-m-left_small"
+                              alternativeText="Previous Tab"
+                              onclick="{! c.onPreviousClick }"
+                              disabled="{! or(empty(v.Wizard.currentQuote), !v.Tabs.isAnyPreviousTabAvailable) }"/>
+
+        <ul class="slds-tabs_path__nav slds-grow slds-m-right_small" role="presentation">
+            <aura:iteration items="{! v.Tabs.tabs }" var="tab" indexVar="index">
+                <aura:if isTrue="{! tab.isVisible }">
+                    <li class="{! join( ' ', 'slds-tabs_path__item',
+                            tab.isOpen ? 'slds-is-current' : '',
+                            greaterthan(v.Tabs.openTabIndex, index) ? 'slds-is-complete' : '',
+                            lessthan(v.Tabs.openTabIndex, index) ? 'slds-is-incomplete' : '',
+                            tab.isDisabled ? 'tab_disabled' : '' ) }"
+                        role="presentation">
+                        <a class="slds-tabs_path__link"
+                           aria-selected="false"
+                           tabindex="-1"
+                           role="tab"
+                           href="javascript:void(0);"
+                           aria-live="assertive"
+                           data-name="{! tab.name }"
+                           onclick="{! c.onTabClick }">
+                            <span class="slds-tabs_path__title">{! tab.label }</span>
+                        </a>
+                    </li>
+                </aura:if>
+            </aura:iteration>
+        </ul>
+
+        <lightning:buttonIcon iconName="utility:right"
+                              class="slds-path__trigger"
+                              alternativeText="Next Tab"
+                              onclick="{! c.onNextClick }"
+                              disabled="{! or(empty(v.Wizard.currentQuote), !v.Tabs.isAnyNextTabAvailable) }"/>
+    </div>
+</aura:component>

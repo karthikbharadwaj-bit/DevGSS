@@ -1,0 +1,25 @@
+<apex:page standardController="opportunity" standardStylesheets="true" showHeader="false">
+    <apex:includeLightning />
+    <apex:slds />
+     
+    <div id="LightningAppId">
+        <!-- Lightning Web Component will be included here. -->
+    </div>
+ 
+     <script>
+        $Lightning.use(
+            "c:PipelineInfoApp", 
+            function() { 
+                $Lightning.createComponent(
+                    "c:pipelineInfoSection", 
+                    {
+                        recordId : '{!$CurrentPage.parameters.Id}',
+                        isVFpage : true
+                    }, 
+                    "LightningAppId" 
+                );
+            }
+        );
+
+     </script>
+</apex:page>

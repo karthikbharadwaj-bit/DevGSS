@@ -1,0 +1,149 @@
+<apex:page standardController="Contact" extensions="ContactHighlight" lightningStylesheets="true">
+  <style>
+  .MessageLeadSource{
+    left:1px;
+    right:1px;
+    /*max-height:100px;*/
+    overflow:auto;
+    border: 1px solid rgb(51, 153, 255);
+    background-color: rgb(252, 252, 204);
+    border-radius: 4px;
+    padding:6px 8px 6px 6px;
+    margin-left:20px;
+    margin-right: 20px;
+  }
+  div.divleft{
+    padding-left: 0px;
+  }
+  div.divleft table {
+    width: 100%;
+  }
+   div.divleft table tr td:nth-child(odd) {
+    padding: 0.2%;
+    width: {! IF(isLongDescription, '7%', '13%') };
+  }
+  div.divleft table tr td:nth-child(even) {
+    padding: 0.2%;
+    width: {! IF(isLongDescription, '25%', '20%') };
+  }
+
+
+</style>
+    <div style ="width: 100%;">
+        <apex:pageMessages escape="false"></apex:pageMessages>
+        <div style="display:none ;">
+            <apex:form >
+                <apex:inputField value="{!Contact.Email}"/>
+            </apex:form>
+        </div>
+        <div class="MessageLeadSource">
+
+            <div class="divleft">
+                <table>
+                    <tr>
+                        <td><b>Lead Source:</b></td>
+                        <td>{!objLead1.LeadSource}</td>
+                        <td><b>Campaign:</b></td>
+                        <td>{!objLead1.Most_Recent_Campaign__r.Name}</td>
+                        <apex:outputPanel rendered="{!isSia}">
+                            <td><b>SIA Information:</b></td>
+                            <td>{!objLead1.SIA_Information__c}</td>
+                        </apex:outputPanel>
+                    </tr>
+                    <tr>
+                        <td><b>Lead Source Description:</b></td>
+                        <td>{!strLeadSourceDescription}</td>
+                        <td><b>Campaign Description:</b></td>
+                        <td>{!strCampaignDiscription}</td>
+                        <apex:outputPanel rendered="{!isSia}">
+                            <td><b>Partner Account Name:</b></td>
+                            <td>{!objLead1.Partner_Account_Name__c}</td>
+                        </apex:outputPanel>
+                    </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td><b>Campaign Product:</b></td>
+                            <td>{!objLead1.Campaign_Product__c}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <apex:outputpanel rendered="{!isBTApproved }">
+                <apex:panelGrid columns="2" id="Paneltable">
+                    <apex:image id="warning" value="{!imgPathRed}" width="48.7"
+                        height="48.7" style="padding:5px;" />
+                    <apex:outputpanel >
+                        <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false">
+                            <font style="font-size: 15px; font-weight: bold;"> This
+                                record is being managed by BT. Only the Carrier Sales Team
+                                should engage with this record.</font>
+                        </apex:outputText>
+                    </apex:outputpanel>
+                </apex:panelGrid>
+            </apex:outputpanel>
+
+            <apex:dataTable value="{!tempList}" var="a" id="theTable">
+
+                <apex:column id="thecolumn1">
+                    <apex:outputPanel rendered="{!!bRedAccount}">
+                        <apex:image id="warning" value="{!imgPath}" width="53"
+                            height="48.7" style="padding:5px;"
+                            rendered="{!isHasOptedOutOfEmail || isDoNotCall || bDomainType || !ISNULL(emailMap) || objLead1.Do_Not_Direct_Mail__c || objLead1.Do_Not_SMS__c || objLead1.Country__c = 'Germany'}" />
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!bRedAccount}">
+                        <apex:image id="warningred" value="{!imgPathRed}"
+                            width="53" height="48.7" style="padding:5px;"
+                            rendered="{!isHasOptedOutOfEmail || isDoNotCall || bDomainType || objLead1.Country__c = 'Germany'}" />
+                    </apex:outputPanel>
+                </apex:column>
+
+                <apex:column id="thecolumn2">
+                    <apex:panelGrid columns="2" columnClasses="panelgridClass" id="Paneltable">
+                        <apex:outputLabel escape="false" rendered="{!objLead1.Do_Not_Direct_Mail__c}">
+                            &#9830;&#160;
+                        </apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!objLead1.Do_Not_Direct_Mail__c}">
+                            <b>Do not send direct mail to this person</b>
+                        </apex:outputText>
+                        <apex:outputLabel escape="false" rendered="{!objLead1.Do_Not_SMS__c}">
+                            &#9830;&#160;
+                        </apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!objLead1.Do_Not_SMS__c}">
+                            <b>Do not send SMS to this person</b>
+                        </apex:outputText>
+                        <apex:outputLabel escape="false" rendered="{!isHasOptedOutOfEmail}">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!isHasOptedOutOfEmail}">
+                            <B>DO NOT EMAIL THIS PROSPECT:</B> This person has unsubscribed from Marketing emails and it is a violation of privacy laws (i.e. it's illegal) to send them promotional messages.
+                        </apex:outputText>
+                        <apex:outputLabel escape="false" rendered="{!isHasOptedOutOfEmail = false && objLead1.Country__c = 'Germany'}">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!isHasOptedOutOfEmail = false && objLead1.Country__c = 'Germany'}">
+                            <B>DO NOT EMAIL THIS PROSPECT:</B> This person has unsubscribed from Marketing emails and it is a violation of privacy laws (i.e. it's illegal) to send them promotional messages.
+                        </apex:outputText>
+                        <apex:outputLabel escape="false" rendered="{!isDoNotCall}">&#9830;&#160;</apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!isDoNotCall}">
+                            <B>DO NOT CALL THIS PROSPECT:</B> This person has requested to no longer be contacted via phone call.
+                        </apex:outputText>
+
+                        <apex:outputLabel escape="false" rendered="{!bDomainType}">&#9830;&#160;</apex:outputLabel>
+                            <apex:outputText escape="false" rendered="{!bDomainType}">
+                                <B>{!sDomainTypeMsg1} {!sDomainType} :</B> {!sDomainTypeMsg2}
+                            </apex:outputText>
+                        <apex:outputLabel escape="false" rendered="{!!ISNULL(emailMap)}">
+                            &#9830;&#160;
+                        </apex:outputLabel>
+                        <apex:outputText escape="false" rendered="{!!ISNULL(emailMap)}">
+                            <B>{!emailMap['title']}</B> {!emailMap['message']}
+                        </apex:outputText>
+                    </apex:panelGrid>
+                </apex:column>
+
+            </apex:dataTable>
+
+
+
+
+        </div>
+    </div>
+</apex:page>

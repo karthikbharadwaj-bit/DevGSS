@@ -1,0 +1,45 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes">
+    <aura:attribute name="height" type="Integer" default="1200" access="global" />
+    <aura:attribute name="startPage" type="String" default="" access="global" />
+    <aura:attribute name="communityName" type="String" access="global" />
+    <aura:attribute name="lmsNamespace" type="String" default="" access="global" />
+
+    <style>
+        .siteforceOneColumnLayout .row .ui-widget{
+            margin:0;
+        }
+        .siteforceOneColumnLayout{
+            max-width: 100%;
+            padding:0;
+            width:100%;
+        }
+
+        .siteforceNapiliBody .cCenterPanel{
+            max-width:100%;
+            margin:0;
+        }
+        .siteforceNapiliBody .cCenterPanel .slds-col .ui-widget, .slds-col--padded .ui-widget, .cb-drop-container div.ui-widget{
+            margin:0;
+        }
+
+        .siteforceNapiliBody .cCenterPanel .slds-col--padded{
+            padding:0;
+        }
+
+    </style>
+
+    <iframe
+        id="learningCustomFrame"
+        src="{! '' + (v.communityName == '' ? '' : '/' + v.communityName) + '/apex/' + (v.lmsNamespace == '' ? '' : v.lmsNamespace + '__') + v.startPage}"
+        width="100%"
+        height="{!v.height+'px'}"
+        style="border:0;"
+        allowfullscreen="true"
+        mozallowfullscreen="true"
+        msallowfullscreen="true"
+        oallowfullscreen="true"
+        webkitallowfullscreen="true"
+    ></iframe>
+
+    <aura:handler event="aura:doneRendering" action="{!c.doInit}"/>
+</aura:component>

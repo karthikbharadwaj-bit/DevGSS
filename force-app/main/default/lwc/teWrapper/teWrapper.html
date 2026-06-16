@@ -1,0 +1,141 @@
+<template>
+    <form onsubmit={onSubmit} class="content">
+        <div class="slds-page-header">
+            <div class="slds-grid">
+                <div class="slds-col slds-has-flexi-truncate">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <lightning-icon class="slds-page-header__icon"
+                                            icon-name="standard:location">
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <h1 class="slds-page-header__title">Tax Exemption Manager</h1>
+                            <h2>Approval Status: {approvalStatus}</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="slds-col slds-no-flex slds-grid slds-align-top">
+                    <lightning-button label="Save"
+                        class="slds-m-left_small"
+                        onclick={onSaveButton}
+                        if:true={isShowSaveButton}
+                        disabled={isSaveDisabled}>
+                    </lightning-button>
+                    <lightning-button label="Submit for approval"
+                        class="slds-m-left_small"
+                        onclick={onSubmitforApproval}
+                        if:true={isShowSubmitForApprovalButton}
+                        disabled={isSubmitForApprovalDisabled}>
+                    </lightning-button>
+                    <lightning-button label="Submit"
+                        class="slds-m-left_small"
+                        onclick={onSubmit}
+                        if:true={isShowSubmitButton}
+                        disabled={isSubmitDisabled}>
+                    </lightning-button>
+                </div>
+            </div>
+        </div>
+
+        <c-lwc-toasts></c-lwc-toasts>
+        <c-lwc-spinner></c-lwc-spinner>
+        <c-lwc-modal></c-lwc-modal>
+
+        <lightning-card class="slds-container_x-large slds-container_center slds-show">
+            <div class="slds-grid slds-text-title_caps slds-gutters slds-p-horizontal_small slds-p-bottom_large">
+                <div class={statusSLDSClass}>
+                    <div class="slds-truncate">Exemption status</div>
+                </div>
+
+                <template if:true={isShowUSTaxExemption}>
+                    <div class={taxSLDSClass}>
+                        <div class="slds-truncate">Federal tax</div>
+                    </div>
+                    <div class={taxSLDSClass}>
+                        <div class="slds-truncate">State tax</div>
+                    </div>
+                    <div class={taxSLDSClass}>
+                        <div class="slds-truncate">County tax</div>
+                    </div>
+                    <div class={taxSLDSClass}>
+                        <div class="slds-truncate">Local tax</div>
+                    </div>
+                    <div if:true={isShowSalesTaxExemption} class={taxSLDSClass}>
+                        <div class="slds-truncate">Sales tax</div>
+                    </div>
+                </template>
+
+                <template if:true={isShowVATTaxExemption}>
+                    <div class="slds-col slds-size_2-of-12">
+                        <div class="slds-truncate">VAT</div>
+                    </div>
+                </template>
+
+                <template if:true={isShowIndianTaxExemption}>
+                    <div class="slds-col slds-size_2-of-12">
+                        <div class="slds-truncate">India</div>
+                    </div>
+                </template>
+            </div>
+
+            <c-placeholder-loading if:true={showLoadingPlaceHolder} type="line"></c-placeholder-loading>
+
+            <template for:each={options} for:item='option'>
+                <c-te-status-item key={option}  option={option}>
+                </c-te-status-item>
+            </template>
+        </lightning-card>
+        <template if:true={isShowVATTaxExemption}>
+            <div class="slds-form-vat-addparams-container">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="vatCountry">
+                        <abbr class="slds-required" title="required"></abbr>VAT Country</label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="vatCountry" placeholder="Enter country" class="slds-input"
+                               disabled
+                               required=""
+                               value={VATCountry}/>
+                    </div>
+                </div>
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="vatNumber">
+                        <abbr class="slds-required" title="required" if:false={isSwitzerland}>* </abbr>VAT Number</label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="vatNumber" placeholder="Enter number" class="slds-input"
+                               disabled={isDisabledVatCountyNumber}
+                               required=""
+                               value={VATNumber}
+                               onchange={onChangeVATNumber} />
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <template if:true={isShowIndianTaxExemption}>
+            <div class="slds-form-vat-addparams-container">
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="gstNumber">GST Number</label>
+                    <div class="slds-form-element__control">
+                        <input type="text" id="gstNumber" placeholder="-" class="slds-input"
+                               value={GSTNumber}
+                               required=""
+                               disabled={isDisabledIndianTax}
+                               />
+                    </div>
+                </div>
+
+                <div class="slds-form-element">
+                    <label class="slds-form-element__label">SEZWOP Certificate</label>
+                    <div class="slds-form-element__control" >
+                        <template iterator:it={sezids}>
+                            <a key={it.value} if:false={it.last} href={it.value.link} target="_blank">{it.value.name}, </a>
+                            <a key={it.value} if:true={it.last} href={it.value.link} target="_blank">{it.value.name}</a>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </form>
+</template>

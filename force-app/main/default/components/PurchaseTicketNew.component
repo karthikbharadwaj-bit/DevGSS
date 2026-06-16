@@ -1,0 +1,51 @@
+<apex:component allowDML="true" controller="PurchaseTicketController">
+	<apex:form id="newpurchaseticket">
+		<style type="text/css">
+		.btn-primary{
+			color: #fff;
+		}
+		.HDmodaltitle{
+			padding: 6px 10px;
+			text-align: right;
+		}
+		.HDticketstyle{
+
+		}
+		</style>
+		<apex:outputPanel id="newpurchaseticket" styleClass="HDticketstyle">
+			<div class="modal-dialog" role="document">
+			    <div class="modal-content">
+			      	<div class="modal-header">
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			        	<h4 class="modal-title" id="purchaseTicketLabel">New Purchase Case</h4>
+			      	</div>
+			      	<div class="modal-body">
+			        	<div class="row">
+			        		<div class="col-md-12">Please fill out the form below in order to create a Purchase Case</div>
+			        	</div>
+			        	<p/>
+			        	<div class="row">
+			        		<div class="col-xs-3 HDmodaltitle">Subject:</div>
+			        		<div class="col-xs-9"><apex:inputText styleClass="form-control" value="{!newPurchaseSubject}" /></div>
+			        	</div>
+			        	<p/>
+			        	<div class="row">
+			        		<div class="col-xs-3 HDmodaltitle">Description:</div>
+			        		<div class="col-xs-9"><apex:inputTextarea styleClass="form-control" value="{!newPurchaseDescription}" /></div>
+			        	</div>
+			        	<p/>
+			        	<div class="row">
+			        		<div class="col-xs-3 HDmodaltitle">Requested date:</div>
+			        		<div class="col-xs-9"><apex:input type="date" styleClass="form-control" value="{!newPurchaseDate}" /></div>
+			        	</div>
+			      	</div>
+			      	<div class="modal-footer">
+			        	<div type="button" class="btn btn-default" data-dismiss="modal">Close</div>
+			        	<apex:commandLink value="Submit" action="{!createNewPurchase}" styleClass="btn btn-primary"/>
+			      	</div>
+			    </div>
+		  	</div>
+	  	</apex:outputPanel>
+  		<apex:Actionfunction name="submitCase" action="{!createNewPurchase}" status="status1" reRender="newpurchaseticket"/>
+  	</apex:form>
+</apex:component>

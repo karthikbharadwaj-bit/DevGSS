@@ -1,0 +1,24 @@
+<apex:component access="global" controller="ApprovalVfTemplateController">
+    <apex:attribute name="quote" type="Quote" description="Current quote ID" assignTo="{!controllerQuote}"/>
+
+    <p>{!$User.FirstName&' '&$User.LastName} has requested your approval. <br/> <br/> Sales Rep: {!quote.Owner_Name__c} <br/>
+        Account: <a href="{!LEFT($Api.Partner_Server_URL_140, FIND('.com/',$Api.Partner_Server_URL_140)+4)}{!quote.Account__c}">{!quote.Account__c}</a> <br/>
+        Sales Agreement: <a href="{!LEFT($Api.Partner_Server_URL_140, FIND('.com/',$Api.Partner_Server_URL_140)+4)}{!quote.Id}">{!quote.QuoteNumber}</a> <br/> Type: {!quote.Opp_Type__c} <br/>
+        Initial Payment: {!quote.Total_Initial_Payment__c} <br/>
+        Initial Discount: {!quote.Initial_Discount__c} <br/>
+        Initial Term: {!quote.Initial_Term_months__c} <br/>
+        Renewal Term: {!quote.Term_months__c} <br/>
+        First Year Total Cost: {!quote.First_Year_Cost_of_Service__c} <br/>
+        First Year Discount: {!quote.First_Year_Discount__c} <br/>
+        Special Terms: {!quote.Special_Terms__c} <br/>
+        Justification and Description: <br/> {!quote.JustificationandDescription__c} <br/>
+        Quote Line Item Summary:
+        <br/> <apex:outputText value="{!totalChanges}" escape="false"/> <br/> <br/>
+        <br/> <apex:outputText value="{!changedDetails}" escape="false"/> <br/> <br/>
+        <br/> <apex:outputText value="{!quote.QLI_details__c}" escape="false"/> <br/> <br/>
+
+        To approve or reject this item answer "Approve" or "Reject" to this email or click the link below for details:
+        <br/><br/> <a href="{!approvalUrl}">link to approval page</a> <br/><br/>
+
+        Approval History: <br/> <apex:outputText value="{!quote.Approval_History__c}" escape="false"/> <br/></p>
+</apex:component>

@@ -1,0 +1,201 @@
+<template>
+    <template if:true={accountHasBeenSelected}>
+        <li class="slds-card slds-p-horizontal_medium slds-p-vertical_x-small slds-m-top_medium">
+
+            <div class="slds-media">
+                <div class="slds-setup-assistant__step-summary-content slds-media__body slds-m-right_none">
+                    <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                        <label>{label.Contactsection}</label>
+                    </h3>
+                </div>
+
+                <div if:true={showApplyEditButton} class="slds-media__figure slds-media__figure_reverse slds-grid">
+                    <!-- Toggle Expand -->
+                    <lightning-button label="Edit"
+                                    class="slds-m-left_small"
+                                    onclick={toggleApply}
+                                    if:false={isExpanded}></lightning-button>
+                </div>
+
+            </div>
+
+            <!-- Loading -->
+            <c-placeholder-loading type='line'
+                                            width="20rem"
+                                            if:true={isLoading}></c-placeholder-loading>
+
+             <!-- Conversion Info Section -->
+        <template if:false={isLoading}>
+            <article class="slds-setup-assistant__step">
+                <div class="slds-setup-assistant__step-summary">
+
+                    <div>
+                        <!-- Collapsed Preview -->
+                            <div class="slds-m-right_large" if:true={isHasMatchedContacts}>
+                                <p class="slds-text-title slds-m-bottom--xx-small">
+                                    <label>{label.Selectedcontact}</label>
+                                </p>
+                                <div if:true={selectedMatchedContact}>
+                                    <h3 class="slds-text-heading_small">
+                                        <a href={selectedMatchedContact.url}
+                                        target="_blank"
+                                        if:true={selectedMatchedContact.url}>{selectedMatchedContact.name}</a>
+                                        <template if:false={selectedMatchedContact.url}>{selectedMatchedContact.name}</template>
+                                    </h3>
+                                    <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                                        <li class="slds-item">{selectedMatchedContact.record.company}</li>
+                                    </ul>
+                                </div>
+                                <div if:false={selectedMatchedContact} class="slds-text-heading_small">
+                                    {label.None}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <!-- Expanded Block -->
+                <div class="slds-summary-detail__content">
+                        <!-- Matched Contacts List-->
+                        <template if:true={isHasMatchedContacts}>
+                            <h4 class="slds-form-element__label">
+                                {tableTitle}
+                            </h4>
+
+                            <div class="slds-container slds-grid slds-grid_vertical slds-is-relative table-container">
+                                <div class="header-background slds-border_bottom slds-shrink-none"></div>
+                                <div class="slds-scrollable_y">
+
+                                    <table class="slds-table slds-table_cell-buffer slds-table_bordered table">
+                                        <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="th-static slds-p-around_none" style="width:3.25rem">
+                                                <div class="slds-truncate slds-assistive-text"
+                                                    title="Choose a row to select">{label.Choosearowtoselect}
+                                                </div>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                    title="Contact Name">{label.ContactName}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.ContactName}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                    title="Company">{label.Company}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.Company}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                    title="Title">{label.Title}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.Title}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                    title="Email">{label.Email}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.Email}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                    title="Phone">{label.Phone}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.Phone}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                        title="Account Status">{label.AccountStatus}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.AccountStatus}</span>
+                                            </th>
+                                            <th class="th-static slds-p-around_none">
+                                                <span class="slds-truncate th-inner"
+                                                        title="Last Modified Date">{label.LastModifiedDate}</span>
+                                                <span class="slds-truncate th-inner-hidden">{label.LastModifiedDate}</span>
+                                            </th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <template for:each={matchedContacts} for:item="contact">
+                                            <tr key={contact.id} class={contact.cssClass}>
+                                                <td class="slds-text-align_right">
+                                                    <lightning-input type="radio" name="matchedContact"
+                                                                    class="column-group-header matched-contact-checkbox"
+                                                                    variant="label-hidden"
+                                                                    label={contact.name}
+                                                                    value={contact.id}
+                                                                    disabled={disableCheckboxes}
+                                                                    checked={contact.isSelected}
+                                                                    onchange={onMatchedContactSelected}></lightning-input>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.name}>
+                                                        <a href={contact.url} tabindex="-1"
+                                                        target="_blank">{contact.name}</a>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.company}>{contact.company}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.title}>
+                                                        {contact.title}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.email}>
+                                                        {contact.email}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.phone}>
+                                                        {contact.phone}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.accountStatus}>
+                                                        {contact.accountStatus}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate" title={contact.LastModifiedDate}>
+                                                        {contact.LastModifiedDate}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        </tbody>
+                                        <tfoot if:true={hasMoreContacts}>
+                                        <tr>
+                                            <td class="slds-text-align_center slds-border_top" colspan="6">
+                                                <button class="slds-button slds-button_bare"
+                                                        type="button"
+                                                        disabled={hasMoreContactsDisabled}
+                                                        onclick={loadMoreContacts}>{label.Loadmore}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                    </template>
+
+                      <!-- Error Container -->
+                    <ul class="slds-list_dotted slds-media__body slds-m-top_small">
+                        <li if:false={isHasMatchedContacts}>
+                            <b>{label.NoContactsmatchthechosenAccount}</b><br>
+                            {label.AnewContactwillbecreated}
+                        </li>
+                    </ul>
+
+                    <!-- Toggle Expand -->
+                    <div class="slds-clearfix slds-m-top_small" if:true={isExpanded}>
+                        <div if:true={showApplyEditButton} class="slds-float_right">
+                            <lightning-button variant="brand" onclick={toggleApply} label="Apply"></lightning-button>
+                        </div>
+                    </div>
+
+                </div>
+
+
+            </article>
+        </template>
+        </li>
+    </template>
+</template>

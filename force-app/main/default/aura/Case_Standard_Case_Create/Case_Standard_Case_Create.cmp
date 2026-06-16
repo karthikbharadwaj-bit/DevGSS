@@ -1,0 +1,67 @@
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction,lightning:actionOverride,lightning:isUrlAddressable"
+                controller="Case_StandardCaseCreate_Ctrl" access="global" >
+    <aura:attribute name="retURL" type="String"/>
+    <aura:attribute name="isFromAccount" type="Boolean" default="false" />
+    <aura:attribute name="recordTypes" type="String[]" access="public"/>
+    <aura:attribute name="recordId" type="Id" access="public"/>
+    <aura:attribute name="parentObject" type="String" access="public"/>
+    <aura:attribute name="base64context" type="String" access="public"/>
+
+    <aura:attribute name="accnt" type="Account" default="{'sobjectType': 'Account'}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="CurrentUser" type="Object"/>
+    
+    <lightning:navigation aura:id="navigate" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+  
+    <aura:if isTrue="{!v.isFromAccount}">
+    <force:recordData recordId="{!$SObjectType.CurrentUser.Id}"
+                      fields="Profile.Name"
+                      targetFields="{!v.CurrentUser}" layoutType="FULL" recordUpdated="{!c.recordProf}"/>
+    </aura:if>
+    
+    <aura:html tag="style">
+        .slds-modal__container {
+        }
+    </aura:html>
+    <div class="slds-is-relative">
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="large" variant="brand"/>
+        </div>
+    </div>
+    
+    <div class="wrapper">
+        <!-- modal body starts here -->
+        <div tabindex="-1" aria-labelledby="header43" aria-hidden="false" id="newClientSectionId" role="dialog" class="slds-modal slds-fade-in-open slds-modal_medium">
+            <div class="slds-backdrop slds-backdrop--open">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <h2 id="header43" class="slds-text-heading--medium">New Case</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium">
+                        <p class="selectRecordType" >Select a record type</p>
+                        <br/>
+                        <div class="recordTypesWrapper">
+                            <aura:iteration items="{!v.recordTypes}" var="rt">
+                                <ol class="slds-list--vertical slds-list--vertical-space" >
+                                    <input type="radio" class="recordTypeItem" disabled="{!rt.Disabled}" value="{!rt.Name}" name="recordTypeRadio" id="{!rt.Id}"/>
+                                    <span class="recordTypeName" >{!rt.Name}</span>
+                                    <aura:if isTrue="{!rt.Disabled}">
+                                        <lightning:icon iconName="utility:warning" style="padding-left:0.2rem" alternativeText="Warning!" class="supportBillingRequestDisabled" size="xx-small" title="{!rt.Notification}"/>
+                                    </aura:if>
+                                    <div class="recordTypeDescription" >{!rt.Description}</div>
+                                </ol>
+                            </aura:iteration>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.cancelCaseCreation}">Cancel</button>
+                        <button class="slds-button slds-button--brand" onclick="{!c.createCase}">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</aura:component>

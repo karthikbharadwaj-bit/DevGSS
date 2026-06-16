@@ -1,0 +1,113 @@
+<aura:component>
+
+    <ltng:require scripts="{! join(',',$Resource.RCHelper + '/RC.js') }"/>
+    <!-- Shared -->
+    <aura:attribute name="proServQuote" type="Quote" description="Quote with ProServ RecordType on Opportunity"/>
+    <aura:attribute name="ccProServQuote" type="Quote" description="Quote with CC ProServ RecordType on Opportunity"/>
+    <aura:attribute name="quote" type="Quote" description="Current Quote Object"/>
+    <aura:attribute name="state" type="Map" default="{}" description="Contain common checks for use by components"/>
+    <aura:attribute name="upsellStatus" type="String" description="Upsell Status considering quote, account and upgrade button"/>
+    <aura:attribute name="numberDLs" type="String" description="Number of Digital Lines on Account"/>
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="wizard" type="object" description="Quoting Wizard App Data"/>
+    <!-- attributes -->
+    <aura:attribute name="quoteType" type="String" />
+    <aura:attribute name="approvalStatus" type="String" />
+    <aura:attribute name="nextApproverLabel" type="String" default="Next Approval" />
+    <aura:attribute name="currentApprover" type="Map" />
+    <aura:attribute name="approvers" type="List" />
+    <aura:attribute name="billingSystem" type="String" />
+    <!-- handlers -->
+    <aura:handler name="change" value="{!v.quote}" action="{!c.checkStatus}"/>
+    <aura:handler name="change" value="{!v.state}" action="{!c.checkStatus}"/>
+    <aura:handler name="change" value="{!v.upsellStatus}" action="{!c.checkStatus}"/>
+    <aura:handler name="change" value="{!v.wizard}" action="{!c.checkStatus}"/>
+    <!-- Billing System -->
+    <li class="slds-page-header__detail-block detail-block" aura:id="billingSystem">
+        <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="Billing system">Billing System</p>
+        <p class="slds-text-body--regular" data-ui-auto="status-billing-system">{!v.billingSystem}</p>
+    </li>
+    <!-- Quote Type -->
+    <li class="slds-page-header__detail-block detail-block" aura:id="quoteType">
+        <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="Quote type">Quote type</p>
+        <p class="slds-text-body--regular" data-ui-auto="status-quote-type">{!v.quoteType}</p>
+    </li>
+    <!-- Number of Digital Lines -->
+    <li class="slds-page-header__detail-block detail-block" aura:id="numberDLs">
+        <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="Number of Lines">Existing Number of DL's</p>
+        <p class="slds-text-body--regular" data-ui-auto="status-account-lines">{!v.numberDLs}</p>
+    </li>
+    <!-- Approval Status -->
+    <li class="slds-page-header__detail-block detail-block" aura:id="approvalStatus">
+        <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="Approval Status">Discount Approval Status</p>
+        <p class="slds-text-body--regular" data-ui-auto="status-approval-status">{!v.approvalStatus}</p>
+    </li>
+    <aura:if isTrue="{!v.proServQuote.Pricebook2.AllowedRecordType__c != 'Service Billing ProServ'}">
+        <!-- Approvers Dropdown -->
+        <li class="slds-page-header__detail-block detail-block approver" aura:id="currentApprover">
+            <button class="slds-button slds-text-title slds-truncate slds-m-bottom--xx-small dropdown-button"
+                    title="Next Approver"
+                    onclick="{!c.openApprovers}">
+                {!v.nextApproverLabel}
+                <lightning:icon iconName="utility:down" size="xx-small" class="slds-button__icon"/>
+            </button>
+            <p class="slds-text-body--regular">
+                <aura:if isTrue="{! not(empty(v.currentApprover.link)) }">
+                    <a href="{!v.currentApprover.link}" target="blank">{!v.currentApprover.name}</a>
+                    <aura:set attribute="else">
+                        {!v.currentApprover.name}
+                    </aura:set>
+                </aura:if>
+
+            </p>
+            <ul class="approver-dropdown" aura:id="allApprovers">
+                <li class="slds-media slds-media--center approver-dropdown__header">
+                    <button class="slds-button slds-text-title slds-truncate dropdown-button" onclick="{!c.closeApprovers}">
+                        All Approvers
+                        <lightning:icon iconName="utility:up" size="xx-small" class="slds-button__icon"/>
+                    </button>
+                </li>
+                <aura:iteration items="{!v.approvers}" var="approver">
+                    <li class="slds-media slds-media--center approver-dropdown__item">
+                        <div class="slds-media__figure approver-dropdown__icon-container">
+                            <lightning:icon iconName="{! 'utility:' + approver.icon }"
+                                            size="xx-small"
+                                            alternativeText="{! approver.status }"
+                                            class="{! 'slds-theme--' + approver.theme }"/>
+                        </div>
+                        <div class="slds-media__body">
+                            <p class="slds-text-title slds-truncate">{!approver.title}</p>
+                            <p class="slds-text-body--regular">
+                                <aura:if isTrue="{! not(empty(approver.link)) }">
+                                    <a href="{!approver.link}" target="blank">{!approver.name}</a>
+                                    <aura:set attribute="else">
+                                        {!approver.name}
+                                    </aura:set>
+                                </aura:if>
+                            </p>
+                        </div>
+                    </li>
+                </aura:iteration>
+            </ul>
+        </li>
+    </aura:if>
+        <div class="approver-overlay" onclick="{!c.closeApprovers}" aura:id="allApproversOverlay"></div>
+
+    <!-- ProServ Status -->
+    <aura:if isTrue="{!and(and(and(v.proServQuote, !v.state.isProServCancelled), v.quote.isPrimary__c),
+        v.proServQuote.Pricebook2.AllowedRecordType__c != 'Service Billing ProServ')}">
+        <li class="slds-page-header__detail-block detail-block">
+            <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="ProServ Status">ProServ Status</p>
+            <p class="slds-text-body--regular" data-ui-auto="status-proserv-status">{!v.proServQuote.ProServ_Status__c}</p>
+        </li>
+    </aura:if>
+
+    <!-- CC ProServ Status -->
+    <aura:if isTrue="{!and(and(v.ccProServQuote, !v.state.isCCProServCancelled), v.quote.isPrimary__c)}">
+        <li class="slds-page-header__detail-block detail-block">
+            <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="CC ProServ Status">CC ProServ Status</p>
+            <p class="slds-text-body--regular" data-ui-auto="status-cc-proserv-status">{!v.ccProServQuote.ProServ_Status__c}</p>
+        </li>
+    </aura:if>
+
+</aura:component>

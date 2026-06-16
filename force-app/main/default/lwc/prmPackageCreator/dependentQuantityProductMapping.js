@@ -1,0 +1,16 @@
+//Child:Parent mapping
+export default {
+  "LC_IBO_290": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO_284": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO_288": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO_292": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO_696": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO_286": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  //MS-Teams
+  //"LC_DL-MST_955": "LC_DL-MST_955",
+  "LC_IBO-MST_961": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO-MST_957": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO-MST_963": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO-MST_965": ["LC_DL-MST_955", "LC_DL-UNL_50"],
+  "LC_IBO-MST_959": ["LC_DL-MST_955", "LC_DL-UNL_50"]
+}

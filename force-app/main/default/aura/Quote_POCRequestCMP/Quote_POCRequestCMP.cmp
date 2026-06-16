@@ -1,0 +1,149 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,lightning:isUrlAddressable,force:lightningQuickAction,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,flexipage:availableForAllPageTypes" 
+                access="global" controller="PartnerQuoteController" extends="c:Quote_BaseComponent">
+    <aura:attribute name="Quote" type="Quote" default="{ 'sobjectType': 'Partner_Quote__c',
+                        'Status__c': 'Draft'}" />
+    <aura:attribute name="showPOCRequest" type="Boolean" default="false"/>
+    <aura:attribute name="Spinner" type="Boolean" default="false"/>
+    <aura:attribute name="isPOCRequestExists" type="Boolean" default="false"/>
+  	<aura:attribute name="ObjNewDealSupport" type="Deal_Support__c" default="{ 'sobjectType': 'Deal_Support__c'}" />
+	<aura:attribute name="recordId" type="String" />
+    
+    <!--BZS-9309--><!--Added for wholesale-->
+    <aura:attribute name="wholesalePartnerPckEditions" type="String[]" default="[]" />
+    <aura:attribute name="isWholesalePartner" type="Boolean" default="false"/>
+    <!-- BZS-9616 -->
+	<aura:attribute name="oppCountry" type="String"/><!--Added for switzerland-->
+    <!--Added for PBC-11030-->
+    <aura:attribute name="objAccountCheckList" type="Account_Checklist__c"
+        default="{'sobjectType':'Account_Checklist__c'}" />
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="accountId" type="String" />
+    <aura:attribute name="isVATNumber" type="Boolean" default="false" />
+    
+        <div class="slds-m-around_xx-large">
+            <!-- Modal/Popup Box starts here-->
+            <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <!-- Modal/Popup Box Header Starts here-->
+                    <header class="slds-modal__header">
+                        <lightning:buttonIcon iconName="utility:close"
+                                              onclick="{! c.closeModel }"
+                                              alternativeText="close"
+                                              variant="bare-inverse"
+                                              class="slds-modal__close"/>
+                        <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Request for POC</h2>
+                    </header>
+                    <!--Modal/Popup Box Body Starts here-->
+                    <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                        <div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div style="width:200px;">
+                                            <lightning:select  class="select-auto-width" label="POC Term" name="select2"  value="{!v.ObjNewDealSupport.POC_Term__c}">
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="15">15</option>
+                                                <option value="30">30</option>
+                                                <!-- <option value="60">60</option> -->
+                                            </lightning:select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div style="width:200px;">
+                                            <lightning:select  class="select-auto-width" label="Number Of Users" name="select2"  value="{!v.ObjNewDealSupport.Number_of_User__c}">
+                                                <option value="5">5</option>
+                                                <option value="10">10</option>
+                                                <option value="15">15</option>
+                                                <option value="20">20</option>
+                                            </lightning:select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <div class="slds-form-element__control">
+                                        <div style="width:200px;">
+                                            <lightning:select  class="select-auto-width" label="Edition" name="select2"  value="{!v.ObjNewDealSupport.Edition__c}">
+                                                <aura:if isTrue="{!v.isWholesalePartner}">
+                                                    <aura:iteration items="{!v.wholesalePartnerPckEditions}" var="item">
+                                                        <aura:if isTrue="{!v.wholesalePartnerPckEditions.length ==0}">
+                                                            <option value="">--None--</option>
+                                                        </aura:if>
+                                                        <option value="{!item}" selected="{!item == v.ObjNewDealSupport.Edition__c}">{!item}</option>
+                                                    </aura:iteration>
+                                                    <aura:set attribute="else">
+													<aura:if isTrue="{!v.oppCountry=='Switzerland'}">
+                                                        <option value="Standard">Standard</option>
+                                                        <option value="Premium">Premium</option>
+                                                        <aura:set attribute="else">
+                                                        <option value="Premium">Premium</option>
+                                                        <!--<option value="Essentials">Essentials</option>
+                                                		<option value="Standard">Standard</option> -->
+                                                        <option value="Ultimate">Ultimate</option>
+                                                        </aura:set>
+                                                    </aura:if>
+                                                        
+                                                    </aura:set>
+                                                </aura:if>
+                                            </lightning:select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> 
+                        <br/>
+                        <div class="slds-size--1-of-1 slds-grid">
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="inputNameSample1">Phone Type</label>
+                                    <div class="slds-form-element__control">
+                                        <lightning:input variant="label-hidden" id="inputNameSample1" value="{!v.ObjNewDealSupport.Phone_type__c}"  type="text"  />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size--4-of-12 slds-grid">
+                                <div class="slds-form-element">
+                                    <label class="slds-form-element__label" for="inputNameSample2">Main Area Code</label>
+                                    <div class="slds-form-element__control">
+                                        <lightning:input  variant="label-hidden" id="inputNameSample2" value="{!v.ObjNewDealSupport.Main_Area_Code__c}"  type="text"  />
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Added for PBC-11030-->
+                            <aura:if isTrue="{!v.oppCountry=='Switzerland'}">
+                                <div class="slds-size--4-of-12 slds-grid">
+                                    <div class="slds-form-element">
+                                        <aura:if isTrue="{!v.isVATNumber}">
+                                        <lightning:input label="VAT Number" value="{!v.objAccountCheckList.VAT_Number__c}" disabled="true">
+                                        </lightning:input>
+                                        </aura:if>
+                                    </div>
+                                </div>
+                            </aura:if>  
+                        </div>
+                        <br/>
+                        <lightning:textarea label="Phone and Shipment Comments" value="{!v.ObjNewDealSupport.Phone_and_Shippment__c}"/>
+						<br/>
+                        <lightning:textarea label="Additional Comments" value="{!v.ObjNewDealSupport.Comment__c}"/>
+                    </div>
+                    <footer class="slds-modal__footer">
+                        <lightning:button variant="neutral"
+                                          label="Cancel"
+                                          title="Cancel"
+                                          onclick="{! c.closeModel }"/>
+                        <lightning:button variant="brand"
+                                          label="Submit"
+                                          title="Submit"
+                                          onclick="{!c.submitPOCRequest}"/>
+                    </footer>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+</aura:component>

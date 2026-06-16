@@ -1,0 +1,64 @@
+<template>
+    <div class={containerStyle}
+         data-ui-auto="show-hide-tier">
+        <div class="tier-block">
+            <div class="tier-hide-pointer tier-block">
+                <lightning-icon icon-name={chevron}
+                                size="xx-small"
+                                class="icon-xx-small">
+                </lightning-icon>
+            </div>
+            <div class={titleStyle} data-ui-auto="tier-name" title={tier}>
+                {tier}
+            </div>
+        </div>
+        
+        <div class="tier-block quote-inline-section">
+            <div if:true={hasMultipleQuoteTypes} class="quote-selection-inline">
+                <span class="quote-label">Quote Type:</span>
+                <div class="quote-options-inline">
+                    <template for:each={quoteSelectionOptions} for:item="option">
+                        <span key={option.value} class="slds-radio slds-p-right_small" onclick={stopPropagation}>
+                            <input
+                                id={option.uniqueId}
+                                type="radio"
+                                value={option.value}
+                                name={tier}
+                                checked={option.isChecked}
+                                disabled={isQuoteTypeDisabled}
+                                onchange={handleQuoteTypeChange}
+                                onclick={handleQuoteTypeChange}
+                            />
+                            <label class="slds-radio__label" for={option.uniqueId} onclick={stopPropagation}>
+                                <span class="slds-radio_faux"></span>
+                                <span class="slds-text-body_small">{option.label}</span>
+                            </label>
+                        </span>
+                    </template>
+                </div>
+            </div>
+
+            <div if:true={showSingleQuoteTypeMessage} class="quote-info-inline">
+                <lightning-icon icon-name="utility:info" size="x-small" class="info-icon-inline"></lightning-icon>
+                <span class="slds-text-body_small quote-message-text">{singleQuoteTypeMessage}</span>
+            </div>
+        </div>
+        
+        <div class="tier-block tier-status">
+            <div if:true={isProcessing}>
+                <lightning-icon icon-name="utility:clock"
+                                size="xx-small"
+                                class="icon-xx-small active">
+                </lightning-icon>
+            </div>
+            <div if:true={isSigned}>
+                <lightning-icon icon-name="utility:success"
+                                size="xx-small"
+                                class="completed">
+                </lightning-icon>
+            </div>
+            &nbsp;
+            <div class={currentStatusStyle}>{currentStatusText}</div>
+        </div>
+    </div>
+</template>

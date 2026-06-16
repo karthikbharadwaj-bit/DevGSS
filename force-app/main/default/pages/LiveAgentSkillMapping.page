@@ -1,0 +1,320 @@
+<apex:page Controller="LiveAgentSkillMapping" readOnly="True"
+            sidebar="false"
+            showHeader="false"
+            standardStylesheets="false"
+            docType="html-5.0"
+            cache="false">
+            
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+    #myInputALL {
+        background-image: url('/css/searchicon.png');
+        background-position: 10px 10px;
+        background-repeat: no-repeat;
+        height:35px;
+        width: 96%;
+        font-size: 16px;
+        padding: 6px 20px 6px 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 6px;
+        margin-left: 6px;
+        margin-top: 6px;
+    } 
+
+    #myInputUS {
+        background-image: url('/css/searchicon.png');
+        background-position: 10px 10px;
+        background-repeat: no-repeat;
+        height:35px;
+        width: 96%;
+        font-size: 16px;
+        padding: 6px 20px 6px 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 6px;
+        margin-left: 6px;
+        margin-top: 6px;
+    }
+    
+    #myInputUK {
+        background-image: url('/css/searchicon.png');
+        background-position: 10px 10px;
+        background-repeat: no-repeat;
+        height:35px;
+        width: 96%;
+        font-size: 16px;
+        padding: 6px 20px 6px 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 6px;
+        margin-left: 6px;
+        margin-top: 6px;
+    }
+
+    #myInputGCC {
+        background-image: url('/css/searchicon.png');
+        background-position: 10px 10px;
+        background-repeat: no-repeat;
+        height:35px;
+        width: 96%;
+        font-size: 16px;
+        padding: 6px 20px 6px 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 6px;
+        margin-left: 6px;
+        margin-top: 6px;
+    }     
+
+    .table-fixed thead {
+        width: 97%;
+    }
+    
+    .table-fixed tbody {
+        height: 400px;
+        overflow-y: auto;
+        width: 100%;
+    }
+    
+    .table-fixed thead, .table-fixed tbody, .table-fixed tr, .table-fixed td, .table-fixed th {
+        display: block;
+    }
+    
+    .table-fixed tbody td, .table-fixed thead > tr> th {
+        float: left;
+        border-bottom-width: 0;
+    }    
+      
+    </style>
+  
+</head>
+
+<body> 
+<apex:form > 
+    <div class="container" style="padding: 1rem;">
+        <img src="{!UrlFor($Resource.RCLogoOnSite)}"/>
+        <h2>LiveAgent Skill-User Mapping</h2>
+        <div class="panel panel-default">
+
+    <ul class="nav nav-tabs">
+        <li class="active"><a data-toggle="tab" href="#home">All Skills</a></li>
+        <li><a data-toggle="tab" href="#menu1">US Sales</a></li>
+        <li><a data-toggle="tab" href="#menu2">UK Sales</a></li>
+        <li><a data-toggle="tab" href="#menu3">Support (GCC)</a></li>
+    </ul>        
+
+
+    <div class="tab-content">
+        <div id="home" class="tab-pane fade in active">
+            <h4 style="color:orange; margin-Left:8px;">All LiveAgent Skills
+            <button id="btnExport" onclick="ExportSkillsALL();" style="margin-right: 6px; float: right;" type="button" class="btn btn-default"> Export to Excel </button><br></br><br></br> 
+            </h4>
+            <span class="input-group-addon">
+                <input type="text" id="myInputALL" onkeyup="SearchSkillALL()" placeholder="Search for Agent Names..." title="Type in a name"/>
+            </span>
+            <table class="table table-fixed" id="myTableALL" >
+                <thead>
+                    <tr>
+                        <th class="col-xs-3">Agents</th>
+                        <th class="col-xs-3">&emsp;Skills</th>
+                        <th class="col-xs-3">&emsp;Last Modified Date</th>
+                        <th class="col-xs-3">&emsp;UserId</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                        <apex:repeat value="{!skillusers}" var="skilluser">
+                            <tr>
+                                <td class="col-xs-3">{!skilluser.User.Name}</td>
+                                <td class="col-xs-3">{!skilluser.Skill.MasterLabel}</td>
+                                <td class="col-xs-3">{!skilluser.LastModifiedDate}</td>
+                                <td class="col-xs-3">{!skilluser.UserId}</td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+            </table>     
+        </div>
+        
+        <div id="menu1" class="tab-pane fade">
+            <h4 style="color:orange; margin-Left:8px;">US Sales LiveAgent Skills
+            <button id="btnExport" onclick="ExportSkillsUS();" style="margin-right: 6px; float: right;" type="button" class="btn btn-default"> Export to Excel </button><br></br><br></br> 
+            </h4>
+            <span class="input-group-addon">
+                <input type="text" id="myInputUS" onkeyup="SearchSkillUS()" placeholder="Search for Agent Names..." title="Type in a name"/>
+            </span>
+            <table class="table table-fixed" id="myTableUS">
+                <thead>
+                    <tr>
+                        <th class="col-xs-4">Agent Name</th>                    
+                        <th class="col-xs-4">&emsp;Skills</th>
+                        <th class="col-xs-4">&emsp;&emsp;UserId</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                        <apex:repeat value="{!USSalesSkillusers}" var="USSalesskilluser">
+                            <tr>
+                                <td class="col-xs-4">{!USSalesskilluser.User.Name}</td>                            
+                                <td class="col-xs-4">{!USSalesskilluser.Skill.MasterLabel}</td>
+                                <td class="col-xs-4">{!USSalesskilluser.UserId}</td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+            </table> 
+        </div>
+        
+        <div id="menu2" class="tab-pane fade">
+            <h4 style="color:orange; margin-Left:8px;">UK Sales LiveAgent Skills
+            <button id="btnExport" onclick="ExportSkillsUK();" style="margin-right: 6px; float: right;" type="button" class="btn btn-default"> Export to Excel </button><br></br><br></br> 
+            </h4>
+            <span class="input-group-addon">
+                <input type="text" id="myInputUK" onkeyup="SearchSkillUK()" placeholder="Search for Agent Names..." title="Type in a name"/>
+            </span>
+            <table class="table table-fixed" id="myTableUK">
+                <thead>
+                    <tr>
+                        <th class="col-xs-4">Agent Name</th>
+                        <th class="col-xs-4">&emsp;Skills</th>
+                        <th class="col-xs-4">&emsp;&emsp;UserId</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                        <apex:repeat value="{!UKSalesSkillusers}" var="UKSalesskilluser">
+                            <tr>
+                                <td class="col-xs-4">{!UKSalesskilluser.User.Name}</td>
+                                <td class="col-xs-4">{!UKSalesskilluser.Skill.MasterLabel}</td>
+                                <td class="col-xs-4">{!UKSalesskilluser.UserId}</td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+            </table>
+        </div>
+        
+        <div id="menu3" class="tab-pane fade">
+            <h4 style="color:orange; margin-Left:8px;">Support (GCC) LiveAgent Skills
+            <button id="btnExport" onclick="ExportSkillsGCC();" style="margin-right: 6px; float: right;" type="button" class="btn btn-default"> Export to Excel </button><br></br><br></br> 
+            </h4>
+            <span class="input-group-addon">
+                <input type="text" id="myInputGCC" onkeyup="SearchSkillGCC()" placeholder="Search for Agent Names..." title="Type in a name"/>
+            </span>
+            <table class="table table-fixed" id="myTableGCC">
+                <thead>
+                    <tr>
+                        <th class="col-xs-4">Agent Name</th>
+                        <th class="col-xs-4">&emsp;Skills</th>
+                        <th class="col-xs-4">&emsp;&emsp;UserId</th>
+                    </tr>
+                </thead>
+                    <tbody>
+                        <apex:repeat value="{!GCCSkillusers}" var="GCCskilluser">
+                            <tr>
+                                <td class="col-xs-4">{!GCCskilluser.User.Name}</td>
+                                <td class="col-xs-4">{!GCCskilluser.Skill.MasterLabel}</td>
+                                <td class="col-xs-4">{!GCCskilluser.UserId}</td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+        </div>
+    </div>
+</apex:form>    
+
+<iframe id="txtArea1" style="display:none"></iframe>
+
+    <script>
+        function SearchSkillALL() {
+            var input, filter, table, tr, td, i;
+            input = document.getElementById("myInputALL");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("myTableALL");
+            tr = table.getElementsByTagName("tr");
+                for (i = 0; i < tr.length; i++) {
+                    td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+                            if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }       
+                }
+        }
+    
+        function SearchSkillUS() {
+            var input, filter, table, tr, td, i;
+            input = document.getElementById("myInputUS");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("myTableUS");
+            tr = table.getElementsByTagName("tr");
+                for (i = 0; i < tr.length; i++) {
+                    td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+                            if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }       
+                }
+        }
+
+        function SearchSkillUK() {
+            var input, filter, table, tr, td, i;
+            input = document.getElementById("myInputUK");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("myTableUK");
+            tr = table.getElementsByTagName("tr");
+                for (i = 0; i < tr.length; i++) {
+                    td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+                            if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }       
+                }
+        }
+
+        function SearchSkillGCC() {
+            var input, filter, table, tr, td, i;
+            input = document.getElementById("myInputGCC");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("myTableGCC");
+            tr = table.getElementsByTagName("tr");
+                for (i = 0; i < tr.length; i++) {
+                    td = tr[i].getElementsByTagName("td")[0];
+                        if (td) {
+                            if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+                                tr[i].style.display = "";
+                            } else {
+                                tr[i].style.display = "none";
+                            }
+                        }       
+                }
+        }
+        
+        
+        function ExportSkillsALL() {
+            window.open('apex/LiveAgentSkillMappingExportAll', '_self').close();
+        }
+        function ExportSkillsUS() {
+            window.open('apex/LiveAgentSkillMappingExportUS', '_self').close();
+        }
+        function ExportSkillsUK() {
+            window.open('apex/LiveAgentSkillMappingExportUK', '_self').close();
+        }
+        function ExportSkillsGCC() {
+            window.open('apex/LiveAgentSkillMappingExportGCC', '_self').close();
+        }
+                    
+    </script>
+
+
+</body>
+
+</apex:page>

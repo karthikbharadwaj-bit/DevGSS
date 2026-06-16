@@ -1,0 +1,60 @@
+<template>
+    <c-lwc-toasts></c-lwc-toasts>
+        <lightning-card>
+            <div slot="title" class="question-div">
+                <img src={ringItLogo} alt="RingIT"/>
+            </div>
+            <span if:true={isSurveyLoaded}>
+                <span if:false={isSurveyCompleted}>
+                    <div class="wrapper-div" if:false={isHasError}>
+                        <div class="question-div">
+                            <p><b><span class="is-required">*</span>How likely are you to recommend RingCentral IT to a colleague?</b></p>
+                            <div class="smileys-div">
+                                <img src={negativeSmiley} alt=":-(" width="28" height="28"/>
+                                <img src={positiveSmiley} alt=":-)" width="28" height="28" style="float: right;"/>
+                            </div>
+                            <lightning-radio-group name="radioGroup"
+                                    options={options}
+                                    value={value}
+                                    class={radioStyle}
+                                    type="button"
+                                    onchange={handleRadioChange}></lightning-radio-group>
+                        </div>
+
+                        <div class="question-div">
+                            <p><b>What could we do to serve you better in the future?</b></p>
+                            <lightning-textarea name="comments"
+                                                class="comment-textarea"
+                                                value={commentsValue}
+                                                onchange={handleCommentsChange}></lightning-textarea>
+                        </div>
+
+                        <div class="question-div footer">
+                            <lightning-button label="Submit" variant="brand" onclick={saveForm} active="false"></lightning-button>
+                        </div>
+                    </div>
+
+                    <div class="slds-notify_container slds-is-relative" if:true={isHasError}>
+                        <div class="slds-notify slds-notify_toast slds-theme_error">
+                            <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top">
+                                <lightning-icon icon-name="utility:error" alternative-text="Error" variant="info" class="message-icon"></lightning-icon>
+                            </span>
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">{errorMessage}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </span>
+            </span>
+            <div class="slds-notify_container slds-is-relative" if:true={isSurveyCompleted}>
+                <div class="slds-notify slds-notify_toast slds-theme_success">
+                    <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top">
+                        <lightning-icon icon-name="utility:success" alternative-text="Error" variant="info" class="message-icon"></lightning-icon>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">{surveyCompletedMessage}</h2>
+                    </div>
+                </div>
+            </div>
+        </lightning-card>
+</template>

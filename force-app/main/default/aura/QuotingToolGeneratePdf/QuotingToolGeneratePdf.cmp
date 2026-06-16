@@ -1,0 +1,186 @@
+<aura:component controller="QuotingToolQuoteApexController">
+
+    <!-- Shared Attributes -->
+    <aura:attribute name="state" type="Map" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="user" type="User" />
+    <aura:attribute name="opportunityId" type="String" />
+    <aura:attribute name="showButton" type="Boolean" default="false" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="isExpDateValid" type="Boolean" description="Indicates that new expiration date is valid"/>
+    <aura:attribute name="isSummaryChanged" type="Boolean" default="false" description="Indicates that there is unsaved chages in summary"/>
+    <!-- Component Attributes -->
+    <aura:attribute name="templateList" type="List" />
+    <aura:attribute name="filteredTemplates" type="List" />
+    <aura:attribute name="currentTemplateId" type="String" />
+    <aura:attribute name="currentTemplateIndex" type="Integer" />
+    <aura:attribute name="mainTitle" type="String" />
+    <aura:attribute name="selectedTemplate" type="RC_Quote_Template__c" />
+    <aura:attribute name="attachButton" type="Map" default="{state:'default'}" />
+    <aura:attribute name="messages" type="List" />
+    <aura:attribute name="currentAttachment" type="Object" />
+    <aura:attribute name="attachmentResult" type="String" />
+    <aura:attribute name="isModalMinimized" type="Boolean" default="false" />
+    <aura:attribute name="isAttachmentBusy" type="Boolean" default="false" />
+    <aura:attribute name="closeButtonLabel" type="String" default="Minimize" />
+    <aura:attribute name="attach" type="Boolean" default="false" />
+    <aura:attribute name="denyCloseModal" type="Boolean" default="false" />
+    <aura:attribute name="generatePdf" type="Boolean" default="false" />
+    <aura:attribute name="generatePDFTooltipText" type="String" default="" />
+    <aura:attribute name="generatePDFTooltipDisabled" type="Boolean" default="true" />
+    <aura:attribute name="generatePDFButtonDisabled" type="Boolean" default="true" />
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.quote}" action="{!c.quoteChanged}" />
+    <aura:handler name="change" value="{!v.isExpDateValid}" action="{!c.checkGeneratePDFButton}" />
+    <aura:handler name="change" value="{!v.isSummaryChanged}" action="{!c.checkGeneratePDFButton}" />
+    <aura:handler name="change" value="{!v.showButton}" action="{!c.showButtonChanged}" />
+    <!-- registered Events -->
+    <aura:registerEvent type="c:PopoverEvent" name="popover" />
+
+    <div class="generate-pdf">
+        <!-- Button -->
+        <div class="slds-m-left--xx-small slds-hide"
+              onmouseover="{!c.mouseOverButton}"
+              onmouseout="{!c.mouseOutButton}"
+              aura:id="generatePDFButtonContainer">
+            <button class="slds-button slds-button--neutral"
+                    onclick="{!c.initDialog}"
+                    aura:id="generatePDFButton"
+                    disabled="{!v.generatePDFButtonDisabled}">Generate PDF</button>
+        </div>
+
+        <!-- modal -->
+        <div role="dialog" tabindex="-1" aria-labelledby="header43" class="slds-modal slds-hide pdf-modal" aura:id="pdfModal">
+            <div class="slds-modal__container pdf-modal__container">
+                <div class="slds-modal__header">
+                    <lightning:buttonIcon disabled="{!v.denyCloseModal}"
+                                          size="large"
+                                          iconName="utility:close"
+                                          onclick="{!c.closeAttachmentComponent}"
+                                          alternativeText="Close window."
+                                          variant="bare"
+                                          class="slds-modal__close"/>
+                    <h2 class="slds-text-heading--medium">{!v.mainTitle}</h2>
+                </div>
+                <!-- Choose template -->
+                <section aura:id="selectTemplateContainer" class="slds-modal--medium">
+                    <div class="slds-modal__content slds-p-around--medium select-template__content height-limit">
+                        <fieldset class="slds-form-element slds-hide" aura:id="selectTemplateFieldset">
+                            <legend class="slds-form-element__legend slds-form-element__label">Please, select a template</legend>
+                            <div class="slds-form-element__control">
+                                <aura:iteration items="{!v.templateList}" var="template">
+                                    <div class="slds-grid">
+                                        <span class="slds-checkbox">
+                                            <input type="checkbox"
+                                                    id="{!template.Id}"
+                                                    name="templates"
+                                                    label="{!template.Name}"
+                                                    text="{!template.Id}"
+                                                    checked="{!template.checked}"
+                                                    onchange="{!c.selectTemplate}"
+                                                    labelClass="{! join(' ','slds-form-element__label select-template__label', template.disabled ? 'disabled' : '' )}"
+                                                    disabled="{!template.disabled}"/>
+                                            <label class="slds-checkbox__label" for="{!template.Id}">
+                                                <span class="slds-checkbox_faux"></span>
+                                                <span class="slds-form-element__label">{!template.Name}</span>
+                                            </label>
+                                            <aura:if isTrue="{!not(empty(template.popovers))}">
+                                                <span data-popover="{!template.popovers}" onmouseover="{!c.mouseOverWarningIcon}" onmouseout="{!c.hidePopover}" class="iconfix">
+                                                    <lightning:icon iconName="utility:warning"
+                                                                    size="xx-small"
+                                                                    variant="warning"
+                                                                    alternativeText="warning"/>
+                                                </span>
+                                            </aura:if>
+                                        </span>
+                                    </div>
+                                </aura:iteration>
+                            </div>
+                        </fieldset>
+                        <div class="slds-spinner_container select-template__spinner" aura:id="selectTemplateSpinner">
+                            <div class="slds-spinner--brand slds-spinner slds-spinner--small select-template__spinner-dots" aria-hidden="false" role="alert">
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                            <p>Loading templates</p>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer slds-modal__footer--directional">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.endDialog}" disabled="{!v.denyCloseModal}">Cancel</button>
+                        <button class="slds-button slds-button--neutral slds-button--brand" disabled="{!!v.generatePdf}" onclick="{!c.generateAndPreview}">Generate and Preview</button>
+                    </div>
+                </section>
+                <!-- Generate and preview -->
+                <section class="slds-hide full-height" aura:id="generateAndPreviewContainer">
+                    <div class="generate-and-preview">
+                        <aura:iteration items="{!v.filteredTemplates}" var="template">
+                            <div id="{! 'filtered' + template.Id }" class="{! v.currentTemplateId == template.Id ? 'pdf-container' : 'pdf-container unfocus-template' }">
+                                <aura:if isTrue="{!template.Template_Engine__c == 'PDF Engine 2.0'}">
+                                    <iframe id="{! 'iframe' + template.Id }" class="iframe__absolute" frameborder="0"
+                                            onload="{!c.disableSpinner}"
+                                            src="{! '/apex/previewPDF?templateId=' + template.Id  + '&amp;objectid=' + v.quote.Id + '#zoom=100'}" ></iframe>
+
+                                </aura:if>
+                                <div id="{! 'spinner' + 'iframe' + template.Id }" class="maxed-out__relative">
+                                    <div class="slds-spinner--brand slds-spinner slds-spinner--medium spinner-position__centered" aria-hidden="false" role="alert">
+                                        <div class="slds-spinner__dot-a"></div>
+                                        <div class="slds-spinner__dot-b"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </aura:iteration>
+                    </div>
+                    <div class="slds-modal__footer slds-grid generate-and-preview__footer">
+                        <div class="slds-col slds-size_4-of-12 slds-text-align_left">
+                            <button class="slds-button slds-button--neutral" onclick="{!c.backToSelectTemplate}" disabled="{!v.denyCloseModal}">Back to select template</button>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-align_absolute-center">
+                            <aura:if isTrue="{! v.filteredTemplates.length > 1 }">
+                                <button class="slds-button slds-button--neutral" onclick="{!c.previousPDF}" disabled="{! v.currentTemplateIndex == 0 }">Previous</button>
+                                <span class="slds-p-horizontal_medium">
+                                    {!v.currentTemplateIndex + 1} / {!v.filteredTemplates.length}
+                                </span>
+                                <button class="slds-button slds-button--neutral" onclick="{!c.nextPDF}" disabled="{! v.currentTemplateIndex == v.filteredTemplates.length - 1 }">Next</button>
+                            </aura:if>
+                        </div>
+                        <div class="slds-col slds-size_4-of-12 slds-align_absolute-right">
+                            <button class="slds-button slds-button--neutral" onclick="{!c.attachToOpportunity}" disabled="{! v.isAttachmentBusy }">
+                                {! v.filteredTemplates.length > 1 ? 'Attach all to Opportunity' : 'Attach to Opportunity' }
+                            </button>
+                        </div>
+                    </div>
+                </section>
+                <!-- Attaching -->
+                <section class="slds-hide" aura:id="attachments">
+                    <div class="slds-modal__content slds-p-around--medium select-template__content slds-current-color">
+                        <ul class="no-bullet">
+                            <!-- Already attached files -->
+                            <aura:iteration items="{!v.messages}" var="message">
+                                <li class="no-bullet">
+                                    <lightning:icon iconName="{! 'utility:' + message.icon }" size="small" class="{! message.style }" />
+                                    <span>{! message.text }</span>
+                                </li>
+                            </aura:iteration>
+                            <!-- Status of file being attached -->
+                            <aura:if isTrue="{! v.currentAttachment }">
+                                <li class="no-bullet">
+                                    <div class="slds-spinner--brand slds-spinner slds-spinner_x-small select-template__spinner-dots current-attachment" aria-hidden="false" role="alert">
+                                        <div class="slds-spinner__dot-a"></div>
+                                        <div class="slds-spinner__dot-b"></div>
+                                    </div>
+                                    <span>{! v.currentAttachment.Name }</span>
+                                </li>
+                            </aura:if>
+                        </ul>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <button class="slds-button slds-button--neutral" onclick="{!c.closeAttachmentComponent}">{! v.closeButtonLabel }</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <div class="slds-backdrop" aura:id="pdfModalBg"></div>
+    </div>
+</aura:component>

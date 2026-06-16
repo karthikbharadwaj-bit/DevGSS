@@ -1,0 +1,71 @@
+<apex:page standardController="Contract" extensions="NotesAttachmentsRelatedListController" >
+<style>
+.buttonClass {
+  text-decoration:none;
+  padding:4px;   
+}
+.linkClass {
+  font-weight:normal;
+  text-decoration : none;
+  color : #015ba7 !important 
+}
+</style>
+    <apex:form id="list">
+        <apex:pageBlock title="Notes & Attachments">
+            <apex:pageBlockButtons >
+                <!-- New Note Button -->
+                <apex:commandLink target="_blank" styleClass="btn buttonClass" action="/002/e?parent_id={!LEFT(sObjectId,15)}&retURL=%2F{!LEFT(sObjectId,15)}" value="New Note"/>
+                <!-- Attach File Button -->
+                <apex:commandLink target="_blank" styleClass="btn buttonClass" action="/p/attach/NoteAttach?pid={!LEFT(sObjectId,15)}&retURL=%2F{!LEFT(sObjectId,15)}" rendered="{!buttonsAvailable == true || $Profile.Name='Deal Desk' ||$Profile.Name='Deal Desk Lightning' }" value="Attach File"/>
+                <!-- View All -->
+                <apex:commandLink target="_blank" styleClass="btn buttonClass" action="/ui/content/ViewAllNotesPage?id={!LEFT(sObjectId,15)}&retURL=%2F{!LEFT(sObjectId,15)}" value="View All"/>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockTable value="{!notesAttachments}" var="q">
+                <apex:column headerValue="Action">
+                    <!-- Attachment Edit Link -->
+                    <apex:outputLink title="edit" styleClass="linkClass" value="/{!q.attachmentId}/e?retURL=/apex/{!$CurrentPage.Name}" rendered="{!AND(q.isNote == false, buttonsAvailable == true)}" target="_blank">Edit</apex:outputLink>
+                    <!-- Note Edit Link -->
+                    <apex:outputLink title="edit" styleClass="linkClass" value="/{!q.noteId}/e?retURL=/apex/{!$CurrentPage.Name}" rendered="{!AND(q.isNote == true, buttonsAvailable == true)}" target="_blank">Edit</apex:outputLink>
+                    <!-- Delimeters -->
+                    <apex:outputText rendered="{!IF(OR(AND(q.isNote == false, buttonsAvailable == true),AND(q.isNote == true, buttonsAvailable == true)),true,false)}">&nbsp;|&nbsp;</apex:outputText>
+                    <!-- Delete LINK -->
+                    <apex:commandLink action="{!DeleteNoteAttachment}" styleClass="linkClass" rendered="{!AND(q.isNote == false, buttonsAvailable == true)}" >Del
+                        <apex:param name="NoteAttachmentId" value="{!q.attachmentId}" assignTo="{!SelectedNoteAttachmentId}"> </apex:param>
+                    </apex:commandLink>
+
+                    <apex:commandLink action="{!DeleteNoteAttachment}" styleClass="linkClass" rendered="{!AND(q.isNote == true, buttonsAvailable == true)}" >Del
+                        <apex:param name="NoteAttachmentId" value="{!q.noteId}" assignTo="{!SelectedNoteAttachmentId}"> </apex:param>
+                    </apex:commandLink>
+                    <!-- Delimeters -->
+                    <apex:outputText rendered="{!AND(q.isNote == false, buttonsAvailable == true)}">&nbsp;|&nbsp;</apex:outputText>
+                    <!-- Attachment View Link -->
+                    <apex:outputLink value="{!URLFOR($Action.Attachment.Download, q.attachmentId)}" styleClass="linkClass" target="_blank" rendered="{!q.isNote == false}">View</apex:outputLink>
+                </apex:column>
+
+                <apex:column headerValue="Type">
+                    {!q.attachmentType}
+                    {!q.noteType}
+                </apex:column>
+                <apex:column headerValue="Title">
+                    <apex:commandLink target="_blank" action="/{!q.attachmentId}" value="{!q.name} " rendered="{!IF(OR(AND(q.isNote == false, buttonsAvailable == true),AND(q.isNote == true, buttonsAvailable == true)),true,false)}"/>
+                    <apex:commandLink target="_blank" action="/{!q.noteId}" value="{!q.title}" rendered="{!IF(OR(AND(q.isNote == false, buttonsAvailable == true),AND(q.isNote == true, buttonsAvailable == true)),true,false)}"/>
+
+                    <apex:outputText rendered="{!IF(OR(AND(q.isNote == false, buttonsAvailable == false),AND(q.isNote == true, buttonsAvailable == false)),true,false)}">{!q.name}</apex:outputText>
+                    <apex:outputText rendered="{!IF(OR(AND(q.isNote == false, buttonsAvailable == false),AND(q.isNote == true, buttonsAvailable == false)),true,false)}">{!q.title}</apex:outputText>
+                </apex:column>
+                <apex:column headerValue="Last Modified">
+                    {!q.attachmentDt}
+                    {!q.noteDt}
+                </apex:column>
+                <apex:column headerValue="Created By">
+                    {!q.attachmentCrBy}
+                    {!q.noteCrBy}
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+        <apex:actionFunction action="{!DeleteNoteAttachment}" name="DeleteNoteAttachment" reRender="list" >
+            <apex:param name="NoteAttachmentId" value="" assignTo="{!SelectedNoteAttachmentId}"/>
+        </apex:actionFunction>
+    </apex:form>
+</apex:page>

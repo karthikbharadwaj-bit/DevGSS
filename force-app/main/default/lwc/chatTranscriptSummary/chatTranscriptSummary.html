@@ -1,0 +1,100 @@
+<template>
+    <template if:true={isLoading}>
+        <div class="ai-line">
+            <lightning-icon icon-name="utility:bot" size="xx-small"></lightning-icon>
+            <span>Your results are on the way 🚀…</span>
+        </div>
+        <div class="cts-skel">
+            <div class="line w90"></div>
+            <div class="line w96"></div>
+            <div class="line w70"></div>
+        </div>
+    </template>
+
+    <template if:false={isLoading}>
+        <template if:true={error}>
+            <div class="cts-empty">{error}</div>
+        </template>
+
+        <template if:false={error}>
+            <!-- Show rich text only when we actually have content -->
+            <template if:true={hasItems}>
+                <ul class="cts-list">
+                    <template for:each={summaryItems} for:item="row">
+                        <li key={row.id} class="cts-li">
+                            <lightning-formatted-rich-text value={row.text}></lightning-formatted-rich-text>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+
+            <!-- Fallback to single paragraph -->
+            <template if:false={hasItems}>
+                <template if:true={summary}>
+                    <lightning-formatted-rich-text class="summary-content" value={summary}></lightning-formatted-rich-text>
+                </template>
+                <template if:false={summary}>
+                    <div class="cts-empty" >{error}</div>
+                </template>
+            </template>
+
+            <template if:true={contentAvailable}>
+                <div class="cta-row">
+                    <div class="cta-inner">
+                        <!-- icons row -->
+                        <div class="cta-icons">
+                            <!-- Stateful thumbs: always shown, state persisted via JS -->
+                            <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                                alternative-text="Like" title="Like" onclick={onLike} selected={isLiked}
+                                variant={likeVariant} disabled={busy}>
+                            </lightning-button-icon-stateful>
+
+                            <lightning-button-icon-stateful icon-name="utility:dislike"
+                                selected-icon-name="utility:dislike" alternative-text="Dislike" title="Dislike"
+                                onclick={onDislike} selected={isDisliked} variant={dislikeVariant} disabled={busy}>
+                            </lightning-button-icon-stateful>
+                            
+                            <span class="no-border-fix">
+                                <lightning-button-icon-stateful icon-name={copyIcon}
+                                    selected-icon-name="utility:copy" alternative-text="Copy Summary"
+                                    title="Copy summary" onclick={handleCopy}>
+                                </lightning-button-icon-stateful>
+                            </span>
+                        </div>
+                        <!-- link stays UNDER the icons, centered (unchanged) -->
+                        <template if:false={reviewed}>
+                            <template if:false={showFeedback}>
+                                <a class="cta-link" href="javascript:void(0);" onclick={toggleFeedback}>Give
+                                    Feedback</a>
+                            </template>
+                        </template>
+
+                        <!-- thanks chip still shows if reviewed -->
+                        <template if:true={reviewed}>
+                            <span class="thanks-badge">Thanks for the review</span>
+                        </template>
+                    </div>
+
+
+                </div>
+
+
+                <!-- feedback row (unchanged) -->
+                <template if:true={showFeedback}>
+                    <div class="feedback-row">
+                        <div class="feedback-inner">
+                            <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…" value={feedback}
+                                oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                            <div class="feedback-actions">
+                                <lightning-button class="btn-compact" variant="brand" label="Send"
+                                    onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                                <lightning-button class="btn-compact" variant="neutral" label="Cancel"
+                                    onclick={onCancelFeedback}></lightning-button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </template>
+    </template>
+</template>

@@ -1,0 +1,141 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global" controller="QuotePlanAndPricingController" extends="c:Quote_BaseComponent">
+    <aura:attribute name="Step" type="String" default="1" />
+    <aura:attribute name="ProductCategories" type="QuotePlanAndPricingController.AdditionalProductWrapper[]" />
+    <aura:attribute name="selectedEdition" type="Product_Package__c" />
+    <aura:attribute name="FinalSelectedSubCategories" type="List" />
+    <aura:attribute name="selectedCategory" type="String" default="" />
+    <aura:attribute name="selectedSubCategories" type="String[]" />
+    <aura:attribute name="NoOfSeats" type="Integer" default="50"/>
+    <aura:attribute name="PricingYearly" type="Boolean" default="true" />
+    <aura:attribute name="Quote" type="Partner_Quote__c" default="{'sobjectType':'Partner_Quote__c', 'Payment_Term__c':'Monthly', 'Number_of_Licenses__c' : '50', 'Contract__c' : true}"/>
+    <aura:attribute name="SelectedProductList" type="QuotePlanAndPricingController.ProductWrapper[]" />
+    <aura:attribute name="AutoTabChange" type="Boolean" default="true" />
+    <aura:attribute name="Step4Name" type="String" default="Cart"/>
+    <aura:attribute name="isProductSelectedFROMPYNTab" type="Boolean" default="false" />
+    <aura:attribute name="Spinner" type="Boolean" default="false"/>
+    <aura:attribute name="currentUser" type="User" />
+    <aura:attribute name="isCurrentUserReadOnlyProfile" type="Boolean" default="false"/>
+    <aura:attribute name="isSuperUser" type="Boolean" default="false"/>
+    <aura:attribute name="hideDiscount" type="Boolean" default="false"/>
+    <aura:attribute name="isPromoCodeAppliedApproved" type="Boolean" default="false"/>
+    <aura:attribute name="mapOfPackageToPromoDetail" type="Map" />
+    <aura:attribute name="mapOfPromoToListAssociatedDetail" type="Map" />
+    <aura:attribute name="baseUrlComm" type="String" />
+    <aura:attribute name="BrandName" type="string" />
+    <aura:attribute name="isSpeciaPermissionAvail" type="Boolean"/>
+    <aura:attribute name="skipPYN" type="Boolean" default="false"/>
+    <!--Added for GO Pricing - start-->
+    <aura:attribute name="Currencycode" type="string" />
+    <aura:attribute name="showOnlyRc" type="Boolean" default="false"/>
+	<!-- Added for GO Pricing - end-->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="evtSelectEdition" event="c:Quote_SelectEdition" action="{!c.handleEditionSelection}" />
+    <div>
+    <lightning:progressIndicator currentStep="{!v.Step}" type="path" hasError="false" variant="base">
+        <lightning:progressStep class="selectpackage" label="Select Package" value="1" onclick="{!c.goToStep1}">
+        </lightning:progressStep>
+        <aura:if isTrue="{!!v.skipPYN}">
+        <lightning:progressStep class="pickyournumbers" label="Pick Your Numbers" value="2" onclick="{!c.goToStep2}">
+        </lightning:progressStep>
+        </aura:if>
+        <lightning:progressStep class="addproducts" label="Add Products" value="3" onclick="{!c.goToStep3}">
+        </lightning:progressStep>
+        <lightning:progressStep class="cart" label="Cart" value="4" onclick="{!c.goToStep4}">
+        </lightning:progressStep>
+        <lightning:progressStep class="checkout" label="Checkout" value="5" onclick="{!c.goToStep5}">
+        </lightning:progressStep>
+    </lightning:progressIndicator>
+    
+    <div class="slds-size--1-of-1">
+        <aura:if isTrue="{!v.Step == '1'}">
+            <div class="quotemainwrap">
+            <!--Added for GO Pricing - Currencycode and showOnlyRC-->
+            <c:Quote_PlanAndPricing NoOfSeats="{!v.NoOfSeats}" 
+                                    PricingYearly="{!v.PricingYearly}" 
+                                    Step="{!v.Step}" 
+                                    Quote="{!v.Quote}"
+                                    BrandName="{!v.BrandName}"
+                                    Currencycode="{!v.Currencycode}"
+                                    showOnlyRc="{!v.showOnlyRc}"/>
+            </div>
+        </aura:if>
+    </div>
+    <div class="slds-size--1-of-1">
+        <aura:if isTrue="{!v.Step == '2'}">
+            <div class="quotemainwrap">
+            <c:Quote_PickYourNumbers Quote="{!v.Quote}" 
+                                     Step="{!v.Step}"
+                                     PricingYearly="{!v.PricingYearly}"
+                                     ProductEdition="{!v.selectedEdition}"
+                                     NoOfSeats="{!v.NoOfSeats}"
+                                     SelectedProductList="{!v.SelectedProductList}"
+                                     isProductSelectedFROMPYNTab = "{!v.isProductSelectedFROMPYNTab}"
+                                     selectedCategory="{!v.selectedCategory}" 
+                                     BrandName="{!v.BrandName}"/>
+            </div>
+		</aura:if>
+    </div>
+    <div class="slds-size--1-of-1">
+        <aura:if isTrue="{!v.Step == '3'}">
+                        <div class="quotemainwrap">
+            <aura:if isTrue="{!v.selectedCategory == ''}">
+            	<c:Quote_AdditionalProducts ProductEdition="{!v.selectedEdition}" 
+                                            selectedCategory="{!v.selectedCategory}"
+                                            Quote="{!v.Quote}"
+                                            ProductCategories="{!v.ProductCategories}"
+                                            SelectedProductList="{!v.SelectedProductList}"
+                                            PricingYearly="{!v.PricingYearly}"
+                                            FinalSelectedSubCategories="{!v.FinalSelectedSubCategories}"/>    
+                <aura:set attribute="else">
+                    <c:Quote_EditionDetails ProductEdition="{!v.selectedEdition}" 
+                                            selectedCategory="{!v.selectedCategory}" 
+                                            selectedSubCategories="{!v.selectedSubCategories}"
+                                            Quote="{!v.Quote}"
+                                            ProductCategories="{!v.ProductCategories}"
+                                            SelectedProductList="{!v.SelectedProductList}"
+                                            PricingYearly="{!v.PricingYearly}"
+                                            FinalSelectedSubCategories="{!v.FinalSelectedSubCategories}"
+                                            currentUser="{!v.currentUser}"
+                                            isSuperUser="{!v.isSuperUser}"
+                                            hideDiscount = "{!v.hideDiscount}"
+                                            isSpeciaPermissionAvail = "{!v.isSpeciaPermissionAvail}"
+                                            mapOfPackageToPromoDetail = "{!v.mapOfPackageToPromoDetail}"
+                                            isPromoCodeAppliedApproved="{!v.isPromoCodeAppliedApproved}"
+                                            BrandName="{!v.BrandName}"/>
+                </aura:set>
+            </aura:if>
+            </div>
+        </aura:if>
+    </div>
+    <div class="slds-size--1-of-1">
+        <aura:if isTrue="{!and(v.Step == '4', v.Quote.Id != null)}">
+            <div class="quotemainwrap">
+            <c:Quote_EditionDetails ProductEdition="{!v.selectedEdition}" 
+                                            ShowQuoteLines="true"
+                                    		Quote="{!v.Quote}" 
+                                    		SelectedProductList="{!v.SelectedProductList}"
+                                    		PricingYearly="{!v.PricingYearly}" 
+                                    		currentUser="{!v.currentUser}"
+                                    		isSuperUser="{!v.isSuperUser}"
+                                    		hideDiscount = "{!v.hideDiscount}"
+                                    		isSpeciaPermissionAvail="{!v.isSpeciaPermissionAvail}"
+                                    		mapOfPackageToPromoDetail = "{!v.mapOfPackageToPromoDetail}"
+                                    		isPromoCodeAppliedApproved="{!v.isPromoCodeAppliedApproved}"
+                                    		BrandName="{!v.BrandName}"/>
+            </div> 
+        </aura:if>
+    </div>
+    <div class="slds-size--1-of-1">
+        <aura:if isTrue="{!and(v.Step == '5', v.Quote.Id != null)}">
+             <aura:if isTrue="{!v.Spinner}">
+                 <c:SpinnerComponent/>
+            </aura:if>
+            <div class="quotemainwrap">
+                <!-- Added BrandName for Longform quote for ACO -->
+            	<c:Quote_PartnerQuoteDetails mapOfPromoToListAssociatedDetail="{!v.mapOfPromoToListAssociatedDetail}" mapOfPackageToPromoDetail="{!v.mapOfPackageToPromoDetail}" isCurrentUserReadOnlyProfile="{!v.isCurrentUserReadOnlyProfile}" Spinner="{!v.Spinner}"  Step="{!v.Step}" selectedCategory="{!v.selectedCategory}" baseUrlComm="{!v.baseUrlComm}" BrandName="{!v.BrandName}"/>
+    			<c:Quote_PartnerQuoteLines hideDiscount = "{!v.hideDiscount}" currentUser="{!v.currentUser}" isSuperUser="{!v.isSuperUser}" Quote="{!v.Quote}"/>
+            </div> 
+        </aura:if>
+    </div>
+</div>
+</aura:component>

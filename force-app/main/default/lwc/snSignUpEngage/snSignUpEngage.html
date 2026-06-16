@@ -1,0 +1,109 @@
+<template>
+    <div class="expandable" data-id={expandableId}>
+        <div class="slds-progress slds-progress_vertical">
+            <c-sn-progress-section header="Preparing Data" status={firstStepSetting}>
+                <div class="slds-m-top_x-small disabled-step text-step" data-ui-auto="engage-step">{step}</div>
+            </c-sn-progress-section>
+        </div>
+        <div class="slds-progress slds-progress_vertical" data-id={progressStepId}>
+            <c-sn-progress-section header="Add General Information" status={secondStepSetting}>
+                <div class="slds-m-right_x-small slds-grid slds-grid_vertical-align-start">
+                    <div class={dropBoxClass}>
+                        <div class="label">{platformLocationLabel}</div>
+                        <lightning-combobox
+                            name="EngageDigitalPlatformLocation"
+                            data-ui-auto="platform-location"
+                            data-id="platform-location"
+                            variant="label-hidden"
+                            class="label-hidden"
+                            value={platformLocationValue}
+                            placeholder="Select platform location"
+                            dropdown-alignment="auto"
+                            options={platformLocationOptions}
+                            disabled={isGeneralInfoDisabled}
+                            onchange={handlePlatformLocationChange}
+                        ></lightning-combobox>
+                    </div>
+                    <div class={dropBoxClass}>
+                        <c-custom-combobox
+                            label={rcPlatformLabel}
+                            placeholder="Select platform"
+                            options={platformOptions}
+                            selected-value={platformValue}
+                            error-message={platformErrorMessage}
+                            disabled={disablePlatformOptions}
+                            onchange={handlePlatformChange}
+                            is-relative-position>
+                        </c-custom-combobox>
+                    </div>
+                    <div class={dropBoxClass} if:false={isEngageVoice}>
+                        <div class="label">Language</div>
+                        <lightning-combobox
+                            name="language"
+                            data-ui-auto="language"
+                            variant="label-hidden"
+                            class="label-hidden"
+                            value={languageValue}
+                            placeholder="Select language"
+                            dropdown-alignment="auto"
+                            options={languageOptions}
+                            disabled={isGeneralInfoDisabled}
+                            onchange={handleLanguageChange}
+                        ></lightning-combobox>
+                    </div>
+                    <div class={dropBoxClass}>
+                        <c-searchable-dropdown 
+                            combobox-options={timezoneOptions}
+                            slds-modal-el={sldsModalEl}
+                            disabled={isGeneralInfoDisabled}
+                            label="Timezone"
+                            onchange={handleTimezoneChange}>
+                        </c-searchable-dropdown>
+                    </div>
+                    <div class="slds-col input" if:false={isEngageVoice}>
+                        <div class="label">RC Engage Digital Domain</div>
+                        <lightning-input
+                            type="text"
+                            name="rcEngageDigitalDomain"
+                            variant="label-hidden"
+                            class="label-hidden"
+                            data-id="Domain"
+                            value={rcEngageDigitalDomain}
+                            disabled={isGeneralInfoDisabled}
+                            placeholder="Enter Engage Digital domain"
+                            onchange={handleEngageDigitalDomainChange}
+                            onblur={handleOnBlur}
+                        ></lightning-input>
+                    </div>
+                    <div class="slds-col" if:true={isEngageVoice}>
+                        <div class="label">Data Retention Duration</div>
+                        <lightning-combobox
+                            name="dataRetentionDuration"
+                            data-ui-auto="data-retention-duration"
+                            placeholder={retentionDurationData}
+                            variant="label-hidden"
+                            class="label-hidden"
+                            disabled
+                        ></lightning-combobox>
+                    </div>
+                </div>
+            </c-sn-progress-section>
+        </div>
+        <div if:true={showAddressValidation} class="slds-progress slds-progress_vertical">
+            <c-sn-progress-section header="Add Address Validation" status={thirdStepSetting}>
+                <c-sn-address-section 
+                    disable-general-fields={isEngageFieldsEmpty} 
+                    suggested-address={suggestedAddress}
+                    service-signed-up={isSignedUp}
+                    enable-validate-button={enableValidateButton}
+                    countries={countriesToMatch}>
+                </c-sn-address-section>
+            </c-sn-progress-section>
+        </div>
+        <div class="slds-progress slds-progress_vertical">
+            <c-sn-progress-section header="Sign Up Engage" status={lastStepSetting} last>
+                <div if:false={isStartedSignUp} class="slds-m-vertical_xx-small text-step">Not started</div>
+            </c-sn-progress-section>
+        </div>
+    </div>
+</template>

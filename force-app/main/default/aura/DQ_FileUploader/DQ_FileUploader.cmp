@@ -1,0 +1,66 @@
+<aura:component controller="DQ_DealQualificationController" implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" access="global" >  
+   <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>  
+   <aura:attribute name="files" type="List"/>  
+   <aura:attribute name="recordId" type="string"/> 
+    <aura:attribute name="dqId" type="string"/> 
+   <aura:attribute name="accept" type="List" default="['.jpg', '.jpeg','.pdf','.csv','.xlsx']"/>  
+   <aura:attribute name="multiple" type="Boolean" default="true"/>  
+   <aura:attribute name="disabled" type="Boolean" default="false"/>  
+       <aura:attribute name="showLoadingSpinner" type="boolean" default="false" />
+
+   <div class="slds">  
+     <div style="border-left: 1px solid rgb(221, 219, 218);  
+           border-right: 1px solid rgb(221, 219, 218);  
+           border-bottom: 1px solid rgb(221, 219, 218);  
+           border-top: 1px solid rgb(221, 219, 218);">  
+       <div class="slds-page-header" style="border-radius: 0px; border-right: 0px;border-left: 0px;border-top: 0px;  
+                          box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.1);">  
+         Files  
+       </div>  
+       <div class="slds-grid">  
+         <div class="slds-col slds-size--5-of-12">  
+           <lightning:input aura:id="fileId" onchange="{!c.handleFilesChange}" type="file" name="file" label="Upload Attachment" multiple="false"/>
+             <aura:if isTrue="{!v.showLoadingSpinner}">
+                 <div class="slds-text-body_small slds-text-color_error">Uploading... 
+                     <img src="/auraFW/resources/aura/images/spinner.gif" class="spinner-img" alt="Loading"/>'
+                 </div>
+             </aura:if>
+
+           </div>&nbsp; &nbsp;  
+         <div class="slds-col slds-size---of-12">  
+          <!-- <lightning:fileUpload label="" multiple="{!v.multiple}"   
+                      accept="{!v.accept}" recordId="{!v.dqId}"   
+                      onuploadfinished="{!c.UploadFinished}" />-->
+            
+    		   <button class="slds-button slds-button_brand" onclick="{!c.doSave}">Upload Attachment</button>
+
+           </div>  
+       </div><br/>
+         <aura:if isTrue="{!not(empty(v.files))}">
+             <table class="slds-table slds-table--bordered">  
+                 <thead>  
+                     <tr>  
+                         <th>Title</th>  
+                         <th>FileType</th>  
+                         <th>Description</th>  
+                     </tr>  
+                 </thead>  
+                 <tbody>  
+                     <aura:iteration items="{!v.files}" var="f">  
+                         <tr>  
+                             <td> 
+                                 <a onclick="{!c.downloadAttachment}" data-record="{!f.Id}"  target="_blank" download="{!f.Name}">{!f.Name}</a>
+                             </td>  
+                             <td>{!f.ContentType}</td>  
+                             <td>{!f.Description}</td>  
+                         </tr>  
+                     </aura:iteration>  
+                 </tbody>  
+             </table>
+             <aura:set attribute="else">
+                 No File Found.
+             </aura:set>
+         </aura:if>
+     </div>  
+   </div>  
+ </aura:component>

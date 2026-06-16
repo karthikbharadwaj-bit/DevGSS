@@ -1,0 +1,50 @@
+<template>
+    <template if:true={isFeatureEnabled}>
+        <template if:true={hasAnyPermission}>
+            <div class="neon-card">
+                <lightning-card>
+                    <div class="slds-media__figure" style="font-size: Medium; margin-top:0rem">
+                        <img src={aiInsightsLogo} alt="AI Insights" style="width:40px; height:40px; margin-left:8px;"/>
+                        <span><b> AI Insights Hub</b></span>
+                    </div>
+                    <lightning-tabset class="custom-tabs" variant="standard" active-tab-value={activeTab}
+                        onactive={handleTabsetActive}>
+
+                        <template if:true={hasAIReporting}>
+                            <lightning-tab label="Case Summary" value="caseSummary">
+                                <div class="no-space">
+                                    <c-case-a-i-summary record-id={recordId} object-api-name="Case"></c-case-a-i-summary>
+                                </div>
+                            </lightning-tab>
+                        </template>
+
+                        <template if:true={hasSupportAgent}>
+                            <lightning-tab label="Similar Cases" value="similarCases" onactive={handleSimilarCasesTabActive}>
+                                <div class="no-space">
+                                    <c-similar-cases-for-g-c-p record-id={recordId}></c-similar-cases-for-g-c-p>
+                                </div>
+                            </lightning-tab>
+
+                        </template>
+
+                        <template if:true={showSimilarJiras}>
+                            <lightning-tab label="Similar Jiras" value="similarJira" onactive={handleSimilarJirasTabActive}>
+                                <div class="no-space">
+                                    <c-similar-jiras-by-g-c-p record-id={recordId}></c-similar-jiras-by-g-c-p>
+                                </div>
+                            </lightning-tab>
+                        </template>
+
+                        <template if:true={showExploreMore}>
+                            <lightning-tab label="Explore more" value="ExploreMore" end-icon-name="utility:new_window"
+                                onactive={handleExploreActive}>
+                                <div class="no-space"></div>
+                            </lightning-tab>
+                        </template>
+
+                    </lightning-tabset>
+                </lightning-card>
+            </div>
+        </template>
+    </template>
+</template>

@@ -1,0 +1,65 @@
+<aura:component controller="LayoutBuilderController">
+    <!-- resources -->
+    <ltng:require scripts="{! $Resource.QuotingToolDependencies + '/QW.js' }"
+                  afterScriptsLoaded="{!c.afterScriptsLoaded}"/>
+
+    <!-- attributes -->
+    <aura:attribute name="layoutMetadata" type="Object" />
+    <aura:attribute name="sections" type="Aura.Component[]"/>
+    <aura:attribute name="record" type="Object"/>
+    <aura:attribute name="enabledPages" type="String[]"/>
+
+    <c:Toasts />
+    <c:Spinner />
+    <c:LookupItemList />
+
+    <!-- handlers -->
+    <!-- Order Header -->
+    <div  class="slds-page-header">
+
+        <div class="slds-media">
+
+            <!-- Order Icon -->
+            <div class="slds-media__figure">
+                <lightning:icon iconName="standard:case"/>
+            </div>
+
+            <div class="slds-media__body">
+
+                <!-- Name -->
+                <h1 class="slds-page-header__title slds-truncate slds-align-middle">
+                    New Case
+                </h1>
+
+                <!-- Details -->
+                <p class="slds-text-body_small slds-line-height_reset">
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+
+    <ul class="slds-grid slds-page-header__detail-row slds-m-top--none slds-m-right--none  slds-m-bottom--none slds-m-left--none">
+        <li class="slds-page-header__detail-block">
+            <p class="slds-text-title slds-truncate slds-m-bottom--xx-small" title="Record Type">Case Record Type</p>
+            <p class="slds-text-body--regular">Support - T1</p>
+        </li>
+    </ul>
+
+    <form method="get" onsubmit="{! c.onsubmit }">
+        <div class="slds-text-align--center slds-p-around--small">
+            <lightning:button type="reset" label="Cancel" onclick="{! c.cancel }" />
+            <lightning:button type="submit" label="Save" variant="brand"/>
+        </div>
+
+        <c:LoadingPlaceholder aura:id="LoadingPlaceholder" isShown="true" type="form" />
+
+        {! v.sections }
+
+        <div class="slds-text-align--center slds-p-around--small">
+            <lightning:button type="reset" label="Cancel" onclick="{! c.cancel }"/>
+            <lightning:button type="submit" label="Save" variant="brand"/>
+        </div>
+    </form>
+</aura:component>

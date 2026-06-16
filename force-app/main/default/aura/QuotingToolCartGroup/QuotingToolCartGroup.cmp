@@ -1,0 +1,111 @@
+<aura:component controller="QuotingToolQuoteApexController">
+
+    <aura:attribute name="group" type="Map" default="{}" />
+    <aura:attribute name="items" type="List" default="[]" />
+    <aura:attribute name="options" type="Map" default="{}" />
+    <aura:attribute name="columns" type="Map" default="{}" />
+    <aura:attribute name="isShowList" type="Boolean" default="false" />
+    <aura:attribute name="areaCodeItems" type="List" default="[]" description="Saved Are Code Line Items"/>
+    <aura:attribute name="areaCodeItemsInOperation" type="List" default="[]" description="Saved and unsaved Are Code Line Items"/>
+    <aura:attribute name="updateTrigger" type="Integer" />
+    <aura:attribute name="quoteRecordTypeName" type="String" description="Quote RecordType Name considering old quotes with null record type"/>
+    <aura:attribute name="quote" type="Quote" description="Current Quote Object"/>
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="state" type="Map" default="{}" description="Contain common checks for use by components"/>
+    <aura:attribute name="settings" type="Map" description="Bundle of various settings which will be not changing during wizard lifecycle"/>
+    <aura:attribute name="deletingAreaCodeItems" type="Set" description="Area Code Line Items delete in progress"/>
+    <aura:attribute name="isCartChanged" type="Boolean" default="false" description="Indicates that there are unsaved chages in cart"/>
+    <aura:attribute name="deletingItems" type="Set" description="QLIs deleting in progress"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    
+    <!-- List Items -->
+    <aura:if isTrue="{!!v.group.isGrouped }">
+        <tbody>
+            <aura:iteration items="{!v.items}" var="item" indexVar="index">
+                <c:QuotingToolCartListEntry document="{!item}"
+                                            index="{!index}"
+                                            params="{!v.options.params}"
+                                            quote="{!v.quote}"
+                                            settings="{!v.settings}"
+                                            state="{!v.state}"
+                                            activePriceBookEntry="{!v.activePriceBookEntry}"
+                                            areaCodeItems="{!v.areaCodeItems}"
+                                            areaCodeItemsInOperation="{!v.areaCodeItemsInOperation}"
+                                            updateTrigger="{!v.updateTrigger}"
+                                            columns="{!v.columns}"
+                                            unmatched="{!item.Unmatched}"
+                                            quoteRecordTypeName="{!v.quoteRecordTypeName}"
+                                            deletingAreaCodeItems="{!v.deletingAreaCodeItems}"
+                                            isCartChanged="{! v.isCartChanged }"
+                                            deletingItems="{! v.deletingItems }"
+                                            Wizard="{! v.Wizard }"
+                />
+            </aura:iteration>
+        </tbody>
+    </aura:if>
+
+    <!-- Group -->
+    <aura:if isTrue="{!v.group.isGrouped &amp;&amp; !empty(v.items)}">
+        <tbody>
+            <tr class="{!join(' ', (v.group.unmatched ? 'disabledRow' : ''), 'qli group')}"
+                onclick="{!c.showList}">
+                <td class="col-1 cart__details-action">
+                    <span class="{!join(' ',
+                            'details-button slds-show_inline-block',
+                            (v.isShowList ? 'show' : '')
+                            )}">
+                        <lightning:buttonIcon iconName="utility:chevronright"
+                                              alternativeText="Toggle details"
+                                              variant="bare"
+                                              aura:id="toggleDetailsButton"/>
+                    </span>
+                </td>
+                <td class="col-5 cart__name">
+                    <div class="slds-truncate" title="">
+                        <span>{!v.group.label}</span>
+                        <span class="slds-m-left--xx-small">({!v.items.length})</span>
+                    </div>
+                </td>
+                <td class="col-1 cart__icons"></td>
+                <td class="col-4 cart__plan"></td>
+                <td class="col-3 cart__qty"></td>
+                <td class="col-3 cart__existing-qty"></td>
+                <td class="col-3 cart__new-total-qty"></td>
+                <td class="col-4"></td>
+                <td class="col-4"></td>
+                <td class="col-3 slds-cell-wrap cart__discount"></td>
+                <td class="col-2 cart__discount-type"></td>
+                <td class="col-4 cart__total-price"></td>
+                <td class="col-1 cart__actions"></td>
+            </tr>
+        </tbody>
+
+        <tbody>
+            <aura:if isTrue="{!v.isShowList}">
+                <aura:iteration items="{!v.items}" var="item" indexVar="index">
+                    <c:QuotingToolCartListEntry document="{!item}"
+                                                index="{!index}"
+                                                params="{!v.options.params}"
+                                                quote="{!v.quote}"
+                                                settings="{!v.settings}"
+                                                state="{!v.state}"
+                                                activePriceBookEntry="{!v.activePriceBookEntry}"
+                                                areaCodeItems="{!v.areaCodeItems}"
+                                                areaCodeItemsInOperation="{!v.areaCodeItemsInOperation}"
+                                                updateTrigger="{!v.updateTrigger}"
+                                                columns="{!v.columns}"
+                                                group="{!v.group}"
+                                                unmatched="{!item.Unmatched}"
+                                                quoteRecordTypeName="{!v.quoteRecordTypeName}"
+                                                deletingAreaCodeItems="{!v.deletingAreaCodeItems}"
+                                                Wizard="{! v.Wizard }"
+                    />
+                </aura:iteration>
+            </aura:if>
+        </tbody>
+
+    </aura:if>
+
+
+
+</aura:component>

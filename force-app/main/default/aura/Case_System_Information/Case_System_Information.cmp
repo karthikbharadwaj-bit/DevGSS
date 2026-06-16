@@ -1,0 +1,59 @@
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickAction" access="global" 
+                controller="Case_StandardCaseCreate_Comp">
+    
+    
+    <aura:attribute name="caseRec" type="Case" />
+    <aura:attribute name="createdBy" type="Id" />
+    <aura:attribute name="lastModifiedby" type="Id" />
+    <aura:attribute name="createdByDate" type="Date" />
+    <aura:attribute name="lastModifiedbyDate" type="Date" />
+    
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+      
+        
+        <div class="slds-form__row">
+            <div class="slds-form__item" role="listitem">
+                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_horizontal slds-hint-parent">
+                    
+                    <span class="slds-form-element__label">Created By </span> 
+                    <div class="slds-form-element__control">
+                        <div class="slds-form-element__static"><a onclick = "{!c.navigateTocreatedBy}">{!v.caseRec.CreatedBy.Name}</a>, 
+                        <lightning:formattedDateTime aura:id="dt"
+                                     value="{!v.createdByDate}"
+                                     month="numeric"
+                                     day="numeric"
+                                     year="numeric"
+                                     hour="2-digit"
+                                     minute="2-digit"
+                                     hour12="true"
+                                     timeZone="{!$Locale.timezone}"/>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            <div class="slds-form__item" role="listitem">
+                <div class="slds-form-element slds-form-element_edit slds-form-element_readonly slds-form-element_horizontal slds-hint-parent">
+                    <span class="slds-form-element__label">Last Modified By</span> 
+                    <div class="slds-form-element__control">
+                        <div class="slds-form-element__static"><a onclick = "{!c.navigateTolastModifiedBy}">{!v.caseRec.LastModifiedBy.Name}</a>,
+                        <lightning:formattedDateTime aura:id="dt"
+                                     value="{!v.lastModifiedbyDate}"
+                                     month="numeric"
+                                     day="numeric"
+                                     year="numeric"
+                                     hour="2-digit"
+                                     minute="2-digit"
+                                     hour12="true"
+                                     timeZone="{!$Locale.timezone}"/>
+                        
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+</aura:component>

@@ -1,0 +1,79 @@
+<template>
+    <div class="option-label">Option D — 3-Column Structured Card</div>
+    <lightning-card>
+        <div slot="title" class="card-title">
+            <lightning-icon icon-name="utility:Einstein" size="x-small" class="einstein-icon"></lightning-icon>
+            &nbsp;AI Summary
+        </div>
+        <div slot="actions">
+            <span class="powered-ai-badge">Powered by AI ✨</span>
+        </div>
+        <div class="slds-p-horizontal_small slds-p-bottom_small">
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_medium">
+                    <lightning-spinner size="small" alternative-text="Loading..."></lightning-spinner>
+                    <span class="slds-m-left_small slds-text-body_small">Fetching from AI…</span>
+                </div>
+            </template>
+            <template if:false={isLoading}>
+                <div class="three-col-grid">
+                    <div class="col">
+                        <div class="col-header risk-header">🔴 Risk</div>
+                        <ul class="col-list">
+                            <template for:each={riskPoints} for:item="p">
+                                <li key={p}>{p}</li>
+                            </template>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <div class="col-header status-header">📋 Status</div>
+                        <ul class="col-list">
+                            <template for:each={statusPoints} for:item="p">
+                                <li key={p}>{p}</li>
+                            </template>
+                        </ul>
+                    </div>
+                    <div class="col">
+                        <div class="col-header steps-header">➡ Next Steps</div>
+                        <ul class="col-list">
+                            <template for:each={nextStepsPoints} for:item="p">
+                                <li key={p}>{p}</li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bottom-bar">
+                    <div class="action-row">
+                        <lightning-button-icon-stateful icon-name="utility:like" selected-icon-name="utility:like"
+                            title="Like" alternative-text="Like" onclick={submitLike}
+                            selected={summaryIsLiked} variant={likeVariant} disabled={summaryBusy}>
+                        </lightning-button-icon-stateful>
+                        <lightning-button-icon-stateful icon-name="utility:dislike" selected-icon-name="utility:dislike"
+                            title="Dislike" alternative-text="Dislike" onclick={submitDislike}
+                            selected={summaryIsDisliked} variant={dislikeVariant} disabled={summaryBusy}>
+                        </lightning-button-icon-stateful>
+                        <lightning-button-icon-stateful icon-name={copyIcon} selected-icon-name="utility:copy"
+                            title="Copy" alternative-text="Copy" onclick={handleCopy}>
+                        </lightning-button-icon-stateful>
+                        <template if:false={summaryReviewed}>
+                            <a href="javascript:void(0);" onclick={toggleFeedback} class="feedback-link">Give Feedback</a>
+                        </template>
+                        <template if:true={summaryReviewed}>
+                            <span class="thanks">✓ Thanks!</span>
+                        </template>
+                    </div>
+                </div>
+                <template if:true={showFeedback}>
+                    <div class="feedback-row">
+                        <textarea class={feedbackClass} rows="2" placeholder="Share a quick note…"
+                            value={feedback} oninput={onFeedbackChange} onkeydown={onFeedbackKeydown}></textarea>
+                        <div class="fb-actions">
+                            <lightning-button variant="brand" label="Send" onclick={onSendFeedback} disabled={sendDisabled}></lightning-button>
+                            <lightning-button variant="neutral" label="Cancel" onclick={onCancelFeedback}></lightning-button>
+                        </div>
+                    </div>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

@@ -1,0 +1,57 @@
+<aura:component description="Support Community Knowledge Info" implements="forceCommunity:availableForAllPageTypes">
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+    <aura:handler event="c:SupportCommunityUserEvent" action="{!c.handleUpdate}"/>
+    <aura:attribute name="updated" type="String" default="" />
+    <aura:attribute name="author" type="String" default="" />
+    <aura:attribute name="updatedBy" type="String" default="" />
+    <aura:attribute name='searchPageName' type='String' default='search/' access='global' />
+    <aura:attribute name="views" type="Integer" default="" />
+    <aura:attribute name="kbid" type="String" default="" />
+    <aura:attribute name="tags" type="List" default="[]" />
+    <aura:attribute name="tagList" type="List" default="[]" />
+    <aura:attribute name="tagsLen" type="Integer" default="0" />
+    <div>
+        <ul class="info-list">
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_updated}</div>
+                <span class="item__value mt-last-updated" data-timestamp="{!v.updated}">
+                    <span class="full">
+                        <lightning:formattedDateTime value="{!v.updated}" day="2-digit" />
+                        <lightning:formattedDateTime value="{!v.updated}" month="long" />
+                        <lightning:formattedDateTime value="{!v.updated}" year="numeric" />
+                    </span>
+                    <span class="mobile">
+                        <lightning:formattedDateTime value="{!v.updated}" year="2-digit" month="2-digit" day="2-digit"/>
+                    </span>
+                </span>
+            </li>
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_author}</div>
+                <h1 class="item__value">{!v.author}</h1>
+            </li>
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_updatedBy}</div>
+                <h1 class="item__value">{!v.updatedBy}</h1>
+            </li>
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_kBID}</div>
+                <div class="item__value">{!v.kbid}</div>
+            </li>
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_pageViews}</div>
+                <div class="item__value"><lightning:formattedNumber value="{!v.views}"/></div>
+            </li>
+            <li class="info-list__item">
+                <div class="item__title">{!$Label.c.SC_tags}</div>
+                <div class="item__value item__value_list">
+                    <aura:iteration items="{!v.tags}" var="item" indexVar="inx">
+                        <a class="tag" href="{!item.url}">{!item.title}</a>
+                        <aura:if isTrue="{!(inx+1) &lt; v.tagsLen}">
+                            <span class="comma">,</span>
+                        </aura:if>
+                    </aura:iteration>
+                </div>
+            </li>
+        </ul>
+    </div>
+</aura:component>

@@ -1,0 +1,25 @@
+<apex:page id="VatNumber" StandardController="Account" extensions="TaxExemptionController" showHeader="false"
+           sidebar="false" standardStylesheets="true" lightningStylesheets="true">
+    <apex:includeLightning />
+    <div id="container"></div>
+    <script>
+        const TE = window;
+        const UITheme = "{!$User.UITheme}";
+        const isVisibleVatNumber = {!$Setup.Feature_Toggle__c.IsVisibleVatNumber__c}
+        console.log(UITheme);
+        if (isVisibleVatNumber) {
+        // Init LWC ApP
+        $Lightning.use("c:ValidationVATNumberApp", () => $Lightning.createComponent("c:VatNumber",
+            {
+                "accountId": '{!Account.Id}',
+                "accVATNumber": '{!Account.VATNumber__c}',
+                "brand": '{!Account.RC_Brand__c}',
+                "currencyIsoCode" : '{!Account.CurrencyIsoCode}',
+                "billingCountry" : '{!Account.BillingCountry}',
+                "billingId" : '{!Account.Billing_ID__c}'
+            }, "container"));
+        }
+    </script>
+    <apex:variable var="uiTheme" value="lightningDesktop">
+    </apex:variable>
+</apex:page>

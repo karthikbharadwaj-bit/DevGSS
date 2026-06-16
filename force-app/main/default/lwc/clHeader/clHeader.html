@@ -1,0 +1,54 @@
+<template>
+    <div class="slds-page-header header">
+        <div class="slds-page-header__row slds-container_x-large slds-container_center">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                        <lightning-avatar slot="media"
+                                          src={leadPhotoUrl}
+                                          fallback-icon-name="standard:lead"
+                                          alternative-text={leadName}></lightning-avatar>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span class="slds-page-header__title slds-truncate">
+                                         {label.ConvertLead}
+                                        <span if:false={isPrmFlow}>
+                                            &nbsp;-&nbsp;
+                                            <a href={leadUrl} target="_blank" if:true={leadUrl}>{leadName}</a>
+                                            <c-placeholder-loading type='line'
+                                                               width="10rem"
+                                                               if:true={isLoading}></c-placeholder-loading>
+                                        </span>
+                                    </span>
+                                </h1>
+                            </div>
+                        </div>
+                        <ul class="slds-page-header__name-meta slds-list_horizontal slds-has-dividers_right">
+                            <li if:true={isLoading}>
+                                <c-placeholder-loading type='line'
+                                                       width="15rem"
+                                                       height="0.75rem"></c-placeholder-loading>
+                            </li>
+                            <li class="slds-item" if:true={leadRecordType}>
+                                {label.RecordType} {leadRecordType}
+                            </li>
+                            <li class="slds-item" if:true={leadBrand}>
+                                {label.Brand} {leadBrand}
+                            </li>
+                        </ul>
+                    </div>
+                    <lightning-button
+                        variant="neutral"
+                        label="Create a Case"
+                        title="Create a Case"
+                        onclick={openCreateCase}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

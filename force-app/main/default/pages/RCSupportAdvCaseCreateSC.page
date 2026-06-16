@@ -1,0 +1,1796 @@
+<apex:page standardController="Case" extensions="RCSupportAdvCaseCreate" showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" cache="false" id="RCSupportAdvCaseCreateSC">
+    <apex:composition template="{!$Site.Template}">
+        <apex:define name="content">
+            <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/css/jqueryValidation.css')}" type="text/css" rel="stylesheet"  media="screen" />
+            <link href="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/colorbox.css')}" type="text/css" rel="stylesheet"  media="screen" />
+            <script src="../../soap/ajax/64.0/connection.js" type="text/javascript"></script>
+            <script src="{!URLFOR($Resource.RCSupportPortal, 'supportPortal/js/libs/jquery.colorbox.js')}"></script>
+            <script type="text/javascript">
+                var __sfdcSessionId = '{!GETSESSIONID()}';
+                var __sfdcSiteUrlPrefix = '{!$Site.Prefix}';
+                sforce.connection.sessionId = "{!$Api.Session_ID}";
+                /*-----------Dynamic iframe height--------------*/
+                var vf_height;
+                function change_vf_height() {
+                    const vf_buf_height = $('body').height();
+                    if(vf_height !== vf_buf_height) {
+                        vf_height = vf_buf_height;
+                        console.warn('vf_height',vf_height);
+                        window.parent.postMessage('sc_vf_resize=' + vf_height, '*');
+                    }
+                }
+
+                $(document).ready(function(){
+                    change_vf_height()
+                });
+               setInterval(function(){change_vf_height()}, 500);
+                $('body').resize(function() {
+                    console.log('resize!');
+                    change_vf_height();
+                });
+                /*---------------------------------------------*/
+                function closewin() {
+                    window.onbeforeunload = function () {
+                        return "If you navigate away from this page the information that you have entered may not be saved.";
+                    }
+                    $(function () {
+                        $("a").click(function () {
+                            window.onbeforeunload = null;
+                        });
+                    });
+                    $(function () {
+                        $("input1").click(function () {
+                            window.onbeforeunload = null;
+                        });
+                    });
+                    $(function () {
+                        $("apex:commandButton").click(function () {
+                            window.onbeforeunload = null;
+                        });
+                    });
+                }
+
+                if({!isSubmitCase}){
+                    $("#fCase").hide();
+                    $("#caseUpdate").hide();
+                    $("#CaseDEtails").hide();
+                }
+
+                function showCaseUpdateDetail() {
+                    $('#caseUpdate').show();
+                    $('body').append('<div id="fade"></div>'); //Add the fade layer to bottom of the body tag.
+                    $('#fade').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); //Fade in the fade layer
+                }
+                function showHomePage() {
+                    window.top.location.href = './s/status';
+                }
+                function hideCaseUpdateDetail(){
+                    $('#caseUpdate').hide();
+                    $("#fade").fadeOut("fast");
+                    $("#fade").remove();
+                }
+                function submitcase(status) {
+                    try {
+                        if(status === 1) {
+                            s.events="Event22";
+                        } else {
+                            s.events="Event23";
+                        }
+                        s.t();
+                    } catch(x) {}
+                }
+                function showSeverityDetail() {
+                    $('#Severity').show();
+                    $('body').append('<div id="fade"></div>'); //Add the fade layer to bottom of the body tag.
+                    $('#fade').css({'filter' : 'alpha(opacity=80)'}).fadeIn(); //Fade in the fade layer
+                }
+                function hideSeverityDetail(){
+                    $('#Severity').hide();
+                    $("#fade").fadeOut("fast").remove();
+                }
+                function validateFormInput(){
+                    if($('.uniform').value() === ''){
+                        $('.assistance.errorMsg').show();
+                    }
+                    return false;
+                }
+                $(document).ready(function() {
+                    resetValue();
+                    $('#tblConatctDetail input').attr('disabled','disabled');
+                });
+                function selectChkBox(objId) {
+                    var $container = $('div.contactpanelNew');
+                    if(objId == 'chk2') {
+                        try {
+                            $('#errorChkBox').hide();
+                            $container.find('input[type=checkbox]').each(function(e) {
+                                var $that = $(this);
+                                console.log($that.attr('id'));
+                                if ($that.attr('id') !== 'chk2') {
+                                    $that.prop('checked', false);
+                                }
+                            });
+
+                            if($("#chk2").prop('checked') === true) {
+                                $('#tblConatctDetail input:not(.callbackInput)').removeAttr('disabled');
+                                $(".fname").removeClass("disableCls");
+                                $(".lname").removeClass("disableCls");
+                                $(".phonenum").removeClass("disableCls");
+                                $(".phonenumext").removeClass("disableCls");//update 12/11/13 by India team
+                                $(".emailadd").attr('disabled','disabled');
+                            } else {
+                                resetValue();
+                            }
+                        } catch(x) {alert(x);}
+                    } else {
+                        try {
+                            $('#errorChkBox').hide();
+                            $('#errorChkBox1').hide();
+                            $container.find('input[type=checkbox]').each(function(e) {
+                                var $that = $(this);
+                                console.log($that.attr('id'));
+                                if ($that.attr('id') !== 'chk1') {
+                                    $that.prop('checked', false);
+                                }
+                            });
+                            resetValue();
+                        } catch(x) {alert(x);}
+                    }
+                }
+                function resetValue(){
+                    $('#tblConatctDetail input').attr('disabled','disabled');
+                    $('.fname').val("{!ConDetail.FirstName}");
+                    $('.lname').val("{!ConDetail.LastName}");
+                    $('.phonenum').val("{!ConDetail.Phone}");
+                    $('.emailadd').val("{!ConDetail.Email}");
+
+                    $(".fname").addClass("disableCls");
+                    $(".lname").addClass("disableCls");
+                    $(".phonenum").addClass("disableCls");
+                    $(".phonenumext").addClass("disableCls");
+                    $(".emailadd").addClass("disableCls");
+                }
+
+                function callbackClicked(cElem) {
+                    var clickedElem = $(cElem);
+                    if (clickedElem.attr('id') == 'cbNo' && clickedElem.attr('checked') === 'checked') {
+                        $('#cbYes').removeAttr('checked');
+                        $('.callbackInput').removeAttr('disabled');
+                        $(".callbackInput").removeClass("disableCls");
+                    }
+                    else {
+                        $('#cbNo').removeAttr('checked');
+                        $('.callbackInput').attr('disabled', 'disabled');
+                        $(".callbackInput").addClass("disableCls");
+                        $('.callbackInput').val($('.phonenum').val());
+                    }
+                    clickedElem.attr('checked', 'checked');
+                }
+                function showOverlay() {
+                    var o = document.getElementById('overlayNew');
+                    o.style.display = 'block';
+                }
+
+                function hideOverlay() {
+                    var o = document.getElementById('overlayNew');
+                    o.style.display = 'none';
+                }
+
+                function showOverlayMessage1() {
+                    var o = document.getElementById('overlayMessage');
+                    o.style.display = 'block';
+                }
+
+                function hideOverlayMessage1() {
+                    var o = document.getElementById('overlayMessage');
+                    o.style.display = 'none';
+                }
+
+                function closeBusyPopup(){
+
+                    $("[id$=agentsBusy]").css('display','none');
+                }
+                $('.rc-result-Article').pajinate({
+                    num_page_links_to_display : 10,
+                    items_per_page : 10,
+                    show_first_last: false
+                });
+
+                if({!isSubmitCase}){
+                    $("#NextCase").hide();
+                    $("#CaseDEtails").hide();
+                }
+
+                function showDiv() {
+                    window.onbeforeunload = null;
+                    window.unload = null;
+                    var isValid=$('[id$=CaseForm]').valid();
+                    if(isValid){
+                        $(".SubmitCaseDiv").show();
+                        showArticleList();
+                    }
+                }
+
+
+                function submitCaseDetail() {
+                    $('#overLay').show();
+                    submitCaseDetail1();
+
+                }
+                function getPortalQuestion(selectVal) {
+                    ifMessageRequired();
+                }
+                function openChat(window_src) {
+                    window.open(window_src, 'newwindow',
+                        config='toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no,'
+                            + 'directories=no, status=no');
+                }
+                function proceedToCaseForm(selectVal) {
+                    hideOverlayMessage1();
+                    callPortalQuestionAF();
+                }
+
+                function hideOverlayAndProceed(){
+                    hideOverlayMessage1();
+                    callPortalQuestionAF();
+                }
+
+                function executeOmnitureCode() {
+                    try {
+                        s.eVar51 ='Chat With Us';
+                        s.events="event31";
+                        s.t();
+                        //setFlagFalse(false);
+                    } catch(x) {}
+                }
+
+                (function() {
+
+                    var overlay11 = $('<div id="overlay11"></div>');
+                    $('.close').click(function(){
+                        $('.popup').hide();
+                        $('#overlay11').hide();
+                        //overlay11.appendTo(document.body).remove();
+                        return false;
+                    });
+                    $('.x').click(function(){
+                        $('.popup').hide();
+                        $('#overlay11').hide();
+                        $('#overlay11').hide();
+                        //overlay11.appendTo(document.body).remove();
+                        return false;
+                    });
+
+                    $('.click').click(function(){
+                        overlay11.show();
+                        overlay11.appendTo(document.body);
+                        $('#overlayMessage').hide();
+                        $('.popup').show();
+                        return false;
+                    });
+                    function openoverlay11(){
+                        overlay11.show();
+                        overlay11.appendTo(document.body);
+                        $('#overlayMessage').hide()
+                        $('.popup').show();
+                    }
+
+                    var lpc;//livePersonChat
+                    //var skill = 'Test Skill';//operator group
+                    var skill = 'Support - Inbound Chat';//operator group
+                    var isSafari = null;//hack for Safari for window.open
+                    function detectSafari()
+                    {
+                        if (null === isSafari) {
+                            isSafari = false;
+                            if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                                isSafari = true;
+                            }
+                        }
+                        return isSafari;
+                    }
+
+                    //called with lpChatConfig.onLoad()
+                    function myOnLoad()
+                    {
+                        lpc = new lpChat();
+                    }
+
+                    function myOnInit()
+                    {
+                        $('.livepersonblock1').css({'cursor': 'pointer'}).bind('click', function(e) {
+
+                            if (detectSafari()) {
+                                console.log('In side safari');
+                                window.livepersonChat = window.open('', 'ChatWindow', 'width=475,height=400,resizable=yes');
+                            }
+                            lpc.chatAvailability({skill: encodeURIComponent(skill)});
+                            console.log('out side safari');
+                        });
+                    }
+                    function myOnAvailability(availObj)
+                    {   if (true == availObj.availability) {
+                        s.eVar35="Online";
+                        s.events="event24";
+                        s.t();
+                        showChatWindow();
+                    } else {
+                        s.eVar35="Offline";
+                        s.events="event24";
+                        s.t();
+                        if (detectSafari()) {
+                            window.livepersonChat.close();
+                        }
+                        showOfflineForm();
+                    }
+                    }
+                    function myOnError(errorObj)
+                    {
+                        if ('undefined' != typeof (console)) {
+                            console.log('error received: ' + Obj.text);
+                        }
+                    }
+                    lpChatConfig =
+                        {
+                            apiKey : '8f0ffa355d2d428ab7450accae1bb8e0',
+                            lpNumber : '2417276',
+                            jsApiSrcDomain: 'sales.liveperson.net',
+                            onLoad : myOnLoad,
+                            onInit : myOnInit,
+                            onAvailability: myOnAvailability,
+                            onError: myOnError
+                        };
+                    lpChatConfig.closure = function()
+                    {
+                    }
+                    lpChatConfig.lpAddScript = function(src, ignore)
+                    {
+                        var c = lpChatConfig;
+                        if (typeof(c.lpProtocol) == 'undefined'){
+                            c.lpProtocol = "https";
+                        }
+                        if (typeof(src) == 'undefined' || typeof(src) == 'object') {
+                            //src = c.lpChatSrc ? c.lpChatSrc : '/hcp/html/lpChatAPI.js';
+                            src = c.lpChatSrc ? c.lpChatSrc : '/hcp/html/jschatapiv2.js';
+                        }
+                        if (src.indexOf('http') != 0) {
+                            src = c.lpProtocol + "://" + c.jsApiSrcDomain + src + '?site=' + c.lpNumber;
+                        } else {
+                            if (src.indexOf('site=') < 0) {
+                                if (src.indexOf('?') < 0) {
+                                    src = src + '?';
+                                } else {
+                                    src = src + '&';
+                                    src = src + 'site=' + c.lpNumber;
+                                }
+                            }
+                        }
+                        src = '{!URLFOR($Resource.LivePerson, 'livepersonapi.js')}';
+                        var s = document.createElement('script');
+                        s.setAttribute('type', 'text/javascript');
+                        s.setAttribute('charset', 'iso-8859-1');
+                        s.setAttribute('src', src);
+                        document.getElementsByTagName('head').item(0).appendChild(s);
+                        var done = false;
+                        s.onload= s.onreadystatechange=function() {
+                            if ( !done && (!this.readyState || this.readyState === "loaded" || this.readyState === "complete") ) {
+                                done = true;
+                                lpChatConfig.closure();
+                                s.onload = s.onreadystatechange = null;
+                            }
+                        };
+                    }
+                    var loadingTableWnd;
+                    function showOfflineForm()
+                    {
+                        openoverlay11();
+                    }
+                    function showChatWindow()
+                    {
+                        var url = 'http://server.iad.liveperson.net/hc/2417276/?cmd=file&file=visitorWantsToChat&site=2417276';
+                        url += '&SV!skill=' + encodeURIComponent(skill);
+                        url += '&referrer=' + escape(document.location);
+                        if (url.length > 2000) {
+                            url = url.substr(0, 2000);
+                        }
+                        if (!detectSafari()) {
+                            window.open(url, 'ChatWindow', 'width=475,height=400,resizable=yes');
+                        } else {
+                            window.livepersonChat.location.href = url;
+                            window.livepersonChat.focus();
+                        }
+                        window.open("{!$Site.BaseCustomUrl}","_self");
+                    }
+                    lpChatConfig.lpAddScript();
+                })();
+                showOrHide = 'false';
+
+                $(document).ready(function () {
+                    $('#emailDivC').hover(function () {
+                        if ($("#chk2").is(':checked')) {
+                            $('#popupInfo').stop(true, true).fadeIn(1);
+                        }
+                    }, function () {
+                        $('#popupInfo').stop(true, true).fadeOut(1000);
+                    });
+                    $('#popupInfo').hover(function () {
+                        if ($("#chk2").is(':checked')) {
+                            $('#popupInfo').stop(true, true).fadeIn(1);
+                        }
+                    }, function () {
+                        $('#popupInfo').stop(true, true).fadeOut(1000);
+                    });
+                });
+
+                function FormatNumber(phoneNum) {
+                    var sVal = '';
+                    var oldValue;
+                    var nVal = phoneNum.length;
+                    var sChar = '';
+                    oldValue = phoneNum;
+                    try {
+                        for (c = 0; c < nVal; c++) {
+                            sChar = phoneNum.charAt(c);
+                            nChar = sChar.charCodeAt(0);
+                            if ((nChar >= 48) && (nChar <= 57)) {
+                                sVal += phoneNum.charAt(c);
+                            }
+                        }
+                    } catch (exception) { //AlertError("Format Number",exception);
+                        sVal = oldValue;
+                    }
+                    if (sVal.length > 20) {
+                        try {
+                            oldValue = sVal;
+                            sVal = sVal.substring((sVal.length - 20));
+                        } catch (exception) {
+                            sVal = oldValue;
+                        }
+                    }
+                    return sVal;
+                }
+
+                function validateForm() {
+                    var isValid = $('[id$=CaseForm]').valid();
+                    if ((isValid) && (ValidateChkBox())) {
+                        showCaseUpdateDetail();
+                    } else {
+                        if (ValidateChkBox() === false) {
+                            var errorDiv = $('.errmsg:visible').first();
+                            var scrollPos1 = errorDiv.offset().top - 40;
+                            $(window).scrollTop(scrollPos1);
+                        }
+                        if (isValid === false) {
+                            var errorDiv = $('.errorMsg:visible').first();
+                            var scrollPos = errorDiv.offset().top - 60;
+                            $(window).scrollTop(scrollPos);
+                        }
+                    }
+                    return false;
+                }
+
+                function hideErrorDiv() {
+                    var d1 = document.getElementById('errorChkBox1');
+                    d1.style.display = 'none';
+                }
+                function ValidateChkBox() {
+                    var yes = $("#chk1").is(':checked'); //document.getElementById('chk1').checked;
+                    var no = $("#chk2").is(':checked');
+                    var d = document.getElementById('errorChkBox');
+                    var d1 = document.getElementById('errorChkBox1');
+                    if (yes == false && no == false) {
+                        //$("#errorChkBox").show();
+                        //("#errorChkBox1").hide();
+                        d.style.display = 'block';
+                        //d1.style.display ='none';
+                        return false;
+                    } else if (no == true) {
+                        var fnameCurrent = "{!ConDetail.FirstName}";
+                        var LnameCurrent = "{!ConDetail.LastName}";
+                        var PhoneCurrent = "{!ConDetail.Phone}";
+                        var EmailCurrent = "{!ConDetail.Email}";
+
+                        var fnameChange = $(".fname").val();
+                        var LnameChange = $(".lname").val();
+                        var PhoneChange = $(".phonenum").val();
+                        var EmailChange = $(".emailadd").val();
+
+                        if ((fnameCurrent != fnameChange)
+                            || (LnameCurrent != LnameChange)
+                            || (PhoneCurrent != PhoneChange)
+                            || (EmailCurrent != EmailChange)) {
+                            return true;
+                        } else {
+
+                            d1.style.display = "block";
+                            d.style.display = "none";
+                            return false;
+                        }
+
+                    } else {
+                        d1.style.display = "none";
+                        d.style.display = "none";
+                        return true;
+                    }
+                }
+
+                function isGdprRequest() {
+                    return $('[id="{!$Component.CaseForm.assistancelabel}"]').val() === 'GDPR Request';
+                }
+
+                function isGdprRequest(val) {
+                    return val === 'GDPR Request';
+                }
+
+                function checkAssistanceVal(selVal) {
+                    if (selVal != '') {
+                        closewin();
+                        if (isGdprRequest(selVal) === true) {
+                            $('#gdprContainer').show();
+                            $("#container3").hide();
+                            $("#container4").hide();
+                            $('.selectOptionMs').hide();
+                            $('div.severity').hide();
+                            $('div.subject-case').hide();
+                            $('div.description-ta').hide();
+                        }
+                        else if (selVal === 'Sales Inquiry or Upgrade') {
+                            $("#container2").hide();
+                            $("#container3").show();
+                            $("#container4").hide();
+                            $('#gdprContainer').hide();
+                            $('.selectOptionMs').show();
+                            $('div.severity').show();
+                            $('div.subject-case').show();
+                            $('div.description-ta').show();
+                        }
+                        else if (selVal === 'Service Downgrade or Cancellation') {
+                            $("#container2").hide();
+                            $("#container3").hide();
+                            $("#container4").show();
+                            $('#gdprContainer').hide();
+                            $('.selectOptionMs').show();
+                            $('div.severity').show();
+                            $('div.subject-case').show();
+                            $('div.description-ta').show();
+                        }
+                        else {
+                            $("#container2").show();
+                            $("#container3").hide();
+                            $("#container4").hide();
+                            $('#gdprContainer').hide();
+                            $('.selectOptionMs').show();
+                            $('div.severity').show();
+                            $('div.subject-case').show();
+                            $('div.description-ta').show();
+                        }
+                    }
+                    else {
+                        $("#container2").show();
+                        $("#container3").hide();
+                        $("#container4").hide();
+                        $('#gdprContainer').hide();
+                        $('.selectOptionMs').show();
+                        $('div.severity').show();
+                        $('div.subject-case').show();
+                        $('div.description-ta').show();
+                    }
+                    callFirstLevelChange(selVal);
+                }
+
+                if ('{!selectedProduct2}' != '') {
+                    $('.level2').show();
+                }
+                if ('{!selectedProduct3}' != '') {
+                    $('.level3').show();
+                }
+
+                function callFirstLevelChange(selVal) {
+                    $('.level2').hide();
+                    $('.level3').hide();
+                    $('.select2').empty();
+                    $('.select2').prev().html('Please select product issue');
+                    getOptionsLevel2(selVal);
+                    if (isGdprRequest(selVal) === true) {
+                        $(document.getElementById('{!$Component.CaseForm.subjectlabel}')).val('');
+                        $(document.getElementById('{!$Component.CaseForm.descriptionlabel}')).val('');
+                    }
+                }
+
+                function callIfMessageRequired(selVal) {
+                    if (isGdprRequest(selVal) === false) {
+                        ifMessageRequired();
+                    }
+                }
+
+
+                $(document).ready(function () {
+                    $('.form-new-case').validate({
+                        rules: {
+                            "{!$Component.CaseForm.assistancelabel}": "required",
+                            "{!$Component.CaseForm.assistancelabel2}": "required",
+                            "{!$Component.CaseForm.assistancelabel3}": "required",
+                            "{!$Component.CaseForm.severitylabel}": "required",
+                            "{!$Component.CaseForm.subjectlabel}": "required",
+                            "{!$Component.CaseForm.descriptionlabel}": "required",
+                            "{!$Component.CaseForm.lastName2}": "required",
+                            "{!$Component.CaseForm.firstName2}": "required",
+                            "{!$Component.CaseForm.contactNumber}": {
+                                required: true,
+                                // phoneUS: true
+                            },
+
+                            "{!$Component.CaseForm.emailAddress2}": {
+                                required: true,
+                                email: true
+                            },
+                            "{!$Component.CaseForm.gdpr_FirstName}": "required",
+                            "{!$Component.CaseForm.gdpr_LastName}": "required",
+                            "{!$Component.CaseForm.gdpr_Email}": {
+                                required: true,
+                                email: true
+                            },
+                            "{!$Component.CaseForm.gdpr_EuCitizen}": "required"
+                        },
+                        messages: {
+                            "{!$Component.CaseForm.assistancelabel}": "Please enter a value",
+                            "{!$Component.CaseForm.assistancelabel2}": "Please enter a value",
+                            "{!$Component.CaseForm.assistancelabel3}": "Please enter a value",
+                            "{!$Component.CaseForm.severitylabel}": "Please enter a value",
+                            "{!$Component.CaseForm.subjectlabel}": "Please enter a subject",
+                            "{!$Component.CaseForm.descriptionlabel}": "Please enter a description",
+                            "{!$Component.CaseForm.lastName2}": "Please enter a value",
+                            "{!$Component.CaseForm.firstName2}": "Please enter a value",
+                            "{!$Component.CaseForm.contactNumber}": {
+                                required: "Please enter a value",
+                                // phoneUS:"Please specify a valid phone number"
+                            },
+                            "{!$Component.CaseForm.emailAddress2}": {
+                                required: "We need your email address to contact you",
+                                email: "Your email address must be in the format of name@domain.com"
+                            },
+                            "{!$Component.CaseForm.gdpr_FirstName}": "Please enter a value",
+                            "{!$Component.CaseForm.gdpr_LastName}": "Please enter a value",
+                            "{!$Component.CaseForm.gdpr_Email}": "Please enter an email in the format of name@domain.name",
+                            "{!$Component.CaseForm.gdpr_EuCitizen}": "This checkbox is required"
+                        },
+                        errorPlacement: function (error, element) { //alert(element.attr("name"));
+                            if (element.attr("name") == "{!$Component.CaseForm.assistancelabel}"
+                                || element.attr("name") == "{!$Component.CaseForm.assistancelabel2}"
+                                || element.attr("name") == "{!$Component.CaseForm.assistancelabel3}") {
+                                error.appendTo(element.parent("div").next("div"));
+                            } else if (element.attr("name") == "{!$Component.CaseForm.severitylabel}"
+                                || element.attr("name") == "{!$Component.CaseForm.emailAddress2}"
+                                || element.attr("name") == "{!$Component.CaseForm.lastName2}"
+                                || element.attr("name") == "{!$Component.CaseForm.firstName2}"
+                                || element.attr("name") == "{!$Component.CaseForm.contactNumber}") {
+                                error.appendTo(element.parent("div").next("div"));
+                            } else if (element.attr("id").indexOf("gdpr") > -1) {
+                                error.insertAfter(element.siblings('label'));
+                            } else {
+                                error.appendTo(element.next("div"));
+                            }
+                        }
+                    });
+                });
+
+                $(function () {
+                    $(".uniform").uniform();
+                    $('[id="{!$Component.CaseForm.gdpr_DataDelete}"]').click(showHideGdprRetainFlags);
+                });
+
+                function showHideGdprRetainFlags(e) {
+                    var show = $(e.currentTarget).prop('checked');
+                    $('#gdprRetainDataContainer').toggle(show);
+                    if (show === false) {
+                        $('[id="{!$Component.CaseForm.gdpr_DataDeleteRetainAnalytics}"]').prop('checked', false);
+                        $('[id="{!$Component.CaseForm.gdpr_DataDeleteRetainGlip}"]').prop('checked', false);
+                    }
+                }
+
+                /* Method to get dependent list values */
+
+                function getDependentOptions(objName, ctrlFieldName, depFieldName) {
+                    // Isolate the Describe info for the relevant fields
+                    var objDesc = sforce.connection.describeSObject(objName);
+                    var ctrlFieldDesc,
+                        depFieldDesc;
+                    var found = 0;
+                    for (var i = 0; i < objDesc.fields.length; i++) {
+                        var f = objDesc.fields[i];
+                        if (f.name == ctrlFieldName) {
+                            ctrlFieldDesc = f;
+                            found++;
+                        } else if (f.name == depFieldName) {
+                            depFieldDesc = f;
+                            found++;
+                        }
+                        if (found == 2)
+                            break;
+                    }
+
+                    // Set up return object
+                    var dependentOptions = {};
+                    var ctrlValues = ctrlFieldDesc.picklistValues;
+                    for (var i = 0; i < ctrlValues.length; i++) {
+                        dependentOptions[ctrlValues[i].label] = [];
+                    }
+
+                    var base64 = new sforce.Base64Binary("");
+                    function testBit(validFor, pos) {
+                        var byteToCheck = Math.floor(pos / 8);
+                        var bit = 7 - (pos % 8);
+                        return ((Math.pow(2, bit) & validFor.charCodeAt(byteToCheck)) >> bit) == 1;
+                    }
+
+                    // For each dependent value, check whether it is valid for each controlling value
+                    var depValues = depFieldDesc.picklistValues;
+                    for (var i = 0; i < depValues.length; i++) {
+                        var thisOption = depValues[i];
+                        var validForDec = base64.decode(thisOption.validFor);
+                        for (var ctrlValue = 0; ctrlValue < ctrlValues.length; ctrlValue++) {
+                            if (testBit(validForDec, ctrlValue)) {
+                                dependentOptions[ctrlValues[ctrlValue].label].push(thisOption.label);
+                            }
+                        }
+                    }
+                    return dependentOptions;
+                }
+
+                function getOptionsLevel2(selVal) {
+                    var OBJ_NAME = 'Case';
+                    var CTRL_FIELD_NAME = "Product_Assistance__c";
+                    var DEP_FIELD_NAME = "Product_Assistance_Lvl2__c";
+                    var options = getDependentOptions(OBJ_NAME, CTRL_FIELD_NAME, DEP_FIELD_NAME);
+                    var depValue = options[selVal];
+                    var options1 = '';
+                    options1 += "<option value='' >Please select product issue</option>";
+                    var showCount = 0;
+                    for (var i = 0; i < depValue.length; i++) {
+                        options1 += '<option value="' + depValue[i] + '">' + depValue[i] + '</option>';
+                        ++showCount;
+                    }
+                    if (options1.length != 0) {
+                        $('.select2').html(options1);
+                    }
+                    if (showCount != 0) {
+                        $('.level2').show();
+                    }
+                    console.debug(options);
+                }
+
+                function getOptionsLevel3(selVal) {
+                    //alert('In');
+                    // clear old values
+                    $('.level3').hide();
+                    $('.select3').empty();
+                    //console.log('===>'+$('.select3').val());
+                    var vals = selVal;
+                    var optionsExist = 'false';
+                    var OBJ_NAME = 'Case';
+                    var CTRL_FIELD_NAME = "Product_Assistance_Lvl2__c";
+                    var DEP_FIELD_NAME = "Product_Assistance_Lvl3__c";
+                    var options = getDependentOptions(OBJ_NAME, CTRL_FIELD_NAME, DEP_FIELD_NAME);
+                    console.log('selVal=' + selVal + '==');
+                    var depValue = options[selVal];
+                    var options1 = '';
+                    options1 += "<option value='Please select product issue' >Please select product issue</option>";
+                    var showCount = 0;
+                    if (depValue && depValue != undefined && depValue.length != 0) {
+                        console.log(depValue);
+                        $('.select3').prev().html('Please select product issue');
+                        $(".select3").append($('<option selected="true"></option>').val("Please select product issue").html("Please select product issue"));
+                        for (var i = 0; i < depValue.length; i++) {
+                            ++showCount;
+                            $(".select3").append($('<option></option>').val(depValue[i]).html(depValue[i]));
+
+                        }
+                    }
+
+                    if (showCount != 0) {
+                        optionsExist = 'true';
+                        $('.level3').show();
+                    }
+                    return optionsExist;
+
+                }
+
+                function getOptionsLevel4(selVal) {
+                    return 'false';
+                }
+
+                function getDescStorageKey() {
+                    return 'SF_CASE_DESC';
+                }
+
+                function storeDescriptionValue() {
+                    var val = $('.desc').val();
+                    if (val && val.length > 1) {
+                        window.sessionStorage.setItem(getDescStorageKey(), val);
+                    }
+                }
+
+                function restoreDescriptionValue() {
+                    var val = window.sessionStorage.getItem(getDescStorageKey());
+                    if (val) {
+                        var ctrl = $('.desc');
+                        var currentVal = ctrl.val();
+                        if (ctrl && ctrl.length > 1) {
+                            val += '\n\n' + currentVal;
+                        }
+                        ctrl.val(val);
+                        window.sessionStorage.removeItem(getDescStorageKey());
+                    }
+                }
+            </script>
+            <style>
+                * {
+                    box-sizing: border-box;
+                }
+                body { overflow-y: hidden;}
+                #caseUpdate {
+                    left: 0 !important;
+                    top: 0 !important;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 10000;
+                    position: fixed;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .sever-def {
+                    max-width: 550px;
+                }
+                #cboxOverlay{background:#000;}
+                #fade {
+                    display: none;
+                    background: #000;
+                    position: fixed; left: 0; top: 0;
+                    z-index: 9999;
+                    width: 100%;
+                    max-width: 1200px;
+                    border-radius: 10px;
+                    height: 100%;
+                    opacity: .65;
+                }
+                .errorMsg {
+                    display:inline;
+                }
+                .contactMsgPanel label { display:inline !important;}
+                .rc-result-Article .page_navigation .next_link, .rc-result-Article .page_navigation .previous_link {
+                    color: #000;
+                    margin: 0px;
+                }
+                .rc-result-Article .page_navigation a {
+                    font-size: 12px;
+                    margin: 0 10px;
+                }
+                .rc-result-Article .active_page {
+                    background: url({!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/sprite.png')}) 0 -477px no-repeat;
+                color: #333333;
+                }
+                .rc-result-Article .page_link {
+                    width: 23px;
+                    height: 23px;
+                    display: inline-block;
+                    line-height: 23px;
+                    text-align: center;
+                    margin-left: 5px;
+                }
+                .rc-result-Article .page_navigation {
+                    margin-top: 30px;
+                }
+                .rc-result-Article .no_more {
+                    color: #cecece !important;
+                    cursor: default !important;
+                    text-decoration: none !important;
+                    margin-left: 5px;
+                }
+                .form-new-case label, .callbackLabel {
+                    font-size:14px !important;
+                }
+                .severity-call {
+                    font-size:13px !important;
+                }
+
+                .form-new-case .selector span {
+                    color: #778899;
+                    font-size:13px;
+                }
+                .example {
+                    padding-top:5px;
+                    font-size:13px;
+                }
+                .sever-def dd {
+                    width:550px !important;
+                }
+                #tblConatctDetail input[type="text"]{
+                    width: 214px !important;
+                }
+                #disabledDiv input[type="text"]{
+                    width: 214px !important;
+                }
+                .labelTd{
+                    text-align:right;
+                    width:75px;
+                }
+                .defaultText {
+                    width: 214px !important;
+                }
+                .contactpanel {
+                    width:auto;
+                    height:auto;
+                    margin:auto;
+                    background: url('{!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/LC-DD-three-column.png')}') 0 140px no-repeat;
+                    padding-bottom:30px;
+                    margin-left: 0px;
+                    width:657px;
+                    margin-top: -25px;
+                }
+                .contactpanelNew {
+                    width:auto;
+                    margin:auto;
+                    position: relative;
+                    margin-left: 0px;
+                    width:657px;
+                    margin-top: -25px;
+                    margin-bottom: 20px;
+                }
+                .contactpanelNew:after {
+                    content: '';
+                    background: url(/support/resource/1522950329000/RCSupportPortal/supportPortal/img/LC-DD-three-column.png) no-repeat;
+                    width: 100%;
+                    height: 9px;
+                    position: absolute;
+                    bottom: -23px;
+                    left: 0;
+                }
+                input[type="radio"], input[type="checkbox"] { border:none; }
+
+                .defaultText {
+                    width: 275px;
+                    border-radius: 5px !important;
+                    padding-left: 7px;
+                    height: 22px;
+                    border : 1px solid #A5A6A5 !important;
+                    color:#474747;
+                    font-weight:bolder;
+                    box-shadow:0px 1px 19px 0px lightgray inset;
+                }
+
+                .defaultTextActive {
+                    color: #9A9A9A;
+                    font-style: italic;
+                    width: 275px;
+                    border-radius: 10px;
+                    padding-left: 7px;
+                    height: 22px;
+                    border : 1px solid #A5A6A5;
+                    font-weight:normal;
+                }
+                .textlabel {
+                    color: #084B8A;
+                    font-size: 13px;
+                }
+                .labelClass {
+                    border: 1px solid lightgray;
+                    box-shadow: 0px 0px 15px 0px lightgray inset;
+                    border-radius:5px;
+                    margin-bottom:10px;
+                }
+                label.error{
+                    margin-left: 0px;
+                }
+                .disableCls {
+                    background:#FAFAFA !important;
+                }
+                .uniform:focus {
+                    border: 1px solid #ccc !important;
+                }
+                .helpInfoPanel {
+                    margin-top:10px;
+                    position: absolute;
+                    width: 300px;
+                    border: 1px solid orange;
+                    border-radius: 4px;
+                    color: white;
+                    opacity: 0.9;
+                    z-index: 99;
+                }
+                .helpInfoContent {
+                    background: white;
+                    padding: 20px;
+                    color : #797979;
+                    box-shadow: 1px 1px 60px 2px white inset;
+                    border-radius: 12px;
+                    -moz-border-radius: 12px;
+                    -webkit-border-radius: 12px;
+                    behavior: url("{!URLFOR($Resource.RCSupportPortal, 'supportPortal/PIE.htc')}");
+                }
+
+                div.helpInfoPanel:after {
+                    content: "";
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    border-width: 10px;
+                    border-style: solid;
+                    border-color: transparent transparent #999 transparent;
+                    top: -21px;
+                    left: 10px;
+                }
+
+                .arrow_box {
+                    position: absolute;
+                    background: white;
+                    border: 2px solid orange;
+                    width: 300px;
+                    opacity: 0.9;
+                    z-index: 99;
+                    left: 106%;
+                    top: -18%;
+                    border-radius: 12px;
+                    -moz-border-radius: 12px;
+                    -webkit-border-radius: 12px;
+                    behavior: url("{!URLFOR($Resource.RCSupportPortal, 'supportPortal/PIE.htc')}");
+                }
+                .arrow_box:after, .arrow_box:before {
+                    right: 100%;
+                    border: solid transparent;
+                    content: " ";
+                    height: 0;
+                    width: 0;
+                    position: absolute;
+                    pointer-events: none;
+                }
+                .arrow_box:after {
+                    border-color: rgba(0, 0, 0, 0);
+                    border-right-color: white;
+                    border-width: 12px;
+                    top: 50%;
+                    margin-top: -12px;
+                }
+                .arrow_box:before {
+                    border-color: rgba(0, 0, 0, 0);
+                    border-right-color: orange;
+                    border-width: 15px;
+                    top: 50%;
+                    margin-top: -15px;
+                }
+
+                #overlayNew {
+                    background: no-repeat scroll top center gray;
+                    border: 0px solid #000000;
+                    bottom: 0;
+                    left: 0;
+                    opacity: 0.75;
+                    position: absolute;
+                    top: 0;
+                    display: none;
+                    width: 100%;
+                    z-index: 1000;
+                    height:1000px;
+                }
+
+                .textDiv{
+                    font-family: Helvetica Neue, Arial, Helvetica, sans-serif;
+                    font-weight: normal;
+                    color: #777;
+                    width: 616px;
+                    padding-left: 13px;
+                    margin-left: 0px;
+                    background: rgb(252, 252, 252);
+                    -moz-border-radius: 3px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    text-align: left;
+                    border : 1px solid gray;
+                    padding-bottom:12px;
+                    padding-top:13px;
+                    display:none;
+                }
+
+                .fancybox-close {
+                    position: absolute;
+                    top: -20px;
+                    right: -20px;
+                    width: 36px;
+                    height: 36px;
+                    cursor: pointer;
+                    z-index: 8040;
+                    zIndex:8040;
+                    background-image:URL("{!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/fancybox_sprite.png')}");
+                }
+                .Chat_OfflineMsg {
+                    background: url('{!URLFOR($Resource.RCSupportPortal, 'supportPortal/img/icon_2.png')}') no-repeat scroll transparent;
+                    display: block;
+                    height: 200px;
+                    float: right;
+                    width: 200px;
+                    position: absolute;
+                    margin-left: 260px;
+                }
+
+                .chat-content{
+                    width: 240px;
+                    float: left;
+                }
+
+                .popup{
+                    width: 900px;
+                    margin-top: -100px;
+                    margin-left: 50px;
+                    display: none;
+                    position: fixed;
+                    z-index: 99;
+                }
+
+                .chat-wrapper{
+                    width: 300px;
+                    padding: 20px;
+                    position: fixed;
+                }
+
+                .content{
+                    min-width: 416px;
+                    width: 374px;
+                    min-height: 165px;
+                    margin: 50px auto;
+                    background: #f3f3f3;
+                    position: relative;
+                    z-index: 103;
+                    padding: 10px;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 5px #000;
+                }
+                .bg_wrapper{
+
+                    z-index: 0000 !important;
+                }
+                .gdpr-container {
+                    margin: 25px 0;
+                    display: none;
+                    height: auto;
+                }
+                .gdpr-row-header {
+                    margin: 15px 0 10px 0;
+                }
+                .gdpr-row-header h3 {
+                    color: #797979;
+                }
+                .gdpr-row-100 {
+                    width: 100%;
+                    height: auto;
+                }
+                .gdpr-row-30 {
+                    width: 30%;
+                    float: left;
+                    height: auto;
+                }
+                .gdpr-col-315 {
+                    width: 315px;
+                    display: inline-block;
+                    padding: 0 0 5px;
+                }
+                .gdpr-col-100 {
+                    width: 100%;
+                    float: left;
+                    padding: 0 0 5px;
+                }
+                .gdpr-input-text {
+                    width: 250px !important;;
+                }
+                .gdpr-input-textarea {
+                    height: 5em !important;
+                }
+                .gdpr-lable-inline {
+                    display: inline-block !important;
+                    margin-left: 10px;
+                }
+                .bodyHidden{
+                    overflow:hidden;
+                }
+                .form-new-case .NextCase .selector {
+                    width: 635px !important;
+                }
+                .form-new-case .NextCase .selector span {
+                    width: 622px !important;
+                }
+                .new-case {
+                    margin-bottom: 0;
+                }
+            </style>
+            <apex:variable var="count1" value="{!1}" />
+            <div class="new-case">
+                <apex:form styleclass="form-new-case" id="CaseForm" forceSSL="{!isGuestUser}">
+                    <apex:outputPanel styleclass="btnContainer pr-270" style="display:block;" rendered="{!!isSubmitCase}" >
+                        <div class="contactpanelNew" style="margin-top:0;">
+                            <div style="width:100%;">
+                                <label style="color:#797979;cursor:default;">
+                                    <h3>Please contact me at:</h3>
+                                </label>
+                            </div>
+                            <div style="width:100%;">
+                                <div style="width:100%;">
+                                    <div style="float:left;"><h4 style="color:#797979;"> The below contact information is correct:</h4></div>
+                                    <div>
+                                        <input type="checkbox" onclick="selectChkBox('chk1');" id="chk1" style="color:#797979;margin-left: 10px;margin-right: 2px;" value="yes" />Yes
+                                        <input type="checkbox"  id="chk2" onclick="selectChkBox('chk2');" style="color:#797979;margin-left: 10px;margin-right: 2px;" value="no" />No
+                                    </div>
+                                </div>
+                                <div id="errorChkBox" class="errmsg" style ="color:red;font-style: italic;font-size: 14px !important;display:none;width:100%;" >
+                                    Please indicate if your contact information is correct or not.
+                                </div>
+                                <div id="errorChkBox1" class="errmsg" style ="color:red;font-style: italic;font-size: 14px !important;display:none;width:100%;" >
+                                    Please update your contact information.
+                                </div>
+                            </div>
+                            <div id='tblConatctDetail' style="display: flex;flex-direction: column;">
+                                <div>
+                                    <div style='float:left;'>
+                                        <div>
+                                            <apex:outputLabel style="margin-left:0px;" styleclass="textlabel" value="First Name:" for="firstName2"/>
+                                            <apex:inputText styleclass="uniform fname" title="First Name" id="firstName2" value="{!ConDetail.FirstName}" maxlength="40" onclick="hideErrorDiv()"/>
+                                        </div>
+                                        <div  class="errorMsg" style='padding:0px;'></div>
+                                    </div>
+                                    <div style='margin-left: 315px;'>
+                                        <div>
+                                            <apex:outputLabel style="margin-left:0px;" styleclass="textlabel" value="Last Name:" for="lastName2"/>
+                                            <apex:inputText styleclass="uniform lname" title="Last Name" id="lastName2" value="{!ConDetail.LastName}"   maxlength="80" onclick="hideErrorDiv()"/>
+                                        </div>
+                                        <div  class="errorMsg" style='padding:0px;'></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style='float:left;position:relative;' class="emailDivP">
+                                        <div class="emailDiv" id="emailDiv">
+                                            <div style="float:left;" id="emailDivC">
+                                                <apex:outputLabel style="margin-left:0px;" styleclass="textlabel" value="Email Address:" for="emailAddress2"/>
+                                                <apex:inputText styleclass="uniform emailadd"  title="Email Address" id="emailAddress2" value="{!ConDetail.Email}" disabled="true" onkeydown="return false;" maxlength="255" onclick="hideErrorDiv()"  /> <!-- onmouseout="document.getElementById('popupInfo').style.display='none';" onmouseover="document.getElementById('popupInfo').style.display='';" -->
+                                            </div>
+                                            <div id="popupInfo" style="display:none;" class="arrow_box">
+                                                <div class="helpInfoContent">
+                                                    <p>To update your email address, go to <b>
+                                                            <apex:OutputPanel rendered="{!language == 'en_US'}" >
+                                                                <a href="http://service.ringcentral.com" target="_top">
+                                                                    http://service.ringcentral.com</a>
+                                                            </apex:OutputPanel>
+                                                            <apex:OutputPanel rendered="{!language == 'en_GB'}" >
+                                                                <a href="http://service.ringcentral.co.uk"  target="_top">
+                                                                    http://service.ringcentral.co.uk</a>
+                                                            </apex:OutputPanel>
+                                                        </b> and click
+                                                        '<b>My Settings</b>' on the menu bar,  then on your name and extension on the left. Update your email in the middle
+                                                        column, and click <b>save</b>.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div  class="errorMsg" style='padding:0px;'></div>
+                                    </div>
+                                    <div style='margin-left: 315px;' >
+                                        <div style='float:left;'>
+                                            <apex:outputLabel style="margin-left:0px;" styleclass="textlabel" value="Phone:" for="contactNumber"/>
+                                            <apex:inputText styleclass="uniform phonenum"  title="Phone" id="contactNumber" value="{!ConDetail.Phone}" onblur="this.value=FormatNumber(this.value);" maxlength="255" onclick="hideErrorDiv()"/>
+                                        </div>
+                                        <div  class="errorMsg" style='padding:0px;float:left'></div>
+                                        <div style='margin-left:245px;'>
+                                            <apex:outputLabel style="margin-left:0px;" styleclass="textlabel" value="Extension:" for="contactPhoneExt"/>
+                                            <apex:inputText style="width: 75px !important;" styleclass="uniform phonenumext"  title="Extension" id="contactPhoneExt" onblur="this.value=FormatNumber(this.value);"  maxlength="5" onclick="hideErrorDiv()" value="{!PhoneExt}" />
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style='float:left;position:relative;'>
+
+                                    </div>
+                                    <div style='margin-left: 315px; margin-top: 10px;'>
+                                        <div class="callbackLabel">
+                                            Callback number is the same as Phone number?
+                                        </div>
+                                        <div style="display: inline-block;">
+                                            <input type="checkbox" name="isCallbackYes" class="callBackchb" id="cbYes" onclick="callbackClicked($(this));"/>
+                                            <label for="isCallbackYes" style="margin-left:0px; display: inline-block;" class="textlabel">Yes</label>
+                                        </div>
+                                        <div style="display: inline-block;">
+                                            <input type="checkbox" name="isCallbackNo" class="callBackchb" id="cbNo" onclick="callbackClicked($(this));"/>
+                                            <label for="isCallbackNo" style="margin-left:0px; display: inline-block;" class="textlabel">No</label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div>
+                                    <div>
+
+                                    </div>
+                                    <div style='margin-left: 315px;'  class="callbackLabel">
+                                        Callback Number:
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <div style='float:left;position:relative;'>
+
+                                    </div>
+                                    <div style='margin-left: 315px;'>
+                                        <apex:inputText value="{!callbackNumber}" styleClass="callbackInput uniform phonenum text valid" onblur="this.value=FormatNumber(this.value);" maxlength="255"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <div >
+                        <apex:outputPanel rendered="{!!isSubmitCase}" >
+                            <div id="NextCase" class="NextCase">
+                                <div class="assistance">
+                                    <apex:outputlabel for="assistancelabel">I Need Assistance With <strong>(Privacy Requester: Please select GDPR Request here)</strong></apex:outputlabel>
+                                    <apex:selectList id="assistancelabel" styleclass="uniform selectWidth error"  multiselect="false" size="1" value="{!selectedProduct}"
+                                                     onchange="checkAssistanceVal(this.value);callIfMessageRequired(this.value); return false;">
+                                        <apex:selectOptions value="{!productAssistanceItems}" />
+                                    </apex:selectList>
+                                    <div  class="errorMsg"></div>
+                                </div>
+
+                                <div style="height:15px;"></div>
+
+                                <apex:outputPanel id="middlePL">
+
+                                    <script>
+                                        function populateOrGrayOut(){
+                                            if ({!flag}==true){
+                                                showOverlayMessage1();
+                                            }else{
+                                                callPortalQuestionAF();
+                                            }
+                                        }
+                                    </script>
+                                </apex:outputPanel>
+
+                                <div class="assistance level2" style="display:none;">
+                                    <script>
+                                        function jscallFunc(selVal){
+                                            showOverlay();
+                                            var optionsExist = getOptionsLevel3(selVal);
+                                            hideOverlay();
+                                        }
+                                    </script>
+
+                                    <apex:actionFunction name="ifMessageRequired" action="{!ifMessageRequired}"  reRender="middlePL" oncomplete="populateOrGrayOut();" status="Ajaxstatus">
+                                    </apex:actionFunction>
+                                    <apex:selectList id="assistancelabel2" styleclass="uniform selectWidth error select2"  multiselect="false" size="1"
+                                                     value="{!selectedProduct2}"
+                                                     onchange="jscallFunc(this.value); return false;">
+
+                                        <apex:selectOptions value="{!productAssistanceItemsLvl2}" />
+                                    </apex:selectList>
+                                    <div  class="errorMsg"></div>
+                                </div>
+
+                                <div class="level2" style="height:15px;display:none;"></div>
+                                <div class="assistance level3" style="display:none;">
+                                    <apex:selectList id="assistancelabel3" styleclass="uniform selectWidth error select3"  multiselect="false" size="1"
+                                                     value="{!selectedProduct3}">
+                                        <apex:selectOptions value="{!productAssistanceItemsLvl3}" />
+                                    </apex:selectList>
+                                    <div  class="errorMsg"></div>
+                                </div>
+                                <div class="level3" style="height:15px;display:none;"></div>
+                                <apex:outputPanel id="faxingSoftPhonic">
+                                    <script>
+                                        if('{!chkValue}' == 'true'){
+                                            $("[id$=container31]").css('display','block');
+                                        }else{
+                                            $("[id$=container31]").css('display','none');
+                                        }
+                                    </script>
+                                    <div class="textDiv" id="container31">
+                                        <apex:outputText value="{!strValue}" escape="false"/>
+                                    </div>
+                                </apex:outputPanel>
+                                <div class="selectOptionMs">** Note: This Developer Platform category specifically caters to Developers working with Platform APIs and Sandbox environment **</div>
+
+                                <div id="gdprContainer" class="gdpr-container">
+                                    <div class="gdpr-row-header"><h3>User Requiring Privacy Action</h3></div>
+                                    <div class="gdpr-row-100">
+                                        <div class="gdpr-col-315">
+                                            <apex:outputlabel for="gdpr_FirstName">First Name</apex:outputlabel>
+                                            <apex:inputText id="gdpr_FirstName" styleClass="uniform gdpr-input-text" value="{!GdprRequest.FirstName}"></apex:inputText>
+                                        </div>
+                                        <div class="gdpr-col-315">
+                                            <apex:outputlabel for="gdpr_LastName">Last Name</apex:outputlabel>
+                                            <apex:inputText id="gdpr_LastName" styleClass="uniform gdpr-input-text" value="{!GdprRequest.LastName}"></apex:inputText>
+                                        </div>
+                                    </div>
+                                    <div class="gdpr-row-100">
+                                        <div class="gdpr-col-315">
+                                            <apex:outputlabel for="gdpr_Email">Email of user requiring privacy action</apex:outputlabel>
+                                            <apex:inputText styleClass="uniform gdpr-input-text" id="gdpr_Email" value="{!GdprRequest.Email}"></apex:inputText>
+                                        </div>
+                                        <div class="gdpr-col-315">
+                                            <apex:outputlabel for="gdpr_Phone">RC Phone number (if applicable) of user requiring privacy action</apex:outputlabel>
+                                            <apex:inputText styleClass="uniform gdpr-input-text" id="gdpr_Phone" value="{!GdprRequest.RcPhone}" onblur="this.value=FormatNumber(this.value);" ></apex:inputText>
+                                        </div>
+                                    </div>
+                                    <div class="gdpr-row-100">
+                                        <apex:inputCheckbox id="gdpr_EuCitizen" value="{!GdprRequest.EuCitizen}"></apex:inputCheckbox>
+                                        <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_EuCitizen">
+                                            Is this user a Citizen or legal resident within the EU (including UK)?
+                                        </apex:outputLabel>
+                                    </div>
+                                    <div class="gdpr-row-header"><h3>Describe Nature of Data Request</h3></div>
+                                    <div class="gdpr-row-30">
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataView"  value="{!GdprRequest.ViewRequest}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataView">View</apex:outputLabel>
+                                        </div>
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataChange" value="{!GdprRequest.ChangeRequest}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataChange">Change</apex:outputLabel>
+                                        </div>
+                                    </div>
+                                    <div class="gdpr-row-30">
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataDownload" value="{!GdprRequest.DownloadRequest}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataDownload">Download</apex:outputLabel>
+                                        </div>
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataDelete" value="{!GdprRequest.DeleteRequest}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataDelete">Delete</apex:outputLabel>
+                                        </div>
+                                    </div>
+                                    <div class="gdpr-row-30" id="gdprRetainDataContainer" style='display: none'>
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataDeleteRetainAnalytics" value="{!GdprRequest.RetainAnalytics}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataDeleteRetainAnalytics">Retain Analytics Data</apex:outputLabel>
+                                        </div>
+                                        <div class="gdpr-col-100">
+                                            <apex:inputCheckbox id="gdpr_DataDeleteRetainGlip" value="{!GdprRequest.RetainGlip}"></apex:inputCheckbox>
+                                            <apex:outputLabel styleClass="gdpr-lable-inline" for="gdpr_DataDeleteRetainGlip">Retain Glip Messages</apex:outputLabel>
+                                        </div>
+                                    </div>
+                                    <div style="clear: both"></div>
+                                    <div class="gdpr-row-100">
+                                        <apex:outputLabel for="gdpr_Commentaries">Comments (Please list examples)</apex:outputLabel>
+                                        <apex:inputTextArea styleClass="uniform gdpr-input-textarea" id="gdpr_Commentaries" value="{!GdprRequest.Comments}"></apex:inputTextArea>
+                                    </div>
+                                </div>
+
+                                <div class="uniform"  id ="container3"  style="font-family: Helvetica Neue, Arial, Helvetica, sans-serif;font-weight: normal;color: #777;border-top: solid 1px #ccc;border-left: solid 1px #ccc;padding-right: 37px;padding-left: 37px;border-bottom: solid 1px #ccc;background: rgb(252, 252, 252);border-right: solid 1px #ccc;-moz-border-radius:3px;border-radius: 10px; display:none;font-size: 15px;text-align:left;" >
+                                    <br/>
+                                    Thank you for your interest in obtaining RingCentral service for your business. Please contact us at:<br/> <br/>
+                                    800-574-5290 (U.S. and Canada)<br />
+                                    925-301-8209 (International)<br/>
+                                    <br />
+                                    Hours of operation are Monday-Friday 8:00am - 10:00pm ET. A customer sales agent will be happy to assist you with your business needs<br/>
+                                    <br/>
+                                </div>
+                                <div styleclass="assistance"  id ="container4" style="font-family: Helvetica Neue, Arial, Helvetica, sans-serif;font-weight: normal;color: #777;border-top: solid 1px #ccc;border-left: solid 1px #ccc;padding-right: 37px;padding-left: 37px;background: rgb(252, 252, 252);border-bottom: solid 1px #ccc;border-right: solid 1px #ccc;-moz-border-radius:3px;border-radius: 10px; display:none;font-size: 15px;text-align:left;" >
+                                    <br/>
+                                    Thank you for contacting RingCentral. Our hours of operation are Monday-Friday 6:00am - 6:00pm PT. <br/>
+                                    Please contact us at the number below during these hours or leave a message or agent will get back to you the next business day:<br/>
+                                    <br/>
+                                    866-733-0810 (U.S. and Canada)<br/>
+                                    925-271-7320 (International)<br/>
+                                    <br/>
+                                </div>
+                                <div styleclass="form-new-case"  id ="container2">
+                                    <div class="severity">
+                                        <apex:outputlabel for="severitylabel">Severity Level <!--<span class="star">*</span>
+                         --></apex:outputlabel>
+                                        <apex:selectList id="severitylabel" styleclass="uniform selectWidth" multiselect="false" size="1" value="{!severityLevel}" onchange="closewin();">
+                                            <apex:selectOptions value="{!caseSeverityItems}"/>
+                                        </apex:selectList>
+                                        <div  class="errorMsg"></div>
+                                        <a class="severity-def" href='javascript:void(0);' onclick='showSeverityDetail();'>Severity Definitions</a>
+                                        <!-- <span class="errorMsg">Please enter a value</span -->
+                                        <span class="severity-call">For Severity 1 cases, please call RingCentral directly. The support number can be found
+                        <a href="{!$Site.CurrentSiteUrl}RCCallSupport" class="anchor-ornge" target="_blank">here.</a></span>
+                                    </div>
+                                    <div class="subject-case">
+                                        <apex:outputlabel for="subjectlabel">Subject </apex:outputlabel>
+                                        <apex:inputField styleClass="uniform" value="{!caseObj.Subject}" id="subjectlabel" onkeydown="closewin();"/>
+                                        <div  class="errorMsg"></div>
+                                    </div>
+                                    <apex:outputpanel id="assistancePnl">
+                                        <div class="description-ta">
+                                            <apex:outputlabel for="descriptionlabel">Description</apex:outputlabel>
+                                            <apex:inputField id="descriptionlabel" styleClass="uniform desc" value="{!caseObj.Description}" onchange="closewin();"/>
+                                            <div  class="errorMsg"></div>
+                                        </div>
+                                    </apex:outputpanel>
+                                    <div class="file-upload">
+                                        <apex:outputlabel style="cursor:default;">You can add attachments after the case has been created.
+                                        </apex:outputlabel>
+                                    </div>
+                                    <div class="btnContainer pr-270">
+                                        <input type="submit" value="Next" class="primary-btn fr" onclick='return validateForm();'/>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputpanel id="showArticleList" rendered="{!isSubmitCase}">
+                            <apex:variable var="count" value="{!0}" />
+                            <knowledge:articleList articleVar="article"  hasMoreVar="hasMore"
+                                                   pageSize="1"
+                                                   categories="{!if(language == 'en_US' ,'Brand:RC_US,RCProductVersion:RC2013','Brand:RC_UK,RCProductVersion:RCUK2013')}"
+                                                   keyword="{!caseObj.Subject}">
+                                <apex:variable var="count" value="{!count+1}" />
+                            </knowledge:articleList>
+
+                            <apex:outputpanel rendered="{!isSubmitCase &&  count==0}">   <!-- rendered="{!isSubmitCase &&  (count==0&& count1>0)}">  -->
+                                No articles found.
+                            </apex:outputpanel>
+                            <div  class="SubmitCaseDiv" >
+                                <apex:outputpanel rendered="{!isSubmitCase && count>0}">   <!-- rendered="{!isSubmitCase && (count>0&& count1>0)}">  -->
+                                    <div id ="con1" class="submit-case1">
+                                        <h6>Before you submit a case, you might find the following information helpful:</h6>
+                                        <section class="submit-case-area">
+                                            <apex:variable var="count" value="{!0}" />
+                                            <knowledge:articleList articleVar="article"  hasMoreVar="hasMore"
+                                                                   pageSize="199"
+                                                                   categories="{!if(language == 'en_US' ,'Brand:RC_US,RCProductVersion:RC2013','Brand:RC_UK,RCProductVersion:RCUK2013')}"
+                                                                   keyword="'{!caseObj.Subject}'">
+                                                <apex:outputText escape="false" rendered="{!count==0 }" value='<div class="rc-result-Article"><section class="paginate" id="paginate">'/>
+
+                                                <apex:variable var="count" value="{!count+1}" />
+                                                <article class="article case-submit">
+
+                                                    <h4>
+                                                        <a class='articleLink' href="./s/article/{!article.UrlName}" target="_blank" title='{!article.title}'>{!article.title}</a>
+                                                    </h4>
+                                                    <p>{!article.abstract}<br/>
+                                                        Date Updated:
+                                                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                                            <apex:param value="{!article.LastModifiedDate}" />
+                                                        </apex:outputText>
+                                                        <br/></p>
+                                                </article>
+                                            </knowledge:articleList>
+                                            <apex:outputtext rendered="{!count>0}" escape='false' value='</section> <div class="page_navigation"></div></div>'/>
+                                            <div class="shadow-small">&nbsp;</div>
+                                        </section>
+                                    </div>
+                                </apex:outputpanel>
+                                <apex:outputText rendered="{!isSubmitCase && count>0  }" escape='false'> <!-- rendered="{!isSubmitCase && (count>0 && count1>0) }" escape='false'> -->
+                                    <div style='float:left;line-height:40px;font-weight:bold;padding-left:250px;'> Did the solution above help you solve your problem?</div>
+                                </apex:outputText>
+                                <div class="btnContainer" id="buttonSubmit">
+                                    <apex:outputpanel rendered="{!isSubmitCase  }"> <!-- rendered="{!isSubmitCase &&  count1>0} -->
+
+                                        <apex:commandButton value="Yes, Go Back" onclick="submitcase(0);showHomePage();return false;"  styleclass="primary-btn" rendered="{!isSubmitCase && count>0}"/>
+                                        <apex:commandButton onclick="submitcase(1);submitCaseDetail();return false;" value="{!IF(count>0,'No, ','')}Submit Case" styleclass="primary-btn" style="{!IF(count==0,'float:right','')}" />
+                                    </apex:outputpanel>
+                                </div>
+                            </div>
+
+                            <div id='overLay' style='display:none;'>
+                                <div class='overLay' style="display:block;z-index:99999;"></div>
+                                <div  class="loader-static" style='z-index:100000;'>
+                                    <div class="loader-static-panel">
+                                        <div style='margin-top:0px;font-weight:bold;'>We are creating your Case.  One moment please</div>
+                                    </div>
+                                    <div class="loader-fix"></div>
+                                </div>
+                            </div>
+                        </apex:outputpanel>
+                        <div id="overlayNew" style="text-align:center;padding-top:700px;">
+                            <apex:image value="{!$Resource.loading}" ></apex:image>
+                        </div>
+
+
+                        <div id="overlayMessage" style="text-align:center;padding-top:700px;display:none;">
+                            <div class='overLay' style="display:block;z-index:99999;zIndex:99999;"></div>
+                            <div  class="loader-static" style='z-index:100000;zIndex:100000;'>
+                                <div class="loader-static-panel" style="background-color:#e0e0e0; height:100px">
+                                    <a class="fancybox-item fancybox-close" href="javascript:void(0)" title="Close" onClick="hideOverlayMessage1();"></a>
+                                    <div style='margin-top:0px;font-weight:bold;'>
+                                        This issue is best handled through our Chat Support channel. Please click on the Chat button below for real time support or click on Web Case to create a case.
+                                        <br/>
+                                        <a class='livepersonblock1' onclick="openChat('https://success.ringcentral.com/liveagentprechatgcc');hideOverlayMessage1();">
+                                            <button type="button" class="primary-btn" style="margin-right: 55%;margin-top: 4%;" >
+                                                Chat
+                                            </button>
+                                        </a>
+                                        <button type="button" class="primary-btn" style="margin-right: 35%;margin-top: 4%;" onClick="proceedToCaseForm();">
+                                            Web Case
+                                        </button>
+                                        <!--                     <apex:commandButton value="Web Case" styleclass="primary-btn" onClick="proceedToCaseForm();"></apex:commandButton> -->
+                                    </div>
+                                </div>
+                                <div class="loader-fix"></div>
+                            </div>
+                        </div>
+                        <apex:actionFunction action="{!SummitCase}" name="submitCase" />
+                        <apex:actionFunction action="{!createCase}" name="submitCaseDetail1" />
+                        <apex:actionFunction action="{!showArticleList}" name="showArticleList" />
+                        <apex:actionStatus id="Ajaxstatus" onStart="showOverlay();" onstop="hideOverlay();"/>
+                        <apex:actionFunction name="callPortalQuestionAF" action="{!setPortalQuestion}" reRender="faxingSoftPhonic,assistancePnl"
+                                             status="Ajaxstatus" onbeforedomupdate="storeDescriptionValue();" oncomplete="restoreDescriptionValue();" />
+
+
+
+                        <apex:actionFunction name="setFlagFalse" action="{!flagValue}" >
+                            <apex:param name="param1" value="" assignTo="{!flag}"/>
+                        </apex:actionFunction>
+                    </div>
+                    <div id="caseUpdate"  style="display: none;">
+                        <div class="sever-def" style="width: 95% !important;height: 310px;">
+                            <div>
+                                <apex:image url="{!$Resource.RcLogo}" style="margin-left: 2%;margin-top: -19px; width:150px; height:60px;"/><br/>
+                                <apex:outputlabel style="margin-left: 2%;">The update on the case that you have created will be sent to this email address: </apex:outputlabel><br/>
+                                <apex:outputlabel id="primEmail"  value="{!$User.Email}" styleClass="uniform"
+                                                  style="color: #848481;padding: 5px 0px 10px 5px;margin-left: 2%;width: 69%;height: 30px;border-top: solid 1px #aaa;
+                                border-left: solid 1px #aaa;border-bottom: solid 1px #ccc;border-right: solid 1px #ccc;border-radius: 3px;
+                                background-color: #E4E4E4;"/>
+                            </div>
+                            <div>
+                                <apex:outputlabel for="secEmail" style="margin-left: 2%;">If the above email address will not reach the person managing this case,<br/> please provide an alternate email address: </apex:outputlabel><br/>
+
+                                <apex:inputText id="secEmail" value="{!alternateEmail}" onclick="hideErrorDiv()" styleClass="uniform" style="margin-left: 2%;width: 67%;"/>
+                                <div  class="errorMsg"></div>
+                            </div>
+                            <div>
+                                <input type="submit" value="Next" onclick="showDiv();return false;"
+                                       class="primary-btn fr" style="margin-right: 9%;margin-top: 4%;"/>
+                            </div>
+                            <br/>
+                            <a class="close" href='javascript:void(0);' onclick='hideCaseUpdateDetail();'>&nbsp;</a>
+                        </div>
+                    </div>
+                    <div id="Textpanel">
+                        <apex:outputpanel id="flagPanel" rendered="{!flag}">
+
+                            <script>
+
+                            </script>
+                        </apex:outputpanel>
+                    </div>
+                </apex:form>
+
+                <script>
+                    window.lpTag = window.lpTag || {};
+                    if (typeof window.lpTag._tagCount === "undefined") {
+                        window.lpTag = {
+                            site: "2417276",
+                            section: lpTag.section || '',
+                            autoStart: lpTag.autoStart || true,
+                            ovr: lpTag.ovr || {},
+                            _v: "1.4",
+                            _tagCount: 1,
+                            protocol: location.protocol,
+                            events: {
+                                bind: function (app, ev, fn) {
+                                    lpTag.defer(function () {
+                                        lpTag.events.bind(app, ev, fn)
+                                    }, 0)
+                                },
+                                trigger: function (app, ev, json) {
+                                    lpTag.defer(function () {
+                                        lpTag.events.trigger(app, ev, json)
+                                    }, 1)
+                                }
+                            },
+                            defer: function (fn, fnType) {
+                                if (fnType == 0) {
+                                    this._defB = this._defB || [];
+                                    this._defB.push(fn)
+                                } else if (fnType == 1) {
+                                    this._defT = this._defT || [];
+                                    this._defT.push(fn)
+                                } else {
+                                    this._defL = this._defL || [];
+                                    this._defL.push(fn)
+                                }
+                            },
+                            load: function (src, chr, id) {
+                                var t = this;
+                                setTimeout(function () {
+                                    t._load(src, chr, id)
+                                }, 0)
+                            },
+                            _load: function (src, chr, id) {
+                                var url = src;
+                                if (!src) {
+                                    url = this.protocol + "//" + ((this.ovr && this.ovr.domain) ? this.ovr.domain : "lptag.liveperson.net") + "/tag/tag.js?site=" + this.site
+                                }
+                                var s = document.createElement("script");
+                                s.setAttribute('charset', chr ? chr : "UTF-8");
+                                if (id) {
+                                    s.setAttribute("id", id)
+                                }
+                                s.setAttribute("src", url);
+                                document.getElementsByTagName('head').item(0).appendChild(s)
+                            },
+                            init: function () {
+                                this._timing = this._timing || {};
+                                this._timing.start = (new Date()).getTime();
+                                var that = this;
+                                if (typeof jQuery == 'undefined') {
+                                    if (window.addEventListener) {
+                                        window.addEventListener("DOMContentLoaded", function () {
+                                            that._domReady("contReady")
+                                        }, false);
+                                        window.addEventListener("load", function () {
+                                            that._domReady("domReady")
+                                        }, false)
+                                    } else {
+                                        window.attachEvent("onload", function () {
+                                            that._domReady("domReady")
+                                        })
+                                    }
+                                } else {
+                                    $(document).ready(function() {
+                                        that._domReady("domReady");
+                                    });
+                                }
+                                if (typeof (window._lptStop) == "undefined") {
+                                    this.load()
+                                }
+                            },
+                            _domReady: function (n) {
+                                if (!this.isDom) {
+                                    this.isDom = true;
+                                    this.events.trigger("LPT", "DOM_READY", { t: n})
+                                }
+                                this._timing[n] = (new Date()).getTime()
+                            }
+                        };
+                        lpTag.init();
+                    } else {
+                        window.lpTag._tagCount += 1
+                    }
+
+                </script>
+            </div>
+
+
+            <div id="Severity"  style="display: none; left: 20%; top: 7%; z-index: 10000; position:fixed;">
+                <div class="sever-def" style="width:750px !important;">
+                    <h5>Severity Definitions</h5>
+                    <dl>
+                        <dt>Level</dt>
+                        <dd>Definitions</dd>
+                        <dt>Level 1 - Critical</dt>
+                        <dd>
+                            <div>
+                                Critical issues affecting all users, including system unavailability with no workaround available.
+                            </div>
+                            <div class="example">Example: All users are impacted including calling/faxing/web navigation.</div>
+                        </dd>
+                        <dt>Level 2 - Urgent</dt>
+                        <dd>
+                            <div>Major functionality is impacted or significant performance degradation is experienced. Issue is persistent and affects many users
+                                and/or major functionality. No reasonable workaround available.
+                            </div>
+                            <div class="example">Example: Most users are impacted due to inadequate quality of services such as calls/faxes. Some feature and functionality are not operational affecting
+                                business/productivity severely with no work around available.
+                            </div>
+                        </dd>
+                        <dt>Level 3 - High</dt>
+                        <dd>
+                            <div>System performance issue or product issues affecting some, but not all users. Short term workaround is available,
+                                but not scalable.</div>
+                            <div class="example">Example: Calls and faxes are working but the setup of the system is undesirable.</div>
+                        </dd>
+                        <dt>Level 4 - Medium</dt>
+                        <dd>
+                            <div>Inquiry regarding a routine technical issue: information requested on system capabilities, navigation, installing or
+                                configuration and issue affecting a small number of users. Reasonable workaround available.
+                            </div>
+                            <div class="example">Example: All services are working as expected but looking into other features or options to route calls and faxes.
+                                This is including questions about how to use the product and where to find information.</div>
+                        </dd>
+                    </dl>
+                    <p>If you are looking to submit feedback about the product or user experience, please log into your account at
+                        <a href="https://service.ringcentral.com" target="_blank" style="text-decoration:underline;">https://service.ringcentral.com</a> and click the Feedback button
+                    </p>
+                    <br/>
+                    <a class="close" href='javascript:void(0);' onclick='hideSeverityDetail();'>&nbsp;</a>
+                </div>
+            </div>
+        </apex:define>
+    </apex:composition>
+</apex:page>

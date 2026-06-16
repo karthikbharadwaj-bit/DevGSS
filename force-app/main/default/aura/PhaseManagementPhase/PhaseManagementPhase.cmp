@@ -1,0 +1,519 @@
+<aura:component description="PhaseManagementPhase" controller="PhaseManagementController">
+
+    <!-- Attributes -->
+    <aura:attribute name="phase" type="Object" />
+    <aura:attribute name="app" type="Object" />
+    <aura:attribute name="isPhasesChanged" type="Boolean" default="false"
+                    description="Indicates that there are unsaved chages in phases"/>
+    <aura:attribute name="preventDeselection" type="Boolean" />
+    <aura:attribute name="phases" type="List" default="[]" />
+    <aura:attribute name="quote" type="Quote" />
+    <aura:attribute name="order" type="Order" />
+    <aura:attribute name="modalGuid" type="String" />
+    <aura:attribute name="userAccessInfo" type="Object" />
+    <aura:attribute name="rcVariousSettings" type="Object" />
+    <aura:attribute name="completionOptionLabel" type="String" />
+    <aura:attribute name="isNotValidCompletionDate" type="Boolean" default="true"/>
+    <aura:attribute name="isRestrictedChangeCompletionDate" type="Boolean" default="false"/>
+    <aura:attribute name="isNewChangeOrder" type="Boolean" />
+    <aura:attribute name="refreshInput"
+                    description="Used to update lightning:input for datepicker as far as errors can't be cleared for this element"
+                    default="true"
+                    type="boolean"/>
+    <aura:attribute name="parent" type="Aura.Component" required="true"/>
+    <aura:attribute name="userPermissions" type="Map" />
+    <aura:attribute name="timer" type="Integer" />
+    <aura:attribute name="hasSelectedCartItems" type="Boolean"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute access="private" name="completionOptions" type="List" default="[
+                                              {'label': 'Manual', 'value': 'Manual'},
+                                              {'label': 'Automated', 'value': 'Automated'}
+                                          ]"/>
+    <aura:attribute access="private" name="completionOption" type="String" />
+    <aura:attribute access="private" name="completionDate" type="String" />
+    <aura:attribute access="private" name="isUserCanRecall" type="Boolean" />
+    <aura:attribute access="private" name="isUserCanApproveReject" type="Boolean" />
+    <aura:attribute name="phaseTypes" type="List" />
+    <aura:attribute access="private" name="phaseTypeSelected" type="List" default=""/>
+
+    <!-- Component attributes for locations import via CSV -->
+    <aura:attribute name="locationsJsonList" type="Object" />
+    <aura:attribute name="locationsCsvTableColumns" type="List" />
+
+    <!-- Handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{! v.locationsJsonList }" action="{! c.onLocationsJsonChanged }"/>
+    <aura:handler name="change" value="{! v.phase.executedSignoff }" action="{! c.onExecutedSignoffChanged }"/>
+
+    <li class="{! join(' ', 'phase slds-is-relative',
+            v.phase.readyToDrop ? 'phase_has-drop' : '',
+            v.phase.isCollapsed ? 'phase_is-collapsed' : '',
+            empty(v.phase.sfid) ? 'phase_is-changed' : '',
+            (v.phase.isDeleted || (v.phase.record.Original_Phase__c != null &amp;&amp; v.phase.record.Status__c == 'Deleted' &amp;&amp; !v.phase.isHasOrder)) ? 'phase_is-deleted' : '',
+            v.phase.isComplete ? 'phase_is-complete' : '',
+            empty(v.phase.estimatedCompletionDate) ? 'phase_est-date-empty' : '',
+            v.phase.isEditEstComplDate ? 'phase_est-date-edit' : '',
+            v.phase.isCompleteInProgress ? 'phase_is-busy' : '',
+            v.phase.isEmptyError ? 'phase_is-empty-error' : '',
+            v.phase.isHasOrder ? 'phase_is-has-order' : '')}"
+        data-guid="{! v.phase.guid }"
+        data-sfid="{! v.phase.sfid }"
+        ondragenter="{! c.onDragEnter }"
+        ondragover="{! c.onDragOver }"
+        ondrop="{! c.onDropInto }">
+
+        <lightning:spinner class="phase__spinner"/>
+
+        <c:Modal aura:id="uploadLocationsCsvModal">
+            <div aura:id="locationsInputDiv">
+                <input name="locationsCsvUpload"
+                        type="file"
+                        id="{! v.phase.sfid + 'locationsCsvInput' }"
+                        aura:id="locationsCsvInput"
+                        accept=".csv"
+                        onchange="{! c.onLocationsUploadFinished }"
+                        class="slds-hide"/>
+                <label for="{! v.phase.sfid + 'locationsCsvInput' }" class="locationsInputLabel slds-align_absolute-center">
+                    <lightning:icon iconName="utility:upload"
+                                    variant="inverse"
+                                    size="small"
+                                    class="uploadIcon"/>
+                    Choose a CSV file...
+                </label>
+            </div>
+        </c:Modal>
+
+        <c:Modal aura:id="locationsTableModal">
+            <div aura:id="locationsTableDiv">
+                <lightning:datatable data="{! v.phase.locationsJsonListValidated }"
+                                     columns="{! v.locationsCsvTableColumns }"
+                                     keyField="id"
+                                     hideCheckboxColumn="true"/>
+            </div>
+        </c:Modal>
+
+        <c:Modal aura:id="completeModal">
+            <form class="slds-p-top_small" onsubmit="{! c.onCompletePhaseSubmit }">
+                <div class="slds-grid">
+                    <div class="slds-col slds-grow-none">
+                        <lightning:radioGroup name="completionOption"
+                                              label="Completion Option"
+                                              options="{! v.completionOptions }"
+                                              type="radio"
+                                              required="true"
+                                              aura:id="completionOption"
+                                              value="{! v.completionOption }"
+                                              onchange="{!c.onChangeCompletionOption}"/>
+                    </div>
+                    <aura:if isTrue="{! v.refreshInput }">
+                        <div class="slds-col completion-date" aura:id="completionDateWrapper">
+                            <aura:if isTrue="{! v.completionOption != null}">
+                                <lightning:input type="date"
+                                                 label="{! v.completionOptionLabel }"
+                                                 required="true"
+                                                 disabled="{! v.isRestrictedChangeCompletionDate }"
+                                                 onchange="{! c.onUserChangeCompletionDate }"
+                                                 max="{! v.app.today }"
+                                                 value="{! v.completionDate }"
+                                                 aura:id="completionDateInput"/>
+                            </aura:if>
+                             <aura:if isTrue="{!and(v.completionOption == 'Automated', v.rcVariousSettings.Automated_Phase_Completion_Days_Limit__c != 0)}">
+                                <div class="slds-col helper-message" aura:id="helperMessage">
+                                    Completion Date can be up to {!v.rcVariousSettings.Automated_Phase_Completion_Days_Limit__c} day(s) in the past
+                                </div>
+                            </aura:if>
+                        </div>
+                    </aura:if>
+                </div>
+
+                <!-- Approval Message -->
+                <aura:if isTrue="{! v.completionOption == 'Automated'}">
+                    <div class="slds-p-top_small">
+                        Phases with Automated Completion should be reviewed by Revenue Operations Team.
+                        Approval Process will start when you click 'Complete and lock Phase
+                    </div>
+                </aura:if>
+            </form>
+        </c:Modal>
+
+        <c:Modal aura:id="approvalActionModal">
+            <div class="slds-p-top_small">
+                <lightning:textarea label="Comment" aura:id="approvalActionComment"/>
+            </div>
+        </c:Modal>
+
+        <section class="slds-accordion__section slds-is-open">
+            <div class="slds-accordion__summary slds-m-bottom_none">
+                <div class="slds-accordion__summary-heading phase__header">
+                    <div class="slds-media__figure phase__logo cursor-click"
+                         data-guid="{! v.phase.guid }"
+                         onclick="{! c.phaseCollapse }">
+
+                         <span>
+                             <lightning:buttonIcon iconName="utility:chevrondown"
+                                                   alternativeText="Click to show/hide Cart Items"
+                                                   variant="bare"
+                                                   size="medium"
+                                                   class="slds-m-right_xx-small phase__collapse-icon"/>
+                         </span>
+
+                        <lightning:icon iconName="{! v.phase.isPendingApproval ? 'utility:clock' :
+                                v.phase.isComplete ? 'standard:task' :
+                                v.phase.isCancelled ? 'utility:error' : 'standard:product_required' }"
+                                        class="{! v.phase.isPendingApproval ? 'phase__icon_approval slds-theme_info' :
+                                                v.phase.isCancelled ? '' : 'phase__icon'}"
+                                        alternativeText="Phase"/>
+                    </div>
+                    <lightning:layout class="slds-media__body">
+                        <lightning:layoutItem class="slds-page-header__detail-block phase__name-block">
+                            <h3 class="slds-truncate slds-text-heading_small">
+
+                                <!-- Phase Name -->
+                                <span class="phase__name cursor-click"
+                                      onclick="{! c.phaseCollapse }"
+                                      data-guid="{! v.phase.guid }">
+                                        {! v.phase.name &amp;&amp; v.isNewChangeOrder ? v.phase.name : 'Phase ' + v.phase.phaseNumber }
+                                </span>
+
+                                <lightning:icon class="slds-m-left_xx-small fix-icon-row-position phase__locked-icon"
+                                                iconName="utility:lock"
+                                                size="xx-small"/>
+                            </h3>
+                            <p class="phase-details cursor-click slds-truncate winter19-fontsize-fix"
+                               data-guid="{! v.phase.guid }"
+                               onclick="{! c.phaseCollapse }">
+                                    {! v.phase.dragItemsLengthLabel }
+                            </p>
+
+                            <p class="phase-details-deleted">
+                                to be deleted
+                            </p>
+                        </lightning:layoutItem>
+
+                        <!-- Phase Cart items indicator -->
+                        <div class="phase-details slds-page-header__detail-block slds-hide">
+                            <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Cart Items</p>
+                                {! v.phase.dragItems.length }
+                        </div>
+
+                        <!-- Phase Total -->
+                        <div class="phase__total-block phase-details slds-page-header__detail-block">
+                            <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Phase Total</p>
+                            <span class="winter19-fontsize-fix">
+                                <c:outputCurrency value="{! v.phase.totalOTP }"
+                                                  currencyCode="{! or(
+                                                                      v.phase.currencyIsoCode,
+                                                                      v.app.currencyIsoCode
+                                                                     ) }"/>
+                                ({! v.phase.percentage }%)
+                            </span>
+                        </div>
+
+                        <aura:if isTrue="{! not(or(v.phase.record.Status__c == 'Deleted', v.phase.record.Status__c == 'Locked')) }">
+                            <!-- Adress validation status -->
+                            <div class="{! join(' ', 'slds-page-header__detail-block',
+                                    and(v.app.isLocationsEnabled, v.phase.isHasLocations) ? '' : 'slds-hide')}">
+                                <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Address Validation</p>
+                                <span class="winter19-fontsize-fix">
+                                    <span class="{! v.phase.isAnyAddressInfoPopulated ? 'slds-hide' : '' }">
+                                        No Address Info
+                                    </span>
+                                    <span class="{! v.phase.isValidationInProgress ? 'slds-hide' : '' }">
+                                        <span class="{! v.phase.isAnyAddressInfoPopulated ? '' : 'slds-hide'}">
+                                            <span class="{! v.phase.isAllLocationAdressesValid ? '' : 'slds-hide' }">
+                                                All valid
+                                            </span>
+                                            <span class="{! v.phase.isAllLocationAdressesValid ? 'slds-hide' : '' }">
+                                                <a href="javascript:void(0)" onclick="{! c.onValidateLocation }">Validate</a>
+                                            </span>
+                                        </span>
+                                        <lightning:dynamicIcon type="score"
+                                                            class="slds-m-left_x-small address-indicator"
+                                                            option="{! v.phase.isAllLocationAdressesValid ? 'positive' : 'negative'}"/>
+                                    </span>
+
+                                    <span class="{! v.phase.isValidationInProgress ? '' : 'slds-hide' }">
+                                        Validating...
+                                        <lightning:spinner  alternativeText="Loading"
+                                                            class="slds-is-relative location__spinner"
+                                                            size="small" />
+                                    </span>
+                                </span>
+                            </div>
+                        </aura:if>
+                        <!-- Phase Status -->
+                        <div class="phase-details slds-page-header__detail-block phase__status-block">
+                            <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Status</p>
+                            <span class="winter19-fontsize-fix">
+                                {! v.phase.record.Status__c || '--None--' }
+                            </span>
+                        </div>
+
+                        <div class="phase_actions slds-col_bump-left slds-text-align_right">
+                            <aura:if isTrue="{! and(and(v.phase.isHasOrder, v.app.isAddPhasesAllowed), and(v.phase.record.Status__c != 'Deleted', v.phase.record.Status__c != 'Locked')) }">
+                                <!-- Upload Locations CSV (Sites) button -->
+                                <span class="phase__complete-button-wrapper slds-m-left--medium">
+                                    <lightning:button label="Upload Sites"
+                                                      value="{! v.phase.guid }"
+                                                      onclick="{! c.onUploadLocationsCsvClick }"
+                                                      class="phase__complete-button"
+                                                      disabled="{! v.phase.isCompleteInProgress
+                                                                || v.phase.isCancelled}"/>
+                                </span>
+                            </aura:if>
+
+                            <aura:if isTrue="{! and(and(v.phase.isHasOrder, v.app.isCompletePhaseAllowed), and(v.phase.record.Status__c != 'Deleted', v.phase.record.Status__c != 'Locked')) }">
+                                    <!-- Complete Phase button -->
+                                <span class="phase__complete-button-wrapper slds-m-left--medium"
+                                      onmouseover="{!c.mouseOverCompleteButton}"
+                                      onmouseout="{!c.mouseOutCompleteButton}">
+                                    <lightning:button label="Complete"
+                                                      value="{! v.phase.guid }"
+                                                      onclick="{! c.onCompletePhaseClick }"
+                                                      class="phase__complete-button"
+                                                      disabled="{! v.phase.isCompleteInProgress
+                                                              || v.phase.isCancelled
+                                                              || !v.phase.isAllLocationAdressesValid
+                                                              || v.isPhasesChanged
+                                                              || !v.phase.record.Executed_Signoff_Link__c
+                                                              || !v.phase.record.Phase_Type__c }"/>
+                                </span>
+                            </aura:if>
+
+                            <aura:if isTrue="{! v.phase.record.Status__c == 'Locked' }">
+                                <!-- Locked Phase button -->
+                                <span class="phase__complete-button-wrapper slds-m-left--medium"
+                                      onmouseover="{!c.mouseOverLockedButton}"
+                                      onmouseout="{!c.mouseOutCompleteButton}">
+                                    <lightning:button label="Locked"
+                                                      value="{! v.phase.guid }"
+                                                      class="phase__complete-button"
+                                                      disabled="true"/>
+                                </span>
+                            </aura:if>
+
+                            <!-- Approval -->
+                            <aura:if isTrue="{! v.phase.record.Status__c == 'Pending Approval' }">
+                                <span class="slds-m-left--medium">
+                                    <lightning:buttonGroup>
+
+                                        <aura:if isTrue="{! v.isUserCanRecall }">
+                                            <lightning:button label="Recall" onclick="{! c.onRecallClick }"/>
+                                        </aura:if>
+
+                                        <aura:if isTrue="{! v.isUserCanApproveReject }">
+                                            <lightning:button label="Approve" onclick="{! c.onApproveClick }"/>
+                                            <lightning:button label="Reject" onclick="{! c.onRejectClick }"/>
+                                        </aura:if>
+
+                                    </lightning:buttonGroup>
+                                </span>
+                            </aura:if>
+
+                            <aura:if isTrue="{! and(and(!v.phase.isPendingApproval, !v.phase.isCancelled), v.phase.record.Status__c != 'Deleted') }">
+                                <span class="phase__completed-at">
+                                    Completed
+                                </span>
+                            </aura:if>
+
+                            <aura:if isTrue="{! v.phase.record.Status__c == 'Deleted' }">
+                                <span>
+                                    Deleted
+                                </span>
+                            </aura:if>
+
+                            <aura:if isTrue="{! and(v.phase.isDelitable,
+                                                and(v.phase.record.Status__c != 'Locked', v.phase.record.Status__c != 'Deleted')) }">
+                                <!-- Delete button -->
+                                <span class="slds-m-left--medium"
+                                      data-guid="{! v.phase.guid }"
+                                      onclick="{! c.onDeletePhaseClick }">
+                                    <lightning:buttonIcon iconName="utility:delete"
+                                                          variant="bare"
+                                                          alternativeText="Delete phase"/>
+                                </span>
+
+                            </aura:if>
+
+                            <!-- Phase move items actions section -->
+                            <p class="phase__drop-actions winter19-fontsize-fix">
+                                <aura:if isTrue="{! v.app.isUnassignedAllowed }">
+                                    <a  href="javascript:void(0);"
+                                        data-guid="{! v.phase.guid }"
+                                        onclick="{! c.moveUnassignedToPhase }"
+                                        class="{! join(' ', 'link_dotted',
+                                                v.app.dragItems.length > 0 ? '' : 'slds-hide',
+                                                v.app.selectedItemsInfo.length > 0 ? 'slds-hide' : '')}">
+                                        Move all unassigned items here
+                                    </a>
+                                </aura:if>
+                                <a  href="javascript:void(0);"
+                                    data-guid="{! v.phase.guid }"
+                                    class="{! join(' ', '',
+                                            v.app.selectedItemsInfo.length > 0 ? 'link_dotted' : 'slds-hide') }"
+                                    onclick="{! c.moveSelectedToPhase }">
+                                    Move selected items here
+                                </a>
+                            </p>
+                        </div>
+                    </lightning:layout>
+                </div>
+            </div>
+            <div class="inputs-block phase__description-block slds-accordion__summary slds-m-bottom_none">
+                <div class="slds-accordion__summary-heading phase__header">
+                    <lightning:layout class="slds-media__body">
+                        <!-- Completion Date -->
+                        <div class="{! join(' ',
+                                'slds-page-header__detail-block completion-date',
+                                (!empty(v.phase.record.Completed_Date__c)) ? '' : 'slds-hide')}">
+                            <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Completion Date</p>
+                            <ui:outputDate value="{! v.phase.record.Completed_Date__c }"/>
+                        </div>
+
+                        <!-- Estimated Completion Date, removed 'is-required' for B-4062, should be added back later -->
+                        <div class="{! join(' ',
+                                'phase-details slds-page-header__detail-block completion-date',
+                                equals(v.phase.estimatedCompletionDate, v.phase.record.Estimated_Completion_Date__c)
+                                        ? ''
+                                        : 'phase-details__est-date_is-changed',
+                                v.phase.hasEstDateError ? 'slds-has-error' : '',
+                                v.phase.isComplete || v.phase.isCancelled ? '' : '')}">
+                            <p class="slds-text-title slds-truncate slds-m-bottom_xx-small label"
+                               title="Estimated Completion Date">
+                                Estimated Completion Date
+                            </p>
+                            <aura:if isTrue="{! not(or(v.phase.record.Status__c == 'Deleted', v.phase.record.Status__c == 'Locked')) }">
+                                <!-- Estimation Completion Date Display Mode -->
+                                <div class="phase-details phase-details__est-date-display">
+                                    <span class="phase-details__est-date-value">
+                                        <ui:outputDate value="{! v.phase.estimatedCompletionDate }"/>
+                                    </span>
+
+                                    <span class="phase-details__est-date-empty">  </span>
+
+                                    <lightning:buttonIcon alternativeText="Edit Estimated Completion Date"
+                                                        iconName="utility:edit"
+                                                        class="{! join(' ',
+                                                                'fix-icon-row-position slds-m-left_xx-small phase__est-date-edit-button',
+                                                                v.app.isEditAllowed ? '' : 'slds-hide') }"
+                                                        variant="bare"
+                                                        value="{! v.phase.guid }"
+                                                        onclick="{! c.editPhaseEstCompDate }"/>
+                                </div>
+
+                                <!-- Estimation Completion Date Edit Mode, set required to false for B-4062, should be set to true later -->
+                                <div class="phase-details phase-details__est-date-edit slds-datepicker">
+                                    <ui:inputDate class="slds-input"
+                                                value="{! v.phase.estimatedCompletionDate }"
+                                                displayDatePicker="true"
+                                                required="false"
+                                                change="{! c.onEstimatedCompletionDateChange }"/>
+                                </div>
+                            </aura:if>
+                            <aura:if isTrue="{! or(v.phase.record.Status__c == 'Deleted', v.phase.record.Status__c == 'Locked') }">
+                                <div class="phase-details phase-details__est-date-display">
+                                        <span class="phase-details__est-date-value">
+                                            <ui:outputDate value="{! v.phase.estimatedCompletionDate }"/>
+                                        </span>
+                                </div>
+                            </aura:if>
+                        </div>
+
+                        <aura:if isTrue="{! and(and(v.phase.isHasOrder, v.app.isAddPhasesAllowed), and(v.phase.record.Status__c != 'Deleted', v.phase.record.Status__c != 'Locked')) }">
+                            <div class="phase-details slds-page-header__detail-block signoff__input-block">
+                                <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Executed Signoff Link</p>
+                                <c:PermissionBasedInput aura:id="executedSignoff"
+                                                        recordValue="{! v.phase.record.Executed_Signoff_Link__c }"
+                                                        inputValue="{! v.phase.executedSignoff }"
+                                                        placeholder="Enter link"
+                                                        pattern="(https?:\/\/)?[0-9A-Za-z_\-]+(\..{2,})+"
+                                                        patternMismatchMessage="Incorrect URL"
+                                                        app="{! v.app }"
+                                                        isPhasesChanged="{! v.isPhasesChanged }"
+                                                        isUserHasEditPermission="{! v.userPermissions.Edit_Phase_Executed_Signoff_Link }"
+                                                        isInputDisabled="{!v.phase.isComplete}"/>
+                            </div>
+
+                            <div class="phase-details slds-page-header__detail-block signoff__input-block">
+                                <p class="slds-text-title slds-truncate slds-m-bottom_xx-small">Phase Type</p>
+                                <lightning:select name="phaseTypeSelect"
+                                                aura:id="phaseTypeSelect"
+                                                onchange="{! c.onPhaseTypeChange }"
+                                                disabled="{!v.phase.isComplete}"
+                                                variant="label-hidden"
+                                                class="nolabel">
+                                    <aura:iteration items="{! v.phaseTypes }" var="type">
+                                            <option value="{! type.value }" selected="{! type.value == v.phase.record.Phase_Type__c }" text="{!type.label}"></option>
+                                        </aura:iteration>
+                                </lightning:select>
+                            </div>
+                        </aura:if>
+                    </lightning:layout>
+                </div>
+            </div>
+            <div class="phase-details phase__description-block">
+                <div class="{!v.app.isEditAllowed ? '' : 'slds-hide'}">
+                    <p class="slds-text-title slds-truncate slds-m-bottom_xx-small label phase__description-label"
+                        title="Phase Description">
+                        Phase Description
+                    </p>
+                    <lightning:textarea name="phaseDescription"
+                                        value="{!v.phase.phaseDescription}"
+                                        maxlength="300"
+                                        disabled="{! or(v.phase.isComplete, or(v.phase.record.Status__c == 'Locked', v.phase.record.Status__c == 'Deleted')) }"
+                                        messageWhenTooLong="You can enter a maximum of 300 characters."
+                                        onchange="{!c.onPhaseDescriptionChange}"/>
+                </div>
+                <aura:if isTrue="{!not(v.app.isEditAllowed)}">
+                    <p class="slds-text-title slds-truncate slds-m-bottom_xx-small label phase__description-label"
+                        title="Phase Description">
+                        Phase Description
+                    </p>
+                    <div class="phase-details">
+                        <lightning:textarea name="phaseDescription"
+                                            class="{!v.app.isEditAllowed ? 'slds-hide' : ''}"
+                                            disabled="true"
+                                            value="{!v.phase.phaseDescription}"/>
+                    </div>
+                </aura:if>
+            </div>
+            <div aria-hidden="false" class="slds-accordion__content">
+
+                <div class="slds-has-error slds-hide slds-text-align_center"
+                     aura:id="deleteProductsMessage">
+                    <div class="slds-form-element__help">
+                        Please delete all products from this phase first
+                    </div>
+                </div>
+
+                <!-- Products -->
+                <div class="{! join(' ', 'phase__products slds-m-top_small',
+                        v.phase.dragItems.length == 0 ? 'slds-hide' : '' )}">
+                    <h4 class="slds-text-title slds-m-bottom--xx-small">Products</h4>
+                    <ul>
+
+                        <aura:iteration items="{! v.phase.dragItems }" var="cartItem" indexVar="index">
+
+                            <c:PhaseManagementCartItem cartItem="{! cartItem }"
+                                                       phase="{! v.phase }"
+                                                       app="{! v.app }"
+                                                       isPhasesChanged="{! v.isPhasesChanged }"
+                                                       preventDeselection="{! v.preventDeselection }"
+                                                       hasSelectedCartItems="{! v.hasSelectedCartItems}"
+                            />
+
+                        </aura:iteration>
+
+                    </ul>
+                </div>
+
+                <!-- Empty products notification -->
+                <div class="{! join(' ', 'rc-message phase__message',
+                        and(v.phase.dragItems.length == 0, v.phase.record.Status__c != 'Deleted') ? '' : 'slds-hide' )}">
+                    Phase is empty
+                </div>
+            </div>
+        </section>
+    </li>
+</aura:component>

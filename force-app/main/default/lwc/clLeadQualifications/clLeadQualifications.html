@@ -1,0 +1,96 @@
+<template>
+    <h4 class="slds-show slds-text-heading_small slds-m-bottom_xx-small">
+        {label.AvailableLeadQualifications}
+    </h4>
+    <div class="slds-container slds-grid slds-grid_vertical slds-is-relative table-container">
+        <div class="header-background slds-border_bottom slds-shrink-none"></div>
+        <div class="slds-scrollable_y">
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered table">
+                <thead>
+                <tr class="slds-line-height_reset">
+                    <th class="th-static slds-p-around_none" style="width:3.25rem">
+                        <div class="slds-truncate slds-assistive-text" id="column-group-header">
+                        </div>
+                    </th>
+                    <th class="th-static slds-p-around_none">
+                        <span class="slds-truncate th-inner" title="Lead Qualification">{label.LeadQualification}</span>
+                        <span class="slds-truncate th-inner-hidden">{label.LeadQualification}</span>
+                    </th>
+                    <th class="th-static slds-p-around_none">
+                        <span class="slds-truncate th-inner" title="Lead">{label.Lead}</span>
+                        <span class="slds-truncate th-inner-hidden">{label.Lead}</span>
+                    </th>
+                    <th class="th-static slds-p-around_none">
+                        <span class="slds-truncate th-inner" title="Account">{label.Account}</span>
+                        <span class="slds-truncate th-inner-hidden">{label.Account}</span>
+                    </th>
+                    <th class="th-static slds-p-around_none">
+                        <span class="slds-truncate th-inner" title="Opportunity">{label.Opportunity}</span>
+                        <span class="slds-truncate th-inner-hidden">{label.Opportunity}</span>
+                    </th>
+                    <th class="th-static slds-p-around_none">
+                        <span class="slds-truncate th-inner" title="Last Modified Date">{label.LastModifiedDate}</span>
+                        <span class="slds-truncate th-inner-hidden">{label.LastModifiedDate}</span>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <template for:each={leadQualifications} for:item="lq">
+                    <tr key={lq.id} class={lq.cssClass}>
+                        <td class="slds-text-align_right">
+                            <lightning-input type="radio" name="availableQualification"
+                                             class="column-group-header available-qualification-checkbox"
+                                             variant="label-hidden"
+                                             onchange={onSelectLeadQualification}
+                                             value={lq.id}
+                                             checked={lq.isSelected}
+                                             label={lq.name}></lightning-input>
+                        </td>
+                        <td tabindex="0">
+                            <div class="slds-truncate" title={lq.name}>
+                                <a href={lq.url} tabindex="-1" target="_blank">{lq.name}</a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate" if:true={lq.leadName} title={lq.leadName}>
+                                <a href={lq.leadUrl} tabindex="-1" target="_blank">{lq.leadName}</a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate" if:true={lq.accountName} title={lq.accountName}>
+                                <a href={lq.accountUrl} tabindex="-1" target="_blank">{lq.accountName}</a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate" if:true={lq.opportunityName} title={lq.opportunityName}>
+                                <a href={lq.opportunityUrl} tabindex="-1" target="_blank">{lq.opportunityName}</a>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-truncate" title={lq.lastModifiedDate}>
+                                <lightning-formatted-date-time value={lq.lastModifiedDate}
+                                                               year="2-digit"
+                                                               month="short"
+                                                               day="2-digit"
+                                                               weekday="long">
+                                </lightning-formatted-date-time>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+                </tbody>
+                <tfoot if:true={hasMoreQualifications}>
+                <tr>
+                    <td class="slds-text-align_center" colspan="6">
+                        <button class="slds-button slds-button_bare"
+                                type="button"
+                                disabled={hasMoreQualificationsDisabled}
+                                onclick={loadMoreQualifications}>{label.Loadmore}
+                        </button>
+                    </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</template>

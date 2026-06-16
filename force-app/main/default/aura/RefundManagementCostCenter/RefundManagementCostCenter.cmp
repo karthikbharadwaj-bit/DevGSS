@@ -1,0 +1,87 @@
+<aura:component description="RefundManagementCostCenter">
+    <!-- Attributes -->
+    <aura:attribute name="app" type="Object"/>
+    <aura:attribute name="transaction" type="Object"/>
+
+    <aura:attribute name="entity" type="Object" />
+
+    <aura:attribute name="padding" type="Integer" />
+    <aura:attribute name="offset" type="Integer" />
+
+    <!-- Registered Events -->
+    <!--<aura:registerEvent name="RefundManagementEvent" type="c:RefundManagementEvent"/>-->
+
+    <!-- Methods -->
+    <!--<aura:method name="focus" action="{! c.focus }" />-->
+    <tr class="{! join(' ', 'product', v.entity.state.isExpandable ? 'clickable' : '') }"
+        onclick="{!c.toggleExpand}">
+
+        <!-- Name -->
+        <td colspan="4" class="product__name" style="{!'padding-left: '+v.padding+'rem;'}">
+            <lightning:buttonIcon
+                class="{! join(' ', 'slds-m-right_small expand-icon', v.entity.state.isExpandable ? '' : 'slds-hide') }"
+                variant="bare"
+                iconName="{! v.entity.state.isExpanded ? 'utility:down' : 'utility:right'}"
+                size="small"
+                alternativeText="{! v.entity.state.isExpanded ? 'Collapse' : 'Expand'}"
+            />
+            {! v.entity.billingCodeName }
+        </td>
+
+        <!-- TOTAL -->
+        <td>
+            <c:outputCurrency value="{! v.entity.totalAmount }" currencyCode="{! v.entity.currencyCode }"/>
+        </td>
+
+        <!-- AVAILABLE REFUND AMOUNT -->
+        <td>
+            <c:outputCurrency value="{! v.entity.availableRefund }"
+                              currencyCode="{! v.entity.currencyCode }"/>
+        </td>
+
+        <!-- REFUNDED AMOUNT -->
+        <td>
+            <aura:if isTrue="{!v.entity.totalRefundedAmount >= 0}">
+                <c:outputCurrency value="{!v.entity.totalRefundedAmount}" currencyCode="{! v.entity.currencyCode }" />
+            </aura:if>
+        </td>
+
+        <!-- REFUND AMOUNT -->
+        <td colspan="2" aura:id="refundCell">
+            <aura:if isTrue="{! v.entity.state.isRefunded }">
+                Refunded
+                <aura:set attribute="else">
+                    <c:outputCurrency value="{!v.entity.refundedAmount}" currencyCode="{! v.entity.currencyCode }" />
+                </aura:set>
+            </aura:if>
+        </td>
+    </tr>
+
+     <!--Product Entities List-->
+    <aura:if isTrue="{!v.entity.state.isExpanded}">
+        <aura:iteration items="{!v.entity.productEntities}" var="entity">
+            <!-- Grouped Products -->
+            <aura:if isTrue="{!entity.products}">
+                <c:RefundManagementProductGroup
+                    aura:id="RefundManagementProductGroup"
+                    app="{!v.app}"
+                    transaction="{!v.transaction}"
+                    entity="{!entity}"
+                    padding="{!v.padding + v.offset}"
+                    offset="{!v.offset}"
+                />
+            </aura:if>
+            <!-- Single Product -->
+            <aura:if isTrue="{!!entity.products}">
+                <c:RefundManagementProduct
+                    aura:id="RefundManagementProduct"
+                    app="{!v.app}"
+                    transaction="{!v.transaction}"
+                    product="{!entity}"
+                    padding="{!v.padding + v.offset}"
+                    offset="{!v.offset}"
+                />
+            </aura:if>
+        </aura:iteration>
+    </aura:if>
+</aura:component>

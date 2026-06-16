@@ -1,0 +1,99 @@
+<aura:component>
+
+    <!-- shared attributes -->
+    <aura:attribute name="data" type="Map"/>
+    <aura:attribute name="index" type="Integer"/>
+    <aura:attribute name="last" type="Boolean" description="is last item"/>
+    <aura:attribute name="even" type="Boolean" description="is an even item"/>
+    <aura:attribute name="parentData" type="Map"/>
+
+    <!-- component attributes -->
+    <aura:attribute access="private" name="display" type="Map" />
+
+    <!-- handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <tr class="{!join(' ',
+            'order-row item',
+            (v.last ? 'last' : ''),
+            (v.even ? 'even' : 'odd')
+            )}">
+        <!-- Name -->
+        <th scope="row">
+            <div class="slds-truncate" title="{!v.data.Order.Name}">
+                <a href="{!'/'+v.data.Order.Id}" target="_blank">{!v.data.Order.Name}</a>
+            </div>
+        </th>
+
+        <!-- Submitted Date -->
+        <th colspan="2" scope="row">
+            <div class="slds-truncate">
+                <ui:outputDate value="{!v.data.Order.Submitted_Date__c}"/>
+            </div>
+        </th>
+
+        <!-- Charge Term -->
+        <td>
+            <div class="slds-truncate">
+                {!v.data.Product2.Charge_Term__c}
+            </div>
+        </td>
+
+        <!-- Quantity -->
+        <td>
+            <div class="slds-truncate">
+                    {!v.data.Qty__c}
+            </div>
+        </td>
+
+        <!-- List Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.price, false) }">
+                    <c:outputCurrency value="{!v.display.price}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+
+                    <aura:set attribute="else">&nbsp;</aura:set>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Discount -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.discount, false) }">
+                    <c:outputCurrency value="{!v.display.discount}"
+                                      currencyCode="{!v.display.discountCurrencyCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+
+                    <aura:set attribute="else">&nbsp;</aura:set>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Your Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.yourPrice, false) }">
+                    <c:outputCurrency value="{!v.display.yourPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+
+                    <aura:set attribute="else">&nbsp;</aura:set>
+                </aura:if>
+            </div>
+        </td>
+
+        <!-- Total Price -->
+        <td>
+            <div class="slds-truncate">
+                <aura:if isTrue="{! notequals(v.display.totalPrice, false) }">
+                    <c:outputCurrency value="{!v.display.totalPrice}" currencyCode="{!v.data.CurrencyIsoCode}"
+                                      precision="{!v.display.currencyPrecision}"/>
+
+                    <aura:set attribute="else">&nbsp;</aura:set>
+                </aura:if>
+            </div>
+        </td>
+
+    </tr>
+</aura:component>

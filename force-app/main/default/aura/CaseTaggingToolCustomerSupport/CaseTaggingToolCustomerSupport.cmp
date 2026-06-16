@@ -1,0 +1,225 @@
+<aura:component controller="CaseTaggingToolInlinePageController">
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:handler name="change" value="{!v.caseType}" action="{!c.caseTypeChange}"/>
+    <aura:handler name="change" value="{!v.openCustomerSupportValues}" action="{!c.validateOpenCustomerSupportRequiredChange}"/>
+    <aura:handler name="change" value="{!v.csatPredictionData}" action="{!c.csatPredictionDataChange}"/>
+    <aura:handler name="change" value="{!v.csatPredictionAfterManagerCallbackData}" action="{!c.csatPredictionAfterManagerCallbackDataChange}"/>
+    <aura:handler name="change" value="{!v.caseObj}" action="{!c.caseObjChange}"/>   
+    <aura:handler name="change" value="{!v.productValue}" action="{!c.validateProductRequiredChange}"/>
+    
+    <aura:attribute name="productValue" type="String"/>
+    <aura:attribute name="productValuesData" type="List" default="[]"/>
+    
+    <aura:handler name="change" value="{!v.csatPredictionAMC}" action="{!c.pushChangesToRecordRecord}"/>
+    <aura:handler name="change" value="{!v.csatPrediction}" action="{!c.pushChangesToRecordRecord}"/>
+    <aura:handler name="change" value="{!v.closeCustomerSupportLevel3Value}" action="{!c.validateCloseCustomerSupportRequiredChange}"/>
+    
+    <aura:handler event="c:CaseTaggingToolPickListChangeEvent" action="{!c.clearInputs}"/>
+    
+    <aura:handler name="change" value="{!v.record}" action="{!c.recordChanged}"/>
+    
+    <!--New ones!-->
+    <aura:handler name="change" value="{!v.openCustomerSupportData}" action="{!c.refreshFiltersFromData}"/>
+    <aura:handler name="change" value="{!v.ptToOpenCSL1Map}" action="{!c.refreshFiltersFromData}"/>
+    <aura:handler name="change" value="{!v.closeCustomerSupportLevel3Data}" action="{!c.refreshFiltersFromData}"/>
+    <aura:handler name="change" value="{!v.openCSL3ToCloseCSL3Map}" action="{!c.refreshFiltersFromData}"/> 
+    
+    <aura:registerEvent name="SaveCase" type="c:CaseTaggingToolSaveCaseEvent"/>
+    
+    <aura:attribute name="tabName" type="String"/>
+    <aura:attribute name="caseObj" type="Case"/>
+    <aura:attribute name="record" type="Map"/>
+    <aura:attribute name="csatPredictionData" type="List"/>
+    <aura:attribute name="csatPredictionAfterManagerCallbackData" type="List"/>
+    <aura:attribute name="caseType" type="String"/>
+    
+    <aura:attribute name="openCustomerSupportData" type="Map"/>
+    <aura:attribute name="openCustomerSupportReadonly" type="Boolean"/>
+    <aura:attribute name="openCustomerSupportValues" type="List"/>
+    <aura:attribute name="openCustomerSupportValid" type="Boolean"/>
+    <aura:attribute name="openCustomerSupportErrors" type="List"/>
+    
+    <!--New values !-->
+    
+    <aura:attribute name="closeCustomerSupportLevel3Value" type="String"/>
+    <aura:attribute name="closeCustomerSupportLevel3Data" type="List" default="[]"/>
+    
+    <aura:attribute name="finalFix" type="String"/>
+    <aura:attribute name="isT2orT3User" type="Boolean" default="false"/>
+    
+    
+    <aura:attribute name="productReadonly" type="Boolean"/>
+    <aura:attribute name="productRequired" type="Boolean"/>
+    <aura:attribute name="productValid" type="Boolean"/>
+    <aura:attribute name="productErrors" type="List"/>
+    
+    <aura:attribute name="maskProductOnCS" type="Boolean" default="false"/>
+    
+    <aura:attribute name="csatPrediction" type="String"/>
+    <aura:attribute name="csatPredictionAMC" type="String"/>
+    <aura:attribute name="resolveNow" type="Boolean"/>
+    
+    
+    <aura:attribute name="closeCustomerSupportReadonly" type="Boolean"/>
+    <aura:attribute name="closeCustomerSupportValues" type="List"/>
+    <aura:attribute name="closeCustomerSupportValid" type="Boolean"/>
+    <aura:attribute name="closeCustomerSupportErrors" type="List"/>
+    
+    <aura:attribute name="isEmbeddedToLayoutBuilder" type="Boolean" default="false"/>
+    <aura:attribute name="isCleaned" type="Boolean" default="false"/>
+    
+    <!-- dependency maps -->
+    <aura:attribute name="ptToOpenCSL1Map" type="Map"/>
+    <aura:attribute name="openCSL3ToCloseCSL3Map" type="Map"/>
+    
+    <!-- filtered data that the UI will actually render -->
+    <aura:attribute name="openCustomerSupportDataFiltered" type="List" default="[]"/>
+    <aura:attribute name="closeCustomerSupportLevel3FilteredData" type="List" default="[]"/>
+    
+    <!-- add with the other attributes -->
+    <aura:attribute name="reRenderOpenCSPicklist" type="Boolean" default="true"/>
+    
+    <!-- Methods -->
+    <aura:method name="validate" action="{!c.validate}"/>
+    <aura:method name="pushChangesToRecord" action="{!c.pushChangesToRecordRecord}"/>
+    
+    <aura:attribute name="finalFixMode" type="String" default="READONLY"/>
+    
+    <aura:attribute name="isInitComplete" type="Boolean" default="false"/>
+    
+    
+    <!-- Markup -->
+    <div class="slds-tabs--default__content slds-hide" role="tabpanel" aura:id="wrapperTab" style="flex-grow:1;">
+        <h2 class="slds-text-heading--medium slds-m-bottom--x-small">Why did the customer contact Support?</h2>
+        
+        <!--New Product -->
+        <!-- ProductType for Customer Support standalone picklist moved here -->
+        
+        <div class="slds-p-horizontal_small slds-m-bottom_medium">
+            <lightning:select label="Product Types"
+                              aura:id="prodTypeSelect"
+                              value="{!v.productValue}"
+                              disabled="{!v.productReadonly}"
+                              required="true"
+                              onchange="{!c.validateProductRequiredChange}">
+                <option value="">--None--</option>
+                <aura:iteration items="{!v.productValuesData}" var="item">
+                    <option value="{!item.value}" disabled="{!item.legacy}" selected="{!item.value == v.productValue}">{!item.label}</option>
+                </aura:iteration>
+            </lightning:select>
+        </div>
+        
+        
+        <aura:if isTrue="{!not(empty(v.openCustomerSupportData))}">
+            <!-- NEW: render guard to force remount when toggled -->
+            <aura:if isTrue="{!v.reRenderOpenCSPicklist}">
+                <c:CaseTaggingToolPicklistSearch
+                                                 searchLabel="Search for Function, Specific Issue being encountered and Where the issue is happening"
+                                                 fieldsLabel="['Function','Specific Issue being encountered','Where the issue is happening']"
+                                                 readonly="{!v.openCustomerSupportReadonly}"
+                                                 required="true"
+                                                 picklistsData="{!v.openCustomerSupportDataFiltered}"
+                                                 values="{!v.openCustomerSupportValues}"
+                                                 isValid="{!v.openCustomerSupportValid}"
+                                                 errors="{!v.openCustomerSupportErrors}"
+                                                 tabName="{!v.tabName}"
+                                                 aura:id="openCustomerSupportPicklist"/>
+            </aura:if>
+            <aura:set attribute="else">
+                <c:LoadingPlaceholder type="field" isShown="true" />
+            </aura:set>
+        </aura:if>
+    
+        <div class="slds-grid slds-grid--pull-padded" style="margin-bottom:1rem;">
+            <div class="slds-p-horizontal--small slds-size--2-of-4 slds-large-size--1-of-4">
+                <lightning:select label="Customer Sentiment Prediction" aura:id="csatPredictionSelect" onchange="{!c.changeActionfire}" required="true" value="{!v.csatPrediction}" disabled="{!v.caseObj.Status == 'Closed'}">
+                    <aura:iteration items="{!v.csatPredictionData}" var="item">
+                        <option value="{!item.value}" selected="{!item.value == v.csatPrediction}">{!item.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+            <div class="slds-p-horizontal--small slds-size--2-of-4 slds-large-size--1-of-4">
+                <lightning:select label="Sentiment after the Manager Callback" onchange="{!c.changeActionfire}" value="{!v.csatPredictionAMC}" disabled="{!v.caseObj.Status == 'Closed'}">
+                    <aura:iteration items="{!v.csatPredictionAfterManagerCallbackData}" var="item">
+                        <option value="{!item.value}" selected="{!item.value == v.csatPredictionAMC}">{!item.label}</option>
+                    </aura:iteration>
+                </lightning:select>
+            </div>
+        </div>   
+        
+        <fieldset class="slds-form-element" style="margin-bottom:1rem;display:none;">
+            <div class="slds-form-element__control">
+                <div class="slds-radio--button-group">
+                    <span class="slds-button slds-radio--button">
+                        <input name="resolve" type="radio" id="resolveNow" checked="{!v.resolveNow == true}"/>
+                        <label class="slds-radio--button__label" for="resolveNow" onclick="{!c.changeResolveType}">
+                            <span class="slds-radio--faux" data-value="true">I'm resolving the case now</span>
+                        </label>
+                    </span>
+                    <span class="slds-button slds-radio--button">
+                        <input name="resolve" type="radio" id="resolveLater" checked="{!v.resolveNow == false}"/>
+                        <label class="slds-radio--button__label" for="resolveLater" >
+                            <span class="slds-radio--faux">I will resolve the case later</span>
+                        </label>
+                    </span>
+                </div>
+            </div>
+        </fieldset>
+        
+        <div class="slds-tabs--scoped" style="margin-bottom:1rem;padding-top:1rem;">
+            <ul class="slds-tabs--scoped__nav" style="margin-bottom:1rem">
+                <li class="{!v.resolveNow == true ? 'slds-tabs--scoped__item slds-size--1-of-2 slds-active': 'slds-tabs--scoped__item slds-size--1-of-2' }" style="margin-bottom:0">
+                    <a class="slds-tabs--scoped__link" href="javascript:void(0);" data-value="true" onclick="{!c.changeResolveType}" style="width:100%;text-align:center;">I'm resolving the case now</a>
+                </li>
+                <li class="{!v.resolveNow != true ? 'slds-tabs--scoped__item slds-size--1-of-2 slds-active': 'slds-tabs--scoped__item slds-size--1-of-2' }" style="margin-bottom:0">
+                    <a class="slds-tabs--scoped__link" href="javascript:void(0);" onclick="{!c.changeResolveType}" style="width:100%;text-align:center;">I will resolve the case later</a>
+                </li>
+            </ul>
+            
+            <div class="{!v.resolveNow == true ? '' : 'slds-hide'}">
+                <h2 class="slds-text-heading--medium slds-m-bottom--x-small">What did you do to resolve the issue</h2>
+                
+                <div class="slds-p-horizontal_small">
+                    
+                    <!-- Close Customer Support Level 3 Standalone -->
+                    <lightning:select label="Search for Function, Specific Action being taken and Where the action was taken if needed"
+                                      aura:id="closeSupportLevel3Select"
+                                      value="{!v.closeCustomerSupportLevel3Value}"
+                                      disabled="{!v.closeCustomerSupportReadonly}"
+                                      required="{!v.resolveNow}" 
+                                      onchange="{!c.validateCloseCustomerSupportRequiredChange}"
+                                      class="slds-m-bottom_medium">
+                        <option value="">--None--</option>
+                        <aura:iteration items="{!v.closeCustomerSupportLevel3FilteredData}" var="item">
+                            <option value="{!item.value}" disabled="{!item.legacy}" selected="{!item.value == v.closeCustomerSupportLevel3Value}">{!item.label}</option>
+                        </aura:iteration>
+                    </lightning:select> 
+                    
+                    
+                    
+                    <!-- Show only when not HIDE; READONLY disables the textarea -->
+                    <aura:if isTrue="{!v.finalFixMode != 'HIDE'}">
+                        <lightning:textarea
+                                            name="FinalFix"
+                                            label="Final Fix"
+                                            aura:id="finalFixField"
+                                            value="{!v.finalFix}"
+                                            disabled="{!or(v.closeCustomerSupportReadonly, v.finalFixMode=='READONLY')}"                                           
+                                            required="{!and(v.finalFixMode=='EDIT', v.resolveNow)}"
+                                            onchange="{!c.pushChangesToRecordRecord}"
+                                            class="slds-m-top_medium" />
+                    </aura:if>
+                </div>
+                
+            </div>
+            <div class="{!v.resolveNow != true ? '' : 'slds-hide'}">
+                
+            </div>
+        </div>
+        
+        <div class="{! v.isEmbeddedToLayoutBuilder ? 'slds-hide' : '' }" style="text-align:center;">
+            <lightning:button variant="neutral" label="Discard" onclick="{!c.discard}" disabled="{!v.caseObj.Status == 'Closed'}"/>
+            <lightning:button variant="brand" label="Save" onclick="{!c.save}" disabled="{!v.caseObj.Status == 'Closed'}"/>
+        </div>
+    </div>
+</aura:component>

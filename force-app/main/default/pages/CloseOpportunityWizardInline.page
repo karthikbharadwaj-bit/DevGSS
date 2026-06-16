@@ -1,0 +1,45 @@
+<apex:page id="CloseOpportunityWizardInline" standardController="Opportunity" showHeader="false" sideBar="false">
+
+    <apex:includeScript value="{!$Resource.DownWizardDependencies + '/DWPage.js'}" />
+
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        .noSidebarCell,
+        #bodyCell,
+        #bodyTable {
+            padding: 0 !important;
+        }
+
+        #wizard {
+            min-width: 960px;
+        }
+    </style>
+
+    <apex:includeLightning />
+
+    <div id="wizard"/>
+
+    <script>
+        $Lightning.use('c:DowngradeWizardApp', function () {
+            $Lightning.createComponent(
+                'c:DowngradeWizardComponent',
+                {
+                    'wizardType' : 'close',
+                    'isInline' : true,
+                    'oppInfo' : JSON.stringify({
+                        opportunityId : '{!JSENCODE(Opportunity.Id)}',
+                        optyName : '{!JSENCODE(Opportunity.Name)}',
+                        parentOrder : null,
+                        isSingleOne : true
+                    }),
+                    'oppId' : '{!JSENCODE(Opportunity.Id)}'
+                },
+                'wizard',
+                function(cmp){}
+            );
+        });
+    </script>
+</apex:page>

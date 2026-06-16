@@ -1,0 +1,617 @@
+<apex:component id="LiveAgentPreChatSales">
+
+    <apex:attribute name="gated" type="Boolean" description="if true - show gated form, else - ungated"/>
+    <apex:attribute name="type" type="String" description="Type of Pre Chat Form: 'Manual' or 'ProActive'"/>
+    <apex:attribute name="buttons" type="map" description="Chat buttons Map<DeveloperName,LiveChatButtonId>"/>
+    <apex:variable var="LIVE_AGENT_API_PROD_ENDPOINT" value="https://d.la4-c2-was.salesforceliveagent.com"/>
+    
+    <apex:includeScript value="{!$Resource.LiveAgentScript + '/LiveAgent.js'}" />
+
+    <style>
+      @font-face {
+        font-family: 'Lato';
+        font-style: normal;
+        font-weight: 300;
+        src: local('Lato Light'), local('Lato-Light'), url("{!URLFOR($Resource.LiveAgent, 'fonts/Lato/light.woff2')}") format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+      }
+      @font-face {
+        font-family: 'Lato';
+        font-style: normal;
+        font-weight: 400;
+        src: local('Lato Regular'), local('Lato-Regular'), url("{!URLFOR($Resource.LiveAgent, 'fonts/Lato/regular.woff2')}") format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+      }
+    </style>
+    
+    <script src="{!$Setup.RingCentralVariousSettings__c.AdobeAnalyticsUrl__c}"></script>
+    <script src="{!LIVE_AGENT_API_PROD_ENDPOINT}/content/g/js/32.0/prechat.js"/>
+
+    <link rel="stylesheet" href="{!URLFOR($Resource.LiveAgent, 'styles/style.css')}" type="text/css" media="screen" />
+
+    <div class="container" id="container">
+      <div class="head">
+        <p>Don't like typing? Give us a call</p>
+        <p id="dynamicPhone">1 (800) 591-6737</p>
+      </div>
+
+      <!-- main -->
+      <form method='POST' class="pre-chat__form" id='prechatForm'>
+        <div class="main">
+
+          <apex:outputPanel layout="none" rendered="{!gated}">
+            <p>To get you to the right sales agent, we need a bit of information:</p>
+          </apex:outputPanel>
+
+          <apex:outputPanel layout="none" rendered="{!!gated}">
+            <p>To get you to the right sales agent, please select:</p>
+          </apex:outputPanel>
+
+          <div class="form">
+
+            <apex:outputPanel layout="none" rendered="{!gated}">
+              <input class="input-field" id="firstName" type="text" name="liveagent.prechat:ContactFirstName" placeholder="First name" />
+              <input class="input-field" id="lastName" type="text" name="liveagent.prechat:ContactLastName" placeholder="Last name" />
+              <input class="input-field" id="email" type="text" name="liveagent.prechat:ContactEmail" placeholder="Work email" />
+            </apex:outputPanel>
+            <apex:outputPanel layout="none" rendered="{!!gated}">
+              <input type="hidden" name="liveagent.prechat:ContactLastName" value="Unavailable" />
+              <input type="hidden" name="liveagent.prechat:ContactEmail" value="Unavailable@example.com" />
+            </apex:outputPanel>
+
+            <div class="select">
+              <select class="input-field" name="liveagent.prechat.buttons" id="employees_selector">
+                <option disabled="true" selected="true" hidden="true" value="" id="employees_selector_placeholder">Company size</option>
+
+                <apex:outputPanel layout="none" rendered="{!type!='ProActive'}"> <!-- Manual -->
+                    <option value="{!buttons['US_Just_Me']},{!buttons['US_Team']}" data-value="Just Me">Just Me</option>
+                    <option value="{!buttons['US_2_4']},{!buttons['US_Team']}" data-value="2-4">2-4</option>
+                    <option value="{!buttons['US_5_9']},{!buttons['US_Team']}" data-value="5-9">5-9</option>
+                    <option value="{!buttons['US_10_19']},{!buttons['US_Team']}" data-value="10-19">10-19</option>
+                    <option value="{!buttons['US_20_49']},{!buttons['US_Team']}" data-value="20-49">20-49</option>
+                    <option value="{!buttons['US_50_99']},{!buttons['US_Team']}" data-value="50-99">50-99</option>
+                    <option value="{!buttons['US_100_249']},{!buttons['US_Team']}" data-value="100-249">100-249</option>
+                    <option value="{!buttons['US_250_499']},{!buttons['US_Team']}" data-value="250-499">250-499</option>
+                    <option value="{!buttons['US_500_999']},{!buttons['US_Team']}" data-value="500-999">500-999</option>
+                    <option value="{!buttons['US_1000']},{!buttons['US_Team']}" data-value="1000+">1000+</option>
+                </apex:outputPanel>
+                <apex:outputPanel layout="none" rendered="{!type=='ProActive'}">
+                    <option value="{!buttons['US_ProActive_Just_Me']},{!buttons['US_Team_ProActive_Chats']}" data-value="Just Me">Just Me</option>
+                    <option value="{!buttons['US_ProActive_2_4']},{!buttons['US_Team_ProActive_Chats']}" data-value="2-4">2-4</option>
+                    <option value="{!buttons['US_ProActive_5_9']},{!buttons['US_Team_ProActive_Chats']}" data-value="5-9">5-9</option>
+                    <option value="{!buttons['US_ProActive_10_19']},{!buttons['US_Team_ProActive_Chats']}" data-value="10-19">10-19</option>
+                    <option value="{!buttons['US_ProActive_20_49']},{!buttons['US_Team_ProActive_Chats']}" data-value="20-49">20-49</option>
+                    <option value="{!buttons['US_ProActive_50_99']},{!buttons['US_Team_ProActive_Chats']}" data-value="50-99">50-99</option>
+                    <option value="{!buttons['US_ProActive_100_249']},{!buttons['US_Team_ProActive_Chats']}" data-value="100-249">100-249</option>
+                    <option value="{!buttons['US_ProActive_250_499']},{!buttons['US_Team_ProActive_Chats']}" data-value="250-499">250-499</option>
+                    <option value="{!buttons['US_ProActive_500_999']},{!buttons['US_Team_ProActive_Chats']}" data-value="500-999">500-999</option>
+                    <option value="{!buttons['US_ProActive_1000']},{!buttons['US_Team_ProActive_Chats']}" data-value="1000+">1000+</option>
+                </apex:outputPanel>
+              </select>
+            </div>
+
+
+
+            <!-- Hidden fields used to set additional custom details -->
+            <!-- Used to set the visitor's name for the agent in the Console -->
+            <input type="hidden" name="liveagent.prechat.name" id="prechat_field_name" />
+            <!-- map: Use the data from prechat form to map it to the Salesforce record's fields -->
+            <input type="hidden" name="liveagent.prechat.findorcreate.map:Contact" value="FirstName,ContactFirstName;LastName,ContactLastName;Email,ContactEmail;Phone,ContactPhone" />
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.map:Case" value="Subject,CaseSubject;Status,CaseStatus;Origin,CaseOrigin;RecordTypeId,CaseRecordType"/> -->
+            <!-- doFind, doCreate and isExactMatch example for a Contact:
+        Find a contact whose Email exactly matches the value provided by the customer in the form
+        If there's no match, then create a Contact record and set it's First Name, Last Name, Email, and Phone to the values provided by the customer -->
+            <input type="hidden" name="liveagent.prechat.findorcreate.map.doFind:Contact" value="Email,true" />
+            <input type="hidden" name="liveagent.prechat.findorcreate.map.isExactMatch:Contact" value="Email,true" />
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Contact" value="FirstName,true;LastName,true;Email,true;Phone,true"/> -->
+            <!-- doCreate example for a Case: create a case to attach to the chat, set the Case Subject to the value provided by the customer and set the case's Status and Origin fields -->
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.map.doCreate:Case" value="Subject,true;Status,true;Origin,true;RecordTypeId,true"/> -->
+            <!-- linkToEntity: Set the record Contact record, found/created above, as the Contact on the Case that's created -->
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.linkToEntity:Contact" value="Case,ContactId"/> -->
+            <input type="hidden" name="liveagent.prechat.linkToEntity:Contact" value="ContactId" />
+            <!-- showOnCreate: Open the Contact and Case records as sub-tabs to the chat for the agent in the Console -->
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Contact" value="true"/> -->
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.showOnCreate:Case" value="true"/> -->
+            <!-- saveToTranscript: Associates the records found / created, i.e. Contact and Case, to the Live Chat Transcript record. -->
+            <input type="hidden" name="liveagent.prechat.saveToTranscript:Contact" value="ContactId" />
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.saveToTranscript:Case" value="CaseId"/> -->
+            <!-- displayToAgent: Hides the case record type from the agent -->
+            <!--  <input type="hidden" name="liveagent.prechat.findorcreate.displayToAgent:CaseRecordType" value="false"/> -->
+            <!-- searchKnowledge: Searches knowledge article based on the text, this assumes that Knowledge is setup -->
+            <!--  <input type="hidden" name="liveagent.prechat.knowledgeSearch:CaseSubject" value="true"/> -->
+            <!-- Marketing params 'BMID', 'AID', 'SID', 'PID', 'RCMT', 'RCKW'-->
+            <input type='hidden' name='liveagent.prechat:BMID' id='BMID' />
+            <input type='hidden' name='liveagent.prechat:AID' id='AID' />
+            <input type='hidden' name='liveagent.prechat:SID' id='SID' />
+            <input type='hidden' name='liveagent.prechat:PID' id='PID' />
+            <input type='hidden' name='liveagent.prechat:RCMT' id='RCMT' />
+            <input type='hidden' name='liveagent.prechat:RCKW' id='RCKW' />
+            <input type='hidden' name='liveagent.prechat:NumberOfEmployees' id='number_of_employees' />
+            <input type='hidden' name='liveagent.prechat:OriginalReferrer' id='original_referrer' />
+            <input type='hidden' name='liveagent.prechat:user_log' id="user_log"/>
+            <input type='hidden' name='liveagent.prechat:gw_referer' id="gw_referer"/>
+            <input type='hidden' name='liveagent.prechat:Adobe_Target_Id__c' id="Adobe_Target_Id__c"/>
+            <input type='hidden' name='liveagent.prechat:Transaction_Id__c' id="Transaction_Id__c"/>
+            <input type='hidden' name='liveagent.prechat:Adobe_Target_Id_History__c' id="Adobe_Target_Id_History__c"/>
+            <input type='hidden' name='liveagent.prechat:BMID_Old__c' id="BMID_Old__c"/>
+           	<input type='hidden' name='liveagent.prechat:RC_Visitor_ID__c' id="RC_Visitor_ID__c"/>            
+            <input type="hidden" name="liveagent.prechat.save:ContactFirstName" value="PreChat_Firstname__c" />
+            <input type="hidden" name="liveagent.prechat.save:ContactLastName" value="PreChat_Lastname__c" />
+            <input type="hidden" name="liveagent.prechat.save:ContactEmail" value="PreChat_Email__c" />
+            <input type="hidden" name="liveagent.prechat.save:ContactPhone" value="PreChat_Phone__c" />
+            <input type="hidden" name='liveagent.prechat:Company' id='company' value="Unavailable" />
+            <input type='hidden' name='liveagent.prechat.save:Company' value="PreChat_Company__c" />
+            <input type="hidden" name="liveagent.prechat.save:NumberOfEmployees" value="PreChat_Number_of_Employees__c" />
+            <input type='hidden' name='liveagent.prechat.save:OriginalReferrer' value="Original_Referrer__c" />
+            <input type="hidden" name="liveagent.prechat.save:BMID" value="BMID__c" />
+            <input type="hidden" name="liveagent.prechat.save:AID" value="AID__c" />
+            <input type="hidden" name="liveagent.prechat.save:SID" value="SID__c" />
+            <input type="hidden" name="liveagent.prechat.save:PID" value="PID__c" />
+            <input type="hidden" name="liveagent.prechat.save:RCMT" value="RCMT__c" />
+            <input type="hidden" name="liveagent.prechat.save:RCKW" value="RCKW__c" />
+            <input type="hidden" name="liveagent.prechat.save:gw_referer" value="GW_Referer__c" />
+            <input type="hidden" name="liveagent.prechat.save:Adobe_Target_Id__c" value="Adobe_Target_Id__c" />
+            <input type="hidden" name="liveagent.prechat.save:Transaction_Id__c" value="Transaction_Id__c" />
+            <input type="hidden" name="liveagent.prechat.save:Adobe_Target_Id_History__c" value="Adobe_Target_Id_History__c" />
+           	<input type="hidden" name="liveagent.prechat.save:BMID_Old__c" value="BMID_Old__c" />
+         	<input type="hidden" name="liveagent.prechat.save:RC_Visitor_ID__c" value="RC_Visitor_ID__c" />            
+            
+            <input type="hidden" name="liveagent.prechat:preChatType" value="{!IF(gated,'Gated','Ungated')}"/>
+            <input type="hidden" name="liveagent.prechat.save:preChatType" value="PreChatFormType__c" />
+
+          </div>
+
+          <div class="errors">
+            <p id="error-text" class="hide">Please complete all fields</p>
+          </div>
+
+          <input type='submit' value='Chat with sales' id='prechat_submit' class="chat-button" />
+
+          <p>
+            if you are a current customer in need of support
+            <a href="http://success.ringcentral.com/RCContactSupp?src=" target="_blank">click here</a>
+          </p>
+        </div>
+
+
+        <input type='hidden' name='liveagent.prechat:OriginalReferrer' id='original_referrer' />
+      </form>
+
+        <script type="text/javascript">
+            try {
+                _satellite.pageBottom();
+            } catch (e) { console.log(e); }
+        </script>
+
+    </div>
+
+    <!-- This script takes the endpoint URL parameter passed from the deployment page and makes it the action for the form -->
+    <script type='text/javascript'>
+
+        /*
+         * LiveAgent
+         */
+        var type = {!gated} ? 'gated' : 'ungated';
+        var liveAgent = new LiveAgent(type);
+
+        // change window size
+        window.onload = function() {
+            liveAgent.trackInit();
+            // liveAgent.trackTyping();
+            liveAgent.trackFocus();
+            changeScreenSize();
+            restoreEmployeesRequired();
+        };
+
+        // validation
+        var elements = document.getElementsByClassName('input-field');
+        for (var i = 0; i < elements.length; i++) {
+          elements[i].addEventListener('change', function(e) {
+            if(e.target.value) {
+              e.target.classList.remove('has-error')
+            }
+          });
+        }
+
+
+        (function() {
+            function handlePageLoad() {
+                try {
+                    var endpointMatcher = new RegExp("[\\?\\&]endpoint=([^&#]*)");
+                    var domainMatcher = new RegExp("(https?:\\/\\/(.+?\\.)?(salesforce|salesforceliveagent)\\.com(\\/[A-Za-z0-9\\-\\._~:\\/\\?#\[\\]@!$&'\\(\\)\*\\+,;\\=]*)?)");
+                    var endpointValue = endpointMatcher.exec(document.location.search)[1] || '';
+                    var escapedEndpoint = decodeURIComponent(endpointValue.replace(/javascript/gi, ''));
+                    
+                    if (domainMatcher.test(escapedEndpoint) === true) {
+                        document.getElementById('prechatForm').setAttribute('action', escapedEndpoint);
+                        parseEndpoint(escapedEndpoint);
+                    }
+                } catch (e) { console.log(e); }
+            }
+
+            if (window.addEventListener) {
+                window.addEventListener('load', handlePageLoad, false);
+            } else {
+                window.attachEvent('onload', handlePageLoad);
+            }
+        })();
+
+        // parse endpoint and load scripts
+        var endpoint = '';
+        function parseEndpoint(endpointParam){
+            if (endpointParam) {
+                var parser = document.createElement('a');
+                parser.href = endpointParam;
+                var endpoint = parser.protocol +'//'+ parser.hostname;
+                if (endpoint) {
+                    liveagent.details.preChatInit(endpoint + '/chat', 'detailCallback');
+                }
+            }
+        }
+
+        // change color of selector
+        (function() {
+            var selectColor = function(event) {
+                event.target.style.color = "#4a4a4c";
+            };
+            var selectEl = document.getElementById('employees_selector');
+                selectEl.style.color = '#757575';
+            if (selectEl.addEventListener) {
+                selectEl.addEventListener("change", selectColor, false);
+                // selectEl.addEventListener("focus", selectColor, false);
+            } else {
+                selectEl.attachEvent('onchange', selectColor);
+                // selectEl.attachEvent('onclick', selectColor);
+            }
+        })();
+
+
+        // handle form submit
+        var prechatSubmit = function(event) {
+            event.preventDefault();
+
+            var validated;
+            if({!gated}) validated = validateFormGated();
+            else validated = validateFormUngated();
+
+            if (validated) {
+                // Set the visitor's name for the agent in the Console to first and last name provided by the customer
+                if({!gated}) {
+                    document.getElementById("prechat_field_name").value = document.getElementById("firstName").value + " " + document.getElementById("lastName").value;
+                }
+
+                liveAgent.trackSubmit();
+
+                // save number of employees to transcript
+                var employeesSelector = document.getElementById('employees_selector');
+                var selected = employeesSelector.options[employeesSelector.selectedIndex];
+                var value = selected.getAttribute('data-value');
+                var noeTranscriptField = document.getElementById('number_of_employees');
+                noeTranscriptField.value = value;
+
+                event.target.submit();
+                return true;
+            }
+        }
+
+
+        var prechatForm = document.getElementById('prechatForm');
+        if (prechatForm.addEventListener) {
+            prechatForm.addEventListener("submit", prechatSubmit);
+        } else {
+            prechatForm.attachEvent('submit', prechatSubmit);
+        }
+
+        function validateFormUngated() {
+          var formValid = true;
+          var fields = [];
+
+          // Company Size
+          fields.push({
+              id: "employees_selector",
+              rules: [{
+                  pass: document.getElementById("employees_selector").value.trim(),
+                  message: 'Please provide your company size',
+              }]
+          });
+
+          fields.forEach(function(field){
+
+              var valid = true;
+              var message = '';
+              var errorText = document.getElementById('error-text');
+              var input = document.getElementById(field.id);
+              field.rules.forEach(function(rule){
+                  if (!rule.pass) {
+                      valid = false;
+                      message = rule.message;
+                  }
+              });
+              if (valid) {
+                input.classList.remove('has-error');
+                errorText.classList.add('hide');
+              } else {
+                formValid = false;
+                input.classList.add('has-error');
+                errorText.classList.remove('hide');
+              }
+
+          });
+          changeScreenSize();
+          return formValid;
+        }
+
+        function validateFormGated(){
+          var formValid = true;
+          var fields = [];
+
+          // First Name
+          fields.push({
+              id: "firstName",
+              rules: [{
+                  pass: document.getElementById("firstName").value.trim(),
+                  message: 'Please provide your first name',
+              }]
+          });
+          // Last Name
+          fields.push({
+              id: "lastName",
+              rules: [{
+                  pass: document.getElementById("lastName").value.trim(),
+                  message: 'Please provide your last name',
+              }]
+          });
+          // Email
+          var email = document.getElementById("email").value.trim();
+          fields.push({
+              id: "email",
+              rules: [
+              {
+                  pass: validateEmail(email),
+                  message: 'Email is invalid',
+              },
+              {
+                  pass: email,
+                  message: 'Please provide your email',
+              }]
+          });
+
+          // Company Size
+          fields.push({
+              id: "employees_selector",
+              rules: [{
+                  pass: document.getElementById("employees_selector").value.trim(),
+                  message: 'Please provide your company size',
+              }]
+          });
+
+          fields.forEach(function(field){
+
+              var valid = true;
+              var message = '';
+              var errorText = document.getElementById('error-text');
+              var input = document.getElementById(field.id);
+              field.rules.forEach(function(rule){
+                  if (!rule.pass) {
+                      valid = false;
+                      message = rule.message;
+                  }
+              });
+              if (valid) {
+                input.classList.remove('has-error');
+                errorText.classList.add('hide');
+              } else {
+                formValid = false;
+                input.classList.add('has-error');
+                errorText.classList.remove('hide');
+              }
+
+          });
+          changeScreenSize();
+          return formValid;
+        }
+
+        function old_validateForm(){
+            var formValid = true;
+            var fields = [];
+            // First Name
+            fields.push({
+                errorsId: "firstNameError",
+                rules: [{
+                    pass: document.getElementById("firstName").value.trim(),
+                    message: 'Please provide your first name'
+                }]
+            });
+            // Last Name
+            fields.push({
+                errorsId: "lastNameError",
+                rules: [{
+                    pass: document.getElementById("lastName").value.trim(),
+                    message: 'Please provide your last name'
+                }]
+            });
+            // Email
+            var email = document.getElementById("email").value.trim();
+            fields.push({
+                errorsId: "emailError",
+                rules: [
+                    {
+                        pass: validateEmail(email),
+                        message: 'Email is invalid'
+                    },
+                    {
+                        pass: email,
+                        message: 'Please provide your email'
+                    }]
+            });
+            // Phone
+            fields.push({
+                errorsId: "phoneError",
+                rules: [{
+                    pass: document.getElementById("phone").value.trim(),
+                    message: 'Please provide your phone'
+                }]
+            });
+            // Company Name
+            fields.push({
+                errorsId: "companyError",
+                rules: [{
+                    pass: document.getElementById("company").value.trim(),
+                    message: 'Please provide your company name'
+                }]
+            });
+            // Number of employees
+            fields.push({
+                errorsId: "employees_selectorError",
+                rules: [{
+                    pass: document.getElementById("employees_selector").value.trim(),
+                    message: 'Please provide how many employees working in your company',
+                }]
+            });
+
+            fields.forEach(function(field){
+                var valid = true;
+                var message = '';
+                var errorContainer = document.getElementById(field.errorsId);
+                field.rules.forEach(function(rule){
+                    if (!rule.pass) {
+                        valid = false;
+                        message = rule.message;
+                    }
+                });
+                if (valid) {
+                    errorContainer.style.display="none";
+                } else {
+                    formValid = false;
+                    errorContainer.innerHTML = message;
+                    errorContainer.style.display="block";
+                }
+            });
+            changeScreenSize();
+            return formValid;
+        }
+
+        function validateEmail(email){
+            var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+            return re.test(email);
+        }
+
+        // change window size
+        function changeScreenSize() {
+            var container = document.getElementById('container');
+            var contentWidth = container.offsetWidth;
+            var contentHeight = container.offsetHeight;
+            var width = contentWidth + (window.outerWidth - window.innerWidth);
+            var height = contentHeight + (window.outerHeight - window.innerHeight);
+            window.resizeTo(width, height);
+        }
+
+        //set empty value for an option to restore native required browser behaviour
+        function restoreEmployeesRequired() {
+            var placeholder = document.getElementById('employees_selector_placeholder');
+            placeholder.value = "";
+        }
+
+        //actions on page load
+        // function onLoadAction() {
+        //     changeScreenSize();
+        //     restoreEmployeesRequired();
+        // }
+
+        // pre-chat routing
+        function detailCallback(details) {
+            // read customDetails
+            var urlParts = [];
+            var titleParts = [];
+            for (var i = 0; i < details.customDetails.length; i++) {
+                var detail = details.customDetails[i];
+                if (detail.label === "url") {
+                    // save URL to Transcript
+                    var originalReferrer = document.getElementById('original_referrer');
+                    originalReferrer.value = details.customDetails[i].value;
+                    //parse URL
+                    var parser = document.createElement('a');
+                    parser.href = detail.value;
+                    var hostname = parser.hostname;
+                    // parse pathname
+                    var pathname = parser.pathname;
+                    urlParts = pathname ? pathname.split('/').filter(function(el) {
+                        return el
+                    }) : [];
+                    // parse marketing params
+                    var search = parser.search.replace('?', '');
+                    var vars = search ? search.split("&") : [];
+                    var params = ['BMID', 'AID', 'SID', 'PID', 'RCMT', 'RCKW', 'BMID_Old__c', 'RC_Visitor_ID__c'];
+                    if (Array.isArray(vars)) {
+                        for (var j = 0; j < vars.length; j++) {
+                            var pair = vars[j].split("=");
+                            var paramName = pair[0].toUpperCase();
+                            if (params.indexOf(paramName) > -1) {
+                                // save param to Transcript
+                                var inp = document.getElementById(paramName);
+                                if (inp) {
+                                    inp.value = pair[1];
+                                }
+                            }
+                        }
+                    }
+                } else if (detail.label === "title") {
+                    // parse title
+                    var title = detail.value;
+                    titleParts = title ? title.split(' ') : [];
+                } else if (detail.label === "user_log"){
+                    //
+                    var user_log = document.getElementById('user_log');
+                    user_log.value = detail.value;
+                } else if (detail.label === "ref"){
+                    // General Web Referrer site info
+                    var gw_referer = document.getElementById('gw_referer');
+                    gw_referer.value = detail.value;
+                } else if (detail.label === "Adobe_Target_Id__c"){
+                    // A/B 360 Analytics
+                    var adobeTargId = document.getElementById('Adobe_Target_Id__c');
+                    adobeTargId.value = detail.value;
+                } else if (detail.label === "Transaction_Id__c"){
+                    // A/B 360 Analytics
+                    var transaction = document.getElementById('Transaction_Id__c');
+                    transaction.value = detail.value;
+                } else if (detail.label === "phone"){
+                    // Dynamic Phone Number
+                    var phone = detail.value;
+                    if (phone){
+                        var dynamicPhone = document.getElementById('dynamicPhone');
+                        dynamicPhone.innerHTML = phone;
+                    }
+                }
+            }
+            // route rules
+            var haystack = urlParts.concat(titleParts);
+            var keywords = ['fax', 'pro'];
+            var routeTo = '';
+            if (Array.isArray(haystack)) {
+                for (var a = 0; a < haystack.length; a++) {
+                    var haystackItem = haystack[a].toLowerCase();
+                    if (keywords.indexOf(haystackItem) > -1) {
+                        routeTo = haystackItem;
+                        break;
+                    }
+                }
+            }
+            var button_id = '';
+            if (routeTo === 'fax') {
+                button_id = '{!IF(type=='ProActive',buttons['US_ProActive_Fax']+','+buttons['US_Team_ProActive_Chats'],buttons['US_Fax']+','+buttons['US_Team'])}'; // US ProActive - Fax || US Fax
+            } else if (routeTo === 'pro') {
+                button_id = '{!IF(type=='ProActive',buttons['US_ProActive_Pro']+','+buttons['US_Team_ProActive_Chats'],buttons['US_Pro']+','+buttons['US_Team'])}'; // US ProActive - Pro || US Pro
+            }
+            var employeesSelector = document.getElementById('employees_selector');
+            var employeesSelectorOptions = employeesSelector.getElementsByTagName('option');
+            if (button_id) {
+                // create liveagent.prechat.buttons element with button id for routing
+                for (var n = 0; n < employeesSelectorOptions.length; n++) {
+                    employeesSelectorOptions[n].value = button_id;
+                }
+            }
+        }
+    </script>
+
+</apex:component>

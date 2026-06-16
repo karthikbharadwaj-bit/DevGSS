@@ -1,0 +1,477 @@
+<aura:component controller="DQ_DealQualificationController">
+    <aura:attribute type="DQ_Deal_Qualification__c" name="objDealQualification" />
+    <aura:attribute type="DQ_DealQualificationController.DealQualificationWrapper" name="objDealQualificationWrap" />
+    <aura:attribute type="List" name="DQDiscountList" />
+    <aura:attribute type="Boolean" name="isChangeApprovalUser" Default="false" />
+    <aura:attribute type="Map" name="prodCatPicklistMap" />
+    <aura:attribute type="Map" name="prodFamilyPicklistMap" />
+    <aura:attribute type="Map" name="mapOfPackageNameToId" />
+    <aura:attribute name="serarchCmpOpen" type="boolean" default="false" />
+    <aura:attribute type="Map" name="prodSubCatPicklistMap" />
+    <aura:attribute type="Map" name="CatagoriesVsSubCatPicklistMap" />
+    <aura:attribute type="DQ_ApprovalEngine1.ApproverWrapper[]" name="approverList" />
+	<aura:attribute type="Map" name="ProductCategoriesSalesMap" />
+    <aura:attribute type="Map" name="ProductCategoriesContactMap" />
+    <aura:attribute type="String" name="ProductCategoryName" />
+    <aura:attribute type="String" name="ProdSubCategoryName" />
+    <aura:attribute type="List" name="DQApproverList" />
+    <aura:attribute name="parent" type="Aura.Component" required="true" />
+    <aura:attribute name="selectedLookUpRecord" type="sObject" default="{}" />
+    <aura:attribute type="boolean" name="isReadOnly" default="false" />
+    <aura:attribute type="boolean" name="showAddProducts" default="false"/>
+	<aura:attribute type="List" name="DQDiscountContactCenterList" />
+    <aura:attribute type="List" name="DQDiscountSalesQuoteList" />
+    <aura:attribute type="String" name="dqDiscountRecordTypeName" />
+    <aura:attribute type="Integer" name="highestStepOrderNumber" />
+	
+    <!--<aura:handler name="render" value="{!this}" action="{!c.onRender}"/> -->
+
+    <!--<lightning:card title="Maximum Discounts" class="subHeader" iconName="action:priority">
+        </lightning:card>-->
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>Product Line Item Discounts </span>
+                    </h2>
+                </div>
+                <!--<div class="slds-no-flex">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="neutral" aura:id="Save" label="Add Product" title="Add Product" onclick="{! c.showAddProducts }"/>
+    			</div>-->
+            </header>
+        </div>
+    </article>
+    <br />
+    <div aura:id="parent-aura-div-id">
+        <div class="slds-grid slds-wrap">
+           	<div class="slds-col slds-size_10-of-12  slds-align-middle" >
+				<h2><b>&nbsp;&nbsp; Sales Quote</b></h2>
+            </div>
+            <div class="slds-col slds-size_2-of-12">
+				<div class="slds-no-flex slds-float_right">
+                    <aura:if isTrue="{!!v.objDealQualification.IsDQCreatedFromCPQOpp__c}">
+                    	<lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="neutral" aura:id="Save" label="Add Product" title="Add Product" onclick="{! c.showAddProductsSalesQuote }"/>
+    			    </aura:if>
+                 </div>
+            </div>
+        </div>
+        <!--<aura:if isTrue="{!v.DQDiscountSalesQuoteList.length > 0}"> -->
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-m-top_xx-small slds-box cardtable">
+            <thead>
+                <tr class="slds-text-title_caps">
+                    <th scope="col">
+                        <div class="slds-truncate">Product Package</div>
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate"><span style="color:red;">*</span>Product Categories</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate">Product Family</div>
+                        </th>
+                    </aura:if>
+                    <th scope="col">
+                        <div class="slds-truncate">Product Name</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Product Sub Categories">Product Sub Categories</div>
+                        </th>
+                    </aura:if>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Discount Type">Discount Type</div>
+                        </th>
+                    </aura:if>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Quantity"><span style="color:red;">*</span>Quantity</div>
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Discount"><span style="color:red;">*</span>Maximum Discount(%)</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Promo Code">Promo Code</div>
+                        </th>
+                    </aura:if>
+                </tr>
+            </thead>
+            <tbody>
+                <aura:iteration items="{!v.DQDiscountSalesQuoteList}" var="objDQDiscountRec" indexVar="rowIndex">
+                    <tr class="slds-text-title_caps">
+                        <td>
+                            <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Package__c}"
+                                disabled="{!v.isReadOnly}" name="productCategoriesList" label="Product Categories">
+                                <option value="">--None--</option>
+                                <aura:iteration items="{!v.mapOfPackageNameToId}" var="packageMap" indexVar="key">
+                                    <option text="{!packageMap.key}" value="{!packageMap.value}"
+                                        selected="{!packageMap.value == objDQDiscountRec.Product_Package__c}" />
+                                </aura:iteration>
+                            </lightning:select>
+                            
+                        </td>
+                        <td id="{!rowIndex + '_state_td'}">
+                            <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Category__c}"
+                                disabled="{!v.isReadOnly}" name="productCategoriesList" label="Product Categories">
+                                <option value="">--None--</option>
+                                <aura:iteration items="{!v.ProductCategoriesSalesMap}" var="prodCat" indexVar="key">
+                                    <option text="{!prodCat.key}" value="{!prodCat.value}"
+                                        selected="{!prodCat.value==objDQDiscountRec.Product_Category__c}" />
+                                </aura:iteration>
+                            </lightning:select>
+                        </td>
+
+                        <aura:if isTrue="false">
+                            <td id="{!rowIndex + '_family_td'}">
+                                <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Family__c}"
+                                    name="productFamiliesList" label="Product Family">
+                                    <option value="">--None--</option>
+                                    <aura:iteration items="{!v.prodFamilyPicklistMap}" var="prodFamily" indexVar="key">
+                                        <option text="{!prodFamily.key}" value="{!prodFamily.value}"
+                                            selected="{!prodFamily.value==objDQDiscountRec.Product_Family__c}" />
+                                    </aura:iteration>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                <!--<lightning:input  type="text"  name="input1" variant="label-hidden" />-->
+                                <c:DQ_TypeAheadCMP packageId="{!objDQDiscountRec.Product_Package__c}" productFamily = "{!objDQDiscountRec.Product_Category__c}" selectedRecordId="{!objDQDiscountRec.Product__c}" isReadOnly="{!v.isReadOnly}"
+                                    cpqConfiguredId="{!objDQDiscountRec.CPQ_Configured_Product__c}" isDQFromCPQ="{!v.objDealQualification.IsDQCreatedFromCPQOpp__c}" objectAPIName="Product_Catalogue__c" IconName="standard:product" label="" />
+                            </div>
+                        </td>
+                        <aura:if isTrue="false">
+                            <td id="{!rowIndex +'_sub_cat_td'}">
+                                <lightning:select aura:id="ProdSubCat"
+                                    value="{!v.objDQDiscountRec.Product_Sub_Categories__c}"
+                                    name="productSubCategoriesList" label="Product Sub Categories">
+                                    <option value="">--None--</option>
+                                    <aura:iteration items="{!v.prodSubCatPicklistMap}" var="prodCat" indexVar="key">
+                                        <option text="{!prodCat.key}" value="{!prodCat.value}"
+                                            selected="{!prodCat.value==objDQDiscountRec.Product_Sub_Categories__c}" />
+                                    </aura:iteration>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <aura:if isTrue="false">
+                            <td>
+                                <lightning:select value="{!objDQDiscountRec.Discount_Type__c}" name="discountType"
+                                    label="Discount Type">
+                                    <option value="Percentage">Percentage</option>
+                                    <option value="Currency">Currency</option>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                <lightning:input type="number" value="{!objDQDiscountRec.Quantity__c}" name="quantity"
+                                    disabled="{!v.isReadOnly}" variant="label-hidden" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                <lightning:input type="number" value="{!objDQDiscountRec.Discount__c}" step="0.01" name="discount"
+                                    disabled="{!v.isReadOnly}" variant="label-hidden" />
+                            </div>
+                        </td>
+                        <aura:if isTrue="false">
+                            <td>
+                                <div class="slds-form-element__control input">
+                                    <lightning:input type="text" value="{!objDQDiscountRec.Promo_Code__c}"
+                                        name="promocode" variant="label-hidden" />
+                                </div>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <!-- conditionally Display Add or Delete Icons
+                 if rowIndex is 0 then show Add New Row Icon else show delete Icon
+             -->
+                            <aura:if isTrue="{!not(v.isReadOnly)}">
+                                <aura:if isTrue="{!rowIndex == 0}">
+                                    <a onclick="{!c.AddNewRow}">
+                                        <lightning:icon iconName="utility:add" iconClass="slds-icon_xx-small"
+                                            class="slds-icon slds-icon_xx-small" size="small" alternativeText="add" />
+                                        <span class="slds-assistive-text">Add Icon</span>
+                                    </a>
+                                    <aura:set attribute="else">
+                                        <a data-indexvardel="{!rowIndex}" onclick="{!c.removeRowSalesQuote}">
+                                            <lightning:icon variant="error" iconClass="slds-icon_xx-small"
+                                                iconName="utility:delete" class="slds-icon slds-icon_xx-small"
+                                                size="small" alternativeText="icon" />
+                                            <span class="slds-assistive-text">Delete Icon</span>
+                                        </a>
+                                    </aura:set>
+                                </aura:if>
+
+                                &nbsp;&nbsp;
+                                <aura:if isTrue="{!!v.objDealQualification.IsDQCreatedFromCPQOpp__c}">
+                                    <a data-indexvardel="{!rowIndex}" onclick="{!c.SearchProd}">
+                                        <lightning:icon iconName="utility:search" iconClass="slds-icon_xx-small"
+                                            class="slds-icon slds-icon_xx-small" size="small" alternativeText="add" />
+                                        <span class="slds-assistive-text">Add Icon</span>
+                                    </a>
+                                </aura:if>
+                            </aura:if>
+
+
+                        </td>
+                    </tr>
+                </aura:iteration>
+            </tbody>
+        </table>
+             <!--<aura:set attribute="else">
+                <span style="padding-left:4px;"><b>No Record Available</b></span>
+                    </aura:set>
+                </aura:if>-->
+    </div>
+    <br/> 
+    <br/>
+    <!--Contact Center Starts-->
+    <div aura:id="parent-aura-div-id">
+        <div class="slds-grid slds-wrap" style="height:30px;">
+           	<div class="slds-col slds-size_10-of-12  slds-align-middle">
+				<h2><b>&nbsp;&nbsp;&nbsp;Contact Center</b></h2>
+            </div>
+            <div class="slds-col slds-size_2-of-12 ">
+				<!-- <div class="slds-no-flex slds-float_right">
+                    <lightning:button disabled="{!v.isChangeOrderSubmitted}" variant="neutral" aura:id="Save" label="Add Product" title="Add Product" onclick="{! c.showAddProductsContactCenter }"/>
+    			</div> -->
+            </div>
+        </div>
+        <!--<aura:if isTrue="{!v.DQDiscountContactCenterList.length > 0}">-->
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-m-top_xx-small slds-box cardtable">
+            <thead>
+                <tr class="slds-text-title_caps">
+                    <!--<th scope="col">
+                        <div class="slds-truncate">Product Package</div>
+                    </th>-->
+                    <th scope="col">
+                        <div class="slds-truncate"><span style="color:red;">*</span>Product Categories</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate">Product Family</div>
+                        </th>
+                    </aura:if>
+                    <th scope="col">
+                        <div class="slds-truncate">Product Name</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Product Sub Categories">Product Sub Categories</div>
+                        </th>
+                    </aura:if>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Discount Type">Discount Type</div>
+                        </th>
+                    </aura:if>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Quantity"><span style="color:red;">*</span>Quantity</div>
+                    </th>
+                    <th scope="col">
+                        <div class="slds-truncate" title="Discount"><span style="color:red;">*</span>Maximum Discount</div>
+                    </th>
+                    <aura:if isTrue="false">
+                        <th scope="col">
+                            <div class="slds-truncate" title="Promo Code">Promo Code</div>
+                        </th>
+                    </aura:if>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <aura:iteration items="{!v.DQDiscountContactCenterList}" var="objDQDiscountRec" indexVar="rowIndex">
+                    <tr class="slds-text-title_caps">
+                        <!--<td>
+                            <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Package__c}"
+                                disabled="{!v.isReadOnly}" name="productCategoriesList" label="Product Categories">
+                                <option value="">- -None- -</option>
+                                <aura:iteration items="{!v.mapOfPackageNameToId}" var="packageMap" indexVar="key">
+                                    <option text="{!packageMap.key}" value="{!packageMap.value}"
+                                        selected="{!packageMap.value == objDQDiscountRec.Product_Package__c}" />
+                                </aura:iteration>
+                            </lightning:select>
+                        </td>-->
+                        <td id="{!rowIndex + '_state_td'}">
+                            <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Category__c}"
+                                disabled="true" name="productCategoriesList" label="Product Categories">
+                                <option value="">--None--</option>
+                                <aura:iteration items="{!v.ProductCategoriesContactMap}" var="prodCat" indexVar="key">
+                                    <option text="{!prodCat.key}" value="{!prodCat.value}"
+                                        selected="{!prodCat.value==objDQDiscountRec.Product_Category__c}" />
+                                </aura:iteration>
+                            </lightning:select>
+                        </td>
+
+                        <aura:if isTrue="false">
+                            <td id="{!rowIndex + '_family_td'}">
+                                <lightning:select aura:id="ProdCat" value="{!objDQDiscountRec.Product_Family__c}"
+                                    name="productFamiliesList" label="Product Family">
+                                    <option value="">--None--</option>
+                                    <aura:iteration items="{!v.prodFamilyPicklistMap}" var="prodFamily" indexVar="key">
+                                        <option text="{!prodFamily.key}" value="{!prodFamily.value}"
+                                            selected="{!prodFamily.value==objDQDiscountRec.Product_Family__c}" />
+                                    </aura:iteration>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                {!objDQDiscountRec.Product__r.Name}
+                                <!--<lightning:input  type="text"  name="input1" variant="label-hidden" />-->
+                                <!--<c:DQ_TypeAheadCMP productFamily = "{!objDQDiscountRec.Product_Category__c}" selectedRecordId="{!objDQDiscountRec.Product__c}" isReadOnly="true"
+                                    objectAPIName="product2" IconName="standard:product" label="" /> -->
+                            </div>
+                        </td>
+                        <aura:if isTrue="false">
+                            <td id="{!rowIndex +'_sub_cat_td'}">
+                                <lightning:select aura:id="ProdSubCat"
+                                    value="{!v.objDQDiscountRec.Product_Sub_Categories__c}"
+                                    name="productSubCategoriesList" label="Product Sub Categories">
+                                    <option value="">--None--</option>
+                                    <aura:iteration items="{!v.prodSubCatPicklistMap}" var="prodCat" indexVar="key">
+                                        <option text="{!prodCat.key}" value="{!prodCat.value}"
+                                            selected="{!prodCat.value==objDQDiscountRec.Product_Sub_Categories__c}" />
+                                    </aura:iteration>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <aura:if isTrue="false">
+                            <td>
+                                <lightning:select value="{!objDQDiscountRec.Discount_Type__c}" name="discountType"
+                                    label="Discount Type">
+                                    <option value="Percentage">Percentage</option>
+                                    <option value="Currency">Currency</option>
+                                </lightning:select>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                <lightning:input type="number" value="{!objDQDiscountRec.Quantity__c}" name="quantity"
+                                    disabled="true" variant="label-hidden" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="slds-form-element__control input">
+                                <lightning:input type="number" step="0.01" value="{!objDQDiscountRec.Discount__c}" name="discount"
+                                    disabled="true" variant="label-hidden" />
+                            </div>
+                        </td>
+                        <aura:if isTrue="false">
+                            <td>
+                                <div class="slds-form-element__control input">
+                                    <lightning:input type="text" value="{!objDQDiscountRec.Promo_Code__c}"
+                                        name="promocode" variant="label-hidden" />
+                                </div>
+                            </td>
+                        </aura:if>
+                        <td>
+                            <!-- conditionally Display Add or Delete Icons
+                 if rowIndex is 0 then show Add New Row Icon else show delete Icon
+             -->
+                            <aura:if isTrue="{!not(v.isReadOnly)}">
+                                <aura:if isTrue="{!rowIndex == 0}">
+                                    <!--<a onclick="{!c.AddNewRow}">
+                                        <lightning:icon iconName="utility:add" iconClass="slds-icon_xx-small"
+                                            class="slds-icon slds-icon_xx-small" size="small" alternativeText="add" />
+                                        <span class="slds-assistive-text">Add Icon</span>
+                                    </a>-->
+                                    <aura:set attribute="else">
+                                        <a data-indexvardel="{!rowIndex}" onclick="{!c.removeRowContactCenter}">
+                                            <lightning:icon variant="error" iconClass="slds-icon_xx-small"
+                                                iconName="utility:delete" class="slds-icon slds-icon_xx-small"
+                                                size="small" alternativeText="icon" />
+                                            <span class="slds-assistive-text">Delete Icon</span>
+                                        </a>
+                                        &nbsp;&nbsp;
+                                    </aura:set>
+                                </aura:if>
+	
+                                <aura:if isTrue="{!!v.objDealQualification.IsDQCreatedFromCPQOpp__c}">
+                                    <a data-indexvardel="{!rowIndex}" onclick="{!c.SearchProd}">
+                                        <lightning:icon iconName="utility:search" iconClass="slds-icon_xx-small"
+                                            class="slds-icon slds-icon_xx-small" size="small" alternativeText="add" />
+                                        <span class="slds-assistive-text">Add Icon</span>
+                                    </a>
+                                </aura:if>
+                            </aura:if>
+
+
+                        </td>
+                    </tr>
+                </aura:iteration>
+                 
+            </tbody>
+        </table>
+           <!-- <aura:set attribute="else">
+                <br/>
+                <span style="padding-left:4px;"><b>No Record Available</b></span>
+                    </aura:set>
+                </aura:if>-->
+                
+    </div>
+    <!--Ends Here -->
+    <br />
+    <br />
+
+    <!--aura:if -->
+        <article class="slds-card">
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                        <div class="slds-media__body">
+                        <h2 class="slds-card__header-title">
+                            <span> Approvals </span>
+                        </h2>
+                    </div>
+                </header>
+            </div>
+        </article>
+    <c:DQ_ApprovalCycle parent="{!v.parent}" isChangeApprovalUser="{!v.isChangeApprovalUser}" objDealQualificationWrap="{!v.objDealQualificationWrap}"
+            DQApproverList="{!v.DQApproverList}" isCPQDQ = "{!v.objDealQualification.IsDQCreatedFromCPQOpp__c}" opportunityId="{!v.objDealQualification.Opportunity__c}"/>
+    <!--/aura:if-->
+    <br/><br/>
+    <!--aura:if isTrue="{!v.objDealQualificationWrap.DQRec.Status__c != 'Pending Approval'}"-->
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>Approval Details</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+    </article>
+    <c:DQ_ApproverDetails approverList="{!v.approverList}" highestStepOrderNumber = "{!v.highestStepOrderNumber}" isCPQDQ = "{!v.objDealQualification.IsDQCreatedFromCPQOpp__c}"/>
+    <br/><br/>
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span>Already Approved Details</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+    </article>
+    <c:DQ_ApproverHistory  dqId="{!v.objDealQualificationWrap.DQRec.Id}"/>
+
+
+    <!--/aura:if-->
+    <!--aura:if isTrue="{!v.objDealQualification.Status__c != 'Approval Pending'}">
+    
+    </aura:if-->
+    <!-- </aura:if>   -->
+    <aura:if isTrue="{!v.serarchCmpOpen}">
+        <c:DQ_ProductSearchFilter ProductCategoryName="{!v.ProductCategoryName}"
+            ProdSubCategoryName="{!v.ProdSubCategoryName}" serarchCmpOpen="{!v.serarchCmpOpen}" />
+    </aura:if>
+    <aura:if isTrue="{!v.showAddProducts}">
+        <c:DQ_AddMulpileDQDiscount dqDiscountRecordTypeName="{!v.dqDiscountRecordTypeName}" parent="{!v.parent}" showAddProducts="{!v.showAddProducts}" dqId="{!v.objDealQualificationWrap.DQRec.Id}"/>
+    </aura:if>
+    
+                    
+</aura:component>

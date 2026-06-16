@@ -1,0 +1,120 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 26-08-2020
+* Description    : Component display and create new AccountContactRole record in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+
+<aura:component implements="flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:appHostable" access="global"
+                controller="AccountContactRoles_Controller">
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+    <aura:attribute name="viewAllFlag" type="boolean" default="false"/>
+    <aura:attribute name="editflag" type="boolean" default="false"/>
+    <aura:attribute name="deleteflag" type="boolean" default="false"/>
+    <aura:attribute name="createflag" type="boolean" default="false"/>
+    <aura:attribute name="validateState" type="boolean" default="true"/>
+    <aura:attribute name="ContactRolesList" type="AccountContactRole[]"/>
+    <aura:attribute name="headerTitle" type="string"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="accountRecord" type="Object"/>
+    <aura:attribute name="accountName" type="string"/>
+    <aura:attribute name="isCustomerAccount" type="boolean"/>
+    <force:recordData aura:id="recordLoader"
+                      recordId="{!v.recordId}"
+                      fields="Name"
+                      targetFields="{!v.accountRecord}"
+                      />
+
+
+    <div class="slds-box">
+        <lightning:card title="{!v.headerTitle}" iconName="standard:opportunity_contact_role" variant="Narrow">
+
+            <aura:set attribute="actions">
+                <aura:if isTrue="{!v.createflag}">
+                    <lightning:button label="New" onclick="{!c.addContactRole}"/>
+                </aura:if>
+            </aura:set>
+
+            <lightning:layout multipleRows="true">
+                <lightning:layoutitem size="12">
+                    <aura:iteration items="{!v.ContactRolesList}" var="Acc_cr">
+
+                        <lightning:card iconName="standard:contact">
+
+                            <aura:set attribute="title">
+
+                                <a href="{!'/lightning/r/' + Acc_cr.Contact.Id + '/view'}" class="normalfont">{!Acc_cr.Contact.Name}</a>
+
+                                <aura:if isTrue="{!Acc_cr.IsPrimary}">
+                                    <span class="slds-m-around--medium slds-badge">
+                                        <lightning:badge label="Primary"/>
+                                    </span>
+                                </aura:if>
+
+
+                            </aura:set>
+                            <aura:set attribute="actions">
+                                <aura:if  isTrue="{!or(v.editflag, v.deleteflag)}">
+
+
+                                    <lightning:buttonMenu  onselect="{!c.handleSelect}" alternativeText="More Options" iconSize="small" >
+                                        <aura:if isTrue="{!v.editflag}">
+                                            <lightning:menuItem value="{!Acc_cr.Id}" label="Edit" />
+                                        </aura:if>
+                                        <aura:if isTrue="{!v.deleteflag}">
+                                            <lightning:menuItem value="{!Acc_cr.Id}" label="Delete"/>
+                                        </aura:if>
+
+
+                                    </lightning:buttonMenu>
+                                </aura:if>
+
+
+                            </aura:set>
+
+
+                            <dl class="slds-dl_horizontal slds-p-vertical--none">
+                                <dt class="slds-dl_horizontal__label">Role:
+                                </dt>
+                                <dd class="slds-dl_horizontal__detail slds-tile__meta">{!Acc_cr.Role}
+                                </dd>
+                                <dt class="slds-dl_horizontal__label">Title:
+                                </dt>
+                                <dd class="slds-dl_horizontal__detail slds-tile__meta">{!Acc_cr.Contact.Title}
+                                </dd>
+                                <dt class="slds-dl_horizontal__label">Status:
+                                </dt>
+                                <dd class="slds-dl_horizontal__detail slds-tile__meta">{!Acc_cr.Contact.RCService_ContactStatus__c}
+                                </dd> 
+                            </dl>
+                            
+
+
+                        </lightning:card>
+                    </aura:iteration>
+                </lightning:layoutitem>
+
+            </lightning:layout>
+
+
+            <aura:set attribute="footer">
+                <aura:if isTrue="{!v.viewAllFlag}">
+                    <a href="javascript:void(0)" onclick="{!c.navigateToRelatedList}">View All</a>
+                </aura:if>
+            </aura:set>
+
+
+        </lightning:card>
+    </div>
+
+
+</aura:component>

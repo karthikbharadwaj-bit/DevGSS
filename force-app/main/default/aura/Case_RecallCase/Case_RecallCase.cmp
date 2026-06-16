@@ -1,0 +1,63 @@
+<!--
+* Created By     : Madhumita
+* Created Date   : 18-06-2020
+* Description    : Component invoked when 'Recall Case' button is clicked on Case in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+<aura:component implements="force:appHostable,flexipage:availableForAllPageTypes,force:lightningQuickAction,force:hasRecordId,force:hasSObjectName" access="public"
+                controller="Case_RecallCase_Controller">
+    <aura:html tag="style">
+        .cuf-content {
+        padding: 0 0rem !important;
+        }
+        .slds-p-around--medium {
+        padding: 0rem !important;
+        }       
+        .slds-modal__content{
+        overflow-y:hidden !important;
+        height:unset !important;
+        max-height:unset !important;
+        }
+        .slds-modal_medium .slds-modal__container{
+        width:50%;
+        
+        }
+    </aura:html>  
+    <aura:attribute name="displayConfirmMessage" type="Boolean" default="false"/>
+    <aura:handler name="init"  value="{!this}" action="{!c.doInit}" />
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:if isTrue="{!v.displayConfirmMessage}">
+        
+        <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open slds-modal_medium slds-backdrop" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1">       
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirmation</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_small" id="modal-content-id-1">
+                    <div class="slds-is-relative">
+                        <div class="spinnerHolder">
+                            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="small"/>
+                        </div>
+                    </div>
+                    <div>                        
+                        You are about to Recall this Case . Are you sure?
+                    </div>
+                </div>
+                <footer class="slds-modal__footer">
+                    <div class="slds-float_left">
+                        <lightning:button variant="neutral" label="Cancel" title="Cancel"  onclick="{!c.closeModal}"/>
+                    </div>
+                    <lightning:button variant="brand" label="Ok" title="Ok"  onclick="{!c.handleConfirmation}"/> 
+                    
+                </footer>   
+            </div>
+        </section>
+    </aura:if>
+</aura:component>

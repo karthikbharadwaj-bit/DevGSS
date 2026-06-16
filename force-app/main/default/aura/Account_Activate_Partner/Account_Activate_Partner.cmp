@@ -1,0 +1,29 @@
+<aura:component
+    implements="force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,force:lightningQuickActionWithoutHeader"
+    access="global" controller="ApprovalHelperCls">
+
+    <aura:attribute name="spinner" type="Boolean" default="false"/>
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}" />
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}" />
+
+    <div class="slds-is-relative slds-grid slds-wrap">
+        <div class="slds-border_bottom slds-p-bottom_x-small slds-size--1-of-1 slds-text-align_center slds-text-title_caps">Activate Partner Account</div> 
+        <div class="slds-p-bottom--xx-large slds-p-top--xx-large slds-size--1-of-1 slds-wrap slds-text-align_center">Are you sure that you want to activate Partner Account?</div>    
+
+        <div class="slds-grid slds-grid--vertical-align-end slds-grid_align-end slds-p-top--xx-large slds-size--1-of-1 slds-wrap">
+            <lightning:button label="No" title="No" onclick="{! c.closeModal }"/>
+            <lightning:button variant="brand" label="Yes" title="Yes" onclick="{! c.handleClickYes }"/>
+        </div>
+
+        <aura:if isTrue="{!v.spinner}">
+            <div aura:id="spinnerId" class="slds-spinner_container">
+                <div class="slds-spinner_brand  slds-spinner slds-spinner_medium slds-is-relative" role="alert">
+                    <span class="slds-assistive-text">Loading...</span>
+                    <div class="slds-spinner__dot-a"></div>
+                    <div class="slds-spinner__dot-b"></div>
+                </div>
+            </div>
+        </aura:if>
+    </div>  
+
+</aura:component>

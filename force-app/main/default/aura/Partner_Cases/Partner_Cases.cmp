@@ -1,0 +1,814 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" access="global" controller="Partner_Cases">
+    
+    <aura:attribute name="baseURL" type="String"/>
+    <aura:attribute name="caseList" type="Case[]"/>
+    <aura:attribute name="caseRec" type="Case"/>
+    <aura:attribute name="listView" type="boolean" default="true"/>
+    <aura:attribute name="showDetail" type="boolean" default="false"/>
+    <aura:attribute name="Message" type="boolean" default="false" description="use for display no record found message"/>
+    
+    <aura:attribute name="pageNumber" type="integer" default="1"/>
+    <aura:attribute name="totalPages" type="integer" default="0"/>
+    <aura:attribute name="totalRecords" type="integer" default="0"/>
+    <aura:attribute name="recordStart" type="integer" default="0"/>
+    <aura:attribute name="recordEnd" type="integer" default="0"/>
+    
+    <aura:attribute name="searchKeyword" type="String" description="use for store user search input"/>
+    <aura:attribute name="searchBy" type="String" default="Account.Name"/>
+    
+    <aura:attribute name="ShowConAcc" type="boolean" default="false"/> 
+    
+    <aura:attribute name="RespectiveTabURL" type="string"/>
+    
+    <aura:attribute name="Lightningfiles" type="List"/>
+    <aura:attribute name="Attachments" type="List"/>
+    <aura:attribute name="caseComments" type="List"/>
+    <aura:attribute name="caseEmails" type="List"/>
+    
+    <aura:attribute name="caseEmail" type="object"/>
+    
+    <aura:attribute name="LightningFilesMessage" type="boolean" default="false" />
+    <aura:attribute name="AttachmentsMessage" type="boolean" default="false" />
+    <aura:attribute name="caseCommentsMessage" type="boolean" default="false" />
+    <aura:attribute name="caseEmailsMessage" type="boolean" default="false" />
+    <aura:attribute name="caseEmailMessage" type="boolean" default="false" />
+    <aura:attribute name="showSelectedEmail" type="boolean" default="false" />
+    
+    <aura:attribute name="loadingSpinner" type="boolean" default="false" />
+    
+    <aura:attribute name="caseFieldsMap" type="Map" />
+    <aura:attribute name="translationsMap" type="Map" />
+    
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    
+    <div>
+        <aura:if isTrue="{!v.loadingSpinner}">
+            <div class="slds-is-relative">
+                <div class="spinnerHolder">
+                    <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" size="medium"/>
+                </div>
+            </div>
+        </aura:if>
+        
+        <aura:if isTrue="{!v.listView}">
+            <div class="filterwrap">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">       
+                        <h1 class="slds-page-header__title slds-m-right_small slds-align-middle slds-truncate"
+                            title="Collection Cases"><lightning:icon iconName="standard:case" /><b> &nbsp;{!v.translationsMap.Collection_Cases}</b></h1>
+                        
+                        <lightning:layout>
+                            
+                            <lightning:layoutItem size="4" class="slds-p-horizontal_small slds-p-vertical_x-small">
+                                <lightning:input label="{!v.translationsMap.Keyword}" value="{!v.searchKeyword}"                                         
+                                                 placeholder="{!v.translationsMap.search_placeholder +'...'}" 
+                                                 aura:id="searchField" />
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem size="2" class="slds-p-horizontal_small slds-p-vertical_x-small">
+                                <lightning:select name="searchBy" value= "{!v.searchBy}" label="{!v.translationsMap.Search_by_Fields}" required="true">
+                                    <!--<option value="CaseNumber">Case Number</option>-->
+                                    <option value="Account.Name">{!v.translationsMap.Account_Name}</option>
+                                    <option value="Status">{!v.translationsMap.Status}</option>
+                                    <option value="Account.Payment_Method__c">{!v.translationsMap.Payment_method}</option>
+                                    <option value="Account.BusinessIdentity__c">{!v.translationsMap.Entity}</option>
+                                </lightning:select>
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem size="2" class="slds-p-top_x-large">
+                                <lightning:button onclick="{!c.searchCases}"
+                                                  variant="brand"
+                                                  label="Search" iconName="utility:search"/> 
+                            </lightning:layoutItem>
+                            
+                            <lightning:layoutItem size="2" class="slds-p-horizontal_small slds-p-vertical_x-small" alignmentBump="left">	
+                                <lightning:select aura:id="pageSize" label="{!v.translationsMap.Display_Cases_Per_Page+':'}" onchange="{!c.onSelectChange}">
+                                    <option text="50" value="50" selected="true"/>
+                                    <option text="100" value="100"/>
+                                    <option text="150" value="150"/>
+                                    <option text="200" value="200"/>
+                                </lightning:select>
+                            </lightning:layoutItem>
+                            
+                        </lightning:layout>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <aura:if isTrue="{!v.Message}">
+                <div class="slds-notify_container slds-is-relative">
+                    <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg" role="alert">
+                        <div class="slds-notify__content">
+                            <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+            
+            <aura:if isTrue="{!!v.Message}">
+                <div class="slds-m-around_xx-small slds-p-top_x-large listviewwrap">       
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                        <thead>
+                            <tr>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Case +'#'}">{!v.translationsMap.Case +'#'}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Account_Name}">{!v.translationsMap.Account_Name}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.UID}">{!v.translationsMap.UID}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Status}">{!v.translationsMap.Status}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Subject}">{!v.translationsMap.Subject}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Escalated_To}">{!v.translationsMap.Escalated_To}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Date_Time_Opened}">{!v.translationsMap.Date_Time_Opened}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong><div class="slds-truncate" title="{!v.translationsMap.Age}">{!v.translationsMap.Age}</div></strong>
+                                </th>
+                                <th scope="col">
+                                    <strong>
+                                        <div class="slds-truncate" title="{!v.translationsMap.Value_of_Invoices_Under_Dispute}">
+                                            {!v.translationsMap.Value_of_Invoices_Under_Dispute}
+                                        </div>
+                                    </strong>
+                                </th>
+                            </tr>
+                        </thead> 
+                        <tbody>
+                            <aura:iteration items="{!v.caseList}" var="case"> 
+                                <tr>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.CaseNumber}" data-value="{!case.Id}">
+                                            <a href="{!v.RespectiveTabURL +'?id=' +case.Id}">
+                                                {!case.CaseNumber}
+                                            </a>
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.Account.Name}">
+                                            {!case.Account.Name}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.RC_User_Id__c}">
+                                            {!case.RC_User_Id__c}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.Status}">
+                                            {!case.Status}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.Subject}">
+                                            {!case.Subject}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.Support_Escalate_To__c}">
+                                            {!case.Support_Escalate_To__c}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate">
+                                            <lightning:formattedDateTime
+                                                                         value="{!case.CreatedDate}"
+                                                                         month="numeric"
+                                                                         day="numeric"
+                                                                         year="numeric"
+                                                                         hour="2-digit"
+                                                                         minute="2-digit"
+                                                                         hour12="true"
+                                                                         timeZone="{!$Locale.timezone}"/>
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{!case.Age_Date__c}">
+                                            {!case.Age_Date__c}
+                                        </div>
+                                    </th>
+                                    <th scope="row" data-label="">
+                                        <div class="slds-truncate" title="{! case.CurrencyIsoCode +' '+ case.Value_of_Invoices_under_Dispute__c }">
+                                            <lightning:formattedNumber value="{!case.Value_of_Invoices_under_Dispute__c}" style="currency" currencyCode="{!case.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </aura:iteration> 
+                        </tbody>
+                    </table>
+                    
+                    <div class="slds-clearfix">
+                        <div class="slds-page-header" role="banner">
+                            <div class="slds-float_right">            
+                                <lightning:button disabled="{!v.pageNumber == 1}"
+                                                  variant="brand" aura:id="prevPage"
+                                                  label="{!v.translationsMap.Prev}" onclick="{!c.handlePrev}" iconName="utility:chevronleft" iconPosition="left"/>            
+                                <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                                  aura:id="nextPage" variant="brand"
+                                                  label="{!v.translationsMap.Next}" onclick="{!c.handleNext}" iconName="utility:chevronright" iconPosition="right"/>
+                            </div>
+                            <p class="slds-truncate">{!v.translationsMap.Displaying} &nbsp;{!v.recordStart}-{!v.recordEnd}&nbsp; {!v.translationsMap.Of}&nbsp; {!v.totalRecords} | {!v.translationsMap.Page}&nbsp; {!v.pageNumber}  &nbsp;{!v.translationsMap.Of}&nbsp; {!v.totalPages}</p>
+                        </div>
+                    </div>
+                </div>
+            </aura:if>
+        </aura:if>
+        
+        <aura:if isTrue="{!v.showDetail}"> 
+            <lightning:card variant="Narrow" title="{!v.translationsMap.Collection_Case_Detail}" iconName="standard:case">
+                <div class="slds-form-element slds-form-element_horizontal slds-align_absolute-center slds-p-around_medium" style="bottom-border:.25rem !important;">
+                    <lightning:button variant="brand" label="{!v.translationsMap.Go_Back}" iconName="action:recall" iconPosition="left" onclick="{!c.goBackToViewList}" />
+                </div>
+                
+                <div class="slds-grid slds-wrap">  
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Account_Name}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span>{!v.caseRec.Account.Name}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Contact_Name}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small">
+                        <span>{!v.caseRec.Contact.Name}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.UID}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.RC_User_Id__c}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span></span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Case +'#'}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.CaseNumber}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.caseFieldsMap.Origin}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Origin}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Status}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Status}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Case_Owner}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Owner.Name}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Priority}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Priority}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Date_Time_Opened}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <lightning:formattedDateTime
+                                                     value="{!v.caseRec.CreatedDate}"
+                                                     month="numeric"
+                                                     day="numeric"
+                                                     year="numeric"
+                                                     hour="2-digit"
+                                                     minute="2-digit"
+                                                     hour12="true"
+                                                     timeZone="{!$Locale.timezone}"/>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Subject}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Subject}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.caseFieldsMap.Corrective_Actions__c}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.caseRec.Corrective_Actions__c}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.caseFieldsMap.Description}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.caseRec.Description}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.caseFieldsMap.Instructions_for_Collections__c}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small slds-border_top">
+                        <span>{!v.caseRec.Instructions_for_Collections__c}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.caseFieldsMap.Dispute_Details__c}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Dispute_Details__c}</span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Value_of_Invoices_Under_Dispute}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <lightning:formattedNumber value="{!v.caseRec.Value_of_Invoices_under_Dispute__c}" style="currency" currencyCode="{!v.caseRec.CurrencyIsoCode}" currencyDisplayAs="code"/>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Created_By}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.CreatedBy.Name}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Age_Days}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.Age_Date__c}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Case_Last_Modified_By}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">
+                        <span>{!v.caseRec.LastModifiedBy.Name}</span>
+                    </div> 
+                    <div class="slds-col slds-size_1-of-7  slds-border_top">
+                        <span></span>
+                    </div>
+                    <div class="slds-col slds-size_1-of-7 slds-p-around_x-small  slds-border_top alignRight" style="color:gray;">
+                        <span>{!v.translationsMap.Case_Date_Time_Last_Modified}</span>
+                    </div>                        
+                    <div class="slds-col slds-size_2-of-7 slds-p-around_x-small  slds-border_top">                    
+                        <lightning:formattedDateTime
+                                                     value="{!v.caseRec.LastModifiedDate}"
+                                                     month="numeric"
+                                                     day="numeric"
+                                                     year="numeric"
+                                                     hour="2-digit"
+                                                     minute="2-digit"
+                                                     hour12="true"
+                                                     timeZone="{!$Locale.timezone}"/>
+                    </div>
+                </div>
+            </lightning:card>
+            
+            <lightning:card variant="Narrow" title="{!v.translationsMap.Emails}" iconName="standard:case_email">       
+                <aura:if isTrue="{!v.caseEmailsMessage}">
+                    <!--<h2 class="slds-text-heading_small slds-text-align_center norecords">No Records Found ...</h2>-->
+                    <div class="slds-notify_container slds-is-relative">
+                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg small" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>
+                <aura:if isTrue="{!!v.caseEmailsMessage}">
+                    <div class="slds-m-around_xx-small">        
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                            <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Subject}">{!v.translationsMap.Subject}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.To_Address}">{!v.translationsMap.To_Address}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Message_Date}">{!v.translationsMap.Message_Date}</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                
+                                <aura:iteration items="{!v.caseEmails}" var="email">
+                                    <tr>
+                                        <th scope="row" data-label="Subject">
+                                            <div class="slds-truncate" title="{!email.Subject}"
+                                                 onclick="{!c.onSelectEmail}" data-id ="{!email.Id}">
+                                                <a href="javascript:void(0)" >
+                                                    {!email.Subject}
+                                                </a>
+                                            </div>
+                                        </th>
+                                        <th scope="row" data-label="To Address">
+                                            <div class="slds-truncate" title="{!email.ToAddress}">
+                                                {!email.ToAddress}
+                                            </div>
+                                        </th>
+                                        <th scope="row" data-label="Message Date">
+                                            <div class="slds-truncate" title="{!email.MessageDate}">
+                                                <lightning:formattedDateTime
+                                                                             value="{!email.MessageDate}"
+                                                                             month="numeric"
+                                                                             day="numeric"
+                                                                             year="numeric"
+                                                                             hour="2-digit"
+                                                                             minute="2-digit"
+                                                                             hour12="true"
+                                                                             timeZone="{!$Locale.timezone}"/>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </aura:iteration>
+                            </tbody>
+                        </table>
+                    </div>
+                </aura:if>
+            </lightning:card>
+            
+            <aura:if isTrue="{!v.showSelectedEmail}">
+                <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <header class="slds-modal__header">
+                            <lightning:buttonIcon iconName="utility:close"
+                                                  onclick="{! c.closeSelectedEmail }"
+                                                  alternativeText="close"
+                                                  variant="bare-inverse"
+                                                  class="slds-modal__close"/>
+                            <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate emailmodal-heading">
+                                <lightning:icon iconName="standard:case_email"/>
+                               {!v.translationsMap.Email_Message_Detail}
+                            </h2>
+                        </header>
+                        <div class="slds-modal__content slds-p-around_medium emailmodal" id="modal-content-id-1">
+                            <lightning:tabset>
+                                <lightning:tab label="Information">
+                                    <div class="slds-grid slds-wrap">
+                                        <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                            <label>{!v.translationsMap.Message_Date}</label>
+                                            <lightning:formattedDateTime
+                                                                         value="{!v.caseEmail.emailMessage.MessageDate}"
+                                                                         month="numeric"
+                                                                         day="numeric"
+                                                                         year="numeric"
+                                                                         hour="2-digit"
+                                                                         minute="2-digit"
+                                                                         hour12="true"
+                                                                         timeZone="{!$Locale.timezone}"/>
+                                        </div>
+                                    </div>
+                                </lightning:tab>
+                                <lightning:tab label="Address Information">
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.From_Address}</label>
+                                        <span>{!v.caseEmail.emailMessage.FromAddress}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.From_Name}</label>
+                                        <span>{!v.caseEmail.emailMessage.FromName}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.To_Address}</label>
+                                        <span>{!v.caseEmail.emailMessage.ToAddress}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.CC_Address}</label>
+                                        <span>{!v.caseEmail.emailMessage.CcAddress}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.BCC_Address}</label>
+                                        <span>{!v.caseEmail.emailMessage.BccAddress}</span>
+                                    </div>
+                                </lightning:tab>   
+                                <lightning:tab label="Message Content">
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.Subject}</label>
+                                        <span>{!v.caseEmail.emailMessage.Subject}</span>
+                                    </div>
+                                    <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                        <label>{!v.translationsMap.Text_Body}</label>
+                                        <span>{!v.caseEmail.emailMessage.TextBody}</span>
+                                    </div>  
+                                    <!--<aura:if isTrue="{!v.caseEmail.emailMessage.HtmlBody}">
+                                        <div class="slds-col slds-size_7-of-7 slds-p-around_x-small">
+                                            <b>Html Body</b>
+                                        </div>
+                                        <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large richtextwrap">
+                                            <lightning:formattedRichText value="{!v.caseEmail.emailMessage.HtmlBody}" />
+                                        </div>
+                                    </aura:if>-->
+                                </lightning:tab>
+                                <aura:if isTrue="{!v.caseEmail.emailMessage.HtmlBody}">
+                                    <lightning:tab label="Html Message Content">
+                                        <div class="slds-col slds-size_7-of-7 slds-p-vertical_x-small slds-p-horizontal_large">
+                                            <lightning:formattedRichText value="{!v.caseEmail.emailMessage.HtmlBody}" />
+                                        </div>
+                                    </lightning:tab>
+                                </aura:if>
+                                <lightning:tab label="{!v.translationsMap.Attachments}">                             
+                                    <div class="slds-col slds-size_7-of-7">    
+                                        <aura:if isTrue="{!v.caseEmailMessage}">
+                                            <div class="slds-notify_container slds-is-relative">
+                                                <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg small" role="alert">
+                                                    <div class="slds-notify__content">
+                                                        <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </aura:if>
+                                        <aura:if isTrue="{!!v.caseEmailMessage}"> 
+                                            <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                                                <thead>
+                                                    <tr class="slds-text-title_caps">
+                                                        <th scope="col">
+                                                            <strong><div class="slds-truncate" title="{!v.translationsMap.File_Name}">{!v.translationsMap.File_Name}</div></strong>
+                                                        </th>
+                                                        <th scope="col">
+                                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Created_By}">{!v.translationsMap.Created_By}</div></strong>
+                                                        </th>
+                                                        <th scope="col">
+                                                            <strong><div class="slds-truncate" title="{!v.translationsMap.Last_Modified_Date}">{!v.translationsMap.Last_Modified_Date}</div></strong>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <aura:iteration items="{!v.caseEmail.emailAttachments}" var="att"> 
+                                                        <tr>
+                                                            <th scope="row" data-label="File Name">
+                                                                <div class="slds-truncate" title="{!att.Name}">
+                                                                    <a aria-live="assertive"
+                                                                       class="slds-text-link"
+                                                                       href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}"
+                                                                       download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!att.Name}</a>      
+                                                                </div>
+                                                            </th>
+                                                            <th scope="row" data-label="Created By">
+                                                                <div class="slds-truncate" title="{!att.CreatedBy.Name}">
+                                                                    {!att.CreatedBy.Name}
+                                                                </div>
+                                                            </th>                                    
+                                                            <th scope="row" data-label="Last Modified Date">
+                                                                <div class="slds-truncate" title="{!att.LastModifiedDate}">
+                                                                    <lightning:formattedDateTime
+                                                                                                 value="{!att.LastModifiedDate}"
+                                                                                                 month="numeric"
+                                                                                                 day="numeric"
+                                                                                                 year="numeric"
+                                                                                                 hour="2-digit"
+                                                                                                 minute="2-digit"
+                                                                                                 hour12="true"
+                                                                                                 timeZone="{!$Locale.timezone}"/>
+                                                                </div>
+                                                            </th>
+                                                        </tr>
+                                                    </aura:iteration>
+                                                    <aura:iteration items="{!v.caseEmail.emailFiles}" var="file">
+                                                        <tr>
+                                                            <th scope="row" data-label="File Name">
+                                                                <div class="slds-truncate" title="{!file.Title}">
+                                                                    <a aria-live="assertive"
+                                                                       class="slds-text-link"
+                                                                       target="_blank"
+                                                                       href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                                       download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!file.Title}</a>    
+                                                                </div>
+                                                            </th>
+                                                            <th scope="row" data-label="Created By">
+                                                                <div class="slds-truncate" title="{!file.CreatedBy.Name}">
+                                                                    {!file.CreatedBy.Name}
+                                                                </div>
+                                                            </th>                                    
+                                                            <th scope="row" data-label="Last Modified Date">
+                                                                <div class="slds-truncate" title="{!file.LastModifiedDate}">
+                                                                    <lightning:formattedDateTime
+                                                                                                 value="{!file.LastModifiedDate}"
+                                                                                                 month="numeric"
+                                                                                                 day="numeric"
+                                                                                                 year="numeric"
+                                                                                                 hour="2-digit"
+                                                                                                 minute="2-digit"
+                                                                                                 hour12="true"
+                                                                                                 timeZone="{!$Locale.timezone}"/>
+                                                                </div>
+                                                            </th>
+                                                        </tr>
+                                                    </aura:iteration>
+                                                </tbody>
+                                            </table>
+                                        </aura:if>
+                                    </div>
+                                </lightning:tab>
+                            </lightning:tabset>
+                        </div>
+                        <footer class="slds-modal__footer">
+                            <lightning:button variant="neutral"
+                                              label="{!v.translationsMap.Cancel}"
+                                              title="{!v.translationsMap.Cancel}"
+                                              onclick="{! c.closeSelectedEmail }"/>
+                        </footer>
+                    </div>
+                </section>
+                <div class="slds-backdrop slds-backdrop_open"></div>
+            </aura:if>
+            
+            <lightning:card variant="Narrow" title="{!v.translationsMap.Case_Comments}" iconName="standard:case_comment">   
+                <aura:if isTrue="{!v.caseCommentsMessage}">
+                    <div class="slds-notify_container slds-is-relative nozindex">
+                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg small" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found +'...'}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>     
+                
+                <aura:if isTrue="{!!v.caseCommentsMessage}">
+                    <div class="slds-m-around_xx-small">        
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                            <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Comment}">{!v.translationsMap.Comment}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Commented_By}">{!v.translationsMap.Commented_By}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Last_Modified_Date}">{!v.translationsMap.Last_Modified_Date}</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="commentstablebody">
+                                <aura:iteration items="{!v.caseComments}" var="comment"> 
+                                    <tr>
+                                        <th scope="row" data-label="Comment">
+                                            <div class="wrap">
+                                                {!comment.CommentBody}
+                                            </div>
+                                        </th>
+                                        <th scope="row" data-label="Commented By">
+                                            <div class="slds-truncate" title="{!comment.CreatedBy.Name}">
+                                                {!comment.CreatedBy.Name}
+                                            </div>
+                                        </th>                                    
+                                        <th scope="row" data-label="Last Modified Date">
+                                            <div class="slds-truncate" title="{!comment.LastModifiedDate}">
+                                                <lightning:formattedDateTime
+                                                                             value="{!comment.LastModifiedDate}"
+                                                                             month="numeric"
+                                                                             day="numeric"
+                                                                             year="numeric"
+                                                                             hour="2-digit"
+                                                                             minute="2-digit"
+                                                                             hour12="true"
+                                                                             timeZone="{!$Locale.timezone}"/>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </aura:iteration>
+                            </tbody>
+                        </table>
+                    </div>
+                </aura:if>
+            </lightning:card>
+            
+            <lightning:card variant="Narrow" title="{!v.translationsMap.Attachments}" iconName="standard:file">       
+                <aura:if isTrue="{!and(v.AttachmentsMessage,v.LightningFilesMessage)}">
+                    <div class="slds-notify_container slds-is-relative nozindex">
+                        <div class="slds-notify slds-notify_toast slds-theme_error norecordsmsg small" role="alert">
+                            <div class="slds-notify__content">
+                                <h2 class="slds-text-heading_small">{!v.translationsMap.No_Records_Found+'...'}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </aura:if>            
+                <aura:if isTrue="{!!and(v.AttachmentsMessage,v.LightningFilesMessage)}">
+                    <div class="slds-m-around_xx-small">        
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_fixed-layout">
+                            <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.File_Name}">{!v.translationsMap.File_Name}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Created_By}">{!v.translationsMap.Created_By}</div></strong>
+                                    </th>
+                                    <th scope="col">
+                                        <strong><div class="slds-truncate" title="{!v.translationsMap.Last_Modified_Date}">{!v.translationsMap.Last_Modified_Date}</div></strong>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <aura:iteration items="{!v.Attachments}" var="att"> 
+                                    <tr>
+                                        <th scope="row" data-label="File Name">
+                                            <div class="slds-truncate" title="{!att.Name}">
+                                                <a aria-live="assertive"
+                                                   class="slds-text-link"
+                                                   href="{!v.baseURL+'/servlet/servlet.FileDownload?file='+att.Id}"
+                                                   download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!att.Name}</a>      
+                                            </div>
+                                        </th>
+                                        <th scope="row" data-label="Created By">
+                                            <div class="slds-truncate" title="{!att.CreatedBy.Name}">
+                                                {!att.CreatedBy.Name}
+                                            </div>
+                                        </th>                                    
+                                        <th scope="row" data-label="Last Modified Date">
+                                            <div class="slds-truncate" title="{!att.LastModifiedDate}">
+                                                <lightning:formattedDateTime
+                                                                             value="{!att.LastModifiedDate}"
+                                                                             month="numeric"
+                                                                             day="numeric"
+                                                                             year="numeric"
+                                                                             hour="2-digit"
+                                                                             minute="2-digit"
+                                                                             hour12="true"
+                                                                             timeZone="{!$Locale.timezone}"/>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </aura:iteration>
+                                <aura:iteration items="{!v.Lightningfiles}" var="file">
+                                    <tr>
+                                        <th scope="row" data-label="File Name">
+                                            <div class="slds-truncate" title="{!file.Title}">
+                                                <a aria-live="assertive"
+                                                   class="slds-text-link"
+                                                   target="_blank"
+                                                   href="{!v.baseURL+'/sfc/servlet.shepherd/version/download/'+ file.ContentDocument.LatestPublishedVersionId}"
+                                                   download="true"><lightning:icon iconName="utility:download" size="x-small" alternativeText="Download"/>&nbsp;{!file.Title}</a>    
+                                            </div>
+                                        </th>
+                                        <th scope="row" data-label="Created By">
+                                            <div class="slds-truncate" title="{!file.CreatedBy.Name}">
+                                                {!file.CreatedBy.Name}
+                                            </div>
+                                        </th>                                    
+                                        <th scope="row" data-label="Last Modified Date">
+                                            <div class="slds-truncate" title="{!file.LastModifiedDate}">
+                                                <lightning:formattedDateTime
+                                                                             value="{!file.LastModifiedDate}"
+                                                                             month="numeric"
+                                                                             day="numeric"
+                                                                             year="numeric"
+                                                                             hour="2-digit"
+                                                                             minute="2-digit"
+                                                                             hour12="true"
+                                                                             timeZone="{!$Locale.timezone}"/>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </aura:iteration>
+                            </tbody>
+                        </table>
+                    </div>
+                </aura:if>
+            </lightning:card>
+            <br/>
+            <br/>
+            
+        </aura:if>
+    </div>
+</aura:component>

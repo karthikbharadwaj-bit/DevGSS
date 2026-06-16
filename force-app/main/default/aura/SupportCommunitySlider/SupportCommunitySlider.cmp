@@ -1,0 +1,21 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes" description="Support Community Slider"  controller="SupportCommunityImageController">
+    <aura:attribute name="autoscroll" type="Boolean" default="true" />
+    <aura:attribute name="initFull" type="Boolean" default="false" />
+    <aura:attribute name="initMob" type="Boolean" default="false" />
+    <aura:attribute name="scrollDuration" type="Integer" default="5" />
+    <aura:attribute name="sliderItemsFull" type="SupportCommunityImagelnk__c[]"/>
+    <aura:attribute name="sliderItemsMob" type="SupportCommunityImagelnk__c[]"/>
+    <aura:handler event="c:SupportCommunityUserEvent"
+                  action="{!c.handleUpdate}"/>
+    <aura:handler name="init" action="{!c.doInit}" value="{!this}"/>
+        <div class="full">
+            <aura:if isTrue="{!v.initFull}">
+                <c:SupportCommunitySubSlider whoIAm="full" sliderItems="{!v.sliderItemsFull}" scrollDuration="{!v.scrollDuration}" autoscroll="{!v.autoscroll}"/>
+            </aura:if>
+        </div>
+        <div class="mobile">
+            <aura:if isTrue="{!v.initMob}">
+                <c:SupportCommunitySubSlider whoIAm="mobile" sliderItems="{!v.sliderItemsMob}" scrollDuration="{!v.scrollDuration}" autoscroll="{!v.autoscroll}"/>
+            </aura:if>
+        </div>
+</aura:component>

@@ -1,0 +1,36 @@
+<aura:component description="StarRatingChart" controller="StarsRatingController" 
+    implements="flexipage:availableForAllPageTypes" access="global">
+<ltng:require scripts="{!join(',',
+        $Resource.ChartJs23)}"
+        afterScriptsLoaded="{!c.scriptsLoaded}" /> 
+
+    <aura:attribute name="graphType" type="String"/>
+    <aura:attribute name="recordId" type="String"/>
+    <aura:attribute name="billedMinutes" type="String" default="Billed Minutes"/>
+    <aura:attribute name="tollFree" type="String" default="Toll Free"/>
+    <aura:attribute name="agents" type="String" default="Agents"/>
+    <aura:attribute name="rCMeetings" type="String" default="RC meetings"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <div class="slds-text-title_caps slds-text-align_left slds-p-bottom_medium">
+        <aura:if isTrue="{!v.graphType == v.billedMinutes}">
+            <b>Monthly Contact Center Billed Minutes</b>
+        </aura:if>
+
+        <aura:if isTrue="{!v.graphType == v.tollFree}">
+            <b>Monthly Toll Free Minutes</b>
+        </aura:if>
+        
+        <aura:if isTrue="{!v.graphType == v.agents}">
+            <b>Monthly Contact Center Configured Seats</b>
+        </aura:if>
+
+        <aura:if isTrue="{!v.graphType == v.rCMeetings}">
+            <b># of Hosts Exceeding Capacity</b>
+        </aura:if>
+    </div>
+
+    <canvas aura:id="chart" width="470" height="300"></canvas>
+    
+</aura:component>

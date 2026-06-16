@@ -1,0 +1,72 @@
+<aura:component>
+
+    <aura:attribute name="panelId" type="String"/>
+    <aura:attribute name="itemId" type="String"/>
+    <aura:attribute name="item" type="Map"/>
+    <aura:attribute name="isEditable" type="Boolean" default="false"/>
+
+    <aura:handler event="c:OptionsPanelEvent" action="{!c.onOptionsPanelEvent}"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+
+    <div>
+        <!-- PICKLIST -->
+        <aura:if isTrue="{!v.item.type == 'picklist'}">
+            <div class="{!(v.item.error ? 'slds-has-error' : '') + ' slds-form-element input-text'}">
+                <label class="slds-form-element__label">{!v.item.label}<span
+                    class="{!v.item.required ? 'required-point' : 'slds-hide'}">*</span></label>
+                <div class="slds-form-element__control">
+                    <ui:inputSelect
+                        class="slds-input"
+                        value="{!v.item.value}"
+                        change="{!c.onChange}"
+                        updateOn="change"
+                        options="{!v.item.values}"
+                        disabled="{!not(v.isEditable)}">
+                    </ui:inputSelect>
+                </div>
+                <aura:if isTrue="{!v.item.error}">
+                    <div id="error-message" class="slds-form-element__help">{!v.item.error}</div>
+                </aura:if>
+            </div>
+        </aura:if>
+        <!-- end PICKLIST -->
+
+        <!-- TEXT -->
+        <aura:if isTrue="{!and(v.item.type == 'text', v.item.show) }">
+            <div class="{!(v.item.error ? 'slds-has-error' : '') + ' slds-form-element input-text'}">
+                <label class="slds-form-element__label">{!v.item.label}<span
+                    class="{!v.item.required ? 'required-point' : 'slds-hide'}">*</span></label>
+                <div class="slds-form-element__control">
+                    <ui:inputText
+                        class="slds-input"
+                        value="{!v.item.value}"
+                        required="{!v.item.required}"
+                        keyup="{!c.onChange}"
+                        updateOn="keyup"
+                        disabled="{!not(v.isEditable)}"/>
+                </div>
+                <aura:if isTrue="{!v.item.error}">
+                    <div id="error-message" class="slds-form-element__help">{!v.item.error}</div>
+                </aura:if>
+            </div>
+        </aura:if>
+        <!-- end TEXT -->
+
+        <!-- DATE -->
+        <aura:if isTrue="{!v.item.type == 'date'}">
+            <div class="input-text">
+                <p class="slds-form-element__label">{!v.item.label}<span
+                    class="{!v.item.required ? 'required-point' : 'slds-hide'}">*</span></p>
+                <ui:inputDate
+                    class="slds-input"
+                    value="{!v.item.value}"
+                    displayDatePicker="true"
+                    change="{!c.onChange}"
+                    updateOn="change"
+                    disabled="{!not(v.isEditable)}"/>
+            </div>
+        </aura:if>
+        <!-- end DATE -->
+    </div>
+
+</aura:component>

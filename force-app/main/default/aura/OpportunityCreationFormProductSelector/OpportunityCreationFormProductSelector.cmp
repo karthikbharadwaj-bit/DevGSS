@@ -1,0 +1,176 @@
+<aura:component controller="OpportunityCreationFormController">
+    <!-- Shared Attributes -->
+    <aura:attribute name="app" type="Object"/>
+
+    <!-- Component Attributes -->
+    <aura:attribute access="private" name="productsForPricebook2Id" type="String"/>
+    <aura:attribute access="private" name="renderingProcessGUID" type="String"/>
+    <aura:attribute access="private" name="productComponents" type="Aura.Component[]"/>
+    <aura:attribute access="private" name="isProductTableActive" type="Boolean" default="false"/>
+    <aura:attribute access="private" name="isProductsLoading" type="Boolean" default="false"/>
+
+    <!-- Change Handlers -->
+    <aura:handler name="change" value="{! v.app }" action="{! c.appChanged }"/>
+    <aura:handler name="change" value="{!v.productComponents}" action="{!c.productComponentsChanged}"/>
+
+    <!-- Methods -->
+    <aura:method name="showSpinner">
+        <aura:attribute name="text" type="String"/>
+    </aura:method>
+    <aura:method name="hideSpinner"/>
+
+    <c:Spinner aura:id="spinner" isGlobalSpinner="false" isFixed="false" />
+
+    <article class="slds-setup-assistant__step">
+        <div class="slds-setup-assistant__step-summary">
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col slds-size_8-of-12">
+                        <span>
+                            <div class="slds-media slds-m-bottom_large">
+                                <div class="slds-setup-assistant__step-summary-content slds-media__body">
+                                    <h3 class="slds-setup-assistant__step-summary-title slds-text-heading_small">
+                                        Add Products
+                                    </h3>
+                                    <p>One - Time Products selected on this step will be automatically added to your Quote</p>
+                                    <p>Selected Phones will be added with Main Area Code by default. To override that, select
+                                        desired Area Codes for chosen Phones.</p>
+                                </div>
+                            </div>
+                        </span>
+                </div>
+                <div class="slds-col slds-size_4-of-12">
+                        <span>
+                            <c:NotificationsBar aura:id="preselectedAreaCodesInfo"/>
+                        </span>
+                </div>
+            </div>
+            <div class="products-table-wrapper">
+
+                <aura:if isTrue="{! not(v.isProductsLoading) }">
+                    <aura:if isTrue="{! v.app.activeProducts.length > 0 }">
+
+                        <!-- Filters -->
+                        <div class="slds-grid slds-wrap slds-no-flex filters" aura:id="filters">
+
+                            <!-- Name Filter  -->
+                            <div
+                                class="slds-p-horizontal--small slds-m-bottom--small slds-col product-filter slds-large-size_4-of-12">
+                                <lightning:input label="Product Name"
+                                                 name="nameFilter"
+                                                 value="{! v.app.filters.name.value }"
+                                                 onchange="{! c.filterProds }"/>
+                            </div>
+
+                            <div class="slds-p-horizontal--small slds-col_bump-left">
+                                <ul class="slds-tabs_default__nav" role="tablist">
+
+                                    <!-- Show All -->
+                                    <li class="{! join(' ', 'slds-tabs_default__item',
+                                        or(v.app.isOnlySelectedShown, v.app.isOnlyPreviouslySoldShown) ? '' : 'slds-is-active') }"
+                                        role="presentation">
+                                        <a class="slds-tabs_default__link"
+                                           href="javascript:void(0);"
+                                           role="tab"
+                                           tabindex="0"
+                                           onclick="{! c.showAll }">
+                                            All
+                                        </a>
+                                    </li>
+
+                                    <!-- Show Selected Only -->
+                                    <li class="{! join(' ', 'slds-tabs_default__item',
+                                        and(v.app.isOnlySelectedShown, !v.app.isOnlyPreviouslySoldShown) ? 'slds-is-active' : '') }"
+                                        role="presentation">
+                                        <a class="slds-tabs_default__link"
+                                           href="javascript:void(0);"
+                                           role="tab"
+                                           tabindex="-1"
+                                           onclick="{! c.showSelectedOnly }">
+                                            Selected Only ({! v.app.selectedProductsNumber })
+                                        </a>
+                                    </li>
+
+                                    <aura:if isTrue="{!v.app.previouslySoldProductsNumber > 0}">
+                                        <!-- Show Previously Sold Only -->
+                                        <li class="{! join(' ', 'slds-tabs_default__item',
+                                            and(v.app.isOnlyPreviouslySoldShown, !v.app.isOnlySelectedShown) ? 'slds-is-active' : '') }"
+                                            role="presentation">
+                                            <a class="slds-tabs_default__link"
+                                            href="javascript:void(0);"
+                                            role="tab"
+                                            tabindex="-1"
+                                            onclick="{! c.showPreviouslySoldOnly }">
+                                                Previously Sold Only ({! v.app.previouslySoldProductsNumber })
+                                            </a>
+                                        </li>
+                                    </aura:if>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="slds-scrollable product-table">
+
+                            <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                <thead>
+                                <tr class="slds-text-title_caps">
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Toggle Details"></div>
+                                    </th>
+                                    <th scope="col">
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Product Name">Product Name</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Category">Category</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Plan">Plan</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Price">List Price</div>
+                                    </th>
+                                    <th scope="col">
+                                        <div class="slds-truncate" title="Price">Your Price</div>
+                                    </th>
+                                    <th scope="col" class="col__qty">
+                                        <div class="slds-truncate" title="Quantity">Quantity</div>
+                                    </th>
+                                    <th scope="col" class="col__selected"></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    {! v.productComponents }
+                                </tbody>
+                            </table>
+
+                            <!-- Indicator how many products has been rendered -->
+                            <aura:if
+                                isTrue="{! notequals( v.app.activeProducts.length, v.productComponents.length ) }">
+                                <div class="slds-badge products-rendered"
+                                     title="Rendered and available for search products">
+                                    <span>{! v.productComponents.length }</span>/<span>{! v.app.activeProducts.length }</span>
+                                </div>
+                            </aura:if>
+
+                        </div>
+
+                        <aura:set attribute="else">
+                            <div class="message-container">
+                                <h1 class="rc-message rc-message_bigger">There are no Products available for quick
+                                    selection</h1>
+                            </div>
+                        </aura:set>
+                    </aura:if>
+
+                    <aura:set attribute="else">
+                        <c:LoadingPlaceholder type="table" isShown="true"/>
+                    </aura:set>
+
+                </aura:if>
+
+            </div>
+
+        </div>
+    </article>
+</aura:component>

@@ -1,0 +1,150 @@
+<!--
+* Created By     : Namitha
+* Created Date   : 14-09-2020
+* Description    : Component display list View of all related attachments under an Account in lightning experience
+
+Change History
+*******************************************************************************************************************************************
+SCRUM/Jira ModifiedBy      Date        Description Tag
+*******************************************************************************************************************************************
+
+*******************************************************************************************************************************************
+-->
+
+
+<aura:component implements="flexipage:availableForAllPageTypes,force:lightningQuickActionWithoutHeader,lightning:isUrlAddressable,flexipage:availableForRecordHome,force:hasRecordId,force:hasSObjectName,force:appHostable" access="global" 
+                controller="Account_RelatedFilesController" >
+     
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:attribute name="accountId" type="Id" />
+    <aura:attribute name="acrId" type="Id" />
+    <aura:attribute name="fileDetailList" type="List"/> 
+    <aura:attribute name="paginatedList" type="List"/>    
+    <aura:handler event="aura:waiting" action="{!c.showSpinner}"/>
+    <aura:handler event="aura:doneWaiting" action="{!c.hideSpinner}"/>
+    <aura:attribute name="deleteflag" type="boolean" default="false"/> 
+    <!--attributes for pagination-->
+    <aura:attribute name="pageNumber" type="integer" default="1"/>
+    <aura:attribute name="totalPages" type="integer" default="0"/>
+    <aura:attribute name="totalRecords" type="integer" default="0"/>
+    <aura:attribute name="recordStart" type="integer" default="0"/>
+    <aura:attribute name="recordEnd" type="integer" default="0"/>
+    <aura:attribute name="pageSize" type="integer" default="10"/>
+    <!--attributes for pagination>-->    
+    
+     <lightning:card iconName="standard:file" class="slds-card_boundary">    
+    <aura:set attribute="title">
+            <span class="slds-card__header-title slds-card__header-link">                                 
+                    Related Files                
+            </span>
+        </aura:set>
+    <div class="slds-is-relative">
+        <div class="spinnerHolder">
+            <lightning:spinner alternativeText="Loading..." aura:id="loadingSpinner" class="slds-hide" size="medium"/>
+        </div>
+    </div>
+    <aura:if isTrue="{!v.totalRecords > 0}">
+        <div class="slds-col slds-has-flexi-truncate slds-size_1-of-7 slds-p-around_small slds-float_right">
+            <lightning:select aura:id="pageSize" label="Records Per Page: " onchange="{!c.onSelectChange}">
+                <option text="10" value="10" selected="true"/>
+                <option text="20" value="20"/>
+                <option text="30" value="30"/>
+                <option text="40" value="40"/>
+                <option text="50" value="50"/>
+            </lightning:select>            
+        </div> 
+                
+
+    
+    <div class="slds-box">        
+        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <thead>
+                <tr>                    
+                    <th scope="col"  style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Title">Title</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Type">Type</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Related To">Related To</div></strong>
+                    </th>
+                    <th scope="col" style="width:14rem;">
+                        <strong><div class="slds-truncate" title="Created By">Created By</div></strong>
+                    </th>                    
+                    <th scope="col" style="width:14rem;">
+                        <strong><div title="Action">Action</div></strong>
+                    </th> 
+                </tr>
+            </thead>
+            <tbody>
+                <aura:iteration items="{!v.paginatedList}" var="fileDetail" indexVar="index"> 
+                    <tr>                        
+                        <th scope="row" data-label="FileName" style="width:14rem;">
+                            <div class="slds-truncate slds-cell-wrap" title="{!fileDetail.name}"
+                                 data-value="{!fileDetail.name}">
+                               <a href="{!'/lightning/r/Attachment/'+fileDetail.recId+'/view'}">
+                                    {!fileDetail.name}
+                                </a>                                
+                            </div>
+                        </th>
+                        <th scope="row" data-label="Type" style="width:14rem;">
+                            <div class="slds-truncate" title="{!fileDetail.type}"
+                                 data-value="{!fileDetail.type}">                                
+                                    {!fileDetail.type}
+                            </div>
+                        </th>
+                        <th scope="row" data-label="Related To" style="width:14rem;">
+                            <div class="slds-truncate slds-cell-wrap" title="{!fileDetail.relatedToName}"
+                                 data-value="{!fileDetail.relatedToId}">
+                                <a href="{!'/'+fileDetail.relatedToId}">
+                                    {!fileDetail.relatedToName}
+                                </a>                                
+                            </div>
+                        </th>
+                        <th scope="row" data-label="CreatedByName" style="width:14rem;">
+                            <div class="slds-truncate" title="{!fileDetail.createdByName}"
+                                 data-value="{!fileDetail.createdByName}">                                
+                                    {!fileDetail.createdByName}
+                            </div>
+                        </th>
+                        <th scope="row" data-label="actions" >
+                            <div>
+                                 <aura:if  isTrue="{!fileDetail.checkdeleteAccess}">
+                                <lightning:buttonMenu  onselect="{!c.handleSelect}" alternativeText="More Options" iconSize="small" >
+                                    <lightning:menuItem value="{!fileDetail.recId+'-'+fileDetail.type}" label="Delete"/>
+                                </lightning:buttonMenu>
+                                </aura:if>
+                                
+                                
+                                
+                            </div>
+                        </th>
+                    </tr>
+                </aura:iteration>
+            </tbody>
+        </table>
+    
+        <div class="slds-clearfix">   
+            <br/>
+            <div class="slds-float_right paginationbuttons"> 
+                <lightning:button disabled="{!or(v.pageNumber == v.totalPages,v.totalPages == 0)}"
+                                  aura:id="nextPage" variant="brand"
+                                  label="Next" onclick="{!c.handleNext}" iconName="utility:chevronright" iconPosition="right"/>
+                
+            </div>
+            <div class="slds-float_right paginationbuttons"> 
+                <lightning:button disabled="{!v.pageNumber == 1}"
+                                  variant="brand" aura:id="prevPage"
+                                  label="Prev" onclick="{!c.handlePrev}" iconName="utility:chevronleft" iconPosition="left"/>            
+                
+            </div>
+            <p class="slds-truncate">Displaying {!v.recordStart}-{!v.recordEnd} of {!v.totalRecords} | Page {!v.pageNumber} of {!v.totalPages}</p>
+        </div>
+        </div>
+    </aura:if>
+         <aura:if isTrue="{!v.totalRecords == 0}">
+             No records to display
+         </aura:if>
+    </lightning:card>
+</aura:component>

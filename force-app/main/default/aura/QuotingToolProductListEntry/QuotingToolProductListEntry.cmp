@@ -1,0 +1,70 @@
+<aura:component >
+    <!-- Shared attributes -->
+    <aura:attribute name="pricebookEntry" type="PricebookEntry" />
+    <aura:attribute name="settings" type="Map" />
+    <aura:attribute name="activePriceBookEntry" type="PriceBookEntry" description="PriceBookEntry(Service Plan) active on quote)"/>
+    <aura:attribute name="addingToCartProds" type="Set" description="Products which are in the process of adding to cart"/>
+    <aura:attribute name="cartItemsSet" type="Set" description="Product2Ids of Products in Cart"/>
+    <aura:attribute name="cartItems" type="List" description="Products in Cart"/>
+    <aura:attribute name="isCommonPhoneIsAddingToCart" type="Boolean"/>
+    <aura:attribute name="isCcEEsProductIsAddingToCart" type="Boolean"/>
+    <aura:attribute name="isIvinexUnifiedUserExperienceProductAddedToCart" type="Boolean"/>
+    <aura:attribute name="Wizard" type="object" description="Quoting Wizard App Data"/>
+    <aura:attribute name="serviceCartItem" type="Object" />
+    <!-- Component attributes -->
+    <aura:attribute name="prodState" type="String" description=""/>
+    <aura:attribute name="addToCartLabel" type="String" description=""/>
+    <aura:attribute name="prodDisabled" type="Boolean" default="false" />
+    <!-- Change handlers -->
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}" />
+    <aura:handler name="change" value="{!v.cartItemsSet}" action="{!c.cartItemsSetChanged}" />
+    <aura:handler name="change" value="{!v.addingToCartProds}" action="{!c.addingToCartProdsChanged}" />
+    <aura:handler name="change" value="{!v.state}" action="{!c.stateChanged}" />
+    <aura:handler name="change" value="{!v.Wizard}" action="{!c.wizardChanged}" />
+    <!-- Registered events -->
+    <aura:registerEvent name="addToCart" type="c:QuotingToolAddToCartEvent" />
+
+    <tr aura:id="entryBody" class="row">
+
+        <!-- Name -->
+        <td>
+            {# v.pricebookEntry.Product2.Name }
+            <aura:if isTrue="{!and(not(empty(v.pricebookEntry.Product2.Supported_Countries__c)),
+                                   v.activePriceBookEntry.Pricebook2.Brand__r.Name == 'RingCentral EU')}">
+                <c:QuotingToolEntryAvailabilityTooltip countries="{!v.pricebookEntry.Product2.Supported_Countries__c}"/>
+            </aura:if>
+            <span class="slds-hide tooltip-position-fix" aura:id="tooltipContainer">
+                <c:Tooltip aura:id="tooltip" />
+            </span>
+        </td>
+
+        <!-- Family -->
+        <td>{# v.pricebookEntry.Product2.Family }</td>
+
+        <!-- Plan -->
+        <td>{# v.pricebookEntry.Product2.Charge_Term__c }</td>
+
+        <!-- Unit Price -->
+        <td>
+            {# v.pricebookEntry.CurrencyIsoCode }&nbsp;<ui:outputCurrency value="{# v.pricebookEntry.UnitPrice }" format="#,##0.00#" />
+        </td>
+
+        <!-- Add to Cart button -->
+        <td class="qw-button-cell">
+            <div class="addtocart">
+                <span class="slds-show_inline-block"
+                      onmouseover="{! c.onMouseOverAddToCart }"
+                      onmouseout="{! c.hidePopover }">
+
+                    <c:Button
+                        class="{! 'slds-button slds-button--brand button--' + v.prodState }"
+                        isBusy="{! v.prodState == 'busy' }"
+                        disabled="{! v.prodState == 'cart' || v.prodDisabled }"
+                        onclick="{! c.addToCart }">
+                        {!  v.addToCartLabel }
+                    </c:Button>
+                </span>
+            </div>
+        </td>
+    </tr>
+</aura:component>

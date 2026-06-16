@@ -1,0 +1,58 @@
+<apex:page StandardController="Lead" extensions="DowngradePopUpCtrl" showHeader="false" sidebar="false" lightningStylesheets="true">
+    <style>
+        .buttons-wrapper input {
+            vertical-align: middle !important;
+        }
+    </style>
+    <apex:includeScript value="{!URLFOR($Resource.rcnotify, 'rcnotify.js')}" />
+    <apex:form id="Form">
+        <apex:pageBlock title="Downgrade Lead" id="PageBlock">
+            <apex:pageBlockSection columns="1">
+                <apex:outputField value="{!currentLead.Status}" />
+                <apex:inputField value="{!currentLead.Downgrade_Reason__c}" required="True" style="width:100%" />
+                <apex:inputField value="{!currentLead.Sub_Downgrade_Reason__c}" required="True" style="width:100%" />
+                <apex:inputField value="{!currentLead.Sub_Downgrade_Reason_Other__c}" required="True" style="width:100%" />
+                <apex:inputField value="{!currentLead.Downgrade_Notes__c}" style="width:100%" />
+            </apex:pageBlockSection>
+            <apex:pageMessages id="msgBox" />
+            <div style="text-align:center; margin-top:10px" class="buttons-wrapper">
+                <apex:commandButton action="{!saveLead}" onClick="saveBusy(true);" oncomplete="closeAndRefresh()" value="Save" styleClass="saveButton" id="saveButton" rerender="errorMsg,msgBox"/>
+                <apex:commandbutton onClick="window.top.close();" value="Cancel"/>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+
+    <script language="JavaScript" type="text/javascript">
+
+        function closeAndRefresh(){
+            saveBusy(false);
+            var msgValue = document.getElementById('{!$Component.Form.PageBlock.msgBox}').innerText;
+            if (!msgValue) {
+                window.opener.location.href="/{!Lead.Id}";
+                self.close();
+            }
+        }
+
+        function saveLead(){
+            saveBusy(true);
+            callSave();
+        }
+
+        function saveBusy(isBusy){
+            var buttons = document.getElementsByClassName('saveButton');
+            for (var i = 0; i < buttons.length; i++) {
+                if (isBusy) {
+                    buttons[i].value = "Saving...";
+                    buttons[i].disabled = true;
+    
+                    rcnotify.showSpinner();
+                } else {
+                    buttons[i].value = "Save";
+                    buttons[i].disabled = false;
+    
+                    rcnotify.hideSpinner();
+                }
+            }
+        }
+    </script>
+</apex:page>

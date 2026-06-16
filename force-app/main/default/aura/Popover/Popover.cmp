@@ -1,0 +1,36 @@
+<aura:component>
+    <aura:attribute name="target" type="Map" />
+    <aura:attribute name="text" type="String" />
+    <aura:attribute name="style" type="String" />
+    <aura:attribute name="themeClass" type="String" />
+    <aura:attribute name="preferredPosition" type="String" />
+    <aura:attribute name="showIcon" type="Boolean" default="false" />
+    <aura:attribute name="iconTheme" type="string" default="info" />
+    <aura:attribute name="nubbinPosition" type="String" default="left-top"/>
+    <aura:attribute name="initPositionTimeout" type="Integer"/>
+    <aura:attribute name="content" type="Aura.Component[]"/>
+    <aura:attribute name="iconCollection" type="String" default="utility" />
+
+    <aura:handler event="c:PopoverEvent" action="{!c.popoverEvent}" />
+
+    <div class="popover-container popover--hidden" aura:id="popover" style="{!v.style}">
+        <div class="{!'popover slds-popover slds-nubbin_' + v.nubbinPosition + ' ' + v.themeClass}" role="dialog">
+            <div class="{! join( ' ' , 'slds-popover__body slds-grid', empty(v.content) ? '' : 'slds-hide') }">
+                <aura:if isTrue="{!v.showIcon}">
+                    <div class="popover-icon-col slds-m-top--xx-small slds-p-right--small">
+                        <lightning:icon iconName="{! v.iconCollection + ':' + v.iconTheme}" class="{!'popover-icon slds-theme--' + v.iconTheme}" size="x-small" />
+                    </div>
+                </aura:if>
+                <div>
+                    <aura:unescapedHtml value="{!v.text}" />
+                </div>
+            </div>
+
+            <div class="{! join( ' ' , 'slds-popover__body', empty(v.content) ? 'slds-hide' : '') }">
+                {! v.content }
+            </div>
+
+        </div>
+    </div>
+
+</aura:component>

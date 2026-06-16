@@ -1,0 +1,22 @@
+<aura:component implements="lightning:actionOverride,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId,forceCommunity:availableForAllPageTypes,force:lightningQuickAction" 
+                access="global" controller ='SolutionDetailViewController' >
+               
+    <aura:attribute type="Solution[]" name="solutionList"/>
+    <aura:attribute name="mycolumns" type="List"/>
+    <aura:attribute name="isLoading" type="Boolean" access="PRIVATE" default="false" />
+   
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+   
+    <lightning:card title="Solution Information" />
+    <lightning:datatable data="{! v.solutionList }"
+                         columns="{! v.mycolumns }"
+                         keyField="Id"
+                         errors="{! v.errors }"
+                         draftValues="{! v.draftValues }"
+                         onsave="{! c.handleSave }"/>
+
+    <aura:if isTrue="{!v.isLoading}">
+        <c:SpinnerComponent />
+    </aura:if>
+   
+</aura:component>

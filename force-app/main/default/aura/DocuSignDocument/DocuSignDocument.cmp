@@ -1,0 +1,33 @@
+<aura:component description="DocuSignDocument">
+    <!-- document -->
+    <aura:attribute name="document" type="Object"/>
+    <aura:attribute name="index" type="Integer"/>
+    <aura:attribute name="iconName" type="String" default="doctype:attachment"/>
+
+    <!-- Registered Events -->
+    <aura:registerEvent name="toggleSelectDocument" type="c:ComponentEvent"/>
+
+    <aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
+
+    <li class="{! join(' ', 'slds-m-bottom_xx-small slds-p-vertical_xx-small attachment',
+            v.document.isSelected ? 'attachment_selected': '') }" onclick="{! c.toggleSelect }">
+        <div class="slds-media slds-media_center">
+            <div class="slds-media__figure slds-is-relative">
+                <div class="checkbox-overlay"></div>
+                <lightning:input label="select" variant="label-hidden" type="checkbox"
+                                 class="slds-m-left_medium" checked="{! v.document.isSelected == true }"/>
+            </div>
+            <div class="slds-media__figure">
+                <lightning:icon iconName="{! v.iconName }"/>
+            </div>
+            <div class="slds-media__body">
+                <p>{! v.document.name } </p>
+                <p class="slds-text-color_weak">
+                    {! v.document.size } •
+                    {! v.document.userName } •
+                    <lightning:formattedDateTime value="{! v.document.date }"/></p>
+            </div>
+        </div>
+    </li>
+
+</aura:component>

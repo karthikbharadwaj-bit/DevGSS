@@ -1,0 +1,46 @@
+<template>
+    <template if:true={shouldRenderComponent}>
+        <div class="slds-card__body slds-card__body_inner slds-card slds-card_boundary forceBaseCard flexipageCard">
+            <div class="slds-card__header slds-grid">
+                <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                    <div class="slds-media__body">
+                        <h1 class="slds-card__header-title slds-grid">
+                            <div class="slds-col slds-m-left_none"><span class="slds-text-heading_medium">{componentTitle}</span></div>
+                            <template if:true={shouldDisplayViewForm}>
+                                <div class="slds-m-right_x-small"><lightning-button variant="Brand" label="Edit" title="Edit" onclick={handleRowAction}></lightning-button></div>
+                                <div class="slds-m-right_large"><lightning-button variant="Neutral" label="View" title="View" onclick={handleRowAction}></lightning-button></div>
+                            </template>
+                        </h1>
+                    </div>
+                </header>
+            </div>
+            <template if:true={shouldDisplayEditForm}>
+                <div>
+                    <lightning-record-edit-form
+                    object-api-name={objectApiNameChild} onsuccess={handleSuccess} onload={handleOnLoad}>
+                        <template for:each={fields} for:item="f">
+                            <template if:false={isReadOnly}><lightning-input-field field-name={f} key={f}></lightning-input-field></template>
+                            <template if:true={isReadOnly}><lightning-input-field field-name={f} key={f} read-only={isReadOnly}></lightning-input-field></template>
+                        </template>
+                        <div class="slds-grid slds-align_absolute-center">
+                            <div class="slds-m-right_x-small"><span><lightning-button variant="Brand" label="Save" title="Save" type="submit" onclick={handleRecordSave} onsuccess={handleSuccess}></lightning-button></span></div>
+                            <div><span><lightning-button variant="Neutral" label="Cancel" title="Cancel" onclick={handleRecordSave}></lightning-button></span></div>
+                        </div>
+                    </lightning-record-edit-form>
+                </div>
+            </template>
+            <template if:true={shouldDisplayViewForm}>
+                <div>
+                    <lightning-record-view-form
+                        record-id={currentRecordId}
+                        object-api-name={objectApiNameChild}
+                        layout-type="Full">
+                        <template for:each={fields} for:item="f">
+                            <lightning-output-field field-name={f} key={f}></lightning-output-field>
+                        </template>
+                    </lightning-record-view-form>
+                </div>
+            </template>
+        </div>
+    </template>
+</template>
