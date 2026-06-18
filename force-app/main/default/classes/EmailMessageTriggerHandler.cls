@@ -758,6 +758,9 @@ public with sharing class EmailMessageTriggerHandler {
                     
                     // Step 3: Create case comments for matching emails
                     if(caseMap.size() > 0) {
+                        //Dynamic way to get the field length of CaseComment.CommentBody, added as part of  
+                        Integer fieldLength = Schema.SObjectType.CaseComment.fields?.CommentBody?.getLength();
+                        
                         for(EmailMessage emailMsg : (List<EmailMessage>)Trigger.new) {
                             if(caseMap.containsKey(emailMsg.ParentId)) {
                                 // Truncate comment body if too long
@@ -765,9 +768,9 @@ public with sharing class EmailMessageTriggerHandler {
                                     ? emailMsg.TextBody 
                                     : 'No email body provided.';
                                 
-                                Integer MAX_COMMENT_LENGTH = 32000; // CaseComment max length
-                                if(commentBody.length() > MAX_COMMENT_LENGTH) {
-                                    commentBody = commentBody.substring(0, MAX_COMMENT_LENGTH - 3) + '...';
+                                
+                                if(commentBody.length() > fieldLength) {
+                                    commentBody = commentBody.substring(0, fieldLength - 3) + '...';
                                 }
                                 
                                 caseComments.add(new CaseComment(
