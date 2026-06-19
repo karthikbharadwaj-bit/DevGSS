@@ -340,5 +340,81 @@
         // Step 2: Validate the results
         List<CaseComment> caseComments = [SELECT Id, ParentId, CommentBody, IsPublished FROM CaseComment WHERE ParentId = :btCase.Id];
         System.assertEquals(1, caseComments.size(), 'Expected one CaseComment to be created');
-    }   
+    }
+
+    //Included as part of PBC-31821 - byte-aware truncation of CaseComment body for TCR CNR emails
+    @isTest
+    static void testCreateCaseCommentsForTCRCNRFlow_TruncatesByBytes() {
+        // Build test data using SObjectBuilder, matching the other comment-creation tests.
+        Account a = (Account) new SObjectBuilder(Account.SObjectType)
+            .setFields(new Map<SObjectField, Object> {
+                Account.Name => 'TCR Test',
+                    Account.RC_Brand__c => 'RingCentral'
+                    })
+            .create()
+            .getRecord();
+
+        Contact con = (Contact) new SObjectBuilder(Contact.SObjectType)
+            .setFields(new Map<SObjectField, Object> {
+                Contact.LastName => 'Test',
+                    Contact.Email => 'test@test.com',
+                    Contact.AccountId => a.Id
+                    })
+            .create()
+            .getRecord();
+
+        Triggers.switchOff();
+
+        Case tcrCase = (Case) new SObjectBuilder(Case.SObjectType)
+            .setFields(new Map<SObjectField, Object> {
+                Case.Status => 'New',
+                    Case.AccountId => a.Id,
+                    Case.ContactId => con.Id,
+                    Case.Case_Reason__c => 'TCR Support'
+                    })
+            .create()
+            .getRecord();
+
+        Triggers.switchOn();
+
+        // 'unit' is 93 chars / 107 bytes (7 multi-byte chars: smart quote U+2019, bullet U+2022).
+        // Repeated until > 6000 chars, the body becomes ~6045 chars / ~6955 bytes. After the
+        // character cut to the 4000 limit it is still 4000 chars / ~4602 bytes, which is > 4000 bytes
+        // and therefore forces the byte re-trim branch to execute.
+        String unit = 'We’re reviewing your case’s status • here’s what we’ll do next • confirm details • resubmit. ';
+        String longBody = '';
+        while (longBody.length() < 6000) {
+            longBody += unit;
+        }
+        // Guard: prove the body will actually reach the byte-cut branch (fails loudly if ever weakened).
+        System.assert(longBody.length() > 4000, 'Body must exceed the character limit');
+        System.assert(Blob.valueOf(longBody.substring(0, 4000)).size() > 4000,
+            'First 4000 chars must exceed 4000 bytes so the byte re-trim branch runs');
+
+        EmailMessage longEmail = (EmailMessage) new SObjectBuilder(EmailMessage.SObjectType)
+            .setFields(new Map<SObjectField, Object> {
+                EmailMessage.ParentId => tcrCase.Id,
+                    EmailMessage.Subject => 'Reply Check on TCR - CNR',
+                    EmailMessage.FromAddress => 'techsupport@ringcentral.com',
+                    EmailMessage.FromName => 'TCR Automation',
+                    EmailMessage.HtmlBody => '<p>' + longBody + '</p>',
+                    EmailMessage.TextBody => longBody,
+                    EmailMessage.Incoming => true
+                    })
+            .create()
+            .getRecord();
+
+        Integer fieldLength = Schema.SObjectType.CaseComment.fields.CommentBody.getLength();
+        List<CaseComment> comments = [SELECT Id, CommentBody FROM CaseComment WHERE ParentId = :tcrCase.Id];
+        System.assertEquals(1, comments.size(), 'Expected one TCR case comment to be created');
+
+        String body = comments[0].CommentBody;
+        System.assert(Blob.valueOf(body).size() <= fieldLength,
+            'Stored comment must fit the field byte limit. Bytes=' + Blob.valueOf(body).size());
+        System.assert(body.length() <= fieldLength,
+            'Stored comment must fit the field char limit. Chars=' + body.length());
+        System.assert(body.endsWith('...'), 'Truncated comment should end with an ellipsis');
+        System.assert(Blob.valueOf(body).size() > body.length(),
+            'Truncated body should still contain multi-byte characters');
+    }
 }

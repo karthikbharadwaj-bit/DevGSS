@@ -40,11 +40,37 @@ public with sharing class EmailMessageTriggerHandler {
                 }
 
                 if(setCaseIds.size() > 0 ){
-                    mapEmailMsgToCase = new Map<Id, Case>([SELECT Id, Status, Engage_Case_Type__c, IsClosed, Cx_Replied_on_Closed_Case__c, ContactId, Original_RecordType__c, Brand_Account__c, Origin
+                    mapEmailMsgToCase = new Map<Id, Case>([SELECT Id, Status, Engage_Case_Type__c, IsClosed, Cx_Replied_on_Closed_Case__c, ContactId, Original_RecordType__c, Brand_Account__c, Origin, CNR_Status__c, CaseNumber
                         FROM CASE WHERE Id = :setCaseIds]);
                 }
 
                 for(EmailMessage emailMsg : (List<EmailMessage>)Trigger.new){
+                    // #region agent log
+                    if (emailMsg.Incoming && emailMsg.ParentId != null && mapEmailMsgToCase.containsKey(emailMsg.ParentId)) {
+                        Case dbgCase = mapEmailMsgToCase.get(emailMsg.ParentId);
+                        if (dbgCase.Brand_Account__c == 'BT Business') {
+                            PlatformLog.logResult(
+                                'DEBUG_CNR_REPLY_71f00f',
+                                'incoming_bt_email',
+                                null,
+                                JSON.serialize(new Map<String, Object>{
+                                    'sessionId' => '71f00f',
+                                    'hypothesisId' => 'H1-H4',
+                                    'from' => emailMsg.FromAddress,
+                                    'to' => emailMsg.ToAddress,
+                                    'subject' => emailMsg.Subject,
+                                    'caseNumber' => dbgCase.CaseNumber,
+                                    'origin' => dbgCase.Origin,
+                                    'originalRT' => dbgCase.Original_RecordType__c,
+                                    'cnrStatus' => dbgCase.CNR_Status__c,
+                                    'status' => dbgCase.Status
+                                }),
+                                null,
+                                false
+                            );
+                        }
+                    }
+                    // #endregion
                     if(emailMsg.ParentId != null && emailMsg.Incoming && ((emailMsg.Subject != null && emailMsg.Subject.contains('ref:_')) || (emailMsg.TextBody != null && emailMsg.TextBody.contains('ref:_'))) && !mapEmailMsgToCase.isEmpty() && mapEmailMsgToCase.containsKey(emailMsg.ParentId) && mapEmailMsgToCase.get(emailMsg.ParentId).Engage_Case_Type__c != null && mapEmailMsgToCase.get(emailMsg.ParentId).Engage_Case_Type__c.contains('Digital case')){
                         if(mapEmailMsgToCase.get(emailMsg.ParentId).IsClosed){
                             mapEmailMsgToCase.get(emailMsg.ParentId).Cx_Replied_on_Closed_Case__c += 1;
@@ -758,8 +784,8 @@ public with sharing class EmailMessageTriggerHandler {
                     
                     // Step 3: Create case comments for matching emails
                     if(caseMap.size() > 0) {
-                        //Dynamic way to get the field length of CaseComment.CommentBody, added as part of  
-                        Integer fieldLength = Schema.SObjectType.CaseComment.fields?.CommentBody?.getLength();
+                        //Dynamic way to get the field length of CaseComment.CommentBody, added as part of  PBC-31821
+                        Integer fieldLength = CaseCommentHelperForOutboundEmails.getMaxCommentLength();
                         
                         for(EmailMessage emailMsg : (List<EmailMessage>)Trigger.new) {
                             if(caseMap.containsKey(emailMsg.ParentId)) {
@@ -767,12 +793,20 @@ public with sharing class EmailMessageTriggerHandler {
                                 String commentBody = String.isNotBlank(emailMsg.TextBody) 
                                     ? emailMsg.TextBody 
                                     : 'No email body provided.';
-                                
-                                
+                            
+                                // First trim by character count so the byte check below converts only a
+                                // <= fieldLength string to a Blob, not the entire email body.
                                 if(commentBody.length() > fieldLength) {
                                     commentBody = commentBody.substring(0, fieldLength - 3) + '...';
                                 }
-                                
+                                // CommentBody's limit is enforced in UTF-8 bytes, not characters, so a
+                                // multi-byte char (smart quotes, bullets, accents) can exceed the limit
+                                // even within fieldLength characters. Re-trim by the byte overhead if needed.
+                                Integer byteLength = Blob.valueOf(commentBody).size();
+                                if(byteLength > fieldLength) {
+                                    Integer extraBytes = byteLength - commentBody.length();
+                                    commentBody = commentBody.substring(0, fieldLength - extraBytes - 3) + '...';
+                                }
                                 caseComments.add(new CaseComment(
                                     ParentId = emailMsg.ParentId,
                                     CommentBody = commentBody,
