@@ -342,24 +342,37 @@
         System.assertEquals(1, caseComments.size(), 'Expected one CaseComment to be created');
     }
 
-    //Included as part of PBC-31821 - byte-aware truncation of CaseComment body for TCR CNR emails
-    @isTest
-    static void testCreateCaseCommentsForTCRCNRFlow_TruncatesByBytes() {
-        // Build test data using SObjectBuilder, matching the other comment-creation tests.
-        Account a = (Account) new SObjectBuilder(Account.SObjectType)
+    // Included as part of PBC-31821 - byte-aware truncation of CaseComment body for TCR CNR emails
+    // ── shouldTruncateCaseCommentByBytes_WhenTCRCNREmailBodyExceedsLimit ───
+
+    @IsTest
+    static void shouldTruncateCaseCommentByBytes_WhenTCRCNREmailBodyExceedsLimit() {
+        String accountName = (String) ValueProviderBuilder.provideUniqueString().getValue();
+        String contactLastName = (String) ValueProviderBuilder.provideUniqueString().getValue();
+        String contactEmail = (String) ValueProviderBuilder.provideUniqueString().getValue() + '@test.com';
+        String rcBrand = 'RingCentral';
+        String tcrCaseReason = 'TCR Support';
+        String emailSubject = 'Reply Check on TCR - CNR';
+        String fromAddress = 'techsupport@ringcentral.com';
+        String fromName = 'TCR Automation';
+        String caseStatus = 'New';
+        Integer minBodyLength = 6000;
+        Integer commentFieldLength = Schema.SObjectType.CaseComment.fields.CommentBody.getLength();
+
+        Account tcrAccount = (Account) new SObjectBuilder(Account.SObjectType)
             .setFields(new Map<SObjectField, Object> {
-                Account.Name => 'TCR Test',
-                    Account.RC_Brand__c => 'RingCentral'
-                    })
+                Account.Name => accountName,
+                Account.RC_Brand__c => rcBrand
+            })
             .create()
             .getRecord();
 
-        Contact con = (Contact) new SObjectBuilder(Contact.SObjectType)
+        Contact tcrContact = (Contact) new SObjectBuilder(Contact.SObjectType)
             .setFields(new Map<SObjectField, Object> {
-                Contact.LastName => 'Test',
-                    Contact.Email => 'test@test.com',
-                    Contact.AccountId => a.Id
-                    })
+                Contact.LastName => contactLastName,
+                Contact.Email => contactEmail,
+                Contact.AccountId => tcrAccount.Id
+            })
             .create()
             .getRecord();
 
@@ -367,54 +380,71 @@
 
         Case tcrCase = (Case) new SObjectBuilder(Case.SObjectType)
             .setFields(new Map<SObjectField, Object> {
-                Case.Status => 'New',
-                    Case.AccountId => a.Id,
-                    Case.ContactId => con.Id,
-                    Case.Case_Reason__c => 'TCR Support'
-                    })
+                Case.Status => caseStatus,
+                Case.AccountId => tcrAccount.Id,
+                Case.ContactId => tcrContact.Id,
+                Case.Case_Reason__c => tcrCaseReason
+            })
             .create()
             .getRecord();
 
         Triggers.switchOn();
 
-        // 'unit' is 93 chars / 107 bytes (7 multi-byte chars: smart quote U+2019, bullet U+2022).
-        // Repeated until > 6000 chars, the body becomes ~6045 chars / ~6955 bytes. After the
-        // character cut to the 4000 limit it is still 4000 chars / ~4602 bytes, which is > 4000 bytes
-        // and therefore forces the byte re-trim branch to execute.
-        String unit = 'We’re reviewing your case’s status • here’s what we’ll do next • confirm details • resubmit. ';
+        // 93 chars / 107 bytes per repeat (7 multi-byte chars: smart quote U+2019, bullet U+2022).
+        // Repeated until > 6000 chars, the body exceeds the char limit; the first commentFieldLength
+        // chars still exceed commentFieldLength bytes, forcing the byte re-trim branch to execute.
+        String multiByteUnit = 'We\u2019re reviewing your case\u2019s status \u2022 here\u2019s what we\u2019ll do next \u2022 confirm details \u2022 resubmit. ';
         String longBody = '';
-        while (longBody.length() < 6000) {
-            longBody += unit;
+        while (longBody.length() < minBodyLength) {
+            longBody += multiByteUnit;
         }
-        // Guard: prove the body will actually reach the byte-cut branch (fails loudly if ever weakened).
-        System.assert(longBody.length() > 4000, 'Body must exceed the character limit');
-        System.assert(Blob.valueOf(longBody.substring(0, 4000)).size() > 4000,
-            'First 4000 chars must exceed 4000 bytes so the byte re-trim branch runs');
 
-        EmailMessage longEmail = (EmailMessage) new SObjectBuilder(EmailMessage.SObjectType)
+        String bodyExceedsCharLimitMessage = 'Body must exceed the CaseComment character limit';
+        Assert.isTrue(longBody.length() > commentFieldLength, bodyExceedsCharLimitMessage);
+
+        String firstCharsExceedByteLimitMessage = 'First commentFieldLength chars must exceed byte limit so the byte re-trim branch runs';
+        Assert.isTrue(
+            Blob.valueOf(longBody.substring(0, commentFieldLength)).size() > commentFieldLength,
+            firstCharsExceedByteLimitMessage
+        );
+
+        Test.startTest();
+        new SObjectBuilder(EmailMessage.SObjectType)
             .setFields(new Map<SObjectField, Object> {
                 EmailMessage.ParentId => tcrCase.Id,
-                    EmailMessage.Subject => 'Reply Check on TCR - CNR',
-                    EmailMessage.FromAddress => 'techsupport@ringcentral.com',
-                    EmailMessage.FromName => 'TCR Automation',
-                    EmailMessage.HtmlBody => '<p>' + longBody + '</p>',
-                    EmailMessage.TextBody => longBody,
-                    EmailMessage.Incoming => true
-                    })
+                EmailMessage.Subject => emailSubject,
+                EmailMessage.FromAddress => fromAddress,
+                EmailMessage.FromName => fromName,
+                EmailMessage.HtmlBody => '<p>' + longBody + '</p>',
+                EmailMessage.TextBody => longBody,
+                EmailMessage.Incoming => true
+            })
             .create()
             .getRecord();
+        Test.stopTest();
 
-        Integer fieldLength = Schema.SObjectType.CaseComment.fields.CommentBody.getLength();
-        List<CaseComment> comments = [SELECT Id, CommentBody FROM CaseComment WHERE ParentId = :tcrCase.Id];
-        System.assertEquals(1, comments.size(), 'Expected one TCR case comment to be created');
+        List<CaseComment> comments = [
+            SELECT Id, CommentBody
+            FROM CaseComment
+            WHERE ParentId = :tcrCase.Id
+        ];
 
-        String body = comments[0].CommentBody;
-        System.assert(Blob.valueOf(body).size() <= fieldLength,
-            'Stored comment must fit the field byte limit. Bytes=' + Blob.valueOf(body).size());
-        System.assert(body.length() <= fieldLength,
-            'Stored comment must fit the field char limit. Chars=' + body.length());
-        System.assert(body.endsWith('...'), 'Truncated comment should end with an ellipsis');
-        System.assert(Blob.valueOf(body).size() > body.length(),
-            'Truncated body should still contain multi-byte characters');
+        String expectedCommentCountMessage = 'Expected one TCR case comment to be created';
+        Assert.areEqual(1, comments.size(), expectedCommentCountMessage);
+
+        String commentBody = comments[0].CommentBody;
+        Integer commentByteLength = Blob.valueOf(commentBody).size();
+
+        String byteLimitMessage = 'Stored comment must fit the CaseComment field byte limit';
+        Assert.isTrue(commentByteLength <= commentFieldLength, byteLimitMessage);
+
+        String charLimitMessage = 'Stored comment must fit the CaseComment field character limit';
+        Assert.isTrue(commentBody.length() <= commentFieldLength, charLimitMessage);
+
+        String ellipsisSuffixMessage = 'Truncated comment should end with an ellipsis';
+        Assert.isTrue(commentBody.endsWith('...'), ellipsisSuffixMessage);
+
+        String multiByteContentMessage = 'Truncated body should still contain multi-byte characters';
+        Assert.isTrue(commentByteLength > commentBody.length(), multiByteContentMessage);
     }
 }
