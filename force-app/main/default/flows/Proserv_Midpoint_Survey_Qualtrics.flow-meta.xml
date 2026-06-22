@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_data_to_Qualtrics</name>
+        <label>Send data to Qualtrics</label>
+        <locationX>314</locationX>
+        <locationY>384</locationY>
+        <actionName>ProServ_Project__c.Qualtrics_Midpoint_Survey</actionName>
+        <actionType>outboundMessage</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <nameSegment>ProServ_Project__c.Qualtrics_Midpoint_Survey</nameSegment>
+    </actionCalls>
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_CCSC_CPL</name>
+        <label>Check CCSC, CPL</label>
+        <locationX>446</locationX>
+        <locationY>276</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Email_fields_not_null</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CC_Survey_Contact_Email__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Customer_Project_Lead_Email__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_data_to_Qualtrics</targetReference>
+            </connector>
+            <label>Email fields not null</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>Midpoint_SendDate</name>
+        <dataType>Date</dataType>
+        <expression>IF(OR({!$Record.Account__r.Total_Account_DL_s__c} = null, {!$Record.Account__r.Total_Account_DL_s__c} &lt; 100) , {!$Record.Kickoff_Call_Date__c} + 30 , {!$Record.Kickoff_Call_Date__c} + 60)</expression>
+    </formulas>
+    <interviewLabel>Proserv Midpoint Survey - Qualtrics {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Proserv Midpoint Survey - Qualtrics</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_survey_send_date</name>
+        <label>Update survey send date</label>
+        <locationX>50</locationX>
+        <locationY>276</locationY>
+        <inputAssignments>
+            <field>Survey_Date_to_Send__c</field>
+            <value>
+                <elementReference>Midpoint_SendDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>122</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_survey_send_date</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Kickoff_Call_Date__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>ProServ_Project__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Midpoint_Survey</name>
+            <connector>
+                <targetReference>Check_CCSC_CPL</targetReference>
+            </connector>
+            <label>Midpoint Survey</label>
+            <offsetNumber>0</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <recordField>Survey_Date_to_Send__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
