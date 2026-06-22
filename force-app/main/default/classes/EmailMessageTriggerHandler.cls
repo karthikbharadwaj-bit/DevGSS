@@ -805,7 +805,11 @@ public with sharing class EmailMessageTriggerHandler {
                                 Integer byteLength = Blob.valueOf(commentBody).size();
                                 if(byteLength > fieldLength) {
                                     Integer extraBytes = byteLength - commentBody.length();
-                                    commentBody = commentBody.substring(0, fieldLength - extraBytes - 3) + '...';
+                                    // Clamp to 0: a body dominated by multi-byte chars can make the byte
+                                    // overhead exceed the limit, which would otherwise pass a negative
+                                    // argument to substring() and throw a StringException.
+                                    Integer safeLength = Math.max(0, fieldLength - extraBytes - 3);
+                                    commentBody = commentBody.substring(0, safeLength) + '...';
                                 }
                                 caseComments.add(new CaseComment(
                                     ParentId = emailMsg.ParentId,
