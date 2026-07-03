@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Update Dummy Account (Email-to-Case Dummy Account(.bizmerge)) to Cases when Cases are not associated with Accounts which are created through Email-to-Case</description>
+    <environments>Default</environments>
+    <interviewLabel>Update Account for SOED cases {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Update Dummy Account for Email-to-Case and Chat Cases</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_account_on_case</name>
+        <label>Update account on case</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <stringValue>001Hr00001jVN9xIAG</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_account_on_case</targetReference>
+        </connector>
+        <filterFormula>OR(AND(OR(PRIORVALUE( {!$Record.OwnerId} ) == &apos;00G34000003eSrn&apos;,PRIORVALUE( {!$Record.OwnerId} ) == &apos;00G34000003eV8s&apos;), OR(ISNULL( {!$Record.AccountId} ), ISBLANK({!$Record.AccountId}) ), OR({!$Record.RecordType.DeveloperName} == &apos;Sales_Order_Except_Desk&apos;,{!$Record.RecordType.DeveloperName} == &apos;Channel_Ops&apos;),ISCHANGED({!$Record.OwnerId})),
+AND(
+{!$Record.RecordType.DeveloperName}  == &apos;Sales_Order_Except_Desk&apos;,
+{!$Record.OwnerId} &lt;&gt; &apos;00G34000003eSrn&apos;,
+ISPICKVAL({!$Record.Origin}, &apos;Chat&apos;),
+ISBLANK({!$Record.AccountId})
+))</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

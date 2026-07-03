@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Update_Case</name>
+        <label>Update Case</label>
+        <locationX>314</locationX>
+        <locationY>287</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>CLF_Support_Survey</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Close_Loop_Feedback_Medallia_SupportSurvey</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Support_Owner_Manager_Id</targetReference>
+            </connector>
+            <label>CLF Support Survey</label>
+        </rules>
+        <rules>
+            <name>CLF_Relationship_Survey</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Close_Loop_Feedback_Medallia_Relationship</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.CSM__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.CSM__r.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Is_CSM_Managed</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Case_Owner_RS</targetReference>
+            </connector>
+            <label>CLF Relationship Survey</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>Is_CSM_Managed</name>
+        <dataType>Boolean</dataType>
+        <expression>IF(AND(NOT(ISBLANK({!$Record.Account.CSM__c})),NOT(CONTAINS({!$Label.medallia_CSM_Queue},{!$Record.Account.CSM_Name__c}))),TRUE,FALSE)</expression>
+    </formulas>
+    <formulas>
+        <name>OwnerID_SupportSurvey</name>
+        <dataType>String</dataType>
+        <expression>IF(
+ NOT(ISBLANK({!$Record.Parent.Owner:User.ManagerId})) &amp;&amp; ({!$Record.Parent.Owner:User.Manager.isActive}),
+    {!$Record.Parent.Owner:User.ManagerId}, 
+  IF(
+    NOT(ISNULL({!Support_Owner_Manager.Id})) &amp;&amp; NOT(ISBLANK({!Support_Owner_Manager.Id})),
+    {!Support_Owner_Manager.Id}, 
+    IF(
+      NOT(ISBLANK({!$Record.Account.CSM__c} )) &amp;&amp; {!$Record.Account.CSM__r.IsActive}, 
+      {!$Record.Account.CSM__c}, 
+      IF(
+        NOT(ISBLANK({!$Record.Account.Current_Owner__c })) &amp;&amp; {!$Record.Account.Current_Owner__r.IsActive}, 
+        {!$Record.Account.Current_Owner__c}, 
+        IF(
+          NOT(ISBLANK({!$Record.Account.OwnerId} )) &amp;&amp; {!$Record.Account.Owner.IsActive},
+           {!$Record.Account.OwnerId}, 
+          &apos;00G2H000003qWbpUAE&apos;
+        )
+      )
+    )
+  )
+)</expression>
+    </formulas>
+    <interviewLabel>Qualtrics Closeloop Feedback Cases Assignment {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Qualtrics Closeloop Feedback Cases Assignment</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Support_Owner_Manager_Id</name>
+        <label>Get Support Owner Manager Id</label>
+        <locationX>50</locationX>
+        <locationY>395</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Copy_2_of_Update_Case_Owner</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Full_Name__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Parent.Support_Owner_Manager__c</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsActive</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>User</object>
+        <outputReference>Support_Owner_Manager</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>Full_Name__c</queriedFields>
+    </recordLookups>
+    <recordUpdates>
+        <name>Copy_2_of_Update_Case_Owner</name>
+        <label>Update Case Owner</label>
+        <locationX>50</locationX>
+        <locationY>503</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>OwnerID_SupportSurvey</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Parent_Case_Owner_Email__c</field>
+            <value>
+                <elementReference>$Record.Parent.Owner:User.Email</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Case_Owner_RS</name>
+        <label>Update Case Owner RS</label>
+        <locationX>314</locationX>
+        <locationY>395</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Record.Account.CSM__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Case</targetReference>
+        </connector>
+        <filterFormula>{!$Record.RecordType.DeveloperName} = &apos;Close_Loop_Feedback_Medallia_Relationship&apos; || {!$Record.RecordType.DeveloperName} = &apos;Close_Loop_Feedback_Medallia_SupportSurvey&apos;</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>Support_Owner_Manager</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>User</objectType>
+    </variables>
+</Flow>

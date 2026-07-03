@@ -1,0 +1,770 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>Continue</name>
+        <choiceText>Continue</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Ibound_CallerID_Name</name>
+        <choiceText>Ibound CallerID Name</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Incorrect_Name_Display</name>
+        <choiceText>Incorrect Name Display</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Locked_Polycom_Provisioning_and_Registration</name>
+        <choiceText>Locked Polycom Provisioning and Registration</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No0001</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No007</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No01</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No_Name_Display</name>
+        <choiceText>No Name Display</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Password_Reset</name>
+        <choiceText>Password Reset</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes0001</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes007</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes01</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes_0001</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Decision6</name>
+        <label>Decision6</label>
+        <locationX>545</locationX>
+        <locationY>879</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_escalate</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes0001</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Escalate_to_Tier_2</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No_custedu</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No0001</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CUSTOMER_EDUCATION01</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_3</name>
+        <label>Decision 3</label>
+        <locationX>542</locationX>
+        <locationY>613</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes001</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes01</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Example_Scenario</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No001</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No01</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CUSTOMER_EDUCATION01</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_4</name>
+        <label>Decision 4</label>
+        <locationX>870</locationX>
+        <locationY>619</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes04</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>DELETING_CONTACTS</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No04</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Escalate_to_Tier_2</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_5</name>
+        <label>Decision 5</label>
+        <locationX>1058</locationX>
+        <locationY>872</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_resolved</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes007</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Issue_Resolved</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No_escalate</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No007</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Escalate_to_Tier_2</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Desicion_2</name>
+        <label>Desicion 2</label>
+        <locationX>212</locationX>
+        <locationY>609</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Incorrect_cnam_display_select</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Incorrect_Name_Display</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CHECK_CNAM_LOOKUP_incorrect</targetReference>
+            </connector>
+            <label>Incorrect cnam display select</label>
+        </rules>
+        <rules>
+            <name>No_cnam_display_select</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No_Name_Display</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CHECK_CNAME_LOOKUP_nodisplay</targetReference>
+            </connector>
+            <label>No cnam display select</label>
+        </rules>
+    </decisions>
+    <description>Inbound Caller ID Name Guide</description>
+    <interviewLabel>Inbound Caller ID Name {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Inbound Caller ID Name</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <screens>
+        <name>CHECK_CNAM_LOOKUP_incorrect</name>
+        <label>CHECK CNAM LOOKUP</label>
+        <locationX>378</locationX>
+        <locationY>613</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Decision_3</targetReference>
+        </connector>
+        <fields>
+            <name>tile3</name>
+            <fieldText>&lt;b&gt;CHECK CNAM LOOKUP&lt;/b&gt;
+
+Check the Calling Number CNAM information using the CNAM Lookup Tool to see if the calling number has the correct CNAM information.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Go to Admin Interface &gt; Click Phone DB on the left-side 
+&lt;li&gt;Click &lt;b&gt;CNAM/TeleSign Lookup&lt;/b&gt;
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Ck&apos; /&gt; 
+
+&lt;li&gt;Enter the Calling Number that is in question and click Lookup
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cp&apos; /&gt; 
+
+&lt;li&gt;It will provide its CNAM information associated with the number in question, and tells you the location where the phone number is registered
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cu&apos; /&gt; 
+&lt;/ul&gt;
+&lt;b&gt;Note:&lt;/b&gt; In the event that you encounter a road block when using this guide, please ask assistance from a Team Lead.
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Does_it_show_the_correct_CallerID_Name_displayed</name>
+            <choiceReferences>Yes01</choiceReferences>
+            <choiceReferences>No01</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Does it show the correct CallerID Name displayed?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>CHECK_CNAME_LOOKUP_nodisplay</name>
+        <label>CHECK CNAME LOOKUP</label>
+        <locationX>219</locationX>
+        <locationY>880</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Decision6</targetReference>
+        </connector>
+        <fields>
+            <name>tile3b</name>
+            <fieldText>&lt;b&gt;CHECK CNAM LOOKUP&lt;/b&gt;
+
+Check the Calling Number CNAM information using the CNAM Lookup Tool to see if the calling number has the correct CNAM information.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Go to Admin Interface &gt; Click Phone DB on the left-side 
+&lt;li&gt;Click &lt;b&gt;CNAM/TeleSign Lookup&lt;/b&gt;
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Ck&apos; /&gt; 
+
+&lt;li&gt;Enter the Calling Number that is in question and click Lookup
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cp&apos; /&gt; 
+
+&lt;li&gt;It will provide its CNAM information associated with the number in question, and tells you the location where the phone number is registered
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cu&apos; /&gt; 
+&lt;/ul&gt;
+&lt;b&gt;Note:&lt;/b&gt; In the event that you encounter a road block when using this guide, please ask assistance from a Team Lead.
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Does_it_show_the_correct_CallerID_Name_displayed01</name>
+            <choiceReferences>Yes0001</choiceReferences>
+            <choiceReferences>No0001</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Does it show the correct CallerID Name displayed?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>CUSTOMER_EDUCATION01</name>
+        <label>CUSTOMER EDUCATION</label>
+        <locationX>543</locationX>
+        <locationY>758</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>tile5</name>
+            <fieldText>&lt;b&gt;CUSTOMER EDUCATION&lt;/b&gt;
+Inform the customer that the calling party needs to have the name registered to the main CNAM Data Base. They should be assisted by the carrier
+
+&lt;b&gt;Recommended KB Article&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/4618&quot; target=&quot;_blank&quot;&gt;Admin: Configure a User&apos;s Incoming Call Information&lt;/a&gt;
+&lt;/ul&gt;
+&lt;b&gt;Reminders:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Probe if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.
+&lt;li&gt;Re-use the guide in the event that the customer has another phone that experiencing provisioning and registration issues.
+&lt;li&gt;Select the correct disposition based on how you handled the problem
+&lt;li&gt;Copy the case history to the comment field
+&lt;/ul&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>DELETING_CONTACTS</name>
+        <label>DELETING CONTACTS</label>
+        <locationX>1053</locationX>
+        <locationY>619</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Decision_5</targetReference>
+        </connector>
+        <fields>
+            <name>Tile7_yes</name>
+            <fieldText>&lt;b&gt;DELETING CONTACTS&lt;/b&gt;
+Inform the customer that the contact name overrides the actual CNAM of the number. Remove the number from the contacts and place a test call 
+
+&lt;b&gt;To remove or delete contacts: &lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Go to &lt;b&gt;My Extension&lt;/b&gt; &gt; &lt;b&gt;Contacts&lt;/b&gt; &gt; &lt;b&gt;Personal&lt;/b&gt; &gt; Delete the contacts name 
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008D9&apos; /&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Did_the_correct_name_show_up</name>
+            <choiceReferences>Yes007</choiceReferences>
+            <choiceReferences>No007</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Did the correct name show up?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Escalate_to_Tier_2</name>
+        <label>Escalate to Tier 2</label>
+        <locationX>874</locationX>
+        <locationY>876</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>tile7_escalate</name>
+            <fieldText>&lt;b&gt;Escalate to Tier 2&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Ensure call samples are provided
+&lt;li&gt;Date and Time: 
+&lt;li&gt;Actual Behavior : 
+&lt;li&gt;Expected Behavior :
+&lt;li&gt;Session Log :
+&lt;li&gt;&lt;b&gt;Critical :&lt;/b&gt; Original calling number should be included in the results
+&lt;/ul&gt;
+&lt;b&gt;Note:&lt;/b&gt; failure to do so may result to an escalation feedback
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Probe if the customer has any other unresolved issues.
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly.
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;/ul&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Example_Scenario</name>
+        <label>Example Scenario</label>
+        <locationX>719</locationX>
+        <locationY>611</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Decision_4</targetReference>
+        </connector>
+        <fields>
+            <name>tile6_yes</name>
+            <fieldText>&lt;b&gt;Example Scenario&lt;/b&gt;
+8043270831 is the caller to ext 101 and the incoming caller Id is incorrect 
+
+&lt;b&gt;What to do:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Check the contacts of the extension that received the call
+&lt;p&gt;Go to &lt;b&gt;My Extension &gt; Contacts &gt; Personal &gt; &lt;/b&gt;look for the Calling number on the contacts&lt;/p&gt;
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cz&apos; /&gt; 
+
+&lt;li&gt;Ensure that the call was received by the extension (example: Ext 101)
+
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008D4&apos; /&gt; 
+&lt;/ul&gt;
+The sample shown above indicates the following:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;&lt;a style=&quot;color:Orange;&quot;&gt; &lt;b&gt;Orange&lt;a/&gt;&lt;/b&gt; - Caller 
+&lt;li&gt;&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;Red&lt;a/&gt;&lt;/b&gt;  - Dialed Number
+&lt;li&gt;&lt;a style=&quot;color:green;&quot;&gt; &lt;b&gt;Green&lt;a/&gt;&lt;/b&gt;  - Actions
+&lt;/ul&gt;
+The call was successfully answered and received by extension 101
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_there_a_contact_saved_for_the_calling_number</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Is there a contact saved for the calling number?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Inbound_CallerID_Name</name>
+        <label>Inbound CallerID Name</label>
+        <locationX>50</locationX>
+        <locationY>325</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>TYPICAL_INBOUND_CALLER_ID_NAME_SCENARIO</targetReference>
+        </connector>
+        <fields>
+            <name>Tile1</name>
+            <fieldText>&lt;p&gt;&lt;b&gt;Inbound Caller ID Name&lt;/b&gt;&lt;/p&gt;
+The caller ID service may include the transmission of name associated with the calling telephone number called CNAM. 
+Inbound CNAM displays a caller&apos;s phone number or caller&apos;s name on the recipient&apos;s phone device before the call is answered.
+
+&lt;b&gt;SYMPTOM/s:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:disc;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Incoming calls showing incorrect caller information
+&lt;li&gt;No name showing up
+&lt;/ul&gt;
+&lt;b&gt;REQUIREMENTS:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:disc;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;&lt;b&gt;User/Extension Status&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;Must be “Enabled”.
+&lt;li&gt;Extensions on “Not Activated” state should be set to “Enabled”
+&lt;/ul&gt;
+&lt;li&gt;&lt;b&gt;Plan Tier&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;RingCentral Office and Office Unlimited Plans
+&lt;/ul&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+&lt;/p&gt;
+Click &lt;b&gt;&quot;Next&quot;&lt;/b&gt; to continue</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <pausedText>{!Guide1}</pausedText>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Issue_Resolved</name>
+        <label>Issue Resolved</label>
+        <locationX>1231</locationX>
+        <locationY>874</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>tile8</name>
+            <fieldText>&lt;b&gt;Issue Resolved&lt;/b&gt;
+Removing the number from the user extension’s contact list, will resolve the issue. If the number is added to the user extension contact, it will  override the actual CNAM of the number.
+
+&lt;b&gt;Recommended KB Article&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/4618&quot; target=&quot;_blank&quot;&gt;Admin: Configure a User&apos;s Incoming Call Information&lt;/a&gt;
+&lt;/ul&gt;
+&lt;b&gt;Reminders:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Probe if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.
+&lt;li&gt;Re-use the guide in the event that the customer has another phone that experiencing provisioning and registration issues.
+&lt;li&gt;Select the correct disposition based on how you handled the problem
+&lt;li&gt;Copy the case history to the comment field
+&lt;/ul&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>TYPICAL_INBOUND_CALLER_ID_NAME_SCENARIO</name>
+        <label>TYPICAL INBOUND CALLER ID NAME SCENARIO</label>
+        <locationX>214</locationX>
+        <locationY>506</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Desicion_2</targetReference>
+        </connector>
+        <fields>
+            <name>Tile2</name>
+            <fieldText>&lt;b&gt;TYPICAL INBOUND CALLER ID NAME SCENARIO&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:disc;&amp;nbsp;&quot;&gt; 
+&lt;li&gt;&lt;b&gt;INCORRECT NAME DISPLAYED&lt;/b&gt; - Caller ID shows City, Province with an incoming call and not the phone number
+&lt;li&gt;&lt;b&gt;NO NAME DISPLAY&lt;/b&gt; - No name was displayed when receiving an incoming call
+&lt;/ul&gt;
+&lt;b&gt;Important:&lt;/b&gt;Ensure that the incoming call information of the extension is set as Displayed Incoming Caller ID
+
+To check the Incoming Call information display, go to &lt;b&gt;Users Extension&lt;/b&gt; &gt; &lt;b&gt;Call Handling and Forwarding&lt;/b&gt; &gt; &lt;b&gt;Settings&lt;/b&gt; &gt; Set Incoming Displayed to me to &lt;b&gt;Incoming Caller ID&lt;/b&gt;
+&lt;p&gt;When you receive a forwarded call from your RingCentral account, you can choose what appears on your phone. 
+Called Number will display the phone number the person dialed. If you use your business phone for personal use as well, 
+it allows you to identify business calls and answer them appropriately. The Caller ID option displays the phone number of the person calling. 
+You can add numbers before (pre-pended) or after (post-pended) the incoming number to help you identify the call.&lt;/p&gt;
+&lt;b&gt;Note:&lt;/b&gt; Some carriers do not support the ability to send caller ID with pre-pended, or post-pended digits. 
+Please test that this functionality is supported by the appropriate carrier device the call will be sent to.</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>image1</name>
+            <fieldText>&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Ca&apos; /&gt;
+&lt;img src=&apos;https://rc--gss--c.cs59.content.force.com/servlet/rtaImage?eid=ka22C00000000lR&amp;feoid=00N80000004hxR2&amp;refid=0EM2C00000008Cf&apos; /&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Typical_Incound_CallerID_Name_Scenario</name>
+            <choiceReferences>Incorrect_Name_Display</choiceReferences>
+            <choiceReferences>No_Name_Display</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Typical Incound CallerID Name Scenario&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <startElementReference>Inbound_CallerID_Name</startElementReference>
+    <status>Obsolete</status>
+    <variables>
+        <name>Guide1</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

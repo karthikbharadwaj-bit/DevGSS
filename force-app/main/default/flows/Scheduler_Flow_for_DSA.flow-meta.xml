@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>This is to send an email for the Updated Account Owner (i.e) Expansion Reps regarding the Account Assignement.</description>
+        <name>Send_an_Email_after_Account_Owner_Update</name>
+        <label>Send an Email after Account Owner Update</label>
+        <locationX>264</locationX>
+        <locationY>1500</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Get_Updated_all_accounts</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>Get_Updated_all_accounts.Owner.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>AccountName</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>BodyTemplate</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>This is to add all the necessary details on the fields that are to be Updated on the Account.</description>
+        <name>Assign_the_Owner</name>
+        <label>Assign the Owner</label>
+        <locationX>264</locationX>
+        <locationY>684</locationY>
+        <assignmentItems>
+            <assignToReference>Loop_All_Accounts.OwnerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.User.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Loop_All_Accounts.MRR_Transfer_Effective_Date__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Loop_All_Accounts.Current_Owner__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.User.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Loop_All_Accounts.Current_Owner_Email__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.User.Email</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>Loop_All_Accounts.Current_Owner_Name__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.User.Full_Name__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Assign_the_Owners</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>This is add all the stored data from the Loop into a Collection Variable.</description>
+        <name>Assign_the_Owners</name>
+        <label>Assign the Owners</label>
+        <locationX>264</locationX>
+        <locationY>792</locationY>
+        <assignmentItems>
+            <assignToReference>UpdatedOwner</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Loop_All_Accounts</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_All_Accounts</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>This is to check if the Requirements like Account Status, Paid Date and Account Team Members are true.</description>
+        <name>Check_the_Requirement_Conditions</name>
+        <label>Check the Requirement Conditions</label>
+        <locationX>396</locationX>
+        <locationY>576</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Conditions_Met</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_Account_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Paid</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_Upgrade_Date__c</leftValueReference>
+                <operator>LessThanOrEqualTo</operator>
+                <rightValue>
+                    <elementReference>PaidDate</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.TeamMemberRole</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>DSA Expansion</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.OwnerId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>Loop_All_Accounts.OwnerId</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_Upgrade_Date__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_the_Owner</targetReference>
+            </connector>
+            <label>Conditions Met</label>
+        </rules>
+    </decisions>
+    <description>This Flow is to Update the Account Owner for the DSA Accounts with the Account Team Member whose Role is DSA Expansion.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>PaidDate</name>
+        <dataType>Date</dataType>
+        <expression>Today() - 3</expression>
+    </formulas>
+    <interviewLabel>Scheduler Flow for DSA {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Scheduler Flow for DSA</label>
+    <loops>
+        <description>Loop all the Updated Accounts to get the Account Owners of the Accounts.</description>
+        <name>Get_Updated_all_accounts</name>
+        <label>Get Updated all accounts</label>
+        <locationX>176</locationX>
+        <locationY>1392</locationY>
+        <collectionReference>Updated_Accounts</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Send_an_Email_after_Account_Owner_Update</targetReference>
+        </nextValueConnector>
+    </loops>
+    <loops>
+        <description>Looping all the Accounts.</description>
+        <name>Loop_All_Accounts</name>
+        <label>Loop All Accounts</label>
+        <locationX>176</locationX>
+        <locationY>468</locationY>
+        <collectionReference>Get_Accounts</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Check_the_Requirement_Conditions</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Update_the_Account_Owner</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <description>Create the Account Team Members after the Account Owner Update on the Account with an Expansion Rep.</description>
+        <name>Create_ATM</name>
+        <label>Create Account Team Members</label>
+        <locationX>176</locationX>
+        <locationY>1176</locationY>
+        <connector>
+            <targetReference>Updated_Accounts</targetReference>
+        </connector>
+        <inputReference>GetAllATM</inputReference>
+    </recordCreates>
+    <recordLookups>
+        <description>This is to get all the Accounts.</description>
+        <name>Get_Accounts</name>
+        <label>Get Accounts</label>
+        <locationX>176</locationX>
+        <locationY>252</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_All_Account_Team_Members</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Account.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>This is to get the Account Team Members on the Account.</description>
+        <name>Get_All_Account_Team_Members</name>
+        <label>Get All Account Team Members</label>
+        <locationX>176</locationX>
+        <locationY>360</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_All_Accounts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.AccountId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>DSA Expansion</stringValue>
+            </value>
+        </filters>
+        <object>AccountTeamMember</object>
+        <outputReference>GetAllATM</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>TeamMemberRole</queriedFields>
+        <queriedFields>AccountAccessLevel</queriedFields>
+        <queriedFields>CaseAccessLevel</queriedFields>
+        <queriedFields>CurrencyIsoCode</queriedFields>
+        <queriedFields>IsDeleted</queriedFields>
+        <queriedFields>OpportunityAccessLevel</queriedFields>
+        <queriedFields>PhotoUrl</queriedFields>
+        <queriedFields>SystemModstamp</queriedFields>
+        <queriedFields>UserId</queriedFields>
+        <queriedFields>Title</queriedFields>
+        <queriedFields>AccountId</queriedFields>
+    </recordLookups>
+    <recordLookups>
+        <description>To get all the Accounts after the Account Owner is Updated with an Expansion Rep.</description>
+        <name>Updated_Accounts</name>
+        <label>Updated Accounts</label>
+        <locationX>176</locationX>
+        <locationY>1284</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Updated_all_accounts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Loop_All_Accounts.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Current_Owner__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Loop_All_Accounts.Current_Owner__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Update the Necessary Fields like Account Owner, Current Owner, Current Owner Email, MRR Transfer Effective Date on Account.</description>
+        <name>Update_the_Account_Owner</name>
+        <label>Update the Account Owner</label>
+        <locationX>176</locationX>
+        <locationY>1068</locationY>
+        <connector>
+            <targetReference>Create_ATM</targetReference>
+        </connector>
+        <inputReference>UpdatedOwner</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Accounts</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>DSA Expansion</stringValue>
+            </value>
+        </filters>
+        <object>AccountTeamMember</object>
+        <schedule>
+            <frequency>Daily</frequency>
+            <startDate>2024-05-20</startDate>
+            <startTime>22:00:00.000Z</startTime>
+        </schedule>
+        <triggerType>Scheduled</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <textTemplates>
+        <name>AccountName</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A new DSA account -{!Get_Updated_all_accounts.Name}- has been assigned to you!</text>
+    </textTemplates>
+    <textTemplates>
+        <name>BodyTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi {!Get_Updated_all_accounts.Current_Owner__r.Full_Name__c},
+
+A new DSA account &quot;{!Get_Updated_all_accounts.Name}&quot; has been assigned to you. Please check the next steps for this account and follow up with the customer.
+
+Account: https://rc.lightning.force.com/lightning/r/Account/{!Get_Updated_all_accounts.Id}/view
+
+
+Thanks!</text>
+    </textTemplates>
+    <variables>
+        <name>Accounts</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Account</objectType>
+    </variables>
+    <variables>
+        <name>GetAllATM</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>true</isOutput>
+        <objectType>AccountTeamMember</objectType>
+    </variables>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>UpdatedOwner</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Account</objectType>
+    </variables>
+</Flow>

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Auto_Response_Email</name>
+        <label>Auto Response Email</label>
+        <locationX>176</locationX>
+        <locationY>455</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>emailBodyTextTemplate</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>emailRecipient</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>emailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Updated the Email Template contents; It now uses &quot;Text Template&quot; as the email body.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>caseURL</name>
+        <dataType>String</dataType>
+        <expression>LEFT($Api.Enterprise_Server_URL_510, FIND( &apos;/services&apos;, $Api.Enterprise_Server_URL_510)) &amp; {!$Record.Id}</expression>
+    </formulas>
+    <formulas>
+        <name>emailBody</name>
+        <dataType>String</dataType>
+        <expression>&quot;Hi,&quot; &amp; br() &amp; 
+br() &amp;
+&quot;We have received your request and it will be reviewed by the Mitel Deals Desk.&quot; &amp; br() &amp; 
+br() &amp;
+&quot;Thank you,&quot; &amp; br() &amp; 
+&quot;Mitel Deals Desk&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>emailRecipient</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.SuppliedEmail}</expression>
+    </formulas>
+    <formulas>
+        <name>emailSubject</name>
+        <dataType>String</dataType>
+        <expression>&quot;Request Received - &quot; &amp; {!$Record.Subject}</expression>
+    </formulas>
+    <interviewLabel>Mitel Deals Desk E2C {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Mitel Deals Desk E2C</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Case_Category</name>
+        <label>Update Case Category</label>
+        <locationX>176</locationX>
+        <locationY>335</locationY>
+        <connector>
+            <targetReference>Auto_Response_Email</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Case_Category__c</field>
+            <value>
+                <stringValue>Mitel Deals Desk</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Case_Category</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Sales_Order_Except_Desk</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Priority</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Medium</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Origin</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Email</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>OwnerId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>00G2H000003qufi</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>emailBodyTextTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hello {!$Record.SuppliedName},&lt;br&gt;
+&lt;br&gt;
+Thank you for submitting your request to the Mitel Deals Desk. Your request has been received and it will be reviewed based on your case priority.&lt;br&gt;
+&lt;br&gt;
+Here is the summary of your request:
+&lt;ul&gt;
+&lt;li&gt;Case No: {!$Record.CaseNumber} - {!caseURL}&lt;/li&gt;
+&lt;li&gt;Subject: {!$Record.Subject}&lt;/li&gt;
+&lt;li&gt;Created Date: {!$Record.Case_Created_Date__c}&lt;/li&gt;
+&lt;/ul&gt;
+Regards,&lt;br&gt;
+Mitel Deals Desk&lt;br&gt;
+&lt;br&gt;
+Thread ID: {!$Record.Thread_ID__c}</text>
+    </textTemplates>
+</Flow>

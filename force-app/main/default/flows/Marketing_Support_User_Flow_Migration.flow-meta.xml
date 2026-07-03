@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Email_Alert_for_New_Marketing_Support_User_Notification_for_RFP_Support</name>
+        <label>Email Alert for New Marketing Support User Notification for RFP Support</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <actionName>Marketing_Support_Users__c.New_Marketing_Support_User_Notification_for_RFP_Support</actionName>
+        <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>New_Proposal_Bid_Manager_Notification_for_RFP_Support1</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Marketing_Support_Users__c.New_Marketing_Support_User_Notification_for_RFP_Support</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Email_Alert_for_New_Proposal_Bid_Manager_Notification_for_RFP_Support</name>
+        <label>Email Alert for 	New Proposal/Bid Manager Notification for RFP Support</label>
+        <locationX>50</locationX>
+        <locationY>731</locationY>
+        <actionName>Marketing_Support_Users__c.New_Proposal_Bid_Manager_Notification_for_RFP_Support</actionName>
+        <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>Check_the_Type_on_Marketing_Support_User</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Marketing_Support_Users__c.New_Proposal_Bid_Manager_Notification_for_RFP_Support</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Email_Alert_for_SE_and_Proserv_Type</name>
+        <label>Email Alert for SE and Proserv Type</label>
+        <locationX>50</locationX>
+        <locationY>1031</locationY>
+        <actionName>Marketing_Support_Users__c.Email_Alert_to_PS_and</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Marketing_Support_Users__c.Email_Alert_to_PS_and</nameSegment>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_the_Type_on_Marketing_Support_User</name>
+        <label>Check the Type on Marketing Support User</label>
+        <locationX>182</locationX>
+        <locationY>923</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Send_Email_to_SE_ProServ</name>
+            <conditionLogic>(1 OR 2) AND 3</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SE</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ProServ</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_User__r.Email</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Email_Alert_for_SE_and_Proserv_Type</targetReference>
+            </connector>
+            <label>Send Email to SE &amp; ProServ</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>This flow is for triggering different Email Alerts based on the Type on Marketing Support User Object.</description>
+        <name>Decision_for_Marketing_Support_User</name>
+        <label>Decision for Marketing Support User</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnector>
+            <targetReference>New_Proposal_Bid_Manager_Notification_for_RFP_Support1</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>New_Marketing_Support_User_Notification_for_RFP_Support</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Marketing_Support_Request__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_User__r.Email</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Type__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Proposal/Bid Manager</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Email_Alert_for_New_Marketing_Support_User_Notification_for_RFP_Support</targetReference>
+            </connector>
+            <label>New Marketing Support User Notification for RFP Support</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>New_Proposal_Bid_Manager_Notification_for_RFP_Support1</name>
+        <label>New Proposal/Bid Manager Notification for RFP Support1</label>
+        <locationX>182</locationX>
+        <locationY>623</locationY>
+        <defaultConnector>
+            <targetReference>Check_the_Type_on_Marketing_Support_User</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>New_Proposal_Bid_Manager_Notification_for_RFP_Support_Value</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Marketing_Support_Request__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Proposal/Bid Manager</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_User__r.Email</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Email_Alert_for_New_Proposal_Bid_Manager_Notification_for_RFP_Support</targetReference>
+            </connector>
+            <label>New Proposal/Bid Manager Notification for RFP Support Value</label>
+        </rules>
+    </decisions>
+    <description>This flow is for Triggering Email Alerts based on the Type on Marketing Support User Object.</description>
+    <environments>Default</environments>
+    <interviewLabel>Marketing Support User Flow Migration {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Marketing Support User Flow Migration</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Decision_for_Marketing_Support_User</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Type__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Marketing_Support_Users__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

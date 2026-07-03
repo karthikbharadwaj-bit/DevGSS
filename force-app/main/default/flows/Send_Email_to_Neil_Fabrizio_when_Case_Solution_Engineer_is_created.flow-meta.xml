@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email_To_Neil_Fabrizio</name>
+        <label>Send Email To Neil Fabrizio</label>
+        <locationX>543</locationX>
+        <locationY>556</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>EmailBodyRich</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>solutionengineercase@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Has_email</name>
+        <label>Has email</label>
+        <locationX>770</locationX>
+        <locationY>557</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Neil_Fabrizio_Email</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_Email_To_Neil_Fabrizio</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <formulas>
+        <name>EmailBody</name>
+        <dataType>String</dataType>
+        <expression>&apos;&lt;b&gt;Case Number: &lt;/b&gt;&apos; + {!$Record.CaseNumber} + 
+BR() + &apos;&lt;b&gt;Subject: &lt;/b&gt;&apos; + {!$Record.Subject} + 
+BR() + &apos;&lt;b&gt;Description: &lt;/b&gt;&apos; +  {!$Record.Description} + 
+BR() + &apos;&lt;b&gt;Category: &lt;/b&gt;&apos; +  TEXT({!$Record.Case_Category__c}) + 
+BR() + &apos;&lt;b&gt;Record Type: &lt;/b&gt;&apos; +  {!$Record.RecordTypeName__c} +
+BR() + &apos;&lt;b&gt;Case link:&lt;/b&gt;&apos; + {!SFLink}</expression>
+    </formulas>
+    <formulas>
+        <name>EmailSubject</name>
+        <dataType>String</dataType>
+        <expression>&apos;New Solution Engineer Case has been created&apos;</expression>
+    </formulas>
+    <formulas>
+        <name>SFLink</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Partner_Server_URL_260}, FIND(&apos;/services&apos;, {!$Api.Partner_Server_URL_260})) + {!$Record.Id}</expression>
+    </formulas>
+    <interviewLabel>Send Email to Neil Fabrizio when Case Solution Engineer is created {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Send Email to Neil Fabrizio when Case Solution Engineer is created</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Neil_Fabrizio_Email</name>
+        <label>Get Neil Fabrizio Email</label>
+        <locationX>777</locationX>
+        <locationY>393</locationY>
+        <assignNullValuesIfNoRecordsFound>true</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Has_email</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Username</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>neil.fabrizio@ringcentral.com</stringValue>
+            </value>
+        </filters>
+        <object>User</object>
+        <outputAssignments>
+            <assignToReference>Neil_Fabrizio_Email</assignToReference>
+            <field>Email</field>
+        </outputAssignments>
+    </recordLookups>
+    <start>
+        <locationX>650</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Get_Neil_Fabrizio_Email</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Solutions_Engineer</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>RC Security</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>EmailBodyRich</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>&lt;p&gt;&lt;b&gt;Case Number&lt;/b&gt;: {!$Record.CaseNumber}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Subject&lt;/b&gt;: {!$Record.Subject}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Description&lt;/b&gt;: {!$Record.Description}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Category&lt;/b&gt;: {!$Record.Case_Category__c}&lt;/p&gt;&lt;p&gt;&lt;b&gt;Record Type&lt;/b&gt;: {!$Record.RecordTypeName__c}&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;{!SFLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;&lt;b&gt;Go to case&lt;/b&gt;&lt;/a&gt;&lt;/p&gt;</text>
+    </textTemplates>
+    <variables>
+        <name>Neil_Fabrizio_Email</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Alert the Account Owner when the Status on Red_Account__c is C360 created.</description>
+        <name>C360_Email_Alert</name>
+        <label>C360 Email Alert</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <actionName>Red_Account__c.C360_Email_Alert</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Red_Account__c.C360_Email_Alert</nameSegment>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>This is for checking the status on Red Account and an email should be sent to the Account Owner.</description>
+        <name>Red_Account_Status_Check</name>
+        <label>Red Account Status Check</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Check_if_Status_is_C360_created</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>C360 created</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>C360_Email_Alert</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>Check if Status is C360 created</label>
+        </rules>
+    </decisions>
+    <description>Alert the Account Owner when the Status on Red Account is C360 created and Update System Owner to RCSF Sync when the Red_Account__c is created.</description>
+    <environments>Default</environments>
+    <interviewLabel>C360 Email Alert and {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>C360 Email Alert and Update System Owner to RCSF Sync</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>Update System Owner to RCSF Sync when the Red_Account__c is created.</description>
+        <name>Update_System_Owner_to_RCSF_Sync</name>
+        <label>Update System Owner to RCSF Sync</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <connector>
+            <targetReference>Red_Account_Status_Check</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>System_Owner__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>System_Owner__c</field>
+            <value>
+                <stringValue>005800000036sJJAAY</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_System_Owner_to_RCSF_Sync</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>System_Owner__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>C360 created</stringValue>
+            </value>
+        </filters>
+        <object>Red_Account__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

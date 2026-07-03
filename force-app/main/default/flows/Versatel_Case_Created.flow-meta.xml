@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Versatel_Case_Creation</name>
+        <label>Case.Versatel_Case_Creation</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.Versatel_Case_Creation</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Versatel_Case_Creation</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Versatel_Case_Creation_Second_Channel</name>
+        <label>Versatel Case Creation Second Channel</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.Versatel_Case_Creation_Second_Channel</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Versatel_Case_Creation_Second_Channel</nameSegment>
+    </actionCalls>
+    <apiVersion>58.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_web_email_address_for_Versatel_First_and_Second_Channel</name>
+        <label>Check web email address for Versatel First and Second Channel</label>
+        <locationX>314</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Check_for_First_Channel</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SuppliedEmail</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>nextip@1und1.net</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Versatel_Case_Creation</targetReference>
+            </connector>
+            <label>Check for First Channel</label>
+        </rules>
+        <rules>
+            <name>Check_for_Second_Channel</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SuppliedEmail</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>cc-technik@1und1.net</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Versatel_Case_Creation_Second_Channel</targetReference>
+            </connector>
+            <label>Check for Second Channel</label>
+        </rules>
+    </decisions>
+    <description>Migrated from the: Versatel Case Created workflow rule
+Workflow rule description: &quot;</description>
+    <environments>Default</environments>
+    <label>Versatel Case Created</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_web_email_address_for_Versatel_First_and_Second_Channel</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Brand_Identifier__c</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Versatel</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email</name>
+        <label>Send Email</label>
+        <locationX>329</locationX>
+        <locationY>400</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <faultConnector>
+            <targetReference>Handle_Email_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>emailRecipients</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>EmailBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Handle_Email_Error</name>
+        <label>Handle Email Error</label>
+        <locationX>600</locationX>
+        <locationY>600</locationY>
+        <assignmentItems>
+            <assignToReference>ErrorMessage</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Failed to send high risk escalation email. Error: {!$Flow.FaultMessage}</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <environments>Default</environments>
+    <formulas>
+        <name>EmailBody</name>
+        <dataType>String</dataType>
+        <expression>
+            &apos;A case has been flagged as HIGH RISK.&apos; &amp; BR() &amp; BR() &amp;
+            &apos;Case Number: &apos; &amp; {!CaseRecord.CaseNumber} &amp; BR() &amp;
+            &apos;Subject: &apos; &amp; {!CaseRecord.Subject} &amp; BR() &amp;
+            &apos;Status: &apos; &amp; TEXT({!CaseRecord.Status}) &amp; BR() &amp;
+            &apos;Priority: &apos; &amp; TEXT({!CaseRecord.Priority}) &amp; BR() &amp;
+            &apos;Account: &apos; &amp; {!CaseRecord.Account.Name} &amp; BR() &amp; BR() &amp;
+            &apos;Case Link: &apos; &amp; LEFT({!$Api.Partner_Server_URL_260}, FIND(&apos;/services&apos;, {!$Api.Partner_Server_URL_260})) &amp; {!CaseRecord.Id} &amp; BR() &amp; BR() &amp;
+            IF(
+                NOT(ISBLANK({!escalationReasons})),
+                &apos;━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━&apos; &amp; BR() &amp;
+                &apos;AI-Powered Escalation Analysis&apos; &amp; BR() &amp;
+                &apos;━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━&apos; &amp; BR() &amp;
+                SUBSTITUTE({!escalationReasons}, CHR(10), BR()),
+                &apos;&apos;
+            )</expression>
+    </formulas>
+    <formulas>
+        <name>EmailSubject</name>
+        <dataType>String</dataType>
+        <expression>
+            &apos;[HIGH RISK CASE] &apos; &amp; {!CaseRecord.CaseNumber} &amp; &apos; - &apos; &amp; {!CaseRecord.Subject}</expression>
+    </formulas>
+    <interviewLabel>ATT High Risk Escalation Email {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>ATT High Risk Escalation Email</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Case</name>
+        <label>Get Case</label>
+        <locationX>329</locationX>
+        <locationY>200</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Email</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>caseId</elementReference>
+            </value>
+        </filters>
+        <object>Case</object>
+        <outputReference>CaseRecord</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>CaseNumber</queriedFields>
+        <queriedFields>Subject</queriedFields>
+        <queriedFields>Status</queriedFields>
+        <queriedFields>Priority</queriedFields>
+        <queriedFields>OwnerId</queriedFields>
+        <queriedFields>AccountId</queriedFields>
+    </recordLookups>
+    <start>
+        <locationX>203</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Get_Case</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>caseId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>CaseRecord</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Case</objectType>
+    </variables>
+    <variables>
+        <name>emailRecipients</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>ErrorMessage</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>escalationReasons</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

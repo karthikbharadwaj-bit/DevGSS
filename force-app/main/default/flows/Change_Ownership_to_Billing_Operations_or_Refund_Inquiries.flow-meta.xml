@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>53.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Update_Case_Owner</name>
+        <label>Update Case Owner</label>
+        <locationX>314</locationX>
+        <locationY>335</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>For_Billing_Operations</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Case_Category__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Payment Method Update</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Credit Card to Invoice</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Case_Owner_for_Billing_Operations</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>For Billing Operations</label>
+        </rules>
+        <rules>
+            <name>For_Refund_Inquiries</name>
+            <conditionLogic>1 AND (2 OR 3 OR 4 OR 5 OR 6 OR 7 OR 8 OR 9)</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Case_Category__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Refund Inquiry</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Proof of Refund</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>ACH</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Refunds follow-up</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Account Credit Removal and Refund</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Purchased Calling Credit Removal</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Duplicate CC Payment</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Incorrect Currency</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Case_Subcategory__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Glip Account Inquiry</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Case_Owner_for_Refund_Inquiries</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>For Refund Inquiries</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Change Ownership to Billing Operations or Refund Inquiries {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Change Ownership to Billing Operations or Refund Inquiries</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Case_Owner_for_Billing_Operations</name>
+        <label>Update Case Owner for Billing Operations</label>
+        <locationX>50</locationX>
+        <locationY>455</locationY>
+        <filterLogic>1 AND 2</filterLogic>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Payment Method Update</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Credit Card to Invoice</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00G2H000002H8Sc</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Case_Owner_for_Refund_Inquiries</name>
+        <label>Update Case Owner for Refund Inquiries</label>
+        <locationX>314</locationX>
+        <locationY>455</locationY>
+        <filterLogic>1 AND (2 OR 3 OR 4 OR 5 OR 6 OR 7 OR 8 OR 9)</filterLogic>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Refund Inquiry</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Proof of Refund</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ACH</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Refunds follow-up</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Account Credit Removal and Refund</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Purchased Calling Credit Removal</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Duplicate CC Payment</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Incorrect Currency</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Glip Account Inquiry</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00G2H000003qoEs</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Case_Owner</targetReference>
+        </connector>
+        <filterLogic>((1 AND 3) OR (2 AND (4 OR 5 OR 6 OR 7 OR 8 OR 9 OR 10 OR 11))) AND 12</filterLogic>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Payment Method Update</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Refund Inquiry</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Credit Card to Invoice</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Proof of Refund</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>ACH</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Refunds follow-up</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Account Credit Removal and Refund</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Purchased Calling Credit Removal</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Duplicate CC Payment</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Incorrect Currency</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Subcategory__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Glip Account Inquiry</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Support_Billing</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

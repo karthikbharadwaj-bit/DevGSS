@@ -1,0 +1,1386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>Available</name>
+        <choiceText>Available</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Busy</name>
+        <choiceText>Busy</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Close_Case</name>
+        <choiceText>Close Case</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Do_not_accept_any_calls</name>
+        <choiceText>Do not accept any calls</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Do_not_accept_call_queue_calls</name>
+        <choiceText>Do not accept call queue calls</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Intermittent</name>
+        <choiceText>Intermittent</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Leave_Open</name>
+        <choiceText>Leave Open</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Take_all_calls</name>
+        <choiceText>Take all calls</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Unavailable</name>
+        <choiceText>Unavailable</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>User_not_in_the_list</name>
+        <choiceText>User not in the list.</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Engaged_on_call</name>
+        <label>Engaged on call</label>
+        <locationX>696</locationX>
+        <locationY>1215</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes2_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Explain_the_status_of_Busy</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No2_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_status_as_user</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Status_changed</name>
+        <label>Status changed</label>
+        <locationX>1243</locationX>
+        <locationY>990</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Test_Call</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_hours</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Status_changed_0</name>
+        <label>hours changed</label>
+        <locationX>1131</locationX>
+        <locationY>1100</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Changes_in_hours</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Toggle_status_online</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Status_changed_1</name>
+        <label>Status changed</label>
+        <locationX>1705</locationX>
+        <locationY>842</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes1_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Test_Call</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No1_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Escalate_to_Tier2</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Test_call_worked</name>
+        <label>Test call worked?</label>
+        <locationX>952</locationX>
+        <locationY>443</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Close_Case_Accordingly</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Recommendation</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>What_is_the_status_of_the_user_in_the_call_queue</name>
+        <label>What is the status of the user in the call queue?</label>
+        <locationX>477</locationX>
+        <locationY>885</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Available1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Available</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_status_as_user_3</targetReference>
+            </connector>
+            <label>Available</label>
+        </rules>
+        <rules>
+            <name>Unavailable1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Unavailable</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_status_as_user</targetReference>
+            </connector>
+            <label>Unavailable</label>
+        </rules>
+        <rules>
+            <name>Busy1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Busy</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Is_user_engaged_on_a_call_2</targetReference>
+            </connector>
+            <label>Busy</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>What_is_the_status_of_the_user_online</name>
+        <label>What is the status of the user online?</label>
+        <locationX>834</locationX>
+        <locationY>891</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Take_all_calls1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Take_all_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_hours</targetReference>
+            </connector>
+            <label>Take_all_calls</label>
+        </rules>
+        <rules>
+            <name>Do_not_accept_call_queue_calls1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Do_not_accept_call_queue_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Change_to_Take_all_calls</targetReference>
+            </connector>
+            <label>Do_not_accept_call_queue_calls</label>
+        </rules>
+        <rules>
+            <name>Do_not_accept_any_calls1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Do_not_accept_any_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Change_to_Take_all_calls</targetReference>
+            </connector>
+            <label>Do_not_accept_any_calls</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>What_is_the_status_of_the_user_online_3</name>
+        <label>What is the status of the user online?</label>
+        <locationX>482</locationX>
+        <locationY>580</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Take_all_calls1_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Take_all_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Toggle_status_online_4</targetReference>
+            </connector>
+            <label>Take_all_calls</label>
+        </rules>
+        <rules>
+            <name>Do_not_accept_call_queue_calls1_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Do_not_accept_call_queue_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Change_to_Take_all_calls1</targetReference>
+            </connector>
+            <label>Do_not_accept_call_queue_calls</label>
+        </rules>
+        <rules>
+            <name>Do_not_accept_any_calls1_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Do_not_accept_any_calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Change_to_Take_all_calls1</targetReference>
+            </connector>
+            <label>Do_not_accept_any_calls</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Call Queue members: Remains unavailable/busy {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Call Queue members: Remains unavailable/busy</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <screens>
+        <name>Change_to_Take_all_calls</name>
+        <label>Change to &quot;Take all calls&quot;</label>
+        <locationX>1422</locationX>
+        <locationY>890</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Status_changed</targetReference>
+        </connector>
+        <fields>
+            <name>ChangetoTakeallcalls</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Change the status of the user online to &quot;Take all calls&quot;.  
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Change_Status</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the status in the call queue change for the user?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_06</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Change_to_Take_all_calls1</name>
+        <label>Change to &quot;Take all calls&quot;</label>
+        <locationX>497</locationX>
+        <locationY>434</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Test_call_worked</targetReference>
+        </connector>
+        <fields>
+            <name>ToggleStatus_4_4</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Change the status of the user online to &quot;Take all calls&quot;.  
+
+
+Do a test call that will direct to the call queue in concern based on the customer&apos;s call routing setup. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Did_the_test_call_work3_4_4</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the test call work?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_07_4_4</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Changes_in_hours</name>
+        <label>Changes in hours</label>
+        <locationX>1543</locationX>
+        <locationY>1095</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Status_changed_1</targetReference>
+        </connector>
+        <fields>
+            <name>ChangetoTakeallcalls_1</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+After updating the hours to set the user hours within the call queue set hours. Did the status in the call queue change for the user?   
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Change_Status_1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the status change?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_06_1</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Check_hours</name>
+        <label>Check hours</label>
+        <locationX>847</locationX>
+        <locationY>1090</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Status_changed_0</targetReference>
+        </connector>
+        <fields>
+            <name>CheckHours</name>
+            <fieldText>Make sure the operating hours of the user is within the operating hours of the call queue. Advice customer that if the call queue hour is outcide of the user hour setup for the extension. The user extension will show as unavailable. 
+
+To check the hours for the call queue, log in as the Account Administrator and then go to the Phone System &gt; Group(s) / Other(s) &gt; then click on the name of the call queue. On the right side, click on &quot;Call Queue Details&quot; then click on the &quot;Settings&quot; tab within the said section. Click on &quot;Edit&quot; under &quot;Business Hours&quot;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/Callqueue3&apos; /&gt;&lt;/ul&gt;
+
+
+To check the hours of the user while logged in as an administrator. Go to the &quot;Users&quot; tab &gt; &quot;User list&quot; &gt; &quot;Users With Extensions&quot;. Click on the name of the user on the list. Click and expand the &quot;User Details&quot; section on the right and then click on &quot;Settings and Permissions&quot; in that section. Tou will be able to see the setup for the user hours by clicking on thne &quot;Edit&quot; button under the User Hours section.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/Callqueue4&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Were_any_changes_corrections_done_for_the_hours</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Were any changes/corrections done for the hours?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Check_status_as_user</name>
+        <label>Check status as user</label>
+        <locationX>706</locationX>
+        <locationY>888</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>What_is_the_status_of_the_user_online</targetReference>
+        </connector>
+        <fields>
+            <name>CheckUserStatus</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Log in to the &lt;a href=&quot;https://service.ringcentral.com/#/enterCredential&quot;; target=&quot;_blank&quot;&gt;RingCentral Online&lt;/a&gt; account as the actual uer. 
+
+Check the status of the user for call routing. Simply check the icon beside the user&apos;s name on the upper right hand side. You can change the status is needed by clicking on the drop-down arrow. 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/GreenCheckIcon&apos; /&gt;Take all calls.
+&lt;li&gt;&lt;img src=&apos;/resource/OrangeSlash&apos; /&gt; Do not accept call queue calls.
+&lt;li&gt;&lt;img src=&apos;/resource/RedDash&apos; /&gt; Do not accept any calls.&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/CallQueue02&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>What_is_the_status_of_the_user</name>
+            <choiceReferences>Take_all_calls</choiceReferences>
+            <choiceReferences>Do_not_accept_call_queue_calls</choiceReferences>
+            <choiceReferences>Do_not_accept_any_calls</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>What is the status of the user?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_05</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Check_status_as_user_3</name>
+        <label>Check status as user</label>
+        <locationX>486</locationX>
+        <locationY>715</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>What_is_the_status_of_the_user_online_3</targetReference>
+        </connector>
+        <fields>
+            <name>CheckUserStatus_3</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Log in to the &lt;a href=&quot;https://service.ringcentral.com/#/enterCredential&quot;; target=&quot;_blank&quot;&gt;RingCentral Online&lt;/a&gt; account as the actual user. 
+
+Check the status of the user for call routing. Simply check the icon beside the user&apos;s name on the upper right hand side. You can change the status if needed by clicking on the drop-down arrow. 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/GreenCheckIcon&apos; /&gt;Take all calls.
+&lt;li&gt;&lt;img src=&apos;/resource/OrangeSlash&apos; /&gt; Do not accept call queue calls.
+&lt;li&gt;&lt;img src=&apos;/resource/RedDash&apos; /&gt; Do not accept any calls.&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/CallQueue02&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>What_is_the_status_of_the_user_3</name>
+            <choiceReferences>Take_all_calls</choiceReferences>
+            <choiceReferences>Do_not_accept_call_queue_calls</choiceReferences>
+            <choiceReferences>Do_not_accept_any_calls</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>What is the status of the user?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_05_3</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Close_Case_Accordingly</name>
+        <label>Close Case Accordingly</label>
+        <locationX>856</locationX>
+        <locationY>180</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>CloseCaseAccordingly</name>
+            <fieldText>&lt;b&gt;Close Case Accordingly&lt;/b&gt;
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Able to gain agreement from customer
+&lt;li&gt;Case disposition fields are set properly
+&lt;li&gt;Severity set to Medium
+&lt;li&gt;Troubleshooting history transferred to case comment field
+&lt;li&gt;Survey positioned to customer accordingly 
+&lt;li&gt;Portal and Success Page promotion&lt;/ul&gt;
+ 
+&lt;b&gt;Note&lt;/b&gt;:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Leave the case open If...
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;If the customer gave instruction not to because issue might recur
+&lt;li&gt;Awaiting resolution from another departmen&lt;/ul&gt;&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;Next&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Close_Case_Accordingly_2</name>
+        <label>Close Case Accordingly</label>
+        <locationX>1425</locationX>
+        <locationY>1215</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>CloseCaseAccordingly_2</name>
+            <fieldText>&lt;b&gt;Close Case Accordingly&lt;/b&gt;
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Able to gain agreement from customer
+&lt;li&gt;Case disposition fields are set properly
+&lt;li&gt;Severity set to Medium
+&lt;li&gt;Troubleshooting history transferred to case comment field
+&lt;li&gt;Survey positioned to customer accordingly 
+&lt;li&gt;Portal and Success Page promotion&lt;/ul&gt;
+ 
+&lt;b&gt;Note&lt;/b&gt;:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Leave the case open If...
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;If the customer gave instruction not to because issue might recur
+&lt;li&gt;Awaiting resolution from another departmen&lt;/ul&gt;&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;Next&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Escalate_to_Tier2</name>
+        <label>Escalate to Tier2</label>
+        <locationX>1716</locationX>
+        <locationY>1216</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Escalation</name>
+            <fieldText>&lt;b&gt;You are escalating this Case to Tier 2&lt;/b&gt;
+
+ 
+
+Please ensure that the following fields are filled-up properly:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Case Severity: Medium
+&lt;li&gt;Status: New
+&lt;li&gt;Escalate to: Tier 2&lt;/ul&gt;
+
+
+Please use the escalation template below on your case comment:  
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;Customer Name:
+&lt;li&gt;CB Number:
+&lt;li&gt;Expected call Back Time ( Expectation Set by the agent ):
+&lt;li&gt;Customer Issue:
+&lt;li&gt;Agent Action Taken/Trouble shooting:
+&lt;li&gt;Was The issue resolved: Yes/No
+&lt;li&gt;Did you Use KB articles to T/S - Yes
+&lt;li&gt;Article Number or URL:
+&lt;li&gt;Session Logs/Manual Time Stamp (if applicable):
+&lt;li&gt;Was TL consulted on the issue? Yes
+&lt;li&gt;Additional steps provided by TL/Agent to resolved the issue after consultation:&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Explain_the_status_of_Busy</name>
+        <label>Explain the status of Busy</label>
+        <locationX>1032</locationX>
+        <locationY>1215</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Close_Case_Accordingly_2</targetReference>
+        </connector>
+        <fields>
+            <name>BusyStatus</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Advise the customer that any inbound or outbound call made by the extension/member will automatically place itself on Busy status. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Is_user_engaged_on_a_call_2</name>
+        <label>Is user engaged on a call?</label>
+        <locationX>488</locationX>
+        <locationY>1079</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Engaged_on_call</targetReference>
+        </connector>
+        <fields>
+            <name>Spacing_12</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_user_engaged_on_a_call</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is user engaged on a call?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_13</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Members_Availability_Status</name>
+        <label>Members Availability Status</label>
+        <locationX>310</locationX>
+        <locationY>883</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>What_is_the_status_of_the_user_in_the_call_queue</targetReference>
+        </connector>
+        <fields>
+            <name>MembersAvailabilityStatus</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+&lt;b&gt;Members Availability Status&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;1.Click on the &quot;Phone System&quot; tab. 
+&lt;li&gt;2. Click on Groups / Others in the left hand side panel.
+&lt;li&gt;3. Click the Call Queues tab. 
+&lt;li&gt;4. Click the drop-down arrow on the far right of the Call Queue you want to check, just under the &quot;Operation&quot; column.
+&lt;li&gt;5. The list of members will be displayed with their corresponding status under the &quot;Member Availability&quot; column..
+
+&lt;li&gt;&lt;img src=&apos;/resource/callqueue01&apos; /&gt;&lt;/ul&gt;
+
+
+&lt;b&gt;Note&lt;/b&gt;:
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;Available&lt;/b&gt; - means the user&apos;s phone is available and awaiting a call.  (In Rotating setup, the call will go to the user who has been in this status the longest.)
+&lt;li&gt;&lt;b&gt;Busy&lt;/b&gt; - means the user is either on a call (inbound or outbound), or has set their line to Busy.  Call queue users will not get calls from call queue while in this status. 
+&lt;li&gt;&lt;b&gt;Unavailable&lt;/b&gt; - means that a call queue member is currently outside their business hours, or has marked themselves as unavailable. If the user&apos;s status is set to DND (deskphone), or &quot;Do not accept queue calls&quot;/&quot;Do not accept any calls&quot; (mobile app / online account), or if the phone/computer is offline, it will also show as Unavailable. Call queue users will not get calls while in this status. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>What_is_the_status</name>
+            <choiceReferences>Available</choiceReferences>
+            <choiceReferences>Unavailable</choiceReferences>
+            <choiceReferences>Busy</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>What is the status of the user in the call queue?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_01</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Opening</name>
+        <label>Opening</label>
+        <locationX>178</locationX>
+        <locationY>883</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Members_Availability_Status</targetReference>
+        </connector>
+        <fields>
+            <name>Symptoms</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+&lt;b&gt;Symptom/s&lt;/b&gt;: 
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Call queue member is not showing available in the call queue member status list. 
+&lt;li&gt;Call queue member is not receiving calls from the call group&lt;/ul&gt;
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: Always ask your supervisor or manager for assistance.
+
+
+
+
+
+Click on &lt;b&gt;Next&lt;/b&gt; if symptom/s matches customer&apos;s concern.
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Recommendation</name>
+        <label>Recommendation</label>
+        <locationX>1065</locationX>
+        <locationY>185</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Recommendation1</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Since user is now showing available in the call queue but still did not receive the call routed through the call queue.  
+
+Please complete this guide/flow, then click on the guide button again to run another guide preferrably one of the call forwarding guides. 
+
+
+
+Click on &lt;b&gt;Next&lt;/b&gt; to update the existing case you selected and/or proceed on the case creation steps if there was no case selected earlier.
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Test_Call</name>
+        <label>Test Call</label>
+        <locationX>1436</locationX>
+        <locationY>623</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Test_call_worked</targetReference>
+        </connector>
+        <fields>
+            <name>TestCall</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Do a test call that will direct to the call queue in concern based on the customer&apos;s call routing setup. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Did_the_test_call_work</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the test call work?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_02</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Toggle_status_online</name>
+        <label>Toggle status online</label>
+        <locationX>1077</locationX>
+        <locationY>562</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Test_call_worked</targetReference>
+        </connector>
+        <fields>
+            <name>ToggleStatus</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Change the status to something else and then change it back to  &quot;Take all calls&quot;.  
+
+Do a test call that will direct to the call queue in concern based on the customer&apos;s call routing setup. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Did_the_test_call_work3</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the test call work?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_07</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Toggle_status_online_4</name>
+        <label>Toggle status online</label>
+        <locationX>745</locationX>
+        <locationY>579</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Test_call_worked</targetReference>
+        </connector>
+        <fields>
+            <name>ToggleStatus_4</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;
+Change the status to something else and then change it back to  &quot;Take all calls&quot;.  
+
+
+&lt;p&gt;
+&lt;/p&gt;
+Change the status of the user online to &quot;Take all calls&quot;.  
+
+
+Do a test call that will direct to the call queue in concern based on the customer&apos;s call routing setup. 
+&lt;p&gt;
+&lt;/p&gt;
+
+
+
+Do a test call that will direct to the call queue in concern based on the customer&apos;s call routing setup. 
+&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Did_the_test_call_work3_4</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Did the test call work?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Spacing_07_4</name>
+            <fieldText>&lt;p&gt;
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <startElementReference>Opening</startElementReference>
+    <status>Obsolete</status>
+</Flow>

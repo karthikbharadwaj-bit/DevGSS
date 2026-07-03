@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>Admin</name>
+        <choiceText>Admin</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>User</name>
+        <choiceText>User</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Caller_capable_of_logging_in_as_admin2</name>
+        <label>Caller capable of logging in as admin?</label>
+        <locationX>944</locationX>
+        <locationY>698</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Caller_capable_of_logging_in_as_admin</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Instruct_caller_to_login_as_admin_then_proceed_to_next_step</targetReference>
+            </connector>
+            <label>Yes/Caller capable of logging in as admin?</label>
+        </rules>
+        <rules>
+            <name>No_Caller_capable_of_logging_in_as_admin</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Advise_caller</targetReference>
+            </connector>
+            <label>No/Caller capable of logging in as admin?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Installation_successful1</name>
+        <label>Installation successful?</label>
+        <locationX>224</locationX>
+        <locationY>448</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Installation_successful</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Issue_Resolved</targetReference>
+            </connector>
+            <label>Yes/Installation successful?</label>
+        </rules>
+        <rules>
+            <name>No_Installation_successful</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Is_the_caller_admin_or_user</targetReference>
+            </connector>
+            <label>No/Installation successful?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Installation_successful1_0</name>
+        <label>Installation successful?</label>
+        <locationX>1572</locationX>
+        <locationY>978</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Installation_successful_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Issue_Resolved</targetReference>
+            </connector>
+            <label>Yes/Installation successful?</label>
+        </rules>
+        <rules>
+            <name>No_Installation_successful_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>You_are_escalating_this_Case_to_Tier_2</targetReference>
+            </connector>
+            <label>No/Installation successful?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_caller_admin_or_user2</name>
+        <label>Is the caller admin or user?</label>
+        <locationX>933</locationX>
+        <locationY>447</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Admin1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Admin</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Ask_caller_to_disable_anti_virus_and_firewall</targetReference>
+            </connector>
+            <label>Admin</label>
+        </rules>
+        <rules>
+            <name>User1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>User</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Caller_capable_of_logging_in_as_admin</targetReference>
+            </connector>
+            <label>User</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Guide: Desktop App Compatibility E {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Guide: Desktop App Compatibility Error</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>Advise_caller</name>
+        <label>Advise caller</label>
+        <locationX>536</locationX>
+        <locationY>699</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Issue_Resolved</targetReference>
+        </connector>
+        <fields>
+            <name>Advisecaller</name>
+            <fieldText>Advise caller to contact the admin of the account and get the necessary information
+
+
+
+
+
+Click Next
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Ask_caller_to_disable_anti_virus_and_firewall</name>
+        <label>Ask caller to disable anti virus and firewall</label>
+        <locationX>1575</locationX>
+        <locationY>445</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Installation_successful1_0</targetReference>
+        </connector>
+        <fields>
+            <name>Askcallertodisableantivirusandfirewall1</name>
+            <fieldText>Ask caller to disable anti virus and firewall
+&lt;p&gt;
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Installation_successful2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Installation successful</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Caller_capable_of_logging_in_as_admin</name>
+        <label>Caller capable of logging in as admin?</label>
+        <locationX>936</locationX>
+        <locationY>570</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Caller_capable_of_logging_in_as_admin2</targetReference>
+        </connector>
+        <fields>
+            <name>Callercapableoflogginginasadmin</name>
+            <fieldText>Caller capable of logging in as admin?</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Caller_capable_of_logging_in_as_admin1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Caller capable of logging in as admin?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Desktop_App_Compatibility_Error</name>
+        <label>Desktop App Compatibility Error</label>
+        <locationX>214</locationX>
+        <locationY>110</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Desktop_App_Compatibility_Error_1</targetReference>
+        </connector>
+        <fields>
+            <name>Symptoms</name>
+            <fieldText>&lt;b&gt;Symptom/s:&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Installation error on windows 7,8,10 / MAC OSx&lt;/ul&gt;
+ 
+
+&lt;b&gt;NOTE:&lt;/b&gt;
+
+Always ask your supervisor or manager for assistance.
+
+
+
+
+
+
+
+
+Click Next if symptom/s matches customer&apos;s concern
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Desktop_App_Compatibility_Error_1</name>
+        <label>Desktop App Compatibility Error 1</label>
+        <locationX>217</locationX>
+        <locationY>228</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>INSTALLING_THE_RINGCENTRAL_APPLICATION</targetReference>
+        </connector>
+        <fields>
+            <name>DesktopAppCompatibilityError1</name>
+            <fieldText>Caller receives compatibility error in installing softphone
+
+Note: Check the OS of the PC and the OS version
+
+Supported Operating Systems
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Windows 7 (32 and 64-bit) or later
+
+&lt;li&gt;Mac OS X with Mac OS 10.7 (Lion) or later&lt;/ul&gt;
+
+For  more information click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/5126&quot;; target=&quot;_blank&quot;&gt;System Requirements | RingCentral&lt;/a&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/DesktopAppCompatibilityError1
+&apos; /&gt;
+&lt;/ul&gt;
+
+
+
+
+
+
+
+Click Next if caller receives compatibility error in installing softphone
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>INSTALLING_THE_RINGCENTRAL_APPLICATION</name>
+        <label>INSTALLING THE RINGCENTRAL APPLICATION</label>
+        <locationX>220</locationX>
+        <locationY>336</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Installation_successful1</targetReference>
+        </connector>
+        <fields>
+            <name>INSTALLINGTHERINGCENTRALAPPLICATION</name>
+            <fieldText>&lt;b&gt;INSTALLING THE RINGCENTRAL APPLICATION&lt;/b&gt;
+
+Login to online account and go to tools &gt; download ringcentral for windows installer then install ringcentral for windows/mac following the step by step procedure
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Installation_successful</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Installation successful?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Instruct_caller_to_login_as_admin_then_proceed_to_next_step</name>
+        <label>Instruct caller to login as admin then proceed to next step</label>
+        <locationX>1370</locationX>
+        <locationY>700</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Ask_caller_to_disable_anti_virus_and_firewall</targetReference>
+        </connector>
+        <fields>
+            <name>Instructcallertologinasadminthenproceedtonextstep1</name>
+            <fieldText>Instruct caller to login as admin then proceed to next step
+
+
+
+
+
+
+
+
+Click Next
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Is_the_caller_admin_or_user</name>
+        <label>Is the caller admin or user?</label>
+        <locationX>611</locationX>
+        <locationY>448</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_caller_admin_or_user2</targetReference>
+        </connector>
+        <fields>
+            <name>Isthecalleradminoruser</name>
+            <fieldText>Is the caller admin or user?
+&lt;p&gt;
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_caller_admin_or_user1</name>
+            <choiceReferences>Admin</choiceReferences>
+            <choiceReferences>User</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the caller admin or user?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Issue_Resolved</name>
+        <label>Issue Resolved</label>
+        <locationX>226</locationX>
+        <locationY>990</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>IssueResolved</name>
+            <fieldText>&lt;b&gt;Close Case Accordingly
+
+
+Reminders:&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Able to gain agreement from customer
+&lt;li&gt;Case disposition fields are set properly
+&lt;li&gt;Severity set to Medium
+&lt;li&gt;Troubleshooting history transferred to case comment field
+&lt;li&gt;Survey positioned to customer accordingly 
+&lt;li&gt;Portal and Success Page promotion&lt;/ul&gt;
+ 
+
+&lt;b&gt;Note:&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Leave the case open If...&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;
+&lt;li&gt;If the customer gave instruction not to because issue might recur
+&lt;li&gt;Awaiting resolution from another department&lt;/ul&gt;&lt;/ul&gt;
+
+
+
+
+Click NEXT to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>You_are_escalating_this_Case_to_Tier_2</name>
+        <label>You are escalating this Case to Tier 2</label>
+        <locationX>1575</locationX>
+        <locationY>1150</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>YouareescalatingthisCasetoTier2</name>
+            <fieldText>&lt;b&gt;You are escalating this Case to Tier 2
+
+
+
+Escalating to Tier 2&lt;/b&gt;
+
+Please ensure that the following fields are filled-up properly:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Case Severity: Medium
+&lt;li&gt;Status: New
+&lt;li&gt;Escalate to: Tier 2&lt;/ul&gt;
+
+
+
+Please use the escalation template below on your case comment:  
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Customer Name:
+&lt;li&gt;CB Number:
+&lt;li&gt;Expected call Back Time ( Expectation Set by the agent ):
+&lt;li&gt;Customer Issue:
+&lt;li&gt;Agent Action Taken/Trouble shooting:
+&lt;li&gt;Was The issue resolved: Yes/No
+&lt;li&gt;Did you Use KB articles to T/S - Yes
+&lt;li&gt;Article Number or URL:
+&lt;li&gt;Was TL consulted on the issue? Yes
+&lt;li&gt;Additional steps provided by TL/Agent to resolved the issue after consultation:&lt;/ul&gt;
+ 
+
+
+
+Click CONTINUE to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>Desktop_App_Compatibility_Error</startElementReference>
+    <status>Obsolete</status>
+</Flow>

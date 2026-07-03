@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>RC_Engage_Digital_Tier_3_Escalation_Email_Alert</name>
+        <label>RC Engage Digital Tier 3 Escalation Email Alert</label>
+        <locationX>50</locationX>
+        <locationY>1055</locationY>
+        <actionName>Case.RC_Engage_Digital_Tier_3_Escalation_Email_Alert</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.RC_Engage_Digital_Tier_3_Escalation_Email_Alert</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Case_Field_Escalate_to_Type_Decision</name>
+        <label>Case Field Escalate to Type Decision</label>
+        <locationX>270</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Action_24_Escalation_Workflow_RC_Engage_Digital_Tier_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RC Engage Digital Tier 3</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Sub_Actions</targetReference>
+            </connector>
+            <label>Action 24 : Escalation Workflow - RC Engage Digital Tier 3</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Copy_1_of_Sub_Actions</name>
+        <label>Copy 1 of Sub Actions</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Copy_1_of_Continue_Checking_Above_Rule</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>EscalationRCEngageDigitalTier3US</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Get_Record_Type_Support_T3</targetReference>
+            </connector>
+            <label>Continue Checking Above Rule</label>
+        </rules>
+        <rules>
+            <name>Escalation_Workflow_RC_Engage_Digital_Tier_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>EscalationRCEngageDigitalTier3</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Get_Record_Type_Support_T3</targetReference>
+            </connector>
+            <label>Escalation Workflow - RC Engage Digital Tier 3</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <description>Excluded the Escalate To field condition</description>
+        <name>EscalationRCEngageDigitalTier3</name>
+        <dataType>Boolean</dataType>
+        <expression>IF ( ISNEW() &amp;&amp; ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;RC Engage Digital Tier 3&quot;) &amp;&amp; (NOT(CONTAINS ({!$Record.Account.RC_Service_name__c}, &quot;Office&quot; ) &amp;&amp; {!$Record.Account.Total_Account_DL_s__c} &gt;= 20 ) || OR(CONTAINS( {!$Record.Account.RC_Brand__c}, &quot;UK&quot;),CONTAINS({!$Record.Account.RC_Brand__c}, &quot;BT&quot;))), TRUE, IF( TEXT ( {!$Record__Prior.Support_Escalate_To__c}  ) &lt;&gt; TEXT ({!$Record.Support_Escalate_To__c}) , IF( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;RC Engage Digital Tier 3&quot;) &amp;&amp; NOT( ISPICKVAL({!$Record.Status}, &quot;Cancelled&quot;) ) &amp;&amp; NOT( ISPICKVAL({!$Record.Status}, &quot;Closed&quot;) ) &amp;&amp; OR(CONTAINS( {!$Record.Account.RC_Brand__c} , &quot;UK&quot;),CONTAINS({!$Record.Account.RC_Brand__c}, &quot;BT&quot;) || (NOT ( CONTAINS ({!$Record.Account.RC_Service_name__c}, &quot;Office&quot; ) &amp;&amp; {!$Record.Account.Total_Account_DL_s__c} &gt;= 20 ))), TRUE, FALSE), FALSE))</expression>
+    </formulas>
+    <formulas>
+        <description>Excluded the Escalate To field conditions</description>
+        <name>EscalationRCEngageDigitalTier3US</name>
+        <dataType>Boolean</dataType>
+        <expression>IF (ISNEW() &amp;&amp; ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;RC Engage Digital Tier 3&quot;) &amp;&amp; ( CONTAINS ({!$Record.Account.RC_Service_name__c}, &quot;Office&quot; ) &amp;&amp; {!$Record.Account.Total_Account_DL_s__c}&gt;= 6 ) &amp;&amp; NOT(OR(CONTAINS({!$Record.Account.RC_Brand__c}, &quot;UK&quot;),CONTAINS({!$Record.Account.RC_Brand__c}, &quot;BT&quot;))) , TRUE, IF( TEXT ( {!$Record__Prior.Support_Escalate_To__c} ) &lt;&gt; TEXT ({!$Record.Support_Escalate_To__c}) , IF( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;RC Engage Digital Tier 3&quot;) &amp;&amp; NOT( ISPICKVAL({!$Record.Status}, &quot;Cancelled&quot;) ) &amp;&amp; NOT( ISPICKVAL({!$Record.Status}, &quot;Closed&quot;) ) &amp;&amp; ( CONTAINS ({!$Record.Account.RC_Service_name__c}, &quot;Office&quot; ) &amp;&amp; {!$Record.Account.Total_Account_DL_s__c} &gt;= 6 ) &amp;&amp; NOT(OR(CONTAINS({!$Record.Account.RC_Brand__c}, &quot;UK&quot;),CONTAINS( {!$Record.Account.RC_Brand__c} , &quot;BT&quot;))) , TRUE, FALSE), FALSE))</expression>
+    </formulas>
+    <formulas>
+        <name>SupportTier3EscCount</name>
+        <dataType>Number</dataType>
+        <expression>{!$Record.Support_Tier_3_Esc_Count__c} + 1</expression>
+        <scale>2</scale>
+    </formulas>
+    <interviewLabel>Case Flow : Escalate to Field Related {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Flow : Escalate to Field Related</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Copy_1_of_Get_Record_Type_Support_T3</name>
+        <label>Get Record Type - Support T3</label>
+        <locationX>50</locationX>
+        <locationY>731</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Queue_RC_Engage_Digital_Tier_3</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>SobjectType</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Case</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Support_T3</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>RecordType</object>
+        <queriedFields>Id</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Queue_RC_Engage_Digital_Tier_3</name>
+        <label>Get Queue - RC Engage Digital Tier 3</label>
+        <locationX>50</locationX>
+        <locationY>839</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Copy_1_of_Update_Case_Fields</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>RC_Engage_Digital_Tier_3</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <queriedFields>Id</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Copy_1_of_Update_Case_Fields</name>
+        <label>Update Case Fields</label>
+        <locationX>50</locationX>
+        <locationY>947</locationY>
+        <connector>
+            <targetReference>RC_Engage_Digital_Tier_3_Escalation_Email_Alert</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>Get_Queue_RC_Engage_Digital_Tier_3.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>Copy_1_of_Get_Record_Type_Support_T3.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Support_Tier_3_Esc_Count__c</field>
+            <value>
+                <elementReference>SupportTier3EscCount</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Type</field>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>144</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Case_Field_Escalate_to_Type_Decision</targetReference>
+        </connector>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>FaultError</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

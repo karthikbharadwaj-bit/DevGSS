@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>This is to send an email after the creation of Account Team Member with Team Role as &quot;DSA Expansion&quot; on the Account.</description>
+        <name>Assigned_as_the_DSA_Expansion_Rep</name>
+        <label>Assigned as the DSA Expansion Rep</label>
+        <locationX>50</locationX>
+        <locationY>1490</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Update_the_Date_Assigned</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>Get_RR_Users.DSA_Rep__r.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>BodyTemplate</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>This is to add the DSA Users to a Collection Variable.</description>
+        <name>Assign_the_Active_RR_Users</name>
+        <label>Assign the Active RR Users</label>
+        <locationX>534</locationX>
+        <locationY>782</locationY>
+        <assignmentItems>
+            <assignToReference>AddUsersInRR</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>Loop_All_Round_Robin_Users.DSA_Rep__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Loop_All_Round_Robin_Users</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>This is to check the existence of the Account Team Membe with Team Role as &quot;DSA Expansion&quot; and Account Owner as an Expansion Rep.</description>
+        <name>Decision_for_User_through_Round_Robin</name>
+        <label>Decision for User through Round Robin</label>
+        <locationX>666</locationX>
+        <locationY>674</locationY>
+        <defaultConnector>
+            <targetReference>Loop_All_Round_Robin_Users</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Add_the_user_as_ATM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Members</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Members.TeamMemberRole</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>DSA Expansion</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Finish</targetReference>
+            </connector>
+            <label>DSA Account Team Member Exists</label>
+        </rules>
+        <rules>
+            <name>No_DSA_Account_Team_Member_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Members</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Accounts.OwnerId</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>Loop_All_Round_Robin_Users.DSA_Rep__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_the_Active_RR_Users</targetReference>
+            </connector>
+            <label>No DSA Account Team Member Exists</label>
+        </rules>
+        <rules>
+            <name>Account_Owner_Equals_ATM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Accounts.OwnerId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>Loop_All_Round_Robin_Users.DSA_Rep__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Footer</targetReference>
+            </connector>
+            <label>Account Owner Equals ATM</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>This is check the Stage as &quot;Closed Won&quot; of the Opportunity for the Selected Account.</description>
+        <name>Send_Email_Only_when_Opportunity_Exists_on_Account</name>
+        <label>Send Email Only when Opportunity Exists on Account</label>
+        <locationX>182</locationX>
+        <locationY>1274</locationY>
+        <defaultConnector>
+            <targetReference>Finish_Button</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Send_Email_Only_when_Opportunity_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Opportunities.StageName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>7. Closed Won</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_ATM</targetReference>
+            </connector>
+            <label>Send Email Only when Opportunity Exists</label>
+        </rules>
+    </decisions>
+    <description>This flow is for creating the Account Team Member on Account using Round Robin Assignment.</description>
+    <environments>Default</environments>
+    <interviewLabel>DSA - Account Team Member Creation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>DSA - Account Team Member Creation</label>
+    <loops>
+        <description>This is to Loop all the Users for the Round Robin Assignment to create the Account Team Member.</description>
+        <name>Loop_All_Round_Robin_Users</name>
+        <label>Loop All Round Robin Users</label>
+        <locationX>182</locationX>
+        <locationY>566</locationY>
+        <collectionReference>GetAllUsersRoundRobin</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Decision_for_User_through_Round_Robin</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_RR_Users</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordCreates>
+        <description>To Create the Account Team Member with Team Role as &quot;DSA Expansion&quot; on the Selected Account.</description>
+        <name>Create_ATM</name>
+        <label>Create ATM</label>
+        <locationX>50</locationX>
+        <locationY>1382</locationY>
+        <connector>
+            <targetReference>Assigned_as_the_DSA_Expansion_Rep</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>AccountAccessLevel</field>
+            <value>
+                <stringValue>Edit</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <elementReference>Get_Accounts.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TeamMemberRole</field>
+            <value>
+                <stringValue>DSA Expansion</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>UserId</field>
+            <value>
+                <elementReference>Get_RR_Users.DSA_Rep__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>AccountTeamMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <description>This is to get the Account Team Members on the Selected Account.</description>
+        <name>Get_Account_Team_Members</name>
+        <label>Get Account Team Members</label>
+        <locationX>182</locationX>
+        <locationY>350</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Next_Rep</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Accounts.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>DSA Expansion</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>AccountTeamMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>This is to get the Accounts.</description>
+        <name>Get_Accounts</name>
+        <label>Get Accounts</label>
+        <locationX>182</locationX>
+        <locationY>134</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Opportunities</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>This is for the Account Team Members selection using a Round Robin Assignment.</description>
+        <name>Get_Next_Rep</name>
+        <label>Get Next Rep</label>
+        <locationX>182</locationX>
+        <locationY>458</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Loop_All_Round_Robin_Users</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DSA_Rep__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Is_Active__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>DSA_Rep_Name__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>DSA_Account_Assignee__c</object>
+        <outputReference>GetAllUsersRoundRobin</outputReference>
+        <queriedFields>Id</queriedFields>
+        <queriedFields>DSA_Rep_Name__c</queriedFields>
+        <queriedFields>DSA_Rep__c</queriedFields>
+        <sortField>Account_Assigned__c</sortField>
+        <sortOrder>Asc</sortOrder>
+    </recordLookups>
+    <recordLookups>
+        <description>This is to get the Opportunities on the Selected Account and to check the Opportunities with Stage as &quot;Closed Won&quot;.</description>
+        <name>Get_Opportunities</name>
+        <label>Get Opportunities</label>
+        <locationX>182</locationX>
+        <locationY>242</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Account_Team_Members</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Accounts.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>StageName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>7. Closed Won</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Opportunity</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>This is to get the Users from the Round Robin Assignement Loop.</description>
+        <name>Get_RR_Users</name>
+        <label>Get RR Users</label>
+        <locationX>182</locationX>
+        <locationY>1166</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Email_Only_when_Opportunity_Exists_on_Account</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DSA_Rep__c</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>AddUsersInRR</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>DSA_Account_Assignee__c</object>
+        <sortField>Account_Assigned__c</sortField>
+        <sortOrder>Asc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>To Update the Last Record Assignmnt Date on the DSA User.</description>
+        <name>Update_the_Date_Assigned</name>
+        <label>Update the Date Assigned</label>
+        <locationX>50</locationX>
+        <locationY>1598</locationY>
+        <connector>
+            <targetReference>Finish_Footer</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DSA_Rep__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_RR_Users.DSA_Rep__c</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Account_Assigned__c</field>
+            <value>
+                <elementReference>$Flow.InterviewStartTime</elementReference>
+            </value>
+        </inputAssignments>
+        <object>DSA_Account_Assignee__c</object>
+    </recordUpdates>
+    <screens>
+        <name>Finish</name>
+        <label>Finish</label>
+        <locationX>270</locationX>
+        <locationY>782</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Account_Team_Member_Exists_On_Account</name>
+            <fieldText>&lt;p&gt;An Account Team Member of DSA Expansion Team Role is Already Present!&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Finish_Button</name>
+        <label>Finish Button</label>
+        <locationX>314</locationX>
+        <locationY>1382</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>No_Opportunity</name>
+            <fieldText>&lt;p&gt;There is no Closed Won Opportunity for this Account.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Finish_Footer</name>
+        <label>Finish Footer</label>
+        <locationX>50</locationX>
+        <locationY>1706</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>ATM_Created</name>
+            <fieldText>&lt;p&gt;An Account Team Member is created.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Footer</name>
+        <label>Footer</label>
+        <locationX>798</locationX>
+        <locationY>782</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>Account_Owner_Is_An_Expansion_Rep</name>
+            <fieldText>&lt;p&gt;An Expansion Rep is the Owner of the Account!&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Accounts</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>BodyTemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi {!Get_RR_Users.DSA_Rep_Name__c},
+
+A new DSA account has been endorsed to you. Please check the details of this Opportunity &quot;{!Get_Opportunities.Name}&quot; and reach out to the customer ASAP.
+
+Opportunity: https://rc.lightning.force.com/lightning/r/Opportunity/{!Get_Opportunities.Id}/view
+
+
+Thanks!</text>
+    </textTemplates>
+    <textTemplates>
+        <name>EmailSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>A new DSA account - {!Get_Accounts.Name} - has been endorsed to you!</text>
+    </textTemplates>
+    <variables>
+        <name>AddUsersInRR</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>GetAllUsersRoundRobin</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>DSA_Account_Assignee__c</objectType>
+    </variables>
+    <variables>
+        <name>GetTheAccountName</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

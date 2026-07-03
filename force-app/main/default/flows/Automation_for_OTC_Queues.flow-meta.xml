@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_the_escalate_to_field</name>
+        <label>Check the escalate to field</label>
+        <locationX>446</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>OTC_Operations_Inquiry</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>OTC Operations Inquiry</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_to_OTC_Operations_Queue</targetReference>
+            </connector>
+            <label>OTC Operations Inquiry</label>
+        </rules>
+        <rules>
+            <name>OTC_Credit_Check_Inquiry</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>OTC Credit Check Inquiry</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_to_OTC_Credit_Check_Queue</targetReference>
+            </connector>
+            <label>OTC Credit Check Inquiry</label>
+        </rules>
+        <rules>
+            <name>SOW_Review</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SOW Review</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_to_User</targetReference>
+            </connector>
+            <label>SOW Review</label>
+        </rules>
+    </decisions>
+    <description>#SR-1821138 Creation of flow for OTC Queues</description>
+    <environments>Default</environments>
+    <interviewLabel>Automation for OTC Queues {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Automation for OTC Queues</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_to_OTC_Credit_Check_Queue</name>
+        <label>Update to OTC Credit Check Queue</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00GHr000004ltxZ</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_to_OTC_Operations_Queue</name>
+        <label>Update to OTC Operations Queue</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00G2H000002H8SR</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_to_User</name>
+        <label>Update to User</label>
+        <locationX>578</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>0052H00000ByoHa</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>320</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_the_escalate_to_field</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>1 AND (2 OR 3 OR 4)</filterLogic>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Deal_And_Order_Support</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>OTC Operations Inquiry</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>OTC Credit Check Inquiry</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SOW Review</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

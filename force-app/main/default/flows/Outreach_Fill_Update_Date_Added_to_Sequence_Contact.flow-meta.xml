@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Current_Sequence_Name_Is_Blanked_Out</name>
+        <label>Current Sequence Name Is Blanked Out</label>
+        <locationX>833</locationX>
+        <locationY>633</locationY>
+        <defaultConnectorLabel>Date Added to Sequence Is Also Blank</defaultConnectorLabel>
+        <rules>
+            <name>Date_Added_to_Sequence_Filled_In</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Current_Sequence_Name__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Outreach_Date_Added_to_Sequence__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Date_Added_to_Sequence_to_Blank</targetReference>
+            </connector>
+            <label>Date Added to Sequence Filled In</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Current_Sequence_Name_is_changed</name>
+        <label>Current Sequence Name changed</label>
+        <locationX>833</locationX>
+        <locationY>375</locationY>
+        <defaultConnector>
+            <targetReference>Current_Sequence_Name_Is_Blanked_Out</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Current Sequence Name Is Blanked Out</defaultConnectorLabel>
+        <rules>
+            <name>Current_Sequence_Name_Is_Not_Blank</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Current_Sequence_Name__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Date_Added_to_Sequence</targetReference>
+            </connector>
+            <label>Current Sequence Name Is Not Blank</label>
+        </rules>
+    </decisions>
+    <description>Updates the &quot;Date Added to Sequence&quot; field when Current Sequence Name is filled in. Blanks out the field if Current Sequence Name is blanked out.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>Seqnull</name>
+        <dataType>Date</dataType>
+        <expression>null</expression>
+    </formulas>
+    <formulas>
+        <description>Current day&apos;s date</description>
+        <name>Today</name>
+        <dataType>Date</dataType>
+        <expression>TODAY()</expression>
+    </formulas>
+    <interviewLabel>Outreach Fill/Update Date Added to Sequence - Contact {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Outreach Fill/Update Date Added to Sequence - Contact</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Date_Added_to_Sequence</name>
+        <label>Update Date Added to Sequence</label>
+        <locationX>1070</locationX>
+        <locationY>379</locationY>
+        <inputAssignments>
+            <field>Outreach_Date_Added_to_Sequence__c</field>
+            <value>
+                <elementReference>Today</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Date_Added_to_Sequence_to_Blank</name>
+        <label>Update Date Added to Sequence to Blank</label>
+        <locationX>1097</locationX>
+        <locationY>630</locationY>
+        <inputAssignments>
+            <field>Outreach_Date_Added_to_Sequence__c</field>
+            <value>
+                <elementReference>Seqnull</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>714</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Current_Sequence_Name_is_changed</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Current_Sequence_Name__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Contact</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>PopulateReferralFromMappings</name>
+        <label>Populate Referral from Mappings</label>
+        <locationX>50</locationX>
+        <locationY>971</locationY>
+        <actionName>workspan__ReferralFieldMappingAction</actionName>
+        <actionType>apex</actionType>
+        <connector>
+            <targetReference>CreateReferral</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>referrals</name>
+            <value>
+                <elementReference>ReferralToCreate</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>workspan__ReferralFieldMappingAction</nameSegment>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>OpportunityAndPartnerAssignment</name>
+        <label>Opportunity and Partner Assignment</label>
+        <locationX>50</locationX>
+        <locationY>863</locationY>
+        <assignmentItems>
+            <assignToReference>ReferralToCreate.workspan__Opportunity__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>ReferralToCreate.workspan__PartnerWsIds__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Amazon</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>PopulateReferralFromMappings</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Check_if_User_has_Permission_Set</name>
+        <label>Check if User has Permission Set</label>
+        <locationX>380</locationX>
+        <locationY>539</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Permission_Set_Assignment</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SearchReferrals</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>CheckExistingReferralsDecision</name>
+        <label>Check existing Referrals</label>
+        <locationX>182</locationX>
+        <locationY>755</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>NoReferralsCreatedYetOutcome</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>SearchReferrals</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>OpportunityAndPartnerAssignment</targetReference>
+            </connector>
+            <label>No Referrals created yet</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <interviewLabel>WorkSpan - Auto-create Referral from Opportunity {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>WorkSpan - Auto-create Referral from Opportunity</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>CreateReferral</name>
+        <label>Create Referral</label>
+        <locationX>50</locationX>
+        <locationY>1079</locationY>
+        <inputReference>PopulateReferralFromMappings</inputReference>
+    </recordCreates>
+    <recordLookups>
+        <name>Get_Permission_Set</name>
+        <label>Get Permission Set</label>
+        <locationX>380</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Permission_Set_Assignment</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>WorkSpanAutoCreateReferral</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>PermissionSet</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Permission_Set_Assignment</name>
+        <label>Get Permission Set Assignment</label>
+        <locationX>380</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_if_User_has_Permission_Set</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AssigneeId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$User.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>PermissionSetId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Permission_Set.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>PermissionSetAssignment</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Search for referrals that have already been shared with the partner.</description>
+        <name>SearchReferrals</name>
+        <label>Search Referrals</label>
+        <locationX>182</locationX>
+        <locationY>647</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>CheckExistingReferralsDecision</targetReference>
+        </connector>
+        <filterLogic>1 AND ((2 AND 3) OR (4 AND 5))</filterLogic>
+        <filters>
+            <field>workspan__Opportunity__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>workspan__ReferralType__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Outgoing</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>workspan__SourcedToPartner__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Amazon</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>workspan__ReferralType__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Incoming</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>workspan__SourcedByPartner__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Amazon</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>workspan__Referral__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <sourceTemplate>workspan__AutoCreateReferralFormOpportunity</sourceTemplate>
+    <start>
+        <locationX>254</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Permission_Set</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>AND (
+ISPICKVAL({!$Record.Brand_Name__c}, &quot;RingCentral&quot;), 
+OR
+(ISPICKVAL({!$Record.Type}, &quot;New Business&quot;), 
+ISPICKVAL({!$Record.Type}, &quot;Renewal&quot;)),
+OR
+(ISPICKVAL({!$Record.StageName}, &quot;2. Problem&quot;), 
+ISPICKVAL({!$Record.StageName}, &quot;3. Solution&quot;), 
+ISPICKVAL({!$Record.StageName}, &quot;4. Proof&quot;), 
+ISPICKVAL({!$Record.StageName}, &quot;5. Agreement&quot;), 
+ISPICKVAL({!$Record.StageName}, &quot;6. Order&quot;)),
+NOT(OR({!$Record.Account.Segment_Name__r.Name} = &quot;SOHO&quot;, {!$Record.Account.Segment_Name__r.Name} = &quot;Small Business&quot;)),
+
+
+NOT(
+OR(
+ISPICKVAL({!$Record.Account.Current_Owner__r.SegmentPicklist__c}, &quot;SOHO&quot;), 
+ISPICKVAL({!$Record.Owner.SegmentPicklist__c}, &quot;SOHO&quot;),
+ISPICKVAL({!$Record.Account.Current_Owner__r.SegmentPicklist__c}, &quot;Small Business&quot;), 
+ISPICKVAL({!$Record.Owner.SegmentPicklist__c}, &quot;Small Business&quot;))
+
+)
+)</filterFormula>
+        <object>Opportunity</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>ReferralSolutionsJunction</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>workspan__ReferralMicrosoftSolution__c</objectType>
+    </variables>
+    <variables>
+        <name>ReferralSolutionToCreate</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>workspan__ReferralMicrosoftSolution__c</objectType>
+    </variables>
+    <variables>
+        <name>ReferralToCreate</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>workspan__Referral__c</objectType>
+    </variables>
+    <variables>
+        <name>solutions</name>
+        <dataType>Multipicklist</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

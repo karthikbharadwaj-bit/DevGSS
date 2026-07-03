@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Notify the reviewer/decision-maker about the internal comment created.</description>
+        <name>KCS_New_Article_Comment_Notification</name>
+        <label>KCS New Article Comment Notification</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <actionName>RC_User_Article_Rating__c.KCS_New_Article_Comment_Notification</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>RC_User_Article_Rating__c.KCS_New_Article_Comment_Notification</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Email_to_Notify_Condition_Check</name>
+        <label>Email to Notify Condition Check</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Check_if_Email_to_Notify_is_Not_Null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.EmailToNotifyAboutNewComment__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>KCS_New_Article_Comment_Notification</targetReference>
+            </connector>
+            <label>Check if Email to Notify is Not Null</label>
+        </rules>
+    </decisions>
+    <description>Notify the reviewer/decision-maker about the internal comment created. 
+Added a decision to check if EmailToNotifyAboutNewComment__c is not null</description>
+    <environments>Default</environments>
+    <interviewLabel>KCS New Article Comment Notification {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>KCS New Article Comment Notification</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Email_to_Notify_Condition_Check</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Is_External__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>RC_User_Article_Rating__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>BodyforEmailTemplate</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;There is a new comment created: &quot;{!$Record.User_Comments__c}&quot;&amp;nbsp;For: {&lt;span style=&quot;background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;!$Record.&lt;/span&gt;Knowledge_Article_URL__c}&amp;nbsp;By: {&lt;span style=&quot;background-color: rgb(255, 255, 255); color: rgb(68, 68, 68);&quot;&gt;!$Record.&lt;/span&gt;CreatedBy}&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>SubjectforEmailTemplate</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;There is a new comment created for {!$Record.RC_ArticleID__c} article.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;</text>
+    </textTemplates>
+    <variables>
+        <name>EmailTemplateId</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>RC_User_Article_Rating__c</objectType>
+    </variables>
+    <variables>
+        <description>Email To Notify About New Comment</description>
+        <name>EmailToNotifyAboutNewComment</name>
+        <dataType>SObject</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>RC_User_Article_Rating__c</objectType>
+    </variables>
+</Flow>

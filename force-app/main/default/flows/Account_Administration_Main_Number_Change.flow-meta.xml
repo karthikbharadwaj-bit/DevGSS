@@ -1,0 +1,1090 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>D1_Is_the_caller_the_admin_of_the_account</name>
+        <label>D1_Is the caller the admin of the account?</label>
+        <locationX>155</locationX>
+        <locationY>392</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D1_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S3_D1_1_MainNumberandUserExtensionNumbers</targetReference>
+            </connector>
+            <label>D1_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D1_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S18_D1_2_Advise_caller_to_contact_the_admin</targetReference>
+            </connector>
+            <label>D1_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D2</name>
+        <label>D2_Is the caller trying to change the main number with an existing number under the same account?</label>
+        <locationX>547</locationX>
+        <locationY>395</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D2_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D2_1_Next</targetReference>
+            </connector>
+            <label>D2_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D2_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S13_D2_2_Will_customer_use_a_vanity_number</targetReference>
+            </connector>
+            <label>D2_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D3</name>
+        <label>D3_Is the number to be swapped with a DL?</label>
+        <locationX>909</locationX>
+        <locationY>393</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D3_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S5_D3_1_Next</targetReference>
+            </connector>
+            <label>D3_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D3_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S6_D4_1_Next</targetReference>
+            </connector>
+            <label>D3_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D4</name>
+        <label>D4_Is the customer going to keep the line?</label>
+        <locationX>1266</locationX>
+        <locationY>395</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D4_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S6_D4_1_Next</targetReference>
+            </connector>
+            <label>D4_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D4_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S12_D4_2_Swap_the_main_number_with_the_DL_number</targetReference>
+            </connector>
+            <label>D4_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D5</name>
+        <label>D5_Number swap successful?</label>
+        <locationX>1590</locationX>
+        <locationY>398</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D5_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S8_D5_1_test_call</targetReference>
+            </connector>
+            <label>D5_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D5_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S11_D5_2_Check_Team_Lead</targetReference>
+            </connector>
+            <label>D5_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D6</name>
+        <label>D6_Test call successful?</label>
+        <locationX>1798</locationX>
+        <locationY>276</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D6_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S9_D6_1_Close_Case_Accordingly</targetReference>
+            </connector>
+            <label>D6_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D6_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S10_D6_2_Check_session_logs</targetReference>
+            </connector>
+            <label>D6_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D7</name>
+        <label>D7_Will customer use a vanity number?</label>
+        <locationX>551</locationX>
+        <locationY>632</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D7_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S14_D7_1_Vanity_Number</targetReference>
+            </connector>
+            <label>D7_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D7_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S15_D7_2_Search_for_an_available_number</targetReference>
+            </connector>
+            <label>D7_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D8</name>
+        <label>D8_Is the chosen number under the same pod?</label>
+        <locationX>1116</locationX>
+        <locationY>630</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D8_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S6_D4_1_Next</targetReference>
+            </connector>
+            <label>D8_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D8_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S17_D8_2_Request_for_pod_to_pod_transfer</targetReference>
+            </connector>
+            <label>D8_2 No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D9_Number_transfer_successful</name>
+        <label>D9_Number transfer successful?</label>
+        <locationX>1272</locationX>
+        <locationY>756</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>D9_1_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S6_D4_1_Next</targetReference>
+            </connector>
+            <label>D9_1 Yes</label>
+        </rules>
+        <rules>
+            <name>D9_2_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S11_D5_2_Check_Team_Lead</targetReference>
+            </connector>
+            <label>D9_2 No</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Account Administration: Main Number Change {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Account Administration: Main Number Change</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>Close_Case_Accordingly</name>
+        <label>Close Case Accordingly</label>
+        <locationX>156</locationX>
+        <locationY>648</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>CloseCaseAccordingly_0</name>
+            <fieldText>&lt;b&gt;Close Case Accordingly&lt;/b&gt;
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Able to gain agreement from customer
+&lt;li&gt;Case disposition fields are set properly
+&lt;li&gt;Severity set to Medium
+&lt;li&gt;Troubleshooting history transferred to case comment field
+&lt;li&gt;Survey positioned to customer accordingly 
+&lt;li&gt;Portal and Success Page promotion&lt;/ul&gt;
+ 
+
+&lt;b&gt;Note&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Leave the case open If...
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;If the customer gave instruction not to because issue might recur
+&lt;li&gt;Awaiting resolution from another department &lt;/ul&gt;&lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S10_D6_2_Check_session_logs</name>
+        <label>S10_D6_2_Check session logs</label>
+        <locationX>2017</locationX>
+        <locationY>276</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Checksessionlogs</name>
+            <fieldText>Check session logs and proceed with recreating extension.
+
+ 
+
+Connect to receiving extension.
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S11_D5_2_Check_Team_Lead</name>
+        <label>S11_D5_2_Check Team Lead</label>
+        <locationX>1593</locationX>
+        <locationY>533</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>S9_D6_1_Close_Case_Accordingly</targetReference>
+        </connector>
+        <fields>
+            <name>ConsultTeamLead</name>
+            <fieldText>Consult Team Lead - make sure that you are swapping the correct numbers especially when number is quarantined.
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S12_D4_2_Swap_the_main_number_with_the_DL_number</name>
+        <label>S12_D4_2_Swap the main number with the DL number</label>
+        <locationX>1269</locationX>
+        <locationY>263</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>S7_Number_swap_successful</targetReference>
+        </connector>
+        <fields>
+            <name>SwapthemainnumberwiththeDLnumber</name>
+            <fieldText>Swap the main number with the DL number; contact the account manager to delete the line after swapping (if the customer is not going to keep line)
+
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S13_D2_2_Will_customer_use_a_vanity_number</name>
+        <label>S13_D2_2_Will customer use a vanity number?</label>
+        <locationX>550</locationX>
+        <locationY>523</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D7</targetReference>
+        </connector>
+        <fields>
+            <name>Will_customer_use_a_vanity_number</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Will customer use a vanity number?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S14_D7_1_Vanity_Number</name>
+        <label>S14_D7_1_Vanity Number</label>
+        <locationX>555</locationX>
+        <locationY>760</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>VanityNumber</name>
+            <fieldText>Vanity Number 
+
+Click on  &lt;b&gt;Phone system &gt; Phone Numbers &gt; Company &gt; Add number&lt;/b&gt;. If the Customer want to change the user extension number into a Vanity Number instead of going to company tab, please go to Assigned then click add number
+
+
+
+&lt;b&gt;Note&lt;/b&gt;: discuss to customer the process and charges - set proper expectations.
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S15_D7_2_Search_for_an_available_number</name>
+        <label>S15_D7_2_Search for an available number</label>
+        <locationX>753</locationX>
+        <locationY>633</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>S16_Is_the_chosen_number_under_the_same_pod</targetReference>
+        </connector>
+        <fields>
+            <name>Searchforanavailablenumber</name>
+            <fieldText>Search for an available number in database using RC admin tool
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S16_Is_the_chosen_number_under_the_same_pod</name>
+        <label>S16_Is the chosen number under the same pod?</label>
+        <locationX>907</locationX>
+        <locationY>631</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D8</targetReference>
+        </connector>
+        <fields>
+            <name>b_Is_the_chosen_number_under_the_same_pod_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the chosen number under the same pod?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S17_D8_2_Request_for_pod_to_pod_transfer</name>
+        <label>S17_D8_2_Request for pod to pod transfer</label>
+        <locationX>1113</locationX>
+        <locationY>756</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D9_Number_transfer_successful</targetReference>
+        </connector>
+        <fields>
+            <name>Requestforpodtopodtransfer</name>
+            <fieldText>Request for pod to pod transfer
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Number_transfer_successful_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Number transfer successful?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S18_D1_2_Advise_caller_to_contact_the_admin</name>
+        <label>S18_D1_2_Advise caller to contact the admin</label>
+        <locationX>153</locationX>
+        <locationY>520</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Close_Case_Accordingly</targetReference>
+        </connector>
+        <fields>
+            <name>Advisecallertocontacttheadmin</name>
+            <fieldText>Advise caller to contact the admin of the account to gain permission to access
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S1_Opening</name>
+        <label>S1_Opening</label>
+        <locationX>154</locationX>
+        <locationY>123</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>S2</targetReference>
+        </connector>
+        <fields>
+            <name>Opening</name>
+            <fieldText>&lt;b&gt;Symptom/s:&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Customer&apos;s requesting to have the main number change with existing number on the account, a vanity number or any available number on the RingCentral database&lt;/ul&gt;
+
+
+
+&lt;b&gt;NOTE&lt;/b&gt;:
+Always ask your supervisor or manager for assistance.
+
+
+
+
+
+Please proceed if symptom/s matches customer&apos;s concern. Click &lt;b&gt;NEXT&lt;/b&gt; to continue.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S2</name>
+        <label>S2</label>
+        <locationX>155</locationX>
+        <locationY>258</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D1_Is_the_caller_the_admin_of_the_account</targetReference>
+        </connector>
+        <fields>
+            <name>S2ChangeMainNumber</name>
+            <fieldText>Caller wants to change the main number of the account
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Is_the_caller_the_admin_of_the_account_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the caller the admin of the account?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S3_D1_1_MainNumberandUserExtensionNumbers</name>
+        <label>S3_D1_1_Main Number and User Extension Numbers</label>
+        <locationX>381</locationX>
+        <locationY>395</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D2</targetReference>
+        </connector>
+        <fields>
+            <name>MainNumberandUserExtensionNumbers</name>
+            <fieldText>&lt;b&gt;Main Number and User Extension Numbers&lt;/b&gt;
+
+To check the main number and user extension number on the account, Go to &lt;b&gt;Phone System &gt;Phone Numbers &gt; Company&lt;/b&gt; or go to &lt;b&gt;Assigned&lt;/b&gt; tab to view Users Extension Number
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>changethemainnumberwithanexistingnumberunderthesameaccount</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the caller trying to change the main number with an existing number under the same account?&lt;/b &gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S4_D2_1_Next</name>
+        <label>S4_D2_1_Next</label>
+        <locationX>751</locationX>
+        <locationY>395</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D3</targetReference>
+        </connector>
+        <fields>
+            <name>b_Is_the_number_to_be_swapped_with_a_DL_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the number to be swapped with a DL?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S5_D3_1_Next</name>
+        <label>S5_D3_1_Next</label>
+        <locationX>1106</locationX>
+        <locationY>395</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D4</targetReference>
+        </connector>
+        <fields>
+            <name>Isthecustomergoingtokeeptheline</name>
+            <fieldText>Is the customer going to keep the line?
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Is_the_customer_going_to_keep_the_line_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the customer going to keep the line?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S6_D4_1_Next</name>
+        <label>S6_D4_1_Next</label>
+        <locationX>1270</locationX>
+        <locationY>532</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>S7_Number_swap_successful</targetReference>
+        </connector>
+        <fields>
+            <name>Pulluptheadmintool</name>
+            <fieldText>Pull up the admin tool and swap with the main number.
+
+Before swapping the number, it is important to test the number by dialling it. Make sure that it&apos;s not a bad number.
+
+Note: Seek assistance from Team Lead if the number is not available in database. Number maybe under quarantine.
+
+
+
+
+
+Pull up the admin tool and swap with the main number. Click &lt;b&gt;NEXT&lt;/b&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S7_Number_swap_successful</name>
+        <label>S7_Number swap successful?</label>
+        <locationX>1438</locationX>
+        <locationY>397</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D5</targetReference>
+        </connector>
+        <fields>
+            <name>b_Number_swap_successful_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Number swap successful?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S8_D5_1_test_call</name>
+        <label>S8_D5_1_test call</label>
+        <locationX>1592</locationX>
+        <locationY>273</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D6</targetReference>
+        </connector>
+        <fields>
+            <name>Checkansweringrulesandrunatestcall</name>
+            <fieldText>Check answering rules and run a test call
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Test_call_successful_p</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Test call successful?&lt;/p&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S9_D6_1_Close_Case_Accordingly</name>
+        <label>S9_D6_1_Close Case Accordingly</label>
+        <locationX>1796</locationX>
+        <locationY>390</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>CloseCaseAccordingly</name>
+            <fieldText>&lt;b&gt;Close Case Accordingly&lt;/b&gt;
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Able to gain agreement from customer
+&lt;li&gt;Case disposition fields are set properly
+&lt;li&gt;Severity set to Medium
+&lt;li&gt;Troubleshooting history transferred to case comment field
+&lt;li&gt;Survey positioned to customer accordingly 
+&lt;li&gt;Portal and Success Page promotion&lt;/ul&gt;
+ 
+
+&lt;b&gt;Note&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Leave the case open If...
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;If the customer gave instruction not to because issue might recur
+&lt;li&gt;Awaiting resolution from another department &lt;/ul&gt;&lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>S1_Opening</startElementReference>
+    <status>Obsolete</status>
+</Flow>

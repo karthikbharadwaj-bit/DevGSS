@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Close_Email_Alert</name>
+        <label>Send Close Email Alert</label>
+        <locationX>510</locationX>
+        <locationY>166</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>emailBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Created_by_Email__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>emailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <formulas>
+        <name>emailBody</name>
+        <dataType>String</dataType>
+        <expression>&quot;Hi &quot; &amp; {!$Record.CreatedBy.Full_Name__c} &amp; &quot;,&quot; &amp; br() &amp; 
+br() &amp;
+&quot;A channel ops case you submitted has been closed. Please reach out to &quot; &amp; {!$Record.Owner:User.Full_Name__c} &amp; &quot; if you have concerns related to this case.&quot; &amp; br() &amp;
+ br() &amp;
+&quot;Case Details: &quot; &amp; br() &amp;
+&quot;Subject: &quot; &amp; {!$Record.Subject} &amp; br() &amp;
+&quot;Description: &quot; &amp; {!$Record.Description} &amp; br() &amp;
+&quot;Link: &quot; &amp; LEFT($Api.Enterprise_Server_URL_510, FIND( &apos;/services&apos;, $Api.Enterprise_Server_URL_510)) &amp; {!$Record.Id} &amp; br()</expression>
+    </formulas>
+    <formulas>
+        <name>emailSubject</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case &quot; &amp; {!$Record.CaseNumber} &amp; &quot;: Closed&quot;</expression>
+    </formulas>
+    <interviewLabel>Email Closure for Channel Ops Cases {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Email Closure for Channel Ops Cases</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>77</locationX>
+        <locationY>84</locationY>
+        <connector>
+            <targetReference>Send_Close_Email_Alert</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Channel_Ops</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Partner Portal</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>IsClosed</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

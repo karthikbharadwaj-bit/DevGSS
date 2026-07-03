@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Case_Status_and_Cx_Replied_on_Closed_Case_field_updates</name>
+        <label>Case Status and Cx Replied on Closed Case field updates</label>
+        <locationX>578</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Case_Status_updated_as_Updated_by_Customer</name>
+            <conditionLogic>1 AND (2 OR 3 )</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Developer_Platform</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>WIP</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Resolved</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Case_Status_Updated_via_Customer_Email_Response</targetReference>
+            </connector>
+            <label>Case Status updated as Updated by Customer</label>
+        </rules>
+        <rules>
+            <name>Cx_Email_Notification_Case_Already_Closed</name>
+            <conditionLogic>(1 OR 2 OR 3 OR 4) AND 5 AND (6 OR 7 OR 8)</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Duplicate</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Cancelled</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Closed</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Closed - No Response</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Origin</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Auto-Email</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.Brand_Account__c</leftValueReference>
+                <operator>Contains</operator>
+                <rightValue>
+                    <stringValue>Telus</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>01280000000UIfJ</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>01280000000ULXx</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Cx_Replied_on_Closed_Case_c_field</targetReference>
+            </connector>
+            <label>Cx Email Notification: Case Already Closed</label>
+        </rules>
+        <rules>
+            <name>Purchasing_Case_Status_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Purchasing</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Case_Status_to_Updated_by_Client</targetReference>
+            </connector>
+            <label>Purchasing Case Status Update</label>
+        </rules>
+        <rules>
+            <name>TAM_Help_Reopen_Case_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>TAM_Help</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.IsClosed</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Case_field_Updated_as_Updated_by_Requester</targetReference>
+            </connector>
+            <label>TAM Help Reopen Case Update</label>
+        </rules>
+    </decisions>
+    <description>This flow covers the below workflow rule functionality
+1. Case Status Updated via Customer Email Response from Dev Platform
+2.Cx Email Notification: Case Already Closed
+3.Purchasing Case Status Update
+4.TAM Help Reopen Case Update</description>
+    <environments>Default</environments>
+    <formulas>
+        <description>This is used to update the Cx_Replied_on_Closed_Case__c value</description>
+        <name>CXRepliedonCloseDate</name>
+        <dataType>Number</dataType>
+        <expression>{!$Record.Parent.Cx_Replied_on_Closed_Case__c}+1</expression>
+        <scale>0</scale>
+    </formulas>
+    <interviewLabel>Case {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Status and   Cx Replied on Closed Case field updates</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Case_field_Updated_as_Updated_by_Requester</name>
+        <label>Case field Updated as Updated by Requester</label>
+        <locationX>842</locationX>
+        <locationY>431</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Parent.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Reopened</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Case Status to Updated by Client</description>
+        <name>Case_Status_to_Updated_by_Client</name>
+        <label>Case Status to Updated by Client</label>
+        <locationX>578</locationX>
+        <locationY>431</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Parent.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Updated by Client</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Case Status Updated via Customer Email Response</description>
+        <name>Case_Status_Updated_via_Customer_Email_Response</name>
+        <label>Case Status Updated via Customer Email Response</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Parent.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Updated by Customer</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Update_Cx_Replied_on_Closed_Case_c_field</name>
+        <label>Update Cx_Replied_on_Closed_Case__c field</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Parent.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Cx_Replied_on_Closed_Case__c</field>
+            <value>
+                <elementReference>CXRepliedonCloseDate</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <start>
+        <locationX>452</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Case_Status_and_Cx_Replied_on_Closed_Case_field_updates</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Incoming</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>EmailMessage</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+</Flow>

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Auto response for Support - Fraud Investigation E2C</description>
+        <name>Send_Auto_Response</name>
+        <label>Send Auto Response</label>
+        <locationX>308</locationX>
+        <locationY>492</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>Recipient</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <elementReference>Sender</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>Body</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>LTR-1564 Email Reports (external: Carrier/GSP/Partner/trusted 3rd Party) to be converted into SalesForce Case
+    SR-1705472 Update the Flow recipient formula by replacing the &quot;To Address&quot; with &quot;Supplied Email&quot;
+    SR-1750919 Add a field update action in flow</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>Recipient</name>
+        <dataType>String</dataType>
+        <expression>{!Get_source_email_info.Parent.SuppliedEmail}</expression>
+    </formulas>
+    <formulas>
+        <name>Sender</name>
+        <dataType>String</dataType>
+        <expression>&quot;noreply-serviceabuse@ringcentral.com&quot;</expression>
+    </formulas>
+    <interviewLabel>Auto Response Support - Fraud Investigation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Auto Response Support - Fraud Investigation</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_source_email_info</name>
+        <label>Get source email info</label>
+        <locationX>308</locationX>
+        <locationY>276</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Update_Fraud_Comment</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>ParentId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>EmailMessage</object>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Asc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Update_Fraud_Comment</name>
+        <label>Update Fraud Comment</label>
+        <locationX>308</locationX>
+        <locationY>384</locationY>
+        <connector>
+            <targetReference>Send_Auto_Response</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>RecordTypeId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>01280000000UEXoAAO</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Origin</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Email</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Fraud_Comments__c</field>
+            <value>
+                <stringValue>3RD PARTY</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <filterFormula>AND({!$Record.RecordTypeId} = &quot;01280000000UEXo&quot;,
+ISNEW(),
+ISPICKVAL({!$Record.Origin}, &quot;Email&quot;),
+{!$Record.CreatedById} = &quot;00580000003TA8j&quot;)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <scheduledPaths>
+            <connector>
+                <targetReference>Get_source_email_info</targetReference>
+            </connector>
+            <pathType>AsyncAfterCommit</pathType>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <textTemplates>
+        <name>Body</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>Thank you for your report.  At RingCentral we take fraud seriously and make every effort to ensure our services are being used for legitimate purposes only. The reported phone number(s) will be investigated and appropriate action will be taken based on the results of our investigation.</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Subject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>{!$Record.CaseNumber} Thank you for your report, We are investigating your concern</text>
+    </textTemplates>
+</Flow>

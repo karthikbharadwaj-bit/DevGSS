@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_Email_Confirmation_to_Creator</name>
+        <label>Send Email Confirmation to Creator</label>
+        <locationX>176</locationX>
+        <locationY>455</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Send_Notification_to_the_Distro</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>emailBodyForCreator</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.SuppliedEmail</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>emailSubjectForCreator</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Notification_to_the_Distro</name>
+        <label>Send Notification to the Distro</label>
+        <locationX>176</locationX>
+        <locationY>575</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>emailBodyForDistro</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>custom.engineering.requests@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>CurrentUser</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>emailSubjectForDistro</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <environments>Default</environments>
+    <formulas>
+        <name>emailBodyForCreator</name>
+        <dataType>String</dataType>
+        <expression>&quot;Dear &quot; &amp; {!$Record.SuppliedEmail} &amp; &quot;,&quot; &amp; br() &amp;
+br() &amp;
+&quot;Your request has been received and will be processed accordingly.&quot; &amp; br() &amp;
+&quot;Ticket &quot; &amp; {!$Record.CaseNumber} &amp; &quot; has been created for your reference and updates will be provided once available.&quot; &amp; br() &amp;
+br() &amp;
+&quot;Sincerely,&quot; &amp; br() &amp;
+&quot;Custom Engineering&quot; &amp; br() &amp;
+&quot;RingCentral, Inc.&quot; &amp; br()</expression>
+    </formulas>
+    <formulas>
+        <name>emailBodyForDistro</name>
+        <dataType>String</dataType>
+        <expression>&quot;Email Sender: &quot; &amp; {!$Record.SuppliedName} &amp; &quot;(&quot; &amp; {!$Record.SuppliedEmail} &amp; &quot;)&quot; &amp; br() &amp;
+br() &amp;
+&quot;Case Subject: &quot; &amp; {!$Record.Subject} &amp; br() &amp;
+br() &amp;
+&quot;Case Number: &quot; &amp; {!$Record.CaseNumber} &amp; &quot; - &quot; &amp; LEFT($Api.Enterprise_Server_URL_510, FIND( &apos;/services&apos;, $Api.Enterprise_Server_URL_510)) &amp; {!$Record.Id} &amp; br() &amp;
+br() &amp;
+&quot;Status: &quot; &amp; TEXT({!$Record.Status}) &amp; br() &amp;
+br() &amp;
+&quot;Case Description: &quot; &amp; {!$Record.Description} &amp; br() &amp;
+br() &amp;
+&quot;Created Date/Time: &quot; &amp; TEXT({!$Record.CreatedDate}) &amp; br() &amp;
+br() &amp;
+&quot;Thread ID: &quot; &amp; {!$Record.Thread_ID__c} &amp; br() &amp;
+br() &amp;
+&quot;Please be sure to update the Account Name, Contact Name, and Opportunity Reference fields appropriately for accurate tracking and reporting.&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>emailSubjectForCreator</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Subject} &amp; &quot; - Custom Engineering Team Notified&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>emailSubjectForDistro</name>
+        <dataType>String</dataType>
+        <expression>&quot;New Case Assigned to &quot; &amp; TEXT({!$Record.Case_Category__c}) &amp; &quot;: &quot; &amp; {!$Record.CaseNumber} &amp; &quot; - &quot; &amp; {!$Record.Thread_ID__c}</expression>
+    </formulas>
+    <interviewLabel>CENG Email to Case {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>CENG Email to Case</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Case_Record</name>
+        <label>Update Case Record</label>
+        <locationX>176</locationX>
+        <locationY>335</locationY>
+        <connector>
+            <targetReference>Send_Email_Confirmation_to_Creator</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>AccountId</field>
+            <value>
+                <stringValue>0013400001SkYrn</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Activity_Request__c</field>
+            <value>
+                <stringValue>Troubleshooting Assistance</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Case_Category__c</field>
+            <value>
+                <stringValue>Custom Engineering</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Opportunity_Reference__c</field>
+            <value>
+                <stringValue>0062H00001IV2oO</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Case_Record</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OwnerId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>00G34000003dP08</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Priority</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>4 – Medium</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Origin</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Email</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Solutions_Engineer</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

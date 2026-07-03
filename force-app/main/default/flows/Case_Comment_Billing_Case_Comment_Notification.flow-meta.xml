@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Notify_Customer</name>
+        <label>Notify Customer</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.Billing_Case_Update_To_Customer</actionName>
+        <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>Customer_Email_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>Get_Parent_Case.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Billing_Case_Update_To_Customer</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>Notify_Owner</name>
+        <label>Notify Owner</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.Billing_Case_Customer_Response_to_Owner</actionName>
+        <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>Owner_Email_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>Get_Parent_Case.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Billing_Case_Customer_Response_to_Owner</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>66.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Customer_Email_Error</name>
+        <label>Customer Email Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varEmailError</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <name>Owner_Email_Error</name>
+        <label>Owner Email Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varEmailError</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Flow.FaultMessage</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <decisions>
+        <name>Customer_or_Agent_Comment</name>
+        <label>Customer or Agent Comment</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Customer_Comment</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CreatedById</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.Support_Portal_Comment_AEM_User_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Is_Owner_Individual_Agent</targetReference>
+            </connector>
+            <label>Customer Comment</label>
+        </rules>
+        <rules>
+            <name>Agent_Comment</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.CreatedById</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.Support_Portal_Comment_AEM_User_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Is_Comment_Public</targetReference>
+            </connector>
+            <label>Agent Comment</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Has_Contact</name>
+        <label>Has Contact</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Contact</defaultConnectorLabel>
+        <rules>
+            <name>YesHasContact</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.ContactId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notify_Customer</targetReference>
+            </connector>
+            <label>Yes Has Contact</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_Billing_Case_In_Scope</name>
+        <label>Is Billing Case In Scope</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Out of Scope</defaultConnectorLabel>
+        <rules>
+            <name>In_Scope</name>
+            <conditionLogic>1 AND (2 OR 3 OR 4) AND (5 OR 6 OR 7 OR 8 OR 9)</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Product_Assistance__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Billing</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.RecordType.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Support - Billing</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.RecordType.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Sales - Customer Issue Form</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.RecordType.Name</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Deal and Order Support</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Brand_Account__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Brand_Account__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral AU</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Brand_Account__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral Canada</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Brand_Account__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral EU</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Parent_Case.Brand_Account__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral UK</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Customer_or_Agent_Comment</targetReference>
+            </connector>
+            <label>In Scope</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_Comment_Public</name>
+        <label>Is Comment Public</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Public_Comment</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.IsPublished</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Has_Contact</targetReference>
+            </connector>
+            <label>Public Comment</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_Owner_Individual_Agent</name>
+        <label>Is Owner Individual Agent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Owner Is Queue</defaultConnectorLabel>
+        <rules>
+            <name>Owner_Is_Individual</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>fml_Is_Owner_Queue</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notify_Owner</targetReference>
+            </connector>
+            <label>Owner Is Individual</label>
+        </rules>
+    </decisions>
+    <description>LTR-2871: Sends email notifications to Case Owner when customer responds, and to Customer when agent posts a public comment, on Billing cases for in-scope brands and record types.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>fml_Is_Owner_Queue</name>
+        <dataType>Boolean</dataType>
+        <expression>BEGINS({!Get_Parent_Case.OwnerId}, &apos;00G&apos;)</expression>
+    </formulas>
+    <interviewLabel>Case Comment: Billing {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Comment: Billing Case Comment Notification</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Parent_Case</name>
+        <label>Get Parent Case</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_Billing_Case_In_Scope</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ParentId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Case</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Parent_Case</targetReference>
+        </connector>
+        <object>CaseComment</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>varEmailError</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

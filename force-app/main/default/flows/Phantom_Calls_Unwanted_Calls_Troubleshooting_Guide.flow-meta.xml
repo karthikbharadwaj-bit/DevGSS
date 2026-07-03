@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Phantom_Calls</name>
+        <choiceText>Phantom Calls</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Unwanted_Calls</name>
+        <choiceText>Unwanted Calls</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Decision</name>
+        <label>Decision</label>
+        <locationX>15</locationX>
+        <locationY>205</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Selection_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Phantom_Calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phantom_Calls_Unwanted_Calls_1</targetReference>
+            </connector>
+            <label>Selection 1</label>
+        </rules>
+        <rules>
+            <name>Selection_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Unwanted_Calls</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phantom_Calls_Unwanted_Calls_0_0_0_0</targetReference>
+            </connector>
+            <label>Selection 2</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_0</name>
+        <label>Decision</label>
+        <locationX>17</locationX>
+        <locationY>424</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Selection_1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phantom_Calls_Unwanted_Calls_0_0</targetReference>
+            </connector>
+            <label>Selection 1</label>
+        </rules>
+        <rules>
+            <name>Selection_2_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phantom_Calls_Unwanted_Calls_0_0_0</targetReference>
+            </connector>
+            <label>Selection 2</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Phantom Calls / Unwanted Calls {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Phantom Calls / Unwanted Calls</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>14</locationX>
+        <locationY>12</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Phantom_Calls_Unwanted_Calls_0</targetReference>
+        </connector>
+        <fields>
+            <name>PhantomCallsUnwantedCalls</name>
+            <fieldText>&lt;p&gt;This guide will walk you through the proper identification and resolution of a&amp;nbsp;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;Phantom Calls / Unwanted Calls&lt;/strong&gt;&lt;/span&gt;&amp;nbsp;issue. During troubleshooting, all information you&apos;ve gathered must be recorded in the case.&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;Phantom Calls / Unwanted Calls&lt;/strong&gt;&lt;/span&gt;&amp;nbsp;are incoming calls for which, when the recipient of the call answers, either:&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; There is no one on the other end of the call.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; Repeat calls from telemarketers, solicitors, or callers calling about a non-related company would keep coming in.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NOTE&lt;/strong&gt;: In the event that you encounter a road block when using this guide, please ask assistance from a Team Lead.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Click &lt;strong&gt;Next&lt;/strong&gt; to continue&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls_0</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>16</locationX>
+        <locationY>108</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Decision</targetReference>
+        </connector>
+        <fields>
+            <name>PhantomCallsUnwantedCalls_0</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;DIFFERENTIATING PHANTOM CALLS VS UNWANTED CALLS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Though both type of calls may sound the same, RingCentral differs the two based on the following characteristics:&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;PHANTOM CALLS&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Phantom calls&lt;/strong&gt;&amp;nbsp;or commonly called&amp;nbsp;&lt;strong&gt;ghost calls&lt;/strong&gt;, are incoming calls in which when answered, there is no one on the other end of the call. Below are the characteristics of&amp;nbsp;&lt;strong&gt;phantom calls&lt;/strong&gt;&amp;nbsp;when encountered by a RingCentral customer.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls would endlessly ring IP Telephones and usually show up with 3 or 4-digit CallerIDs (Ex. 101, 4001, etc.)&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls only affect VOIP devices and will never reach regular telephones or mobile phones.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may sometimes show up a CallerID Name&amp;nbsp;&lt;strong&gt;SIPVicious&lt;/strong&gt;&amp;nbsp;or something similar.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls&amp;nbsp;&lt;strong&gt;do not show up&lt;/strong&gt;&amp;nbsp;in the account&apos;s&amp;nbsp;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;Call Logs&lt;/strong&gt;&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;UNWANTED CALLS&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Unwanted calls&lt;/strong&gt;&amp;nbsp;are incoming calls that reach the RingCentral number which commonly come from telemarketers, robo calls, and regular callers trying to reach a non-related company. Below are the characteristics of&amp;nbsp;&lt;strong&gt;phantom calls&lt;/strong&gt;&amp;nbsp;when encountered by a RingCentral customer.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls when answered will play a pre-recorded message about a product or company it is endorsing.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls when answered will connect you to telemarkerters.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may come from callers asking for another company.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may come from prank callers to simply annoy the receiver&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; All these calls are recorded in the account&apos;s&amp;nbsp;&lt;span style=&quot;text-decoration: underline;&quot;&gt;&lt;strong&gt;Call&lt;/strong&gt;&amp;nbsp;&lt;strong&gt;Logs&lt;/strong&gt;&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Which_kind_of_calls_are_being_received_by_the_customer</name>
+            <choiceReferences>Phantom_Calls</choiceReferences>
+            <choiceReferences>Unwanted_Calls</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Helvetica&quot; STYLE=&quot;font-size:14px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Which kind of calls are being received by the customer?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls_0_0</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>18</locationX>
+        <locationY>556</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>PhantomCallsUnwantedCalls_0_0</name>
+            <fieldText>&lt;p&gt;If the customer has an ACL-capable router,&amp;nbsp;&lt;strong&gt;ensure that the customer has the ability to be able to log in to the router settings&lt;/strong&gt;. Once this has been validated, this case should be further handled by Tier 2.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Escalate the case to Tier 2.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Reminders before escalating the case:&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Gather&amp;nbsp;&lt;strong&gt;all important information&amp;nbsp;&lt;/strong&gt;such as:&lt;/p&gt;
+&lt;p style=&quot;margin-left: 80px&quot;&gt;&amp;bull;&amp;nbsp; &lt;strong&gt;Brand and model of the router&lt;/strong&gt;&lt;/p&gt;
+&lt;p style=&quot;margin-left: 80px&quot;&gt;&amp;bull;&amp;nbsp; Data sheet web source indicating that the router has ACL capability.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Ensure that your case notes are detailed and concise.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Set expectations with the customer regarding their case being escalated.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Do not forget to select the correct Phantom Calls / Unwanted Calls disposition based&amp;nbsp;on the issue being escalated.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Use probing questions to determine if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls_0_0_0</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>229</locationX>
+        <locationY>427</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>PhantomCallsUnwantedCalls_0_0_0</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;DISCLAIMER ABOUT PHANTOM CALLS&amp;nbsp;&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The customer must understand that any IP Telephones can be a victim of these&amp;nbsp;&lt;strong&gt;SIP port scanning attacks&lt;/strong&gt;. These attacks are directed to the IP Telephones and does not go through the RingCentral network. RingCentral&amp;nbsp;&lt;strong&gt;does not have any way to block these kinds of attacks&lt;/strong&gt;&amp;nbsp;from the server side and the only stable resolution is to lock down the IP Addresses being used by IP Telephones to only communicate to&amp;nbsp;&lt;strong&gt;RingCentral Supernets&lt;/strong&gt;. This is by use of configuring the ACL functionality of the router.&lt;/p&gt;
+&lt;p&gt;Recommend to the customer that they need to purchase an ACL-capable router to resolve the issue.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Issue is not with RingCentral.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Use probing questions to determine if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Re-use the guide in the event that the customer has another&amp;nbsp;&lt;strong&gt;Phantom Calls /&amp;nbsp;Unwanted Calls&amp;nbsp;&lt;/strong&gt;or&amp;nbsp;another issue involving another user.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px&quot;&gt;&amp;bull;&amp;nbsp; Do not forget to select the correct Phantom Calls / Unwanted Calls disposition based on how you handled the problem.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls_0_0_0_0</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>236</locationX>
+        <locationY>206</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>PhantomCallsUnwantedCalls_0_0_0_0</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;UNWANTED CALLS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Unwanted calls&lt;/strong&gt;&amp;nbsp;are incoming calls that reach the RingCentral number which commonly come from telemarketers, robo calls, and regular callers trying to reach a non-related company. Below are the characteristics of&amp;nbsp;&lt;strong&gt;unwanted calls&lt;/strong&gt;&amp;nbsp;when encountered by a RingCentral customer.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls when answered will play a pre-recorded message about a product or company it is endorsing.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls when answered will connect you to telemarkerters.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may come from callers asking for another company.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may come from prank callers to simply annoy the receiver&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; All these calls are &lt;strong&gt;recorded&lt;/strong&gt; in the account&apos;s&amp;nbsp;&lt;strong&gt;Call&amp;nbsp;Logs&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Unwanted calls&lt;/strong&gt;, similar torobo calls&amp;nbsp;can be relentless and can not only seriously disrupt someone&apos;s day but also possibly scam people out of money.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NOTE:&lt;/strong&gt;&amp;nbsp;These type of calls consume the account&apos;s minutes however RingCentral customers have the ability to block these callers.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;HOW CAN YOU STOP THESE KINDS OF CALLS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;There are several ways to combat these types of calls. One way to immediately stop receiving calls from a specific caller is by using the call blocking feature of the RingCentral account.&lt;/p&gt;
+&lt;p&gt;Customers can easily block these calls directly from the&amp;nbsp;&lt;strong&gt;Call Logs&lt;/strong&gt;&amp;nbsp;section in the online account.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;An in-depth guide of blocking calls is available through our success site:&amp;nbsp;&lt;a title=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/Block-Calls-and-Faxes-without-Caller-ID&quot; href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/Block-Calls-and-Faxes-without-Caller-ID&quot;&gt;https://success.ringcentral.com/articles/RC_Knowledge_Article/Block-Calls-and-Faxes-without-Caller-ID&lt;/a&gt;&lt;br /&gt;Another way is to file a complaint to the&amp;nbsp;&lt;strong&gt;Do Not Call registry&amp;nbsp;(DNC)&lt;/strong&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; To register via the Internet, the customer must go to&amp;nbsp;&lt;a href=&quot;http://www.donotcall.gov&quot;&gt;http://www.donotcall.gov&lt;/a&gt;.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; To register by phone, the customer can call 1 (888) 382-1222 from the phone number they wish to register.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NOTE:&lt;/strong&gt;&amp;nbsp;If a new RingCentral customer has been receiving calls directed to a non-related company, there is a possibility that the number they are currently using has been previously used by an already deleted RingCentral subscriber. The customer can continue to block callers however they have the option to change phone numbers if they request so.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Issue is not with RingCentral.&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Use probing questions to determine if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; Re-use the guide in the event that the customer has another&amp;nbsp;Phantom Calls /&amp;nbsp;Unwanted Calls&amp;nbsp;or&amp;nbsp;another issue involving another user.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; Do not forget to select the correct Phantom Calls / Unwanted Calls disposition based on how you handled the problem.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Phantom_Calls_Unwanted_Calls_1</name>
+        <label>Phantom Calls / Unwanted Calls</label>
+        <locationX>18</locationX>
+        <locationY>315</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Decision_0</targetReference>
+        </connector>
+        <fields>
+            <name>PhantomCallsUnwantedCalls_1</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;PHANTOM CALLS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Phantom calls&lt;/strong&gt;&amp;nbsp;or commonly called&amp;nbsp;&lt;strong&gt;ghost calls&lt;/strong&gt;, are incoming calls in which when answered, there is no one on the other end of the call. Below are the characteristics of&amp;nbsp;phantom calls&amp;nbsp;when encountered by a RingCentral customer.&lt;/p&gt;
+&lt;p&gt;These calls would endlessly ring IP Telephones and usually show up with 3 or 4-digit CallerIDs (Ex. 101, 4001, etc.)&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls only affect VOIP devices and will never reach regular telephones or mobile phones.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls may sometimes show up a CallerID Name&amp;nbsp;&lt;strong&gt;SIPVicious&lt;/strong&gt;&amp;nbsp;or something similar.&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; These calls&amp;nbsp;&lt;strong&gt;do not show&amp;nbsp;up&lt;/strong&gt; in the account&apos;s&amp;nbsp;&lt;strong&gt;Call Logs&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Phantom calls&amp;nbsp;are actually a result of &lt;strong&gt;malicious intent&lt;/strong&gt;. Certain people use a program to probe people&apos;s networks and sometimes compromise phones. These attacks can be validated if the IP Telephone rings with suspicious CallerIDs (Ex. 101, 4001, etc.) but the calls do not show up in the account&apos;s&amp;nbsp;Call Logs. This means the call didn&apos;t come through the RingCentral servers.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NOTE:&lt;/strong&gt;&amp;nbsp;These type of calls do not consume the account&apos;s minutes. RingCentral is&amp;nbsp;&lt;strong&gt;not responsible&lt;/strong&gt;&amp;nbsp;for fixing SIP port scanning attacks, and can only make recommendations. Selection, configuration and maintenance of a customer&apos;s network equipment is not handled by RingCentral.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;HOW CAN YOU STOP THESE KINDS OF SIP ATTACKS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The only stable resolution is to&amp;nbsp;&lt;strong&gt;lock down&amp;nbsp;the SIP ports&lt;/strong&gt; on the router. The concept is to only allow inbound and outbound traffic on IP Telephones to&amp;nbsp;&lt;strong&gt;go to&amp;nbsp;and&amp;nbsp;come from&lt;/strong&gt;&amp;nbsp;RingCentral IP networks (&lt;strong&gt;Supernets&lt;/strong&gt;). The current RingCentral Supernets are as follows:&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 103.44.68.0/22&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 104.245.56.0/21&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 185.23.248.0/23&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 192.209.24.0/21&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 199.68.212.0/22&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 199.255.120.0/22&lt;/p&gt;
+&lt;p style=&quot;margin-left: 40px;&quot;&gt;&amp;bull;&amp;nbsp; 208.87.40.0/22&lt;/p&gt;
+&lt;p&gt;The list is regularly updated through our success site:&amp;nbsp;&lt;a title=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9233#7&quot; href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9233#7&quot;&gt;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9233#7&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;To&amp;nbsp;lock down&amp;nbsp;the SIP ports on the router,, the customer&apos;s router must have a funtionality commonly referred to as&amp;nbsp;&lt;strong&gt;Access Control List (ACL)&lt;/strong&gt;. This functionality allows a user to specifically set local IP Addresses to only communicate to the RingCentral Supernets.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;NOTE:&lt;/strong&gt; SonicWALL routers or compatible Cisco routers have ACL. Most small office / home office (SOHO) routers do not have the capability to set up rules like these.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Ask the customer the&amp;nbsp;brand and model&amp;nbsp;of the router being used and look-up data sheets to identify if the router have ACL capability.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Does_the_customer_s_router_have_ACL_capability</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:14px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Does the customer&amp;apos;s router have ACL capability?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>Phantom_Calls_Unwanted_Calls</startElementReference>
+    <status>Obsolete</status>
+</Flow>

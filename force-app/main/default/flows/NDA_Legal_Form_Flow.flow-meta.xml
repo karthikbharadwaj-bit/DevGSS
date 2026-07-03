@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Email to notify about Contract expiry</description>
+        <name>Contract_Expiry_Notification</name>
+        <label>Contract Expiry Notification</label>
+        <locationX>50</locationX>
+        <locationY>731</locationY>
+        <actionName>NDA_Contract__c.Email_Notification_NDA_Near_Termination</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>NDA_Contract__c.Email_Notification_NDA_Near_Termination</nameSegment>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_for_Contract_Expiry</name>
+        <label>Check for Contract Expiry</label>
+        <locationX>182</locationX>
+        <locationY>623</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Contract_Expiry_in_30_days</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>NDAContractabouttoExpire</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Contract_Expiry_Notification</targetReference>
+            </connector>
+            <label>Contract Expiry in 30 days</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>NDA_Legal_Form_Check</name>
+        <label>NDA Legal Form Check</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnector>
+            <targetReference>Check_for_Contract_Expiry</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>NDA_Legal_Form</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Select_NDA_Form__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RingCentral Form</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>NDA_Form_Location_Update</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>NDA Legal Form</label>
+        </rules>
+    </decisions>
+    <description>Auto-Populate Venue and Jurisdiction when selected form is RingCentral Form / Send email to notify about Contract expiry</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>NDAContractabouttoExpire</name>
+        <dataType>Boolean</dataType>
+        <expression>IF(({!$Record.Termination_Date_of_Contract__c}- DATEVALUE(NOW()) = 30), true, false)</expression>
+    </formulas>
+    <interviewLabel>NDA Legal Form Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>NDA Contract Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>NDA_Form_Location_Update</name>
+        <label>NDA Form Location Update</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <connector>
+            <targetReference>Check_for_Contract_Expiry</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Select_NDA_Form__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>RingCentral Form</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Choice_of_Law_Jurisdiction__c</field>
+            <value>
+                <stringValue>California</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Venue_Location__c</field>
+            <value>
+                <stringValue>San Mateo County, California</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>NDA_Legal_Form_Check</targetReference>
+        </connector>
+        <object>NDA_Contract__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Notification_For_DQ_Deal_Qualification_Approver</name>
+        <label>DQ_Deal_Qualification_Approver__c.Notification_For_DQ_Deal_Qualification_Ap</label>
+        <locationX>176</locationX>
+        <locationY>923</locationY>
+        <actionName>DQ_Deal_Qualification_Approver__c.Notification_For_DQ_Deal_Qualification_Approver</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>DQ_Deal_Qualification_Approver__c.Notification_For_DQ_Deal_Qualification_Approver</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Checking_if_the_Owner_is_User_or_Queue</name>
+        <label>Checking if the Owner is User or Queue</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Decision_for_User_or_Queue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Owner:User.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>005</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notification_For_DQ_Deal_Qualification_Approver</targetReference>
+            </connector>
+            <label>Decision for User</label>
+        </rules>
+        <rules>
+            <name>Decision_for_Queue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Owner:Group.OwnerId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>00G</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Queue_Members</targetReference>
+            </connector>
+            <label>Decision for Queue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_to_send_email_or_not</name>
+        <label>Decision to Check Queue</label>
+        <locationX>132</locationX>
+        <locationY>539</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Send_Email</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Queue_Members.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notification_For_DQ_Deal_Qualification_Approver</targetReference>
+            </connector>
+            <label>Queue members are present</label>
+        </rules>
+        <rules>
+            <name>Queue_members_are_not_Present</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Queue_Members.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <label>Queue members are not Present</label>
+        </rules>
+    </decisions>
+    <description>Migrated from the: DQ Deal Qualification Notification Alert workflow rule
+Workflow rule description: Send alert notification to approvers for approving records.&quot;</description>
+    <environments>Default</environments>
+    <label>DQ Deal Qualification Notification Alert</label>
+    <migratedFromWorkflowRuleName>DQ Deal Qualification Notification Alert</migratedFromWorkflowRuleName>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Queue_Members</name>
+        <label>Get Queue Members</label>
+        <locationX>132</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Decision_to_send_email_or_not</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>GroupId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>GroupMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Checking_if_the_Owner_is_User_or_Queue</targetReference>
+        </connector>
+        <filterFormula>OR( AND(ISNEW(),ISPICKVAL({!$Record.Status__c},&apos;Pending&apos;)), AND(ISPICKVAL({!$Record.Status__c},&apos;Pending&apos;), ISCHANGED({!$Record.OwnerId})), ISPICKVAL({!$Record.Status__c},&apos;Pending&apos;), ISPICKVAL({!$Record.Status__c}, &apos;Notification&apos;))</filterFormula>
+        <object>DQ_Deal_Qualification_Approver__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

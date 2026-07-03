@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_User_to_Sendoso_Integration_User</name>
+        <label>Assign User to Sendoso Integration User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>UserID</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>005Hr00000EAYwFIAX</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Sendoso_Task_Sender_Name</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Assigns the User&apos;s Full Name to Sendoso Task- Sender Name Field</description>
+        <name>Assign_User_to_Sendoso_Task_Sender_Name</name>
+        <label>Assign User to Sendoso Task - Sender Name</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>UserID</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_User.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Sendoso_Task_Sender_Name</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <description>Checks if Get User has an Existing Record and is Currently Active</description>
+        <name>Is_User_Existing</name>
+        <label>Is User Existing?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Assign_User_to_Sendoso_Integration_User</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Outcome_1_of_Is_User_Existing</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_User</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_User.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_User_to_Sendoso_Task_Sender_Name</targetReference>
+            </connector>
+            <label>Outcome 1 of Is User Existing?</label>
+        </rules>
+    </decisions>
+    <description>Assigns the User&apos;s Full Name to Sendoso Task - Sender Name on Task Create
+
+Version 2 - Added Sendoso Task - Sender Email for further filtering (07/25/2025)
+Version 3 - Removed Sendoso Task - Sender Name as Filtering for Get User Record (08/08/2025)
+Version 4 - If User does not exist, it will be assigned to Sendoso Integration User (08/11/2025)</description>
+    <environments>Default</environments>
+    <interviewLabel>Assign Sendoso Task - Sender Name {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Assign Sendoso Task - Sender Name</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <description>Gets the user from Sendoso Task - Sender Name</description>
+        <name>Get_User</name>
+        <label>Get User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Is_User_Existing</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Sendoso_Task_Sender_Email__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <description>Updates the Name of the Sendoso Task - Sender Name to the Assigned User</description>
+        <name>Update_Sendoso_Task_Sender_Name</name>
+        <label>Update Sendoso Task - Sender Name</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>UserID</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_User</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>CreatedById</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>005Hr00000EAYwFIAX</stringValue>
+            </value>
+        </filters>
+        <object>Task</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <description>A Placeholder for User&apos;s ID</description>
+        <name>UserID</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_Record_Type_and_Case_Comments</name>
+        <label>Check Record Type and Case Comments</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>IsAllState_Case</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Parent.RecordTypeName__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Support_Customer_ebonding</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.IsPublished</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>RemoveSpacefromCaseCommentBody</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>RemoveSpacefromCustomLabel</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_First_Response_TimeStamp</targetReference>
+            </connector>
+            <label>IsAllState Case</label>
+        </rules>
+    </decisions>
+    <description>Added new formula and updated description</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>CheckCaseChanges</name>
+        <dataType>Boolean</dataType>
+        <expression>ISCHANGED({!$Record.Parent.Status}) || ISCHANGED({!$Record.Parent.Case_Severity__c}) || ISCHANGED({!$Record.Parent.Partner_Case_Status__c}) || ISCHANGED({!$Record.Parent.OwnerId}) ||
+ISCHANGED({!$Record.Parent.Resolution__c})</expression>
+    </formulas>
+    <formulas>
+        <description>Added Substitute method to remove white space and double quotes from the case comment</description>
+        <name>RemoveSpacefromCaseCommentBody</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(SUBSTITUTE({!$Record.CommentBody},&apos; &apos;,&apos;&apos; ),&apos;\&quot;&apos;,&apos;&apos;)</expression>
+    </formulas>
+    <formulas>
+        <description>Added Substitute method to remove white space and double quotes from the case comment response template.</description>
+        <name>RemoveSpacefromCustomLabel</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(SUBSTITUTE({!$Label.AllState_CaseComment_Template},&apos; &apos;,&apos;&apos; ),&apos;\&quot;&apos;,&apos;&apos;)</expression>
+    </formulas>
+    <interviewLabel>Case Comment : Update First Response Timestamp For Direct Customers {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Comment : Update First Response Timestamp For Direct Customers</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_First_Response_TimeStamp</name>
+        <label>Update First Response TimeStamp</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ParentId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>RecordTypeName__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Support_Customer_ebonding</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Duplicate</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Invalid</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Cancelled</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>First_Response_Timestamp_TELUS__c</field>
+            <value>
+                <elementReference>$Flow.CurrentDateTime</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_Record_Type_and_Case_Comments</targetReference>
+        </connector>
+        <object>CaseComment</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>CaseCommentIdentifier</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>CaseCommentTypeIdentifier</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

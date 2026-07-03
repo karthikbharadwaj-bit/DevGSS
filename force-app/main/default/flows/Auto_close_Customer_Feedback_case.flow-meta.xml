@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Auto_reply_email_for_United_Solutions_Collection_Closed_Cases</name>
+        <label>Auto-reply email for United Solutions-Collection Closed Cases</label>
+        <locationX>314</locationX>
+        <locationY>647</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>cwheatley@unitedsolutions.coop</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>NotifyUnitedSolutionsDistro</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>1.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <name>Auto_reply_email_for_WM_Closed_cases</name>
+        <label>Auto-reply email for WM Closed cases</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>OPX@wm.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>NotifyWMDistro</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>LTR-2361 Auto-Reply email for WM Closed Case</description>
+        <name>Check_if_Case_is_for_WM</name>
+        <label>Check if Case is for WM</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Case_is_for_WM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeName__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Customer_Feedback</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_User_ID__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>340386037</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Contacts_from_the_Account</targetReference>
+            </connector>
+            <label>Case is for WM</label>
+        </rules>
+        <rules>
+            <name>Case_is_for_United_Solutions_Collections</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeName__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Customer_Feedback</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_User_ID__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>3004211036</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Contacts_from_the_Account2</targetReference>
+            </connector>
+            <label>Case is for United Solutions-Collections</label>
+        </rules>
+    </decisions>
+    <description>SR-1684726 - Add new criteria.
+LTR-2361 Auto-Reply email for WM Closed Case
+SR-1905433 Change the Delivery address and add created date in the email body
+LTR-3034 Auto-Reply email for United Solutions-Collections Closed Case</description>
+    <environments>Default</environments>
+    <interviewLabel>Auto-close Customer Feedback case {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Auto-close Customer Feedback case</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Contacts_from_the_Account</name>
+        <label>Get Contacts from the Account</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Auto_reply_email_for_WM_Closed_cases</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>User_Id__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>340386037</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.FormSubmitterEmail__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contacts_from_the_Account2</name>
+        <label>Get Contacts from the Account2</label>
+        <locationX>314</locationX>
+        <locationY>539</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Auto_reply_email_for_United_Solutions_Collection_Closed_Cases</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>User_Id__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>3004211036</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Email</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.FormSubmitterEmail__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Change</name>
+        <label>Change Case Status to Closed</label>
+        <locationX>314</locationX>
+        <locationY>323</locationY>
+        <connector>
+            <targetReference>Check_if_Case_is_for_WM</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Closed</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Change</targetReference>
+        </connector>
+        <filterFormula>AND(
+    ISNEW(),
+    {!$Record.RecordType.DeveloperName} = &quot;Customer_Feedback&quot;,
+    NOT(ISPICKVAL({!$Record.Origin}, &quot;RC App&quot;)),
+    {!$Record.CreatedById} != &quot;00534000009LhQeAAK&quot;,
+    NOT((BEGINS({!$Record.Subject}, &quot;RC App Detractor Alert&quot;)))
+)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>NotifyUnitedSolutionsDistro</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>An end-user has created the below case. RingCentral has auto-closed the case. Please reach out to Support if you require further assistance in resolving the case by either calling us or replying to this email and the case will be automatically reopened.
+
+End User Information
+End User: {!$Record.ContactName__c}
+Email: {!$Record.FormSubmitterEmail__c}
+
+Case Information:
+RingCentral Case Number: {!$Record.CaseNumber}
+Subject: {!$Record.Subject}
+Description: {!$Record.Description}
+
+Thank You,
+RingCentral</text>
+    </textTemplates>
+    <textTemplates>
+        <name>NotifyWMDistro</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>An end-user has created the below case. RingCentral has auto-closed the case.Please reach out to support if you require further assistance in resolving the case by either calling us or replying to this email and the case will be automatically reopened.
+
+End User Information
+End User : {!Get_Contacts_from_the_Account.Name}
+Email : {!$Record.FormSubmitterEmail__c}
+
+Case Information:
+RingCentral Case Number: {!$Record.CaseNumber}
+Time Created: {!$Record.CreatedDate}
+Case Priority: {!$Record.Priority}
+Subject: {!$Record.Subject}
+Description: {!$Record.Description}
+
+
+
+Thank You,
+RingCentral.</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Subject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>{!$Record.Subject}</text>
+    </textTemplates>
+    <textTemplates>
+        <name>USCDistro</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255); font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, &amp;quot;Segoe UI&amp;quot;, Roboto, Oxygen, Ubuntu, &amp;quot;Fira Sans&amp;quot;, &amp;quot;Droid Sans&amp;quot;, &amp;quot;Helvetica Neue&amp;quot;, sans-serif; color: rgb(23, 43, 77);&quot;&gt;cwheatley@unitedsolutions.coop&lt;/span&gt;&lt;/p&gt;</text>
+    </textTemplates>
+</Flow>

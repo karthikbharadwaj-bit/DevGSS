@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_CNR_condition</name>
+        <label>Check CNR condition</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>update_status</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Partner_CNR_setting</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Parent.CNR_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>isExcludedRecordTypes</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Email_to_an_Open_Case</targetReference>
+            </connector>
+            <label>update status</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>isExcludedRecordTypes</name>
+        <dataType>String</dataType>
+        <expression>CASE({!$Record.Parent.RecordTypeName__c},
+&apos;Customer_Feedback&apos;, &apos;True&apos;,
+&apos;Support_Charter_SMB&apos;, &apos;True&apos;,
+&apos;Support_Charter&apos;, &apos;True&apos;,
+&apos;Support_Avaya&apos;, &apos;True&apos;,
+&apos;Support_Ecotel&apos;, &apos;True&apos;,
+&apos;Support_Frontier&apos;, &apos;True&apos;,
+&apos;Support_DT&apos;, &apos;True&apos;,
+&apos;Support_Glip&apos;, &apos;True&apos;,
+&apos;Support_Integrations&apos;, &apos;True&apos;,
+&apos;RCC_Issues&apos;, &apos;True&apos;,
+&apos;Support_T1&apos;, &apos;True&apos;,
+&apos;Support_T2&apos;, &apos;True&apos;,
+&apos;Support_T1_VAR_Partners&apos;, &apos;True&apos;,
+&apos;Reseller_VAR_Partners&apos;, &apos;True&apos;,
+&apos;Support_VIPFR&apos;, &apos;True&apos;,
+&apos;Support_Case&apos;, &apos;True&apos;,
+&apos;Support_Telus&apos;, &apos;True&apos;,
+&apos;Support_Chat&apos;, &apos;True&apos;,
+&apos;Support_QoS&apos;, &apos;True&apos;,
+&apos;False&apos;
+)</expression>
+    </formulas>
+    <formulas>
+        <name>partnerIdentifier</name>
+        <dataType>String</dataType>
+        <expression>IF(BEGINS({!$Record.Parent.Account.RC_Brand__c}, &apos;Rise&apos;), {!$Record.Parent.Account.Sub_Brand__c}, {!$Record.Parent.Account.RC_Brand__c})</expression>
+    </formulas>
+    <interviewLabel>Partner CNR : Terminate on customer response {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Partner CNR : Terminate on customer response</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Partner_CNR_setting</name>
+        <label>Get Partner CNR setting</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_CNR_condition</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Brand_name__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>partnerIdentifier</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Record_Type__c</field>
+            <operator>Contains</operator>
+            <value>
+                <elementReference>$Record.Parent.RecordTypeName__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Partner_CNR_setting__mdt</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Email_to_an_Open_Case</name>
+        <label>Email to an Open Case</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ParentId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>IsClosed</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Updated by Customer</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>CNR_Status__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Updated by Customer</stringValue>
+            </value>
+        </inputAssignments>
+        <object>Case</object>
+    </recordUpdates>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Partner_CNR_setting</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>AND(
+{!$Record.Incoming} = TRUE, 
+NOT(CONTAINS({!$Record.FromAddress}, &quot;@ringcentral&quot;)),
+NOT(BEGINS({!$Record.Subject}, &quot;Automatic reply:&quot;)),
+NOT(ISNULL({!$Record.ParentId}))
+)</filterFormula>
+        <object>EmailMessage</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

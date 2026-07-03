@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>64.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Reseller_VAR_Partners_Case_Escalation_Field_Update</name>
+        <label>Reseller - VAR &amp; Partners Case Escalation Field Update</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.RecordTypeId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>01280000000UG1yAAG</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>VAR_SLA</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Update_Dev_Support_Tier_2</name>
+        <label>Update Dev Support Tier 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.OwnerId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>00G34000003b0maEAA</stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>$Record.RecordTypeId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>01280000000ULXxAAO</stringValue>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>$Record.Status</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <name>VAR_SLA_Field_Update</name>
+        <label>VAR SLA Field Update</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.CreatedDateEscalateTo__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Now</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <decisions>
+        <name>Entry_Condition_Check</name>
+        <label>Entry Condition Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Condition_Satisfied</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>NewRecord</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>EscalationRouter</targetReference>
+            </connector>
+            <label>Condition Satisfied</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Escalate_To_isChanged_or_New</name>
+        <label>Escalate To isChanged or New</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>VAR_SLA</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>NewRecord</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Reseller_VAR_Partners_Case_Escalation_Field_Update</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>EscalationRouter</name>
+        <label>Escalation Router</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Escalation Match</defaultConnectorLabel>
+        <rules>
+            <name>Escalate_to_Dev_Support_Tier_2</name>
+            <conditionLogic>1 AND ( 2 OR 3 )</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Dev Support Tier 2</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>NewRecord</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_Dev_Support_Tier_2</targetReference>
+            </connector>
+            <label>Escalate to Dev Support Tier 2</label>
+        </rules>
+        <rules>
+            <name>Escalate_to_Reseller_VAR_Partners</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Reseller - VAR &amp; Partners</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Escalate_To_isChanged_or_New</targetReference>
+            </connector>
+            <label>Escalate to Reseller - VAR &amp; Partners</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>VAR_SLA</name>
+        <label>VAR SLA</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Outcome_1_of_VAR_SLA</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Reseller_VAR_Partners</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>VAR_SLA_Field_Update</targetReference>
+            </connector>
+            <label>Outcome 1 of VAR SLA</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>NewRecord</name>
+        <dataType>Boolean</dataType>
+        <expression>ISNEW()</expression>
+    </formulas>
+    <formulas>
+        <name>Now</name>
+        <dataType>DateTime</dataType>
+        <expression>NOW()</expression>
+    </formulas>
+    <interviewLabel>Case {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case: Escalation Router - Before Save</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Entry_Condition_Check</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Dev Support Tier 2</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Reseller - VAR &amp; Partners</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

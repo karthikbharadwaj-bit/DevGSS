@@ -1,0 +1,4010 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>Announcement</name>
+        <choiceText>Announcement</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Audio_problem_with_the_uploaded_file</name>
+        <choiceText>Audio problem with the uploaded file</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Audio_recording_is_not_saving</name>
+        <choiceText>Audio recording is not saving</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Company_Greeting</name>
+        <choiceText>Company Greeting</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Default_Greeting_Announcement</name>
+        <choiceText>Default Greeting/Announcement</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Greeting_for_Message_Only_Extension</name>
+        <choiceText>Greeting for Message Only Extension</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Import</name>
+        <choiceText>Import</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Name</name>
+        <choiceText>Name</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No_Audio_detected</name>
+        <choiceText>No Audio detected</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No_call_from_RingCentral_received</name>
+        <choiceText>No call from RingCentral received</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Record_over_computer_microphone</name>
+        <choiceText>Record over computer microphone</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Record_over_the_phone</name>
+        <choiceText>Record over the phone</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>RingCentral_text_to_speech</name>
+        <choiceText>RingCentral text-to-speech</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>User_or_Group_Greeting</name>
+        <choiceText>User or Group Greeting</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>User_or_Group_Voicemail_Greeting</name>
+        <choiceText>User or Group Voicemail Greeting</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Are_you_able_to_reach_the_customer1</name>
+        <label>Are you able to reach the customer?</label>
+        <locationX>315</locationX>
+        <locationY>2338</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Are_you_able_to_reach_the_customer</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION</targetReference>
+            </connector>
+            <label>Yes/Are you able to reach the customer?</label>
+        </rules>
+        <rules>
+            <name>No_Are_you_able_to_reach_the_customer</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TRY_OTHER_PHONE_NUMBER</targetReference>
+            </connector>
+            <label>No/Are you able to reach the customer?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Are_you_able_to_reach_the_customer1_0</name>
+        <label>Are you able to reach the customer?</label>
+        <locationX>318</locationX>
+        <locationY>2802</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Are_you_able_to_reach_the_customer_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_PHONE_0</targetReference>
+            </connector>
+            <label>Yes/Are you able to reach the customer?</label>
+        </rules>
+        <rules>
+            <name>No_Are_you_able_to_reach_the_customer_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL</targetReference>
+            </connector>
+            <label>No/Are you able to reach the customer?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_Audio_Quality_clear1</name>
+        <label>Is the Audio Quality clear?</label>
+        <locationX>1527</locationX>
+        <locationY>1714</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Is_the_Audio_Quality_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED</targetReference>
+            </connector>
+            <label>Yes/Is the Audio Quality clear?</label>
+        </rules>
+        <rules>
+            <name>No_Is_the_Audio_Quality_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_NOT_WITH_RINGCENTRAL</targetReference>
+            </connector>
+            <label>No/Is the Audio Quality clear?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_Audio_quality_during_the_call_clear1</name>
+        <label>Is the Audio quality during the call clear?</label>
+        <locationX>938</locationX>
+        <locationY>2233</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Is_the_Audio_quality_during_the_call_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION_1</targetReference>
+            </connector>
+            <label>Yes/Is the Audio quality during the call clear?</label>
+        </rules>
+        <rules>
+            <name>No_Is_the_Audio_quality_during_the_call_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TRY_OTHER_PHONE_NUMBER_1</targetReference>
+            </connector>
+            <label>No/Is the Audio quality during the call clear?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_Audio_quality_during_the_call_clear1_1</name>
+        <label>Is the Audio quality during the call clear?</label>
+        <locationX>945</locationX>
+        <locationY>2686</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Is_the_Audio_quality_during_the_call_clear_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_PHONE_0_1</targetReference>
+            </connector>
+            <label>Yes/Is the Audio quality during the call clear?</label>
+        </rules>
+        <rules>
+            <name>No_Is_the_Audio_quality_during_the_call_clear_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL_3</targetReference>
+            </connector>
+            <label>No/Is the Audio quality during the call clear?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_Audio_Quality_of_the_recorded_file_sound_clear1</name>
+        <label>Is the Audio Quality of the recorded file sound clear?</label>
+        <locationX>2577</locationX>
+        <locationY>2281</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Is_the_Audio_Quality_of_the_recorded_file_sound_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION2</targetReference>
+            </connector>
+            <label>Yes/Is the Audio Quality of the recorded file sound clear?</label>
+        </rules>
+        <rules>
+            <name>No_Is_the_Audio_Quality_of_the_recorded_file_sound_clear</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TRY_OTHER_COMPUTER_MICROPHONE</targetReference>
+            </connector>
+            <label>No/Is the Audio Quality of the recorded file sound clear?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_the_Audio_Quality_of_the_recorded_file_sound_clear1_2</name>
+        <label>Is the Audio Quality of the recorded file sound clear?</label>
+        <locationX>2610</locationX>
+        <locationY>2864</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Is_the_Audio_Quality_of_the_recorded_file_sound_clear_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_COMPUTER_MICROPHONE_2</targetReference>
+            </connector>
+            <label>Yes/Is the Audio Quality of the recorded file sound clear?</label>
+        </rules>
+        <rules>
+            <name>No_Is_the_Audio_Quality_of_the_recorded_file_sound_clear_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL_2</targetReference>
+            </connector>
+            <label>No/Is the Audio Quality of the recorded file sound clear?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Other_computer_microphone_available2</name>
+        <label>Other computer microphone available?</label>
+        <locationX>2594</locationX>
+        <locationY>2542</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Other_computer_microphone_available</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TEST_OTHER_COMPUTER_MICROPHONE</targetReference>
+            </connector>
+            <label>Yes/Other computer microphone available?</label>
+        </rules>
+        <rules>
+            <name>No_Other_computer_microphone_available</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL_2_2</targetReference>
+            </connector>
+            <label>No/Other computer microphone available?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Other_phone_number_available1</name>
+        <label>Other phone number available?</label>
+        <locationX>316</locationX>
+        <locationY>2572</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Other_phone_number_available</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CALL_OTHER_PHONE_NUMBER_USING_INCONTACT</targetReference>
+            </connector>
+            <label>Yes/Other phone number available?</label>
+        </rules>
+        <rules>
+            <name>No_Other_phone_number_available</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL_4</targetReference>
+            </connector>
+            <label>No/Other phone number available?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Other_phone_number_available1_1</name>
+        <label>Other phone number available?</label>
+        <locationX>938</locationX>
+        <locationY>2451</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Other_phone_number_available_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CALL_OTHER_PHONE_NUMBER_USING_INCONTACT_1</targetReference>
+            </connector>
+            <label>Yes/Other phone number available?</label>
+        </rules>
+        <rules>
+            <name>No_Other_phone_number_available_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_IS_NOT_WITH_RINGCENTRAL_3_3</targetReference>
+            </connector>
+            <label>No/Other phone number available?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_imported</name>
+        <label>Recording successfully imported?</label>
+        <locationX>927</locationX>
+        <locationY>1803</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_imported</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED</targetReference>
+            </connector>
+            <label>Yes/Recording successfully imported?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_imported</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TEST_AUDIO_FILE_USING_COMPUTER_MEDIA_PLAYER</targetReference>
+            </connector>
+            <label>No/Recording successfully imported?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_recorded1</name>
+        <label>Recording successfully recorded?</label>
+        <locationX>306</locationX>
+        <locationY>1888</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_recorded</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED</targetReference>
+            </connector>
+            <label>Yes/Recording successfully recorded?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_recorded</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TYPICAL_RECORDING_FAILURE_SCENARIO</targetReference>
+            </connector>
+            <label>No/Recording successfully recorded?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_recorded1_0</name>
+        <label>Recording successfully recorded?</label>
+        <locationX>328</locationX>
+        <locationY>3036</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_recorded_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED_0</targetReference>
+            </connector>
+            <label>Yes/Recording successfully recorded?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_recorded_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION_0</targetReference>
+            </connector>
+            <label>No/Recording successfully recorded?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_recorded1_0_1</name>
+        <label>Recording successfully recorded?</label>
+        <locationX>1377</locationX>
+        <locationY>2350</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_recorded_0_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED_0_1</targetReference>
+            </connector>
+            <label>Yes/Recording successfully recorded?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_recorded_0_1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION_1</targetReference>
+            </connector>
+            <label>No/Recording successfully recorded?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_recorded1_2</name>
+        <label>Recording successfully recorded?</label>
+        <locationX>2688</locationX>
+        <locationY>1603</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_recorded_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED</targetReference>
+            </connector>
+            <label>Yes/Recording successfully recorded?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_recorded_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TYPICAL_RECORDING_BY_COMPUTER_MICROPHONE_FAILURE_SCENARIO</targetReference>
+            </connector>
+            <label>No/Recording successfully recorded?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Recording_successfully_recorded1_2_2</name>
+        <label>Recording successfully recorded?</label>
+        <locationX>2605</locationX>
+        <locationY>3219</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Recording_successfully_recorded_2_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ISSUE_RESOLVED_2</targetReference>
+            </connector>
+            <label>Yes/Recording successfully recorded?</label>
+        </rules>
+        <rules>
+            <name>No_Recording_successfully_recorded_2_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION2_2</targetReference>
+            </connector>
+            <label>No/Recording successfully recorded?</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>SELECT_APPROPRIATE_SCENARIO1</name>
+        <label>SELECT APPROPRIATE SCENARIO</label>
+        <locationX>307</locationX>
+        <locationY>2107</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>No_call_from_RingCentral_received1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No_call_from_RingCentral_received</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>No_call_from_RingCentral_received2</targetReference>
+            </connector>
+            <label>No call from RingCentral received</label>
+        </rules>
+        <rules>
+            <name>Audio_problem_with_the_uploaded_file1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Audio_problem_with_the_uploaded_file</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Audio_problem_with_the_uploaded_file2</targetReference>
+            </connector>
+            <label>Audio problem with the uploaded file</label>
+        </rules>
+        <rules>
+            <name>Audio_recording_is_not_saving1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Audio_recording_is_not_saving</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TIER_2_ESCALATION_2</targetReference>
+            </connector>
+            <label>Audio recording is not saving</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>SELECT_APPROPRIATE_SCENARIO1_2</name>
+        <label>SELECT APPROPRIATE SCENARIO</label>
+        <locationX>2964</locationX>
+        <locationY>2103</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>No_Audio_detected1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No_Audio_detected</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TEST_THE_RECORDING_DEVICE</targetReference>
+            </connector>
+            <label>No Audio detected</label>
+        </rules>
+        <rules>
+            <name>Audio_problem_with_the_uploaded_file1_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Audio_problem_with_the_uploaded_file</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <label>Audio problem with the uploaded file</label>
+        </rules>
+        <rules>
+            <name>Audio_recording_is_not_saving1_2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Audio_recording_is_not_saving</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <label>Audio recording is not saving</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Select_how_the_customer_will_record_the_greeting1</name>
+        <label>Select how the customer will record the greeting</label>
+        <locationX>933</locationX>
+        <locationY>1570</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Record_over_the_phone1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Record_over_the_phone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_PHONE</targetReference>
+            </connector>
+            <label>Record over the phone</label>
+        </rules>
+        <rules>
+            <name>Record_over_computer_microphone1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Record_over_computer_microphone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_COMPUTER_MICROPHONE</targetReference>
+            </connector>
+            <label>Record over computer microphone</label>
+        </rules>
+        <rules>
+            <name>Import1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Import</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_IMPORTING</targetReference>
+            </connector>
+            <label>Import</label>
+        </rules>
+        <rules>
+            <name>Default_Greeting_Announcement1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Default_Greeting_Announcement</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SYSTEM_AUTOMATED_RECORDING_ANNOUNCEMENT</targetReference>
+            </connector>
+            <label>Default Greeting/Announcement</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Select_how_the_customer_will_record_the_greeting1_0</name>
+        <label>Select how the customer will record the greeting</label>
+        <locationX>1480</locationX>
+        <locationY>693</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Record_over_the_phone1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Record_over_the_phone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_PHONE</targetReference>
+            </connector>
+            <label>Record over the phone</label>
+        </rules>
+        <rules>
+            <name>Record_over_computer_microphone1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Record_over_computer_microphone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_COMPUTER_MICROPHONE</targetReference>
+            </connector>
+            <label>Record over computer microphone</label>
+        </rules>
+        <rules>
+            <name>Import1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Import</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORDING_BY_IMPORTING</targetReference>
+            </connector>
+            <label>Import</label>
+        </rules>
+        <rules>
+            <name>Default_Greeting_Announcement1_0</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Default_Greeting_Announcement</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SYSTEM_AUTOMATED_RECORDING_ANNOUNCEMENT</targetReference>
+            </connector>
+            <label>Default Greeting/Announcement</label>
+        </rules>
+        <rules>
+            <name>RingCentral_text_to_speech1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RingCentral_text_to_speech</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RingCentral_text_to_speech_Name</targetReference>
+            </connector>
+            <label>RingCentral text-to-speech</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Select_the_type_of_Greeting_the_customer_is_need_of_assistance1</name>
+        <label>Select the type of Greeting the customer is need of assistance</label>
+        <locationX>432</locationX>
+        <locationY>107</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Company_Greeting1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Company_Greeting</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_COMPANY_GREETINGS_WALKTHROUGH</targetReference>
+            </connector>
+            <label>Company Greeting</label>
+        </rules>
+        <rules>
+            <name>User_or_Group_Greeting1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>User_or_Group_Greeting</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_USER_OR_GROUP_GREETING</targetReference>
+            </connector>
+            <label>User or Group Greeting</label>
+        </rules>
+        <rules>
+            <name>User_or_Group_Voicemail_Greeting1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>User_or_Group_Voicemail_Greeting</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_USER_OR_GROUP_VOICEMAIL_GREETING</targetReference>
+            </connector>
+            <label>User or Group Voicemail Greeting</label>
+        </rules>
+        <rules>
+            <name>Name1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Name</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_NAME</targetReference>
+            </connector>
+            <label>Name</label>
+        </rules>
+        <rules>
+            <name>Announcement1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Announcement</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_ANNOUNCEMENT</targetReference>
+            </connector>
+            <label>Announcement</label>
+        </rules>
+        <rules>
+            <name>Greeting_for_Message_Only_Extension1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Greeting_for_Message_Only_Extension</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RECORD_GREETINGS_FOR_MESSAGE_ONLY_EXTENSION</targetReference>
+            </connector>
+            <label>Greeting for Message Only Extension</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Guide: RingCentral Greetings {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Guide: RingCentral Greetings</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>Audio_problem_with_the_uploaded_file2</name>
+        <label>Audio problem with the uploaded file</label>
+        <locationX>746</locationX>
+        <locationY>2231</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_Audio_quality_during_the_call_clear1</targetReference>
+        </connector>
+        <fields>
+            <name>Audioproblemwiththeuploadedfile</name>
+            <fieldText>&lt;b&gt;ISOLATE THE ISSUE USING INCONTACT&lt;/b&gt;
+
+ 
+
+Isolate the issue by calling the phone number keyed in Call me at in the Set Greeting window using your incontact. Speak with the customer and look for Audio issues during the conversation.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_Audio_quality_during_the_call_clear</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the Audio quality during the call clear?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>CALL_OTHER_PHONE_NUMBER_USING_INCONTACT</name>
+        <label>CALL OTHER PHONE NUMBER USING INCONTACT</label>
+        <locationX>318</locationX>
+        <locationY>2690</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Are_you_able_to_reach_the_customer1_0</targetReference>
+        </connector>
+        <fields>
+            <name>CALLOTHERPHONENUMBERUSINGINCONTACT</name>
+            <fieldText>CALL OTHER PHONE NUMBER USING INCONTACT
+
+
+Before proceeding with customizing the Recording by Phone make sure the other number is reachable by calling the number using your incontact.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Are_you_able_to_reach_the_customer2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Are you able to reach the customer?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>CALL_OTHER_PHONE_NUMBER_USING_INCONTACT_1</name>
+        <label>CALL OTHER PHONE NUMBER USING INCONTACT</label>
+        <locationX>940</locationX>
+        <locationY>2575</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_Audio_quality_during_the_call_clear1_1</targetReference>
+        </connector>
+        <fields>
+            <name>CALLOTHERPHONENUMBERUSINGINCONTACT_1</name>
+            <fieldText>CALL OTHER PHONE NUMBER USING INCONTACT
+
+
+Before proceeding with customizing the Recording by Phone make sure the other number is reachable by calling the number using your incontact.. Speak with the customer and look for Audio issues during the conversation.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_Audio_quality_during_the_call_clear2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the Audio quality during the call clear?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>757</locationX>
+        <locationY>2804</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that the other phone number could also have an issue with the RingCentral system or with their phone number carrier. If the carrier is RingCentral follow appropriate guide for that issue such as Callforwarding. Offer other method in customizing the recording.
+
+Create a ticket and run the guide again if needed.
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL_2</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>2033</locationX>
+        <locationY>2881</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL_2</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that the other Computer Microphone also has issue with recording an audio file advice the customer to check with their vendor. Offer other method in customizing the recording.
+
+Create a ticket and run the guide again if needed.
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL_2_2</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>2016</locationX>
+        <locationY>2536</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL_2_2</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that the Computer Microphone has issue with recording an audio file advice the customer to check with their vendor. Offer other method in customizing the recording.
+
+Create a ticket and run the guide again if needed.
+
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL_3</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>945</locationX>
+        <locationY>2809</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL_3</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that the other phone could also have an issue with its phone speaker or with their phone number carrier. If the carrier is RingCentral follow appropriate guide for that issue such as Callforwarding or Quality of Service Guide. Offer other method in customizing the On-Demand Call Recording announcement.
+
+Create a ticket and run the guide again if needed.
+
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL_3_3</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>1297</locationX>
+        <locationY>2448</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL_3_3</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that since there is no other phone number available the issue could be with RingCentral or with their phone number carrier or the phone device itself. If the carrier of the phone is RingCentral follow appropriate guide such as Callforwarding or Quality of Service to isolate and provide proper resolution. Offer other method in customizing the recording.
+
+Create a ticket and run the guide again if needed.
+
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_IS_NOT_WITH_RINGCENTRAL_4</name>
+        <label>ISSUE IS NOT WITH RINGCENTRAL</label>
+        <locationX>752</locationX>
+        <locationY>2575</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUEISNOTWITHRINGCENTRAL_4</name>
+            <fieldText>&lt;b&gt;ISSUE IS NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that since there is no other phone number available the issue could be with RingCentral or with their phone number carrier. If the carrier of the phone is RingCentral follow appropriate guide such as Callforwarding to isolate and provide proper resolution. Offer other method in customizing the recording.
+
+Create a ticket and run the guide again if needed.
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting
+ 
+
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_NOT_WITH_RINGCENTRAL</name>
+        <label>ISSUE NOT WITH RINGCENTRAL</label>
+        <locationX>2170</locationX>
+        <locationY>1721</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUENOTWITHRINGCENTRAL</name>
+            <fieldText>&lt;b&gt;ISSUE NOT WITH RINGCENTRAL&lt;/b&gt;
+
+Inform the customer that the issue is on the recorded file after playing the file with a thirdparty application issue still occurs advice the customer to rerecord the announcement and be mindful of the RingCentral system requirements. Offer other method in customizing the Greeting. 
+
+Create a ticket and run the guide again if needeed.
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article 
+&lt;li&gt;Reuse the guide if the concern is regarding Greeting&lt;/ul&gt;
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_RESOLVED</name>
+        <label>ISSUE RESOLVED</label>
+        <locationX>2698</locationX>
+        <locationY>1921</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUERESOLVED</name>
+            <fieldText>&lt;b&gt;ISSUE RESOLVED&lt;/b&gt;
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_RESOLVED1</name>
+        <label>ISSUE RESOLVED</label>
+        <locationX>1502</locationX>
+        <locationY>1379</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUERESOLVED1</name>
+            <fieldText>&lt;b&gt;ISSUE RESOLVED&lt;/b&gt;
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_RESOLVED_0</name>
+        <label>ISSUE RESOLVED</label>
+        <locationX>331</locationX>
+        <locationY>3157</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUERESOLVED_0</name>
+            <fieldText>&lt;b&gt;ISSUE RESOLVED&lt;/b&gt;
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_RESOLVED_0_1</name>
+        <label>ISSUE RESOLVED</label>
+        <locationX>1785</locationX>
+        <locationY>2362</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUERESOLVED_0_1</name>
+            <fieldText>&lt;b&gt;ISSUE RESOLVED&lt;/b&gt;
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>ISSUE_RESOLVED_2</name>
+        <label>ISSUE RESOLVED</label>
+        <locationX>2597</locationX>
+        <locationY>3436</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>ISSUERESOLVED_2</name>
+            <fieldText>&lt;b&gt;ISSUE RESOLVED&lt;/b&gt;
+
+Inform the customer that there was an issue with initial computer microphone and advice them to check with their vendor to investigate the concern.
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>No_call_from_RingCentral_received2</name>
+        <label>No call from RingCentral received</label>
+        <locationX>314</locationX>
+        <locationY>2225</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Are_you_able_to_reach_the_customer1</targetReference>
+        </connector>
+        <fields>
+            <name>NocallfromRingCentralreceived</name>
+            <fieldText>&lt;b&gt;ISOLATE THE ISSUE USING INCONTACT&lt;/b&gt;
+
+ 
+Isolate the issue by calling the phone number keyed in &lt;b&gt;Call me at&lt;/b&gt; in the &lt;b&gt;Set Greeting&lt;/b&gt; window using your incontact.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Are_you_able_to_reach_the_customer</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Are you able to reach the customer?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_ANNOUNCEMENT</name>
+        <label>RECORD ANNOUNCEMENT</label>
+        <locationX>494</locationX>
+        <locationY>1289</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDANNOUNCEMENT</name>
+            <fieldText>&lt;b&gt;RECORD ANNOUNCEMENT&lt;/b&gt;
+
+&lt;b&gt;Editing the Announcement settings&lt;/b&gt;
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Only &lt;b&gt;Super Admins&lt;/b&gt;, &lt;b&gt;User Admins&lt;/b&gt;, &lt;b&gt;Users with Billing Admin access&lt;/b&gt; and the user who can access the extension can view and make changes to this section. See &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Editing-the-Extension-Permissions-via-Web&quot;; target=&quot;_blank&quot;&gt;User Roles and Permission&lt;/a&gt; for more information. 
+
+For the step by step process on setting up the Announcement-Only Extension kindly go to Article number 4492 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/4492#Announcement&quot;; target=&quot;_blank&quot;&gt;Announcement-Only Extension - Overview | RingCentral&lt;/a&gt;
+
+Step 1: The Administrator should log in to the RingCentral Online account then go to the &lt;b&gt;Phone System&lt;/b&gt; section on the &lt;b&gt;Admin Portal&lt;/b&gt; then click &lt;b&gt;Groups() Others()&lt;/b&gt; to open the Groups section then Click on the Others lastly the Announcement only extension in order to modify the Announcement extension settings (see image below).
+
+&lt;img src=&apos;/resource/RECORDANNOUNCEMENT1&apos; /&gt;
+
+
+
+Step 2: Click &lt;b&gt;Announcement&lt;/b&gt; &gt; &lt;b&gt;Greeting&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDANNOUNCEMENT2&apos; /&gt;
+
+
+
+Step 3: A pop-up will appear displaying the current Announcement Greeting. Customer have an option wether to use the default or customize an announcement.
+
+&lt;img src=&apos;/resource/RECORDANNOUNCEMENT3&apos; /&gt;
+
+
+
+Custom
+
+&lt;img src=&apos;/resource/RECORDANNOUNCEMENT4&apos; /&gt;
+
+
+
+Customer have three option to record their customized annoucement
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Record over the phone
+&lt;li&gt;Record over computer microphone
+&lt;li&gt;Import&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting4</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_COMPANY_GREETINGS_WALKTHROUGH</name>
+        <label>RECORD COMPANY GREETINGS WALKTHROUGH</label>
+        <locationX>1214</locationX>
+        <locationY>686</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDCOMPANYGREETINGSWALKTHROUGH</name>
+            <fieldText>&lt;b&gt;RECORD COMPANY GREETINGS WALKTHROUGH&lt;/b&gt;
+
+The Company Greeting and Menu section provides additional call handling options, including hearing the Default greeting and recording a Custom greeting. This is a great way to specify the greeting callers will hear when they call the main company number, during Company or Business Hours, and After Hours.
+
+ 
+
+&lt;b&gt;NOTE&lt;/b&gt;: To set up Company Call Handling Rules, go to &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/How-to-access-the-advanced-call-handling-feature-of-the-auto-receptionist&quot;_blank&quot;&gt;Setting your Company Call Handling and Operator Extension&lt;/a&gt;. Clicking on &lt;b&gt;Advanced&lt;/b&gt; will allow you to &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/Adding-Custom-Rules-More-Option&quot;; target=&quot;_blank&quot;&gt;Set Up Advanced Company Call Handling rules via the Auto-Receptionist.&lt;/a&gt;.
+
+For the step by step process on setting up the company greeting via Auto Receptionist kindly go to Article number 3381 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/Uploading-Company-Business-Hours-Greeting&quot;; target=&quot;_blank&quot;&gt;Company Greeting - Setup Custom Greeting | RingCentral&lt;/a&gt;
+
+See instructions below for the brief example of setting up an account&apos;s company greeting.
+
+&lt;b&gt;Accessing the Company Greeting and Menu Section&lt;/b&gt;
+
+Step 1: Log in as the Account Administrator in the RingCentral account.
+
+Step 2: Go to &lt;b&gt;Admin Portal&lt;/b&gt;, and then click &lt;b&gt;Phone System&lt;/&gt;.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH1
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+Step 3: Click &lt;b&gt;Auto-Receptionist.&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH2
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+Step 4: Click &lt;b&gt;IVR Settings&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH3
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;Default Company Greetings&lt;/b&gt;
+
+Step 1: Select either &lt;b&gt;Company Hours&lt;/b&gt; or &lt;b&gt;After Hours&lt;/b&gt;. Click &lt;b&gt;Edit&lt;/b&gt;.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH4
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+Step 2: Select &lt;b&gt;Default&lt;/b&gt; on the drop down menu under &lt;b&gt;Set Greeting&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH5
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+Press the &lt;b&gt;play&lt;/b&gt; button to hear the sample of the default greeting.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH6
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;Setting Up Custom Company Greetings for User Hours or After Hours&lt;/b&gt;
+
+Step 1: Choose between &lt;b&gt;Company Hours&lt;/b&gt; or &lt;b&gt;After Hours&lt;/b&gt;, and then click &lt;b&gt;Edit&lt;/b&gt;.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH7
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+Step 3: Select &lt;b&gt;Custom&lt;/b&gt; to record or upload a personalized greeting for the company. There are three (3) ways to customize the company greeting:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Record over the Phone
+&lt;li&gt;Record over tthe computer microphone
+&lt;li&gt;Import&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH8
+&apos; /&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH9
+&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;Setting the Rule if the Callers Enter No Action&lt;/b&gt;
+
+Once done setting up the Company Hours and After Hours greeting, the Caller enters no action needs to be set.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Connect to Operator
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;Select this option to direct the callers to ext 0, or the Operator Extension, afer the greeting.&lt;/ul&gt;&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDCOMPANYGREETINGSWALKTHROUGH10
+&apos; /&gt;
+&lt;li&gt;&lt;b&gt;NOTE&lt;/b&gt;: Connect to Operator is selected by Default.&lt;/ul&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Disconnect
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;Select this option to disconnect the caller after the greeting repeat three times.&lt;/ul&gt;&lt;/ul&gt;
+
+
+
+&lt;a style=&quot;color:RED;&quot;&gt; &lt;b&gt;NOTE&lt;a/&gt;&lt;/b&gt;: The Operator Extension is an extension that is set up to recieve all calls and messages that comes in the main company number. Customer can assign a User or Call Queue as the Operator Extension. 
+for more information regarding setting up Operator Extension click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/How-to-access-the-advanced-call-handling-feature-of-the-auto-receptionist#The%20Operator%20Extension&quot;; target=&quot;_blank&quot;&gt;Company Call Handling and Operator Extension - Set up | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_GREETINGS_FOR_MESSAGE_ONLY_EXTENSION</name>
+        <label>RECORD GREETINGS FOR MESSAGE ONLY EXTENSION</label>
+        <locationX>302</locationX>
+        <locationY>1530</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDGREETINGSFORMESSAGEONLYEXTENSION</name>
+            <fieldText>&lt;b&gt;RECORD GREETINGS FOR MESSAGE ONLY EXTENSION&lt;/b&gt;
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Only Super Admins, User Admins, Users with Billing Admin access and the user who can access the extension can view and make changes to this section. See &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Editing-the-Extension-Permissions-via-Web&quot;; target=&quot;_blank&quot;&gt; User Roles and Permission &lt;/a&gt; for more information. 
+
+&lt;b&gt;Editing the Messages-Only Extension Name&lt;/b&gt;
+
+&lt;b&gt;NOTE&lt;/b&gt;: Customer&apos;s have an option to modify the name of their Annoucement Only Extension, Changing the Name of the extension will affect the name pronounce on the voicemail greeting when the extension is called. this occurs when the Voicemail greeting is set to default.
+
+Step 1: Under &lt;b&gt;Groups&lt;/b&gt; &gt; &lt;b&gt;Others&lt;/b&gt;, select the &lt;b&gt;Message-Only Extension&lt;/b&gt;
+
+&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION1&apos; /&gt;
+
+
+
+Step 2: Click Extension Info &gt; Record Extension Name
+
+&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION2&apos; /&gt;
+
+
+
+Step 3: A pop-up will appear displaying the current &lt;b&gt;Record Extension Name&lt;/b&gt;. Customer have an option wether to use the RingCentral text-to-speech name or Record extension name.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;RingCentral text-to-speech name (RingCentral will pronounce the name based on what is typed on the optional field)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION3&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Record extension name (Customer have three option to record their custom Message Only Extension name Phone, Record Using Computer Microphone, Import)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION4&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;Editing the Messages-Only Extension Voicemail Greeting&lt;/b&gt;
+
+Step 1: On the &lt;b&gt;Messages &amp; Notifications&lt;/b&gt; tab you will see the settings that the customer can configure.
+
+&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION5&apos; /&gt;
+
+
+
+&lt;b&gt;Voicemail Greeting&lt;/b&gt;
+
+A pop-up will appear displaying the current Voicemail Greeting. Choose the preffered type of greeting.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;Default&lt;/b&gt; (Changing the message only extension name see above instructions &lt;b&gt;Editing the Messages-Only Extension Name&lt;/b&gt; will take effect here when Voicemail Greeting is set to default)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION6&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Custom (Selecting this option will allow the customer to record a custom voicemail greeting in three ways
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;Record Over the Phone
+&lt;li&gt;Record Using Computer Microphone
+&lt;li&gt;Import&lt;/ul&gt;&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDGREETINGSFORMESSAGEONLYEXTENSION7&apos; /&gt;&lt;/ul&gt;
+
+
+
+For the step by step process on setting up Message only Extension, kindly go to Article number 4491 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/4491#ConfiguringMO&quot;; target=&quot;_blank&quot;&gt;Message-Only Extension - Overview | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting5</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_NAME</name>
+        <label>RECORD NAME</label>
+        <locationX>1443</locationX>
+        <locationY>493</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1_0</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDNAME</name>
+            <fieldText>&lt;b&gt;RECORD NAME&lt;/b&gt;
+
+&lt;b&gt;Admin: Record another User&apos;s Name&lt;/b&gt;
+
+RingCentral reads the First and Last Name saved in an extension&apos;s User Details as part of the default User Greeting or Voicemail Greeting. This can be customized with the help of the Record User Name option which can be found on the General tab in the User Details section. This option ensures that a User&apos;s name is correctly pronounced by the system.
+
+Use RingCentral text-to-speech to create a phonetic spelling of the User&apos;s name so the system can pronounce it correctly and be used for announcements. Use Record my name to create a recording by following the prompts on the phone, or by recording it straight from your computer microphone, or by uploading a .wav or .mp3 file.
+
+&lt;b&gt;NOTE&lt;/b&gt;: Recommended audio formats include the following:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;CCITT u-Law (G711a), 8kHz, 8 bit, mono
+&lt;li&gt;PCM, 8kHz, 16 bit, mono&lt;/ul&gt;
+
+&lt;b&gt;NOTE&lt;/b&gt;: &lt;b&gt;Administrators&lt;/b&gt; should log in to the RingCentral Online accoint then go to My Extension in order to modify his own extension&apos;s settings. Check &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9722&quot;; target=&quot;_blank&quot;&gt;User Details - Record your User Name | RingCentral&lt;/a&gt; for directions.
+
+&lt;img src=&apos;/resource/RECORDNAME1&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Only &lt;b&gt;Super Admins&lt;/b&gt;, &lt;b&gt;User Admins&lt;/b&gt;, and &lt;b&gt;Users with Billing Admin access&lt;/b&gt; can view and make changes to this section. See &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Editing-the-Extension-Permissions-via-Web&quot;; target=&quot;_blank&quot;&gt;User Roles and Permissions | RingCentral&lt;/a&gt; for more information.
+
+For the step by step process on setting up User Name via Administrator kindly go to Article number 1763 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/841&quot;; target=&quot;_blank&quot;&gt;User Settings - Admin - Record User&apos;s user name&lt;/a&gt;
+
+See instructions below for the brief walkthrough.
+
+The Administrator should log in to the RingCentral Online account then go to the Users section on the &lt;b&gt;Admin Portal&lt;/b&gt; in order to modify the Users&apos; setings.
+
+&lt;img src=&apos;/resource/RECORDNAME2&apos; /&gt;
+
+
+
+&lt;b&gt;Customizing another extensions&apos;s User Name&lt;/b&gt;
+
+Step 1: On the &lt;b&gt;User list&lt;/b&gt; &gt; &lt;b&gt;Users With Extensions&lt;/b&gt; tab, click the User&apos;s name.
+
+&lt;img src=&apos;/resource/RECORDNAME3&apos; /&gt;
+
+
+
+Step 2: Click &lt;b&gt;User Details&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDNAME4&apos; /&gt;
+
+
+
+Step 3: On the General tab, clik &lt;b&gt;Edit&lt;/b&gt; below &lt;b&gt;Record User Name&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDNAME5&apos; /&gt;
+
+
+
+At this point the Customer have two options for recording the Name of the extension
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;RingCentral text-to-speech&lt;/b&gt; (RingCentral will pronounce the name based on what is typed on the &lt;b&gt;Greeting Name&lt;/b&gt; field)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDNAME6&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;Record My Name&lt;/b&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-typecircle;&amp;nbsp;&quot;&gt;&lt;li&gt;By clicking the red small icon the customer will have three option to record either by &lt;b&gt;Phone, Computer, Import.&lt;/b&gt;&lt;/ul&gt;&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDNAME7&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;USER: Record your User Name&lt;/b&gt;
+
+For the step by step process on setting up the Name via User extersion kindly go to Article number 9722 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9722&quot;; target=&quot;_blank&quot;&gt;User Details - Record your User Name | RingCentral&lt;/a&gt;
+
+&lt;b&gt;Setting Up a Call Queue group Name&lt;/b&gt;
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Only &lt;b&gt;Super Admins&lt;/b&gt;, &lt;b&gt;User Admins&lt;/b&gt;, and &lt;b&gt;Users with Billing Admin access&lt;/b&gt; can view and make changes to this section. See &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Editing-the-Extension-Permissions-via-Web&quot;; target=&quot;_blank&quot;&gt;User Roles and Permissions | RingCentral&lt;/a&gt; for more information.
+
+Step 1: The Administrator should log in to the RingCentral Online account then go to the &lt;b&gt;Phone System&lt;/b&gt; section on the &lt;b&gt;Admin Portal&lt;/b&gt; then click &lt;b&gt;Groups() Others()&lt;/b&gt; to open the Groups section then Click on the Call Queue lastly the &lt;b&gt;Call Queue&lt;/b&gt; extension in order to modify the Call Queue extension settings (see image below).
+
+&lt;img src=&apos;/resource/RECORDNAME8&apos; /&gt;
+
+
+
+Step 2: Under the Info section of the Call Queue Extension, Click the Record 
+
+&lt;img src=&apos;/resource/RECORDNAME9&apos; /&gt;
+
+
+
+At this point the Customer have two options for recording the Name of the call queue extension
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;Custom&lt;/b&gt; (by clicking on the red circle icon the customer have three option in recording a custom Call queue name Record over the phone, Record over computer microphone, Import)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDNAME10&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;RingCentral text-to-speech name&lt;/b&gt; (RingCentral will pronounce the name based on what is typed on the optional field)&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;/resource/RECORDNAME11&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting6</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>RingCentral_text_to_speech</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_USER_OR_GROUP_GREETING</name>
+        <label>RECORD USER OR GROUP GREETING</label>
+        <locationX>954</locationX>
+        <locationY>885</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDUSERORGROUPGREETING</name>
+            <fieldText>&lt;b&gt;RECORD USER OR GROUP GREETING&lt;/b&gt;
+
+ 
+
+&lt;b&gt;Admin: Setup an extension&apos;s User Greeting&lt;/b&gt;
+
+RingCentral system comes with a default personal greeting, such as &quot;Thank you for calling (user name).&quot; Custom greetings allow the customer to change what their callers hear when they connect to an extension. The User Greeting feature is disabled by default and is not a personal voicemail announcement. Customer can have this option enabled if they prefer the system to answer the call with a recorded welcome message so callers know they have reached the right person.
+
+For the step by step process on setting up the user greeting via Auto Receptionist kindly go to Article number 3913 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-How-to-customize-your-extension-s-greeting&quot;; target=&quot;_blank&quot;&gt;User Greeting - Set Up Custom Greeting | Administrators | RingCentral
+&lt;/a&gt;
+
+&lt;b&gt;NOTE&lt;/b&gt;: Administrator should log in to the RingCentral Online account then go to &lt;b&gt;My Extension&lt;/b&gt; in order to configure their User Greeting. Check User: &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/9720&quot;; target=&quot;_blank&quot;&gt;User Settings - Set up User Greeting | RingCentral&lt;/a&gt; for instructions.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING1&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Only &lt;b&gt;Super Admins, User Admins, and User Admin access&lt;/b&gt; can set up an extension&apos;s User Greeting. See &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Editing-the-Extension-Permissions-via-Web&quot;; target=&quot;_blank&quot;&gt;User Roles and Permissions | RingCentral&lt;/a&gt; for more information.
+
+See instructions below for the brief example of setting up a Admin: Setup an extension&apos;s User Greeting.
+
+Step 1: Administrator should log in to the RingCentral Online account and go to the Users section on the &lt;b&gt;Admin Portal&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING2&apos; /&gt;
+
+
+
+Step 2: On the  User list &gt; &lt;&lt;b&gt;Users With Extensions&lt;/b&gt; tab, Click the User.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING3&apos; /&gt;
+
+
+
+Step 3: Click &lt;b&gt;Screening, Greeting, &amp; Hold Music&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING4&apos; /&gt;
+
+
+
+Step 4: Click &lt;b&gt;User Hours&lt;/b&gt; or &lt;b&gt;After Hours&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING5&apos; /&gt;
+
+
+
+Step 5: Check &lt;b&gt;Enable&lt;/b&gt; below &lt;b&gt;User Greeting&lt;/b&gt;, then click &lt;b&gt;Edit&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING6&apos; /&gt;
+
+
+
+Step 6: Make sure &lt;b&gt;Set Greeting&lt;/b&gt; is set to &lt;b&gt;Custom&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING7&apos; /&gt;
+
+
+
+Step 7: Select how the customer prefer to customize the User Greeting
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPGREETING8&apos; /&gt;
+
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Record over the Phone
+&lt;li&gt;Record over Computer Microphone
+&lt;li&gt;Import&lt;/ul&gt;
+
+&lt;b&gt;User: Set up User Greeting&lt;/b&gt;
+
+For the step by step process on setting up the user greeting via User: Set up User Greeting kindly go to Article number 9720 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-How-to-customize-your-extension-s-greeting&quot;; target=&quot;_blank&quot;&gt;User Greeting - Set Up Custom Greeting | Administrators | RingCentral
+&lt;/a&gt;
+
+ 
+
+&lt;b&gt;Admin: Uploading Custom Greetings for a Call Queue&lt;/b&gt; 
+
+For the step by step process on setting up the custom greeting for a Call Queue group kindly go to Article number 3532 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/How-to-upload-after-hours-greetings-for-a-department&quot;; target=&quot;_blank&quot;&gt;Call Queue - Admin: Set Up Custom Greeting | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting2</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORD_USER_OR_GROUP_VOICEMAIL_GREETING</name>
+        <label>RECORD USER OR GROUP VOICEMAIL GREETING</label>
+        <locationX>717</locationX>
+        <locationY>1093</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_how_the_customer_will_record_the_greeting1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDUSERORGROUPVOICEMAILGREETING</name>
+            <fieldText>&lt;b&gt;RECORD USER OR GROUP VOICEMAIL GREETING&lt;/b&gt;
+
+
+&lt;b&gt;Setting Up a Custom Voicemail Greeting on a User Extension&lt;/b&gt;
+
+For the step by step process on setting up the user voicemail greeting via Auto Receptionist kindly go to Article number 3190 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Uploading-Business-Hour-Voicemail-Greetings-of-an-extension-via-Web#Users&quot;; target=&quot;_blank&quot;&gt;Voicemail - Setup User&apos;s voicemail greeting | Admin | RingCentral&lt;/a&gt;
+
+&lt;b&gt;NOTE&lt;/b&gt;: Administrators should Log in to their RingCentral Online Account then go to &lt;b&gt;My Extension&lt;/b&gt; in order to configure his User Greeting see .
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPVOICEMAILGREETING1&apos; /&gt;
+
+
+
+Administrators setting up for other users should go to &lt;b&gt;Users&lt;/b&gt; section on the &lt;b&gt;Admin Portal&lt;/b&gt;.
+
+&lt;b&gt;Users: Adding a Custom Voicemail Greeting for other Users&lt;/b&gt;
+
+Step 1: On the &lt;b&gt;User list&lt;/b&gt; &gt; &lt;b&gt;Users With Extensions&lt;/b&gt; tab, click the User.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPVOICEMAILGREETING2&apos; /&gt;
+
+
+
+Step 2: Click &lt;b&gt;Messages and Notifications&lt;/b&gt;. Select &lt;b&gt;User Hours&lt;/b&gt; or &lt;b&gt;After Hours&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPVOICEMAILGREETING3&apos; /&gt;
+
+
+
+Step 3: Enable &lt;b&gt;Take Messages&lt;/b&gt;. Customer&apos;s may customize their Voicemail Greeting by clicking &lt;b&gt;Edit&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPVOICEMAILGREETING4&apos; /&gt;
+
+
+
+Step 4: Set Greeting to &lt;b&gt;Custom&lt;/b&gt;. Customer&apos;s may record their Voicemail Greeting by &lt;b&gt;Phone&lt;/b&gt;. &lt;b&gt;Computer Microphone&lt;/b&gt;, or by &lt;b&gt;Importing&lt;/b&gt; from their computer.
+
+&lt;img src=&apos;/resource/RECORDUSERORGROUPVOICEMAILGREETING5&apos; /&gt;
+
+
+
+&lt;b&gt;Note&lt;/b&gt;: for extension which only has user access kindly go to Messages and Notifications &gt; Voicemail greeting (for either user hours or after hours) then proceed to Step 2 in Article number 3190 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/5-10-Uploading-Business-Hour-Voicemail-Greetings-of-an-extension-via-Web#Users&quot;; target=&quot;_blank&quot;&gt;Voicemail - Setup User&apos;s voicemail greeting | Admin | RingCentral&lt;/a&gt;
+
+ 
+
+&lt;b&gt;Updating the Messages and Notification Settings of a Call Queue Group&lt;/b&gt;
+
+For the step by step process on updating the messages and Notification Settings for a call Queue Group  kindly go to Article number 3519 in our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/en_US/RC_Knowledge_Article/How-to-edit-the-department-hours-messages-and-notification-settings-of-a-department&quot;; target=&quot;_blank&quot;&gt;Call Queue - Update the Messages and Notification Settings | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_how_the_customer_will_record_the_greeting3</name>
+            <choiceReferences>Record_over_the_phone</choiceReferences>
+            <choiceReferences>Record_over_computer_microphone</choiceReferences>
+            <choiceReferences>Import</choiceReferences>
+            <choiceReferences>Default_Greeting_Announcement</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select how the customer will record the greeting</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_COMPUTER_MICROPHONE</name>
+        <label>RECORDING BY COMPUTER MICROPHONE</label>
+        <locationX>2483</locationX>
+        <locationY>1598</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_recorded1_2</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYCOMPUTERMICROPHONE</name>
+            <fieldText>&lt;b&gt;RECORDING BY COMPUTER MICROPHONE&lt;/b&gt;
+
+This option allow the customer to record their own Greeting using their computer&apos;s microphone. Walk the customer through this set up by following the steps below:
+
+Step 1. Ask the customer to select Computer microphone and then, click Record &lt;img src=&apos;/resource/RecordIcon&apos; /&gt; icon to start recording.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE1&apos; /&gt;
+
+
+
+Step 2. Once they are finish recording ask the customer to click the Stop Record &lt;img src=&apos;/resource/StopRecordIcon&apos; /&gt;  icon.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE2&apos; /&gt;
+
+
+
+Step 3. Ask the customer to click the Upload &lt;img src=&apos;/resource/UploadIcon&apos; /&gt; icon.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE3&apos; /&gt;
+
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: Click Play &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; to listen to recording or Record &lt;img src=&apos;/resource/RecordIcon&apos; /&gt;to re-record prompt. Click Cancel to cancel recording and/or Done to save and apply the recording.
+
+MPORTANT: Before proceeding make sure the greeting is saved successfully by playing it via online portal on Recording as seen on the image below. If new recording does not play, click &lt;b&gt;Edit&lt;/b&gt; then check by click ing play in the Edit window and/or re-recording a new one by clicking the record icon. 
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE4&apos; /&gt;
+
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_recorded2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully recorded?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_COMPUTER_MICROPHONE_2</name>
+        <label>RECORDING BY COMPUTER MICROPHONE</label>
+        <locationX>2610</locationX>
+        <locationY>3014</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_recorded1_2_2</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYCOMPUTERMICROPHONE_2</name>
+            <fieldText>&lt;b&gt;USE THE OTHER COMPUTER MICROPHONE TO RECORD THE CUSTOM ANNOUCEMENT&lt;/b&gt;
+
+&lt;b&gt;RECORDING BY COMPUTER MICROPHONE&lt;/b&gt;
+
+
+Step 1. Ask the customer to select Computer microphone and then, click Record &lt;img src=&apos;/resource/RecordIcon&apos; /&gt; icon to start recording.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE1&apos; /&gt;
+
+
+
+Step 2. Once they are finish recording ask the customer to click the Stop Record &lt;img src=&apos;/resource/StopRecordIcon&apos; /&gt;  icon.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE2&apos; /&gt;
+
+
+
+Step 3. Ask the customer to click the Upload &lt;img src=&apos;/resource/UploadIcon&apos; /&gt; icon.
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE3&apos; /&gt;
+
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: Click Play &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; to listen to recording or Record &lt;img src=&apos;/resource/RecordIcon&apos; /&gt;to re-record prompt. Click Cancel to cancel recording and/or Done to save and apply the recording.
+
+MPORTANT: Before proceeding make sure the greeting is saved successfully by playing it via online portal on Recording as seen on the image below. If new recording does not play, click &lt;b&gt;Edit&lt;/b&gt; then check by click ing play in the Edit window and/or re-recording a new one by clicking the record icon. 
+
+&lt;img src=&apos;/resource/RECORDINGBYCOMPUTERMICROPHONE4&apos; /&gt;
+
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_recorded2_2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully recorded?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_IMPORTING</name>
+        <label>RECORDING BY IMPORTING</label>
+        <locationX>933</locationX>
+        <locationY>1703</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_imported</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYIMPORTING</name>
+            <fieldText>&lt;b&gt;RECORDING BY IMPORTING&lt;/b&gt;
+
+
+This option will allow the customer to upload a customized pre-recorded audio file stored from their computer/device. Walk the customer through this by following the steps below:
+
+Step 1: Click Importing and then, click Browse.
+
+&lt;img src=&apos;/resource/RECORDINGBYIMPORTING1&apos; /&gt;
+
+
+
+&lt;b&gt;Note&lt;/b&gt;: After the customer click &lt;b&gt;Browse&lt;/b&gt;, they will see a pop-up window where they can locate and select the file that they want to use as their On-demand Call Recording Announcement. They can only use .wav or .mp3 audio files with the following format best audio quality:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;CCITT u-Law (G711a), 8 kHz, 8-bit, mono
+&lt;li&gt;PCM, 8 kHz, 16-bit, mono&lt;/ul&gt;
+
+Step 2:Click Open.
+
+&lt;img src=&apos;/resource/RECORDINGBYIMPORTING2&apos; /&gt;
+
+
+
+Step 3:Click Done.  
+Step 4: Click the Play &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; button to listen to the recording. 
+
+&lt;img src=&apos;/resource/RECORDINGBYIMPORTING3&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: If the quality of the audio is not as clear the sound quality when played on the customer&apos;s computer, inform the customer that RingCentral system auto convert their uploaded audio to our supported file indicated below. 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;CCITT u-Law (G711a), 8 kHz, 8-bit, mono
+&lt;li&gt;PCM, 8 kHz, 16-bit, mono&lt;/ul&gt;
+
+&lt;b&gt;Note&lt;/b&gt;: Background music and HD files will be converted to RingCentral recommended file size and quality this may affect audio quality.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_imported1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully imported?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_PHONE</name>
+        <label>RECORDING BY PHONE</label>
+        <locationX>304</locationX>
+        <locationY>1783</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_recorded1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYPHONE</name>
+            <fieldText>&lt;b&gt;RECORDING BY PHONE&lt;/b&gt;
+
+This option will allow the customer to record their customized greeting over the phone. Walk the customer through this by following the steps below:
+
+Step 1: Ask the customer to enter their phone number on the box provided that RingCentral system can call.
+
+Step 2: Whenever they are ready ask the customer to click &lt;b&gt;Call Now&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE1&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Customer&apos;s will receive an automated call from RingCentral on the number the they selected, with the instructions for recording their custom greetings. Press 1 to start recording and when they are done, ask them to press the pound # key. After they press the pound # key, the following prompts will be announced:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Press 1 - Save your custom greeting.
+
+&lt;li&gt;Press 2 - Listen to your greeting.
+
+&lt;li&gt;Press 3 - Change your greeting.&lt;/ul&gt;
+
+
+
+
+Step 3: Their custom greeting will be saved and activated once they end the call.  Once satisfied they are satisfied, ask the customer to click Save.
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Before proceeding make sure the greeting is saved successfully by playing it via online portal on Recording as seen on the image below.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE2&apos; /&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Click the &lt;b&gt;Play&lt;/b&gt;  &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; button to listen to the recording. 
+&lt;li&gt;Click the &lt;b&gt;Record&lt;/b&gt; &lt;img src=&apos;/resource/RecordIcon&apos; /&gt; icon if you want to record the custom greeting over the phone again.
+&lt;li&gt;Click the &lt;b&gt;Download&lt;/b&gt; &lt;img src=&apos;/resource/DownloadIcon&apos; /&gt; icon if you want to save the custom greeting to your computer or external storage. &lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_recorded</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully recorded?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_PHONE_0</name>
+        <label>RECORDING BY PHONE</label>
+        <locationX>325</locationX>
+        <locationY>2920</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_recorded1_0</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYPHONE_0</name>
+            <fieldText>&lt;b&gt;RECORDING BY PHONE&lt;/b&gt;
+
+This option will allow the customer to record their customized greeting over the phone. Walk the customer through this by following the steps below:
+
+Step 1: Ask the customer to enter their phone number on the box provided that RingCentral system can call.
+
+Step 2: Whenever they are ready ask the customer to click &lt;b&gt;Call Now&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE1&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Customer&apos;s will receive an automated call from RingCentral on the number the they selected, with the instructions for recording their custom greetings. Press 1 to start recording and when they are done, ask them to press the pound # key. After they press the pound # key, the following prompts will be announced:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Press 1 - Save your custom greeting.
+
+&lt;li&gt;Press 2 - Listen to your greeting.
+
+&lt;li&gt;Press 3 - Change your greeting.&lt;/ul&gt;
+
+
+
+
+Step 3: Their custom greeting will be saved and activated once they end the call.  Once satisfied they are satisfied, ask the customer to click Save.
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Before proceeding make sure the greeting is saved successfully by playing it via online portal on Recording as seen on the image below.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE2&apos; /&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Click the &lt;b&gt;Play&lt;/b&gt;  &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; button to listen to the recording. 
+&lt;li&gt;Click the &lt;b&gt;Record&lt;/b&gt; &lt;img src=&apos;/resource/RecordIcon&apos; /&gt; icon if you want to record the custom greeting over the phone again.
+&lt;li&gt;Click the &lt;b&gt;Download&lt;/b&gt; &lt;img src=&apos;/resource/DownloadIcon&apos; /&gt; icon if you want to save the custom greeting to your computer or external storage. &lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_recorded_0</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully recorded?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RECORDING_BY_PHONE_0_1</name>
+        <label>RECORDING BY PHONE</label>
+        <locationX>1380</locationX>
+        <locationY>2680</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Recording_successfully_recorded1_0_1</targetReference>
+        </connector>
+        <fields>
+            <name>RECORDINGBYPHONE_0_1</name>
+            <fieldText>&lt;b&gt;RECORDING BY PHONE&lt;/b&gt;
+
+This option will allow the customer to record their customized greeting over the phone. Walk the customer through this by following the steps below:
+
+Step 1: Ask the customer to enter their phone number on the box provided that RingCentral system can call.
+
+Step 2: Whenever they are ready ask the customer to click &lt;b&gt;Call Now&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE1&apos; /&gt;
+
+
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Customer&apos;s will receive an automated call from RingCentral on the number the they selected, with the instructions for recording their custom greetings. Press 1 to start recording and when they are done, ask them to press the pound # key. After they press the pound # key, the following prompts will be announced:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Press 1 - Save your custom greeting.
+
+&lt;li&gt;Press 2 - Listen to your greeting.
+
+&lt;li&gt;Press 3 - Change your greeting.&lt;/ul&gt;
+
+
+
+
+Step 3: Their custom greeting will be saved and activated once they end the call.  Once satisfied they are satisfied, ask the customer to click Save.
+
+&lt;a style=&quot;color:Red;&quot;&gt; &lt;b&gt;IMPORTANT&lt;a/&gt;&lt;/b&gt;: Before proceeding make sure the greeting is saved successfully by playing it via online portal on Recording as seen on the image below.
+
+&lt;img src=&apos;/resource/RECORDINGBYPHONE2&apos; /&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Click the &lt;b&gt;Play&lt;/b&gt;  &lt;img src=&apos;/resource/PlayIcon&apos; /&gt; button to listen to the recording. 
+&lt;li&gt;Click the &lt;b&gt;Record&lt;/b&gt; &lt;img src=&apos;/resource/RecordIcon&apos; /&gt; icon if you want to record the custom greeting over the phone again.
+&lt;li&gt;Click the &lt;b&gt;Download&lt;/b&gt; &lt;img src=&apos;/resource/DownloadIcon&apos; /&gt; icon if you want to save the custom greeting to your computer or external storage. &lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Recording_successfully_recorded_0_1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Recording successfully recorded?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RingCentral_Greetings</name>
+        <label>RingCentral Greetings</label>
+        <locationX>156</locationX>
+        <locationY>107</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_the_type_of_Greeting_the_customer_is_need_of_assistance1</targetReference>
+        </connector>
+        <fields>
+            <name>RINGCENTRALGREETINGSSETUP</name>
+            <fieldText>&lt;b&gt;RINGCENTRAL GREETINGS SET UP&lt;/b&gt;
+
+ 
+
+This guide will walk you through on how to set up Greetings via online portal. Before proceeding make sure the phone number the customer wants the greeting to play is isolated and if its an extension make sure the extension is activated. The guide covers the following topics below.
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;Company Greeting&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;Calls to customer&apos;s company number can be connected to a built-in Auto-Receptionist or connected to a specific extension. When they choose to connect the calls to RingCentral&apos;s built-in Auto-Receptionist, the Company Greeting will be played to welcome their callers when they dial the customer&apos;s RingCentral Number.
+
+&lt;li&gt;&lt;b&gt;Note&lt;/b&gt;: Only an account Administrator with access to the Auto-Receptionist will be able to record this greeting. Guide does not include settingg Advance Call Handling setting greetings kindly check Advance Call Handling Option Guide for this information&lt;/ul&gt;
+
+
+&lt;li&gt;&lt;b&gt;User or Group Greeting&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;Turn on this option when a customer wants the system to answer the call with a recorded welcome message so callers know they&apos;ve reached the right person or Call Group when they press an extension.
+
+&lt;li&gt;&lt;b&gt;Note&lt;/b&gt;:  Customer&apos;s can also use their own User Greeting by adding a Custom Greeting to their User Extension, or customize a Call Group&apos;s greeting.&lt;/ul&gt;
+
+
+&lt;li&gt;&lt;b&gt;User or Group Voicemail Greeting&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;il&gt;Callers hear this greeting when they are routed to the customer voicemail to leave a message.
+
+&lt;li&gt;&lt;b&gt;Note&lt;/b&gt;: Customer&apos;s can customize User&apos;s Voicemail Greeting. as well as a Call Group&apos;s Voicemail Greetings. &lt;/ul&gt;
+
+
+&lt;li&gt;&lt;b&gt;Name&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;il&gt;Use this option to ensure the Group Name or Extension&apos;s Name is pronounced correctly by the system operator. Customer&apos;s can spell out the name the way it sounds to help the operator, or they can record the name in customer&apos;s own voice and use it for announcements instead.
+
+&lt;li&gt;Customer&apos;s Extension or Call Group&apos;s name is converted with text-to-speech technology. 
+
+&lt;li&gt;&lt;b&gt;Note&lt;/b&gt;: Customers can customize your User Extension&apos;s Name or a Group&apos;s Name via Online Portal.&lt;/ul&gt;
+
+
+&lt;li&gt;&lt;b&gt;Announcement&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;il&gt;Great for when customer&apos;s want to provide directions, events information, or any other announcement. Callers will not be given an option to leave messages. This guide is only for Announcement Only Extension Greeting.
+
+&lt;li&gt;&lt;b&gt;Note&lt;/b&gt;: Walkthrough does not include On-Demand and Automatic Call Recording Announcement, Kindly follow the Call Recording for steps in configuring On-Demand and Automatic Call Recording Announcement.&lt;/ul&gt;
+
+
+&lt;li&gt;&lt;b&gt;Greeting for Message Only Extension&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;il&gt;The Message Only Extension also serves as customer&apos;s Company&apos;s General Mailbox where their callers can leave voice messages. This guide covers customizing the Message Only Extension name, which is pronounce by the system as the name of the extension when the Message Only extension is set to default in the Voice Mail Greeting. Also this guide covers setting up a customized greeting &lt;/ul&gt;&lt;/ul&gt;
+
+For more information kindly go to &lt;b&gt;Article 1898&lt;/b&gt; on our success site or click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/RingCentral-Greeting-Types&quot;; target=&quot;_blank&quot;&gt;Greeting Types | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_the_type_of_Greeting_the_customer_is_need_of_assistance</name>
+            <choiceReferences>Company_Greeting</choiceReferences>
+            <choiceReferences>User_or_Group_Greeting</choiceReferences>
+            <choiceReferences>User_or_Group_Voicemail_Greeting</choiceReferences>
+            <choiceReferences>Name</choiceReferences>
+            <choiceReferences>Announcement</choiceReferences>
+            <choiceReferences>Greeting_for_Message_Only_Extension</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select the type of Greeting the customer is need of assistance</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>RingCentral_text_to_speech_Name</name>
+        <label>RingCentral text-to-speech Name</label>
+        <locationX>1904</locationX>
+        <locationY>689</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>ISSUE_RESOLVED1</targetReference>
+        </connector>
+        <fields>
+            <name>RingCentraltexttospeechName</name>
+            <fieldText>&lt;b&gt;RingCentral text-to-speech Name&lt;/b&gt;
+
+Make sure Record by is set to RingCentral text-to-speech. Enter the name in the text field below Greeting Name/optional.
+
+For User: (see image below)
+
+&lt;img src=&apos;/resource/RingCentraltexttospeechName1&apos; /&gt;
+
+
+
+For Call Queue Name:(see image below)
+
+&lt;img src=&apos;/resource/RingCentraltexttospeechName1&apos; /&gt;
+
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: Customer need to spell ou the name the way is sounds to help the system pronounce it correctly. For example, they can enter &lt;b&gt;&quot;Debbie Smith one oh one&quot;&lt;/b&gt; so the the system will mention Debbie Smith 101.
+
+Click &lt;b&gt;Save&lt;/b&gt;.
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to proceed
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>SYSTEM_AUTOMATED_RECORDING_ANNOUNCEMENT</name>
+        <label>SYSTEM AUTOMATED RECORDING/ANNOUNCEMENT</label>
+        <locationX>1303</locationX>
+        <locationY>1380</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>ISSUE_RESOLVED1</targetReference>
+        </connector>
+        <fields>
+            <name>SYSTEMAUTOMATEDRECORDINGANNOUNCEMENT</name>
+            <fieldText>&lt;b&gt;SYSTEM AUTOMATED RECORDING/ANNOUNCEMENT&lt;/b&gt;
+
+If the customer opt out in creating/setting up a custom recording/announcement by default the system will play the system automated recording/announcement which is stated in the previous screen steps article. Make sure the Callforwarding and Advance Rules are properly set to have the correct greeting playing depending on the customer&apos;s preference.
+
+Dont forget to run a test call to make sure all issue have been addressed. 
+
+&lt;b&gt;Reminders&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gain agreement from customer to close the case
+&lt;li&gt;Set case disposition field properly
+&lt;li&gt;Set Severity to Medium
+&lt;li&gt;Copy the case history to the comment field
+&lt;li&gt;Position the survey to the customer accordingly
+&lt;li&gt;Promote Get Help option and provide the KB Article&lt;/ul&gt;
+ 
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TEST_AUDIO_FILE_USING_COMPUTER_MEDIA_PLAYER</name>
+        <label>TEST AUDIO FILE USING COMPUTER MEDIA PLAYER</label>
+        <locationX>1277</locationX>
+        <locationY>1709</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_Audio_Quality_clear1</targetReference>
+        </connector>
+        <fields>
+            <name>TESTAUDIOFILEUSINGCOMPUTERMEDIAPLAYER</name>
+            <fieldText>&lt;b&gt;TEST AUDIO FILE USING COMPUTER MEDIA PLAYER&lt;/b&gt;
+
+To isolate the issue ask the customer to test file using their media player on their computer.
+
+Check for the following:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Grabled sound
+&lt;li&gt;Static
+&lt;li&gt;Not playing
+&lt;li&gt;Audio Quality not to customer&apos;s preference&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_Audio_Quality_clear</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the Audio Quality clear?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TEST_OTHER_COMPUTER_MICROPHONE</name>
+        <label>TEST OTHER COMPUTER MICROPHONE</label>
+        <locationX>2588</locationX>
+        <locationY>2708</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_Audio_Quality_of_the_recorded_file_sound_clear1_2</targetReference>
+        </connector>
+        <fields>
+            <name>TESTOTHERCOMPUTERMICROPHONE</name>
+            <fieldText>&lt;b&gt;TEST OTHER COMPUTER MICROPHONE&lt;/b&gt;
+
+Ask the customer to plug in the other computer microphone. Before proceeding with recording via Online portal make sure the computer microphone is working by running a test. Walk the customer through in checking if the other microphone is working by following steps below:
+
+
+
+For &lt;b&gt;Windows&lt;/b&gt;
+
+Ask the the customer to do the following steps on their computer:
+
+&lt;b&gt;Note&lt;/b&gt;: By default most Windows Operating System automatically enables microphones and line in ports.
+
+1. Click Start &lt;img src=&apos;/resource/WindowsStartIcon&apos; /&gt;, and then click &lt;b&gt;Control Panel&lt;/b&gt;
+
+2. Click &lt;b&gt;Hardware and Sounds&lt;/b&gt;, and then click &lt;b&gt;Managing audio devices&lt;/b&gt;. A sound window opens.
+
+3. Click the &lt;b&gt;Recording&lt;/b&gt; tab. Select the device the customer is using on the selection make sure the icon has a green check mark to make sure that is the default audio input device, if it doesnt have the green checkmark right click the icon then select &lt;b&gt;Enable&lt;/b&gt;.
+
+4. To test the microphone, speak into it.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE1&apos; /&gt;
+
+
+
+5. After making sure the device is enabled and detected, test if the sound quality of the compupter microphone has no issue by doing a Sound Recorder test. Ask the customer to click Start &lt;img src=&apos;/resource/WindowsStartIcon&apos; /&gt;, All Programs, Accessories, and select &lt;b&gt;Sound Recorder&lt;/b&gt;.
+
+6. Click &lt;b&gt;Start Recording&lt;/b&gt; (the red circle) and speak into the microphone.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE2&apos; /&gt;
+
+
+
+7. When the customer is finish recording, click &lt;b&gt;Stop Recording&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE3&apos; /&gt;
+
+
+
+A save screen automatically opens.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE4&apos; /&gt;
+
+
+
+8. Ask the customer to find and double-click the filename of recording to play back the recorded sound. The file should play from the sound software that is associated with the audio file type - either WAV or WMA. They can open the sound file using Windows Media Player.
+
+
+
+
+
+For MAC
+
+Step 1: Click the &lt;b&gt;Apple&lt;/b&gt; icon present in the top left corner of the screen. A menu will appear.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE5&apos; /&gt;
+
+
+
+Step 2: Click &lt;b&gt;System Preferences&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE6&apos; /&gt;
+
+
+
+Step 3: Under system preferences select &lt;b&gt;Sound&lt;/b&gt; either by clicking it or by searching for it in the search text box.
+
+Step 4: Under &lt;b&gt;Sound&lt;/b&gt; select the &lt;b&gt;Input&lt;/b&gt; tab.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE7&apos; /&gt;
+
+Step 5: The list of recording devices will appear. Make sure that the “Internal Microphone” is selected if the customer is using a line in port make sure the line in port is selected. Ask the customer to speak into the microphone, and look for blue bars moving beside Input Level while you talk. 
+
+&lt;b&gt;Note&lt;/b&gt;: If the blue bars are rising while the customer is speaking that means the microphone is properly configured skip step 6 - 7 - 8 proceed to step 9, if its not rising proceed to step 6
+
+Step 6: Drag the slider all the way to the right, to set the max volume.
+
+Step 7: Now check again if the customer see blue bars rising when they talk into the microphone: if they do, mic is now properly configured. if the blue bars are still not rising proceed to step 8:
+
+Step 8: Shut down the machine and then turn it back on
+
+&lt;b&gt;Note&lt;/b&gt;: After the computer has rebooted follow the steps again and check if the blue bar is rising if its rising proceed to step 9 if its not rising refer the customer to their vendor.
+
+Step 9: Ask the customer to open QuickTime Player from Applications folder (if the customer doesnt have the QuickTime Player ask them if they have other recording application installed in the computer.
+
+Step 10: Open the File menu and select New Audio Recording.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE8&apos; /&gt;
+
+
+
+Step 11: The customer will see a very simple user interface with sound recording controls. Ask the customer toclick the Red circle icon to start recording then click the red circle icon again to stop recording. Ask the customer to save the recorded file
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE9&apos; /&gt;
+
+
+
+Step 12. Ask the customer to open the recorded file and press PLAY
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_Audio_Quality_of_the_recorded_file_sound_clear2</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the Audio Quality of the recorded file sound clear?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TEST_THE_RECORDING_DEVICE</name>
+        <label>TEST THE RECORDING DEVICE</label>
+        <locationX>2566</locationX>
+        <locationY>2120</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_the_Audio_Quality_of_the_recorded_file_sound_clear1</targetReference>
+        </connector>
+        <fields>
+            <name>TESTTHERECORDINGDEVICE</name>
+            <fieldText>&lt;b&gt;TEST THE RECORDING DEVICE&lt;/b&gt;
+
+Isolate the issue wether its a RingCentral issue or the customer&apos;s microphone by following the steps below.
+
+For &lt;b&gt;Windows&lt;/b&gt;
+
+Ask the the customer to do the following steps on their computer:
+
+&lt;b&gt;Note&lt;/b&gt;: By default most Windows Operating System automatically enables microphones and line in ports.
+
+1. Click Start &lt;img src=&apos;/resource/WindowsStartIcon&apos; /&gt;, and then click &lt;b&gt;Control Panel&lt;/b&gt;
+
+2. Click &lt;b&gt;Hardware and Sounds&lt;/b&gt;, and then click &lt;b&gt;Managing audio devices&lt;/b&gt;. A sound window opens.
+
+3. Click the &lt;b&gt;Recording&lt;/b&gt; tab. Select the device the customer is using on the selection make sure the icon has a green check mark to make sure that is the default audio input device, if it doesnt have the green checkmark right click the icon then select &lt;b&gt;Enable&lt;/b&gt;.
+
+4. To test the microphone, speak into it.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE1&apos; /&gt;
+
+
+
+5. After making sure the device is enabled and detected, test if the sound quality of the compupter microphone has no issue by doing a Sound Recorder test. Ask the customer to click Start &lt;img src=&apos;/resource/WindowsStartIcon&apos; /&gt;, All Programs, Accessories, and select &lt;b&gt;Sound Recorder&lt;/b&gt;.
+
+6. Click &lt;b&gt;Start Recording&lt;/b&gt; (the red circle) and speak into the microphone.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE2&apos; /&gt;
+
+
+
+7. When the customer is finish recording, click &lt;b&gt;Stop Recording&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE3&apos; /&gt;
+
+
+
+A save screen automatically opens.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE4&apos; /&gt;
+
+
+
+8. Ask the customer to find and double-click the filename of recording to play back the recorded sound. The file should play from the sound software that is associated with the audio file type - either WAV or WMA. They can open the sound file using Windows Media Player.
+
+
+
+
+
+For MAC
+
+Step 1: Click the &lt;b&gt;Apple&lt;/b&gt; icon present in the top left corner of the screen. A menu will appear.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE5&apos; /&gt;
+
+
+
+Step 2: Click &lt;b&gt;System Preferences&lt;/b&gt;.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE6&apos; /&gt;
+
+
+
+Step 3: Under system preferences select &lt;b&gt;Sound&lt;/b&gt; either by clicking it or by searching for it in the search text box.
+
+Step 4: Under &lt;b&gt;Sound&lt;/b&gt; select the &lt;b&gt;Input&lt;/b&gt; tab.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE7&apos; /&gt;
+
+Step 5: The list of recording devices will appear. Make sure that the “Internal Microphone” is selected if the customer is using a line in port make sure the line in port is selected. Ask the customer to speak into the microphone, and look for blue bars moving beside Input Level while you talk. 
+
+&lt;b&gt;Note&lt;/b&gt;: If the blue bars are rising while the customer is speaking that means the microphone is properly configured skip step 6 - 7 - 8 proceed to step 9, if its not rising proceed to step 6
+
+Step 6: Drag the slider all the way to the right, to set the max volume.
+
+Step 7: Now check again if the customer see blue bars rising when they talk into the microphone: if they do, mic is now properly configured. if the blue bars are still not rising proceed to step 8:
+
+Step 8: Shut down the machine and then turn it back on
+
+&lt;b&gt;Note&lt;/b&gt;: After the computer has rebooted follow the steps again and check if the blue bar is rising if its rising proceed to step 9 if its not rising refer the customer to their vendor.
+
+Step 9: Ask the customer to open QuickTime Player from Applications folder (if the customer doesnt have the QuickTime Player ask them if they have other recording application installed in the computer.
+
+Step 10: Open the File menu and select New Audio Recording.
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE8&apos; /&gt;
+
+
+
+Step 11: The customer will see a very simple user interface with sound recording controls. Ask the customer toclick the Red circle icon to start recording then click the red circle icon again to stop recording. Ask the customer to save the recorded file
+
+&lt;img src=&apos;/resource/TESTTHERECORDINGDEVICE9&apos; /&gt;
+
+
+
+Step 12. Ask the customer to open the recorded file and press PLAY
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_Audio_Quality_of_the_recorded_file_sound_clear</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is the Audio Quality of the recorded file sound clear?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>748</locationX>
+        <locationY>2337</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the RingCentral system since you were able to reach the phone number they use at the &lt;b&gt;Set Greeting&lt;/b&gt; window and an intervention from a higher support will be needed.
+
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly &lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION2</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>2022</locationX>
+        <locationY>2269</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION2</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the RingCentral system since there was no issue with the recorded file after troubleshooting the computer microphone and an intervention from a higher support will be needed.
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly 
+ &lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION2_2</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>2027</locationX>
+        <locationY>3242</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION2_2</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the RingCentral system since there was no issue with the other computer microphone audio quality while recording and an intervention from a higher support will be needed.
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly 
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+
+ &lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION_0</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>756</locationX>
+        <locationY>3034</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION_0</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the RingCentral system since you were able to reach the phone number they use at the &lt;b&gt;Set Greeting&lt;/b&gt; window and an intervention from a higher support will be needed.
+
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly &lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION_1</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>1375</locationX>
+        <locationY>2237</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION_1</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the RingCentral system since you were able to reach the phone number and was able to speak with customer with no issue on the audio quality they use at the Set Greeting window and an intervention from a higher support will be needed.
+
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly &lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TIER_2_ESCALATION_2</name>
+        <label>TIER 2 ESCALATION</label>
+        <locationX>744</locationX>
+        <locationY>2116</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TIER2ESCALATION_2</name>
+            <fieldText>&lt;b&gt;TIER 2 ESCALATION&lt;/b&gt;
+
+Inform the customer that there is a possible issue with the system since the custom recording is not saved, after following the walkthrough and an intervention from a higher support will be needed.
+
+
+
+&lt;b&gt;Reminders before escalating the case&lt;/b&gt;:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Gather all important information
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Do not forget to select the correct disposition based on the issue being escalated
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly &lt;/ul&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TRY_OTHER_COMPUTER_MICROPHONE</name>
+        <label>TRY OTHER COMPUTER MICROPHONE</label>
+        <locationX>2583</locationX>
+        <locationY>2425</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Other_computer_microphone_available2</targetReference>
+        </connector>
+        <fields>
+            <name>TRYOTHERCOMPUTERMICROPHONE</name>
+            <fieldText>&lt;b&gt;TRY OTHER COMPUTER MICROPHONE&lt;/b&gt;
+
+ 
+
+At this point further isolation is needed since the issue could be the computer microphone or the RingCentral system. Ask the customer to use other Computer Microphone to make sure the issue is not with his initial computer microphone.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Other_computer_microphone_available</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Other computer microphone available?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TRY_OTHER_PHONE_NUMBER</name>
+        <label>TRY OTHER PHONE NUMBER</label>
+        <locationX>315</locationX>
+        <locationY>2460</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Other_phone_number_available1</targetReference>
+        </connector>
+        <fields>
+            <name>TRYOTHERPHONENUMBER</name>
+            <fieldText>TRY OTHER PHONE NUMBER
+
+ 
+
+If the initial phone number cannot be reach it could be that the phone number has a carrier issue with our RingCentral system, a good troubleshooting step is to use another phone number for further isolation. Ask the customer for another phone number and call that number using your incontact.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Other_phone_number_available</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Other phone number available?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TRY_OTHER_PHONE_NUMBER_1</name>
+        <label>TRY OTHER PHONE NUMBER</label>
+        <locationX>938</locationX>
+        <locationY>2346</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Other_phone_number_available1_1</targetReference>
+        </connector>
+        <fields>
+            <name>TRYOTHERPHONENUMBER_1</name>
+            <fieldText>TRY OTHER PHONE NUMBER
+
+ 
+
+If the initial phone number cannot be reach it could be that the phone number has a carrier issue with our RingCentral system, a good troubleshooting step is to use another phone number for further isolation. Ask the customer for another phone number and call that number using your incontact.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Other_phone_number_available_1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Other phone number available?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TYPICAL_RECORDING_BY_COMPUTER_MICROPHONE_FAILURE_SCENARIO</name>
+        <label>TYPICAL RECORDING BY COMPUTER MICROPHONE FAILURE SCENARIO</label>
+        <locationX>2971</locationX>
+        <locationY>1597</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>SELECT_APPROPRIATE_SCENARIO1_2</targetReference>
+        </connector>
+        <fields>
+            <name>TYPICALRECORDINGBYCOMPUTERMICROPHONEFAILURESCENARIO</name>
+            <fieldText>&lt;b&gt;TYPICAL RECORDING FAILURE SCENARIO&lt;/b&gt;
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;No Audio Detected&lt;/b&gt; - Prompted by an error that no audio detected after clicking Record in Set greeting window
+&lt;li&gt;&lt;b&gt;Audio problem with the uploaded file&lt;/b&gt; - Audio quality of the recorded greeting is distorted, garbled, static clicking sound etc...
+&lt;li&gt;&lt;b&gt;Audio recording is not saving&lt;/b&gt; - The greeting still playing the default greeting instead of the custom recorded greeting. &lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>SELECT_APPROPRIATE_SCENARIO_2</name>
+            <choiceReferences>No_Audio_detected</choiceReferences>
+            <choiceReferences>Audio_problem_with_the_uploaded_file</choiceReferences>
+            <choiceReferences>Audio_recording_is_not_saving</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>SELECT APPROPRIATE SCENARIO</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TYPICAL_RECORDING_FAILURE_SCENARIO</name>
+        <label>TYPICAL  RECORDING FAILURE SCENARIO</label>
+        <locationX>307</locationX>
+        <locationY>2006</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>SELECT_APPROPRIATE_SCENARIO1</targetReference>
+        </connector>
+        <fields>
+            <name>TYPICALRECORDINGFAILURESCENARIO</name>
+            <fieldText>&lt;b&gt;TYPICAL  RECORDING FAILURE SCENARIO&lt;/b&gt;
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;No Audio Detected&lt;/b&gt; - Prompted by an error that no audio detected after clicking Record in Set greeting window
+&lt;li&gt;&lt;b&gt;Audio problem with the uploaded file&lt;/b&gt; - Audio quality of the recorded greeting is distorted, garbled, static clicking sound etc...
+&lt;li&gt;&lt;b&gt;Audio recording is not saving&lt;/b&gt; - The greeting still playing the default greeting instead of the custom recorded greeting. &lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>SELECT_APPROPRIATE_SCENARIO</name>
+            <choiceReferences>No_call_from_RingCentral_received</choiceReferences>
+            <choiceReferences>Audio_problem_with_the_uploaded_file</choiceReferences>
+            <choiceReferences>Audio_recording_is_not_saving</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>SELECT APPROPRIATE SCENARIO</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>RingCentral_Greetings</startElementReference>
+    <status>Obsolete</status>
+</Flow>

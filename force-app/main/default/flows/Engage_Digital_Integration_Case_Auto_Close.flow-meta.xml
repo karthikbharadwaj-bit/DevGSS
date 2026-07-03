@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SR-2003401 https://ringcentral.freshservice.com/a/tickets/2003401 (Update filter criteria and field update)
+SR-1996449 https://ringcentral.freshservice.com/a/tickets/1996449 (90 mins after)</description>
+    <environments>Default</environments>
+    <interviewLabel>Engage Digital Integration - Case Auto Close {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Engage Digital Integration - Case Auto Close</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Auto_Close_RChee_Bot_Case</name>
+        <label>Auto Close RChee Bot Case</label>
+        <locationX>308</locationX>
+        <locationY>276</locationY>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>OwnerId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>0052H00000DerrBQAR</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>OwnerId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>00580000003TA8jAAG</stringValue>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>CloseInternalWorkflowLevel1__c</field>
+            <value>
+                <stringValue>IFD - Case Auto Close</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>OpenInternalWorkflowLevel1__c</field>
+            <value>
+                <stringValue>IFD - Case Auto Create</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Closed</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record.Dimelo__Cases__r</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>NOT(CONTAINS({!$Record.Owner:User.Profile.Name}, &apos;Support&apos;))</filterFormula>
+        <object>Dimelo__Intervention__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>X90_Minutes_After</name>
+            <connector>
+                <targetReference>Auto_Close_RChee_Bot_Case</targetReference>
+            </connector>
+            <label>90 Minutes After</label>
+            <offsetNumber>90</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <recordField>CreatedDate</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

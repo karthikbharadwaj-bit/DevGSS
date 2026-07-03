@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>AssignKBId</name>
+        <label>AssignKBId</label>
+        <locationX>620</locationX>
+        <locationY>50</locationY>
+        <assignmentItems>
+            <assignToReference>var_input_searchstring</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>ArticleSearch_t_kbidholder</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>RemoveStopWords</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>EmptySearch_A</name>
+        <label>EmptySearch A</label>
+        <locationX>1000</locationX>
+        <locationY>191</locationY>
+        <assignmentItems>
+            <assignToReference>var_input_searchstring</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>999999999</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>ResetArticleSearchIndicator_A</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>GoBacktoSearch_A</name>
+        <label>GoBacktoSearch A</label>
+        <locationX>620</locationX>
+        <locationY>653</locationY>
+        <assignmentItems>
+            <assignToReference>var_articlesearchindicator</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Go Back</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <name>ReenterKB_A</name>
+        <label>ReenterKB A</label>
+        <locationX>620</locationX>
+        <locationY>367</locationY>
+        <assignmentItems>
+            <assignToReference>var_input_searchstring</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>ReenterKBId_kbidholder</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>RemoveStopWords</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>RemoveSpaces</name>
+        <label>RemoveSpaces</label>
+        <locationX>862</locationX>
+        <locationY>50</locationY>
+        <assignmentItems>
+            <assignToReference>var_input_searchstring</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>frm_removespaces</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>EmptySearch_D</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>RemoveStopWords</name>
+        <label>RemoveStopWords</label>
+        <locationX>742</locationX>
+        <locationY>50</locationY>
+        <assignmentItems>
+            <assignToReference>var_input_searchstring</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>frm_removestopwords</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>RemoveSpaces</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>ResetArticleSearchIndicator_A</name>
+        <label>ResetArticleSearchIndicator A</label>
+        <locationX>1180</locationX>
+        <locationY>55</locationY>
+        <assignmentItems>
+            <assignToReference>var_articlesearchindicator</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Article Search</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <name>UsedThirdPartyReference_A</name>
+        <label>UsedThirdPartyReference A</label>
+        <locationX>619</locationX>
+        <locationY>518</locationY>
+        <assignmentItems>
+            <assignToReference>var_articlesearchindicator</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <stringValue>Third Party Reference</stringValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <choices>
+        <name>ArticleSearch_rb_choice_proceedwithkbid</name>
+        <choiceText>&lt;span style=&quot;color: rgb(211, 118, 18);&quot;&gt;Proceed with this Knowledge Base article number&lt;/span&gt;</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>ArticleSearch_rb_choice_thirdpartyreference</name>
+        <choiceText>&lt;span style=&quot;color: rgb(211, 118, 18);&quot;&gt;I am using a third party reference&lt;/span&gt;</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>ReenterKBId_rb_choice_goback</name>
+        <choiceText>&lt;span style=&quot;color: rgb(211, 118, 18);&quot;&gt;Go back to the search screen&lt;/span&gt;</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>ReenterKBId_rb_choice_proceedwithkbid</name>
+        <choiceText>&lt;span style=&quot;color: rgb(211, 118, 18);&quot;&gt;Proceed with this Knowledge Base article number&lt;/span&gt;</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>ReenterKBId_rb_choice_thirdpartyreference</name>
+        <choiceText>&lt;span style=&quot;color: rgb(211, 118, 18);&quot;&gt;I am using a third party reference&lt;/span&gt;</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>ArticleSearch_D</name>
+        <label>ArticleSearch D</label>
+        <locationX>462</locationX>
+        <locationY>52</locationY>
+        <defaultConnector>
+            <targetReference>UsedThirdPartyReference_A</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>ArticleSearch_D_kbidselected</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>ArticleSearch_rb_choice_proceedwithkbid</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>AssignKBId</targetReference>
+            </connector>
+            <label>KB ID Selected</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>EmptySearch_D</name>
+        <label>EmptySearch D</label>
+        <locationX>991</locationX>
+        <locationY>52</locationY>
+        <defaultConnector>
+            <targetReference>ResetArticleSearchIndicator_A</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>EmptySearch_D_null</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>var_input_searchstring</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>EmptySearch_A</targetReference>
+            </connector>
+            <label>Null</label>
+        </rules>
+        <rules>
+            <name>EmptySearch_D_empty</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>var_input_searchstring</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue></stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>EmptySearch_A</targetReference>
+            </connector>
+            <label>Empty</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>ReenterKBId_D</name>
+        <label>ReenterKBId D</label>
+        <locationX>178</locationX>
+        <locationY>51</locationY>
+        <defaultConnector>
+            <targetReference>ArticleSearch</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>ReenterKBId_D_reenterkbid</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>var_articlesearchindicator</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Re-enter KB Id</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ReenterKBId</targetReference>
+            </connector>
+            <label>Reenter KB Id</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>ReenterKBIdArticleSearch_D</name>
+        <label>ReenterKBIdArticleSearch D</label>
+        <locationX>457</locationX>
+        <locationY>370</locationY>
+        <defaultConnector>
+            <targetReference>GoBacktoSearch_A</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>ReenterKBIdArticleSearch_D_kbidselected</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>ReenterKBId_rb_choice_proceedwithkbid</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ReenterKB_A</targetReference>
+            </connector>
+            <label>KB ID Selected</label>
+        </rules>
+        <rules>
+            <name>ReenterKBIdArticleSearch_D_thirdpartyreference</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>ReenterKBId_rb_choice_thirdpartyreference</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>UsedThirdPartyReference_A</targetReference>
+            </connector>
+            <label>Third Party Reference</label>
+        </rules>
+    </decisions>
+    <formulas>
+        <name>frm_removespaces</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE({!var_input_searchstring},&quot; &quot;,&quot;&quot;)</expression>
+    </formulas>
+    <formulas>
+        <name>frm_removestopwords</name>
+        <dataType>String</dataType>
+        <expression>LOWER(SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE( 
+SUBSTITUTE({!var_input_searchstring}, &quot;to&quot;, &quot;&quot;), &quot;unable&quot;, &quot;&quot;), &quot; cant &quot;, &quot;&quot;), &quot;the&quot;, &quot;&quot;), &quot;cannot&quot;, &quot;&quot;), &quot;does not&quot;, &quot;&quot;), &quot;doesnt&quot;, &quot;&quot;), &quot; is &quot;, &quot;&quot;), &quot; on &quot;, &quot;&quot;), &quot; in &quot;, &quot;&quot;), &quot;not&quot;, &quot;&quot;), &quot; are &quot;, &quot;&quot;), &quot; any &quot;, &quot;&quot;), &quot; of &quot;, &quot;&quot;), &quot; is &quot;, &quot;&quot;), &quot; are &quot;, &quot;&quot;), &quot; able &quot;, &quot;&quot;), &quot;arent&quot;, &quot;&quot;), &quot; as &quot;, &quot;&quot;), &quot; at &quot;, &quot;&quot;), &quot;could&quot;, &quot;&quot;), &quot;0000000000&quot;, &quot;~~~~~&quot;), &quot;000000000&quot;, &quot;~~~~~&quot;), &quot;00000000&quot;, &quot;~~~~~&quot;), &quot;0000000&quot;, &quot;~~~~~&quot;), &quot;stop&quot;, &quot;&quot;), &quot;should&quot;, &quot;&quot;), &quot;would&quot;, &quot;&quot;))</expression>
+    </formulas>
+    <interviewLabel>RingCentral Troubleshooting Tool - Quick Search Engine - Article Search {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>RingCentral Troubleshooting Tool - Quick Search Engine - Article Search</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <screens>
+        <name>ArticleSearch</name>
+        <label>ArticleSearch</label>
+        <locationX>333</locationX>
+        <locationY>50</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>ArticleSearch_D</targetReference>
+        </connector>
+        <fields>
+            <name>ArticleSearch_h00</name>
+            <fieldText>&lt;p&gt;{!var_accountdetailsheader}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_h01</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DW9u&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H000001DHuY&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_h02</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DBfM&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H0000019eSf&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_dt01</name>
+            <fieldText>&lt;p&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;ARTICLE SEARCH THROUGH RINGCENTRAL SUPPORT&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;﻿&lt;/b&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt;Click the link below to search for &lt;/span&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;Knowledge Base articles&lt;/b&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt; using &lt;/span&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;RingCentral Support&lt;/b&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt;After going through the article, do not forget to copy the &lt;/span&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;KB Id (Knowledge Base article number)&lt;/b&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt; then come back to this window so the tool can automatically attach the article to your case.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_dt02</name>
+            <fieldText>&lt;p&gt;&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;RINGCENTRAL SUPPORT LINK:&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://support.ringcentral.com/s/search/%40uri?language=en_US#q={!var_input_searchstring}&amp;amp;t=All&amp;amp;sort=relevancy&amp;amp;f:@articlestype=[Knowledge%20base]&quot; target=&quot;_blank&quot; style=&quot;color: rgb(211, 118, 18);&quot;&gt;https://support.ringcentral.com/s/search/%40uri?language=en_US#q={!var_input_searchstring}&amp;amp;t=All&amp;amp;sort=relevancy&amp;amp;f:@articlestype=[Knowledge%20base]&lt;/a&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_dt03</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DBfM&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H000001C6vn&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_t_kbidholder</name>
+            <dataType>String</dataType>
+            <fieldText>&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;KNOWLEDGE BASE ARTICLE NUMBER&lt;/b&gt;</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <validationRule>
+                <errorMessage>&lt;p&gt;&lt;i style=&quot;font-size: 11px; color: rgb(255, 0, 0);&quot;&gt;Please enter a valid knowledge base article number  or enter &quot;00000&quot; if you choose to use a third party reference&lt;/i&gt;&lt;/p&gt;</errorMessage>
+                <formulaExpression>REGEX ({!ArticleSearch_t_kbidholder},&quot;[0-9]{4,10}&quot;)</formulaExpression>
+            </validationRule>
+        </fields>
+        <fields>
+            <name>ArticleSearch_rb</name>
+            <choiceReferences>ArticleSearch_rb_choice_proceedwithkbid</choiceReferences>
+            <choiceReferences>ArticleSearch_rb_choice_thirdpartyreference</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;How would you like to proceed?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ArticleSearch_dt04</name>
+            <fieldText>&lt;p&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;REMINDERS&lt;/i&gt;&lt;/b&gt;&lt;b style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;&lt;i&gt;:&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;The &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;KB Id (Knowledge Base article number)&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt; is found at the left hand side of the article.&lt;/i&gt;&lt;/li&gt;&lt;li&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;If you have used &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;Community&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt; or did not use a Knowledge Base article to troubleshoot, select &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;I am using a third party reference&lt;/i&gt;&lt;/b&gt;&lt;b style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;&lt;i&gt; &lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;then click &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;Next&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;.&lt;/i&gt;&lt;/li&gt;&lt;/ul&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>ReenterKBId</name>
+        <label>ReenterKBId</label>
+        <locationX>332</locationX>
+        <locationY>368</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>ReenterKBIdArticleSearch_D</targetReference>
+        </connector>
+        <fields>
+            <name>ReenterKBId_h00</name>
+            <fieldText>&lt;p&gt;{!var_accountdetailsheader}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_h01</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DW9u&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H000001DHuY&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_h02</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DBfM&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H0000019eSf&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_dt01</name>
+            <fieldText>&lt;p&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;RE-ENTER THE KNOWLEDGE ARTICLE NUMBER&lt;/b&gt;&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt;Enter the &lt;/span&gt;&lt;b style=&quot;color: rgb(211, 118, 18);&quot;&gt;KB Id (Knowledge Base article number)&lt;/b&gt;&lt;span style=&quot;color: rgb(53, 113, 151);&quot;&gt; below so the tool can automatically attach the article to your case.&lt;/span&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_dt02</name>
+            <fieldText>&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;https://rc--c.na97.content.force.com/servlet/rtaImage?eid=ka22H000000DBfM&amp;amp;feoid=00N80000004hxR2&amp;amp;refid=0EM2H000001C6vn&quot;&gt;&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_kbidholder</name>
+            <dataType>String</dataType>
+            <fieldText>&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;KNOWLEDGE BASE ARTICLE NUMBER&lt;/b&gt;</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <validationRule>
+                <errorMessage>&lt;p&gt;&lt;i style=&quot;color: rgb(255, 0, 0); font-size: 11px;&quot;&gt;Please enter a valid knowledge base article number or enter &quot;00000&quot; if you choose to use a third party reference&lt;/i&gt;&lt;/p&gt;</errorMessage>
+                <formulaExpression>REGEX ({!ReenterKBId_kbidholder},&quot;[0-9]{4,10}&quot;)</formulaExpression>
+            </validationRule>
+        </fields>
+        <fields>
+            <name>ReenterKBId_rb</name>
+            <choiceReferences>ReenterKBId_rb_choice_proceedwithkbid</choiceReferences>
+            <choiceReferences>ReenterKBId_rb_choice_thirdpartyreference</choiceReferences>
+            <choiceReferences>ReenterKBId_rb_choice_goback</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b style=&quot;color: rgb(53, 113, 151);&quot;&gt;How would you like to proceed?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>ReenterKBId_dt03</name>
+            <fieldText>&lt;p&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;REMINDERS&lt;/i&gt;&lt;/b&gt;&lt;b style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;&lt;i&gt;:&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;The &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;KB Id (Knowledge Base article number)&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt; is found at the left hand side of the article.&lt;/i&gt;&lt;/li&gt;&lt;li&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;If you have used &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;Community&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt; or did not use a knowledge base article to troubleshoot, select &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;I am using a third party reference&lt;/i&gt;&lt;/b&gt;&lt;b style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;&lt;i&gt; &lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;then click &lt;/i&gt;&lt;b style=&quot;font-size: 11px; color: rgb(211, 118, 18);&quot;&gt;&lt;i&gt;Next&lt;/i&gt;&lt;/b&gt;&lt;i style=&quot;font-size: 11px; color: rgb(53, 113, 151);&quot;&gt;.&lt;/i&gt;&lt;/li&gt;&lt;/ul&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <start>
+        <locationX>50</locationX>
+        <locationY>49</locationY>
+        <connector>
+            <targetReference>ReenterKBId_D</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>var_accountdetailsheader</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>var_articlesearchindicator</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>var_input_searchstring</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Email_Notification</name>
+        <label>Email Notification</label>
+        <locationX>176</locationX>
+        <locationY>431</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>ai.assist.devteam@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>Body</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>#SR-1795665 Creation of flow</description>
+    <environments>Default</environments>
+    <interviewLabel>Automation for SE AI Assist {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Automation for SE AI Assist</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Case_Owner</name>
+        <label>Update Case Owner</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <connector>
+            <targetReference>Email_Notification</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00GTU00000HiS8T</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Case_Owner</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>SE - AI Assist</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>RecordTypeId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>01280000000UEYI</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>Body</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;&lt;strong&gt;Case Subject:&lt;/strong&gt; {!$Record.Subject}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Case Number:&lt;/strong&gt; {!$Record.CaseNumber}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Status:&lt;/strong&gt; {!$Record.Status}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Case Owner:&lt;/strong&gt; {!$Record.Owner:Group.Name}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Case Severity:&lt;/strong&gt; {!$Record.Case_Severity__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Case Description:&lt;/strong&gt; {!$Record.Description}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Created By:&lt;/strong&gt; {!$Record.CreatedBy.Full_Name__c}&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Created Date/Time:&lt;/strong&gt; {!$Record.CreatedDate}&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Subject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>New Case Escalated</text>
+    </textTemplates>
+</Flow>

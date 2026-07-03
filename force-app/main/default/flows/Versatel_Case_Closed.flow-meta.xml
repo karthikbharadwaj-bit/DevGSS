@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Versatel_Case_Closed_First_Channel</name>
+        <label>Versatel Case Closed First Channel</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.Versatel_Case_Closed</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Versatel_Case_Closed</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Versatel_Case_Closed_Second_Channel</name>
+        <label>Versatel Case Closed Second Channel</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.Versatel_Case_Closed_Second_Channel</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Versatel_Case_Closed_Second_Channel</nameSegment>
+    </actionCalls>
+    <apiVersion>58.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Identify_the_From_Address</name>
+        <label>Identify the From Address</label>
+        <locationX>314</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Check_for_second_channel_web_Email_Address</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SuppliedEmail</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>cc-technik@1und1.net</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Versatel_Case_Closed_Second_Channel</targetReference>
+            </connector>
+            <label>Check for second channel web Email Address</label>
+        </rules>
+        <rules>
+            <name>Check_for_first_channel_web_Email_Address</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.SuppliedEmail</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>nextip@1und1.net</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Versatel_Case_Closed_First_Channel</targetReference>
+            </connector>
+            <label>Check for first channel web Email Address</label>
+        </rules>
+    </decisions>
+    <description>Migrated from the: Versatel Case Closed workflow rule
+Workflow rule description: &quot;</description>
+    <environments>Default</environments>
+    <label>Versatel Case Closed</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Identify_the_From_Address</targetReference>
+        </connector>
+        <filterFormula>CONTAINS( {!$Record.Brand_Identifier__c} , &apos;Versatel&apos;) &amp;&amp; ISCHANGED({!$Record.Partner_Case_Status__c}) &amp;&amp; ISPICKVAL({!$Record.Partner_Case_Status__c} , &apos;Closed&apos;)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

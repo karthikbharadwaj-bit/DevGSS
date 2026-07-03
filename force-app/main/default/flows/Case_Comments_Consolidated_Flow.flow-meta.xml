@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Create_Case_Comment_for_Owner_Queue_Change</name>
+        <label>Create Case Comment for Owner Queue Change</label>
+        <locationX>50</locationX>
+        <locationY>731</locationY>
+        <actionName>Case.Case_Comment</actionName>
+        <actionType>quickAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contextId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>CommentBody</name>
+            <value>
+                <elementReference>CaseComment_for_Owner_Queue</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Case_Comment</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Create_Case_Comment_for_Owner_User_Change</name>
+        <label>Create Case Comment for Owner User Change</label>
+        <locationX>314</locationX>
+        <locationY>731</locationY>
+        <actionName>Case.Case_Comment</actionName>
+        <actionType>quickAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contextId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>CommentBody</name>
+            <value>
+                <elementReference>CaseComment_for_Owner_User</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Case_Comment</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Create_Case_Comment_for_Status_Change</name>
+        <label>Create Case Comment for Status Change</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.Case_Comment</actionName>
+        <actionType>quickAction</actionType>
+        <connector>
+            <targetReference>Case_Owner_Change</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contextId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>CommentBody</name>
+            <value>
+                <elementReference>CaseCommentCreation</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Case_Comment</nameSegment>
+    </actionCalls>
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Case_Owner_Change</name>
+        <label>Case Owner Change</label>
+        <locationX>314</locationX>
+        <locationY>623</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Case_Owner_Queue_Changed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>00G</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_Brand__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Unify Office by RingCentral</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Case_Comment_for_Owner_Queue_Change</targetReference>
+            </connector>
+            <label>Case Owner Queue Changed</label>
+        </rules>
+        <rules>
+            <name>Case_Owner_User_Changed</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.OwnerId</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.RC_Brand__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <stringValue>Unify Office by RingCentral</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Case_Comment_for_Owner_User_Change</targetReference>
+            </connector>
+            <label>Case Owner User Changed</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Case_Status_Update</name>
+        <label>Case Status Update</label>
+        <locationX>314</locationX>
+        <locationY>323</locationY>
+        <defaultConnector>
+            <targetReference>Case_Owner_Change</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Case_Status_Change_updated</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Case_Comment_for_Status_Change</targetReference>
+            </connector>
+            <label>Case Status Change updated</label>
+        </rules>
+    </decisions>
+    <description>Rise Partner case comments are removed from this flow and hereafter will be exclusively for AAA Brands</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>CaseComment_for_Owner_Queue</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Owner Assigned To&quot;+&quot;:&quot;+{!$Record.Owner:Group.Name}</expression>
+    </formulas>
+    <formulas>
+        <name>CaseComment_for_Owner_User</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Owner Assigned To&quot;+&quot;:&quot;+{!$Record.Owner:User.Full_Name__c}</expression>
+    </formulas>
+    <formulas>
+        <name>CaseCommentCreation</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Status Updated To&quot;+&quot;:&quot;+TEXT({!$Record.Status})</expression>
+    </formulas>
+    <interviewLabel>Case Comments Consolidated Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Comments Consolidated Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Case_Status_Update</targetReference>
+        </connector>
+        <filterFormula>AND (NOT(ISBLANK( {!$Record.Account.Id})),NOT(ISBLANK({!$Record.Account.RC_Brand__c})), OR({!$Record.Account.RC_Brand__c}= &quot;Avaya Cloud Office&quot;,
+{!$Record.Account.RC_Brand__c} = &quot;Unify Office&quot;,
+{!$Record.Account.RC_Brand__c} = &quot;Rainbow Office&quot;,
+{!$Record.Account.RC_Brand__c} = &quot;Unify Office by RingCentral&quot;))</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

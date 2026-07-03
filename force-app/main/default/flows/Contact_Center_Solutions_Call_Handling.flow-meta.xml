@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>AFTER_HOURS</name>
+        <choiceText>AFTER HOURS</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>BUSINESS_HOURS_7AM_5PM_PACIFIC_MONDAY_TO_FRIDAY</name>
+        <choiceText>BUSINESS HOURS (7AM-5PM PACIFIC, MONDAY TO FRIDAY)</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>RingCentral_account_has_less_than_20_Lines</name>
+        <choiceText>RingCentral account has less than 20 Lines</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>RingCentralaccounthasmorethan20Lines</name>
+        <choiceText>RingCentral account has more than 20 Lines</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Select_appropriate_account_plan1</name>
+        <label>Select appropriate account plan</label>
+        <locationX>985</locationX>
+        <locationY>349</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>RingCentral_account_has_less_than_20_Lines1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RingCentral_account_has_less_than_20_Lines</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_a_case</targetReference>
+            </connector>
+            <label>RingCentral account has less than 20 Lines</label>
+        </rules>
+        <rules>
+            <name>RingCentral_account_has_more_than_20_Lines</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RingCentralaccounthasmorethan20Lines</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_a_case_0</targetReference>
+            </connector>
+            <label>RingCentral account has more than 20 Lines</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Select_the_time_you_received_the_call1</name>
+        <label>Select the time you received the call</label>
+        <locationX>181</locationX>
+        <locationY>347</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>BUSINESS_HOURS_7AM_5PM_PACIFIC_MONDAY_TO_FRIDAY1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>BUSINESS_HOURS_7AM_5PM_PACIFIC_MONDAY_TO_FRIDAY</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Check_Account_Plan</targetReference>
+            </connector>
+            <label>BUSINESS HOURS (7AM-5PM PACIFIC, MONDAY TO FRIDAY)</label>
+        </rules>
+        <rules>
+            <name>AFTER_HOURS1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>AFTER_HOURS</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_a_case_1</targetReference>
+            </connector>
+            <label>AFTER HOURS</label>
+        </rules>
+    </decisions>
+    <interviewLabel>Ring Central Contact Center {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Contact Center Solutions Call Handling</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <screens>
+        <name>Check_Account_Plan</name>
+        <label>Check Account Plan</label>
+        <locationX>733</locationX>
+        <locationY>345</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_appropriate_account_plan1</targetReference>
+        </connector>
+        <fields>
+            <name>CheckAccountPlan</name>
+            <fieldText>&lt;b&gt;Check Account Plan&lt;/b&gt;
+
+Check customer&apos;s salesforce account if the customer RingCentral Plan has less than 20 or more than 20 lines.
+
+to check go to Salesforce and look into the customer&apos;s account &gt; scroll down to RC Service Details&gt; check the Number of DL&apos;s field.
+
+below is a sample of a 20 plus line account:
+
+&lt;img src=&apos;/resource/RingCentralContactCenter1&apos; /&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_appropriate_account_plan</name>
+            <choiceReferences>RingCentral_account_has_less_than_20_Lines</choiceReferences>
+            <choiceReferences>RingCentralaccounthasmorethan20Lines</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select appropriate account plan</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Create_a_case</name>
+        <label>Create a case</label>
+        <locationX>990</locationX>
+        <locationY>483</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Createacase</name>
+            <fieldText>&lt;b&gt;reate a case in SFDC and set the following parameters&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;i. Subject:  Contact Center : &lt;Issue of the customer&gt;
+
+&lt;li&gt;ii. Description:  &lt;detailed description of the customers issue&gt;
+
+&lt;li&gt;iii. Internal Comments: 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;1. RC Number: 
+&lt;li&gt;2. User ID: 
+&lt;li&gt;3. Caller Name: 
+&lt;li&gt;4.Callback: 
+&lt;li&gt;5.Troubleshooting:&lt;/ul&gt;&lt;/ul&gt;
+
+
+&lt;b&gt;Save the case&lt;/b&gt;
+
+&lt;b&gt;Escalate case to Contact Support by setting “Escalate to” field to “Contact Center Support”&lt;/b&gt;
+
+&lt;img src=&apos;/resource/RingCentralContactCenter2&apos; /&gt;
+
+ 
+
+ 
+&lt;b&gt;Warm Transfer the Call to Support InContact 1-19&lt;/b&gt;
+follow the steps below:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;1. Go to InContact and Select Address Book (see image below)
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter3&apos; /&gt;
+ 
+
+
+&lt;li&gt;2. On Address Book select Skills on the drop down the menu (see image below)
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter4&apos; /&gt;
+
+ 
+
+&lt;li&gt;3. On the blank field type in &quot;Support InContact&quot; then press Enter &gt; Select the appropriate Skill (see image below)
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter5&apos; /&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Create_a_case_0</name>
+        <label>Create a case</label>
+        <locationX>987</locationX>
+        <locationY>176</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Createacase_0</name>
+            <fieldText>&lt;b&gt;reate a case in SFDC and set the following parameters&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;i. Subject:  Contact Center : &lt;Issue of the customer&gt;
+
+&lt;li&gt;ii. Description:  &lt;detailed description of the customers issue&gt;
+
+&lt;li&gt;iii. Internal Comments: 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;1. RC Number: 
+&lt;li&gt;2. User ID: 
+&lt;li&gt;3. Caller Name: 
+&lt;li&gt;4.Callback: 
+&lt;li&gt;5.Troubleshooting:&lt;/ul&gt;&lt;/ul&gt;
+
+
+&lt;b&gt;Save the case&lt;/b&gt;
+
+&lt;b&gt;Escalate case to Contact Support by setting “Escalate to” field to “Contact Center Support”&lt;/b&gt;
+
+&lt;img src=&apos;/resource/RingCentralContactCenter2&apos; /&gt;
+ 
+
+ 
+&lt;b&gt;Warm Transfer the Call to Support InContact 20 plus&lt;/b&gt;
+follow the steps below:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:circle;&amp;nbsp;&quot;&gt;&lt;li&gt;1. Go to InContact and Select Address Book (see image below)
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter3&apos; /&gt;
+
+
+&lt;li&gt;2. On Address Book select Skills on the drop down the menu (see image below)
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter4&apos; /&gt;
+
+ 
+
+&lt;li&gt;3. On the blank field type in &quot;Support InContact&quot; then press Enter &gt; Select the appropriate Skill (see image below), you will be routed to the support Incontact queue provide the next agent with full details of the concern then warm transfer the call. 
+
+&lt;li&gt;&lt;img src=&apos;/resource/RingCentralContactCenter5&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;IMPORTANT&lt;/b&gt;: Do not forget to create a ticket first before transferring the call
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Create_a_case_1</name>
+        <label>Create a case</label>
+        <locationX>188</locationX>
+        <locationY>533</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Createacase_1</name>
+            <fieldText>&lt;b&gt;reate a case in SFDC and set the following parameters&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;i. Subject:  Contact Center : &lt;Issue of the customer&gt;
+
+&lt;li&gt;ii. Description:  &lt;detailed description of the customers issue&gt;
+
+&lt;li&gt;iii. Internal Comments: 
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;1. RC Number: 
+&lt;li&gt;2. User ID: 
+&lt;li&gt;3. Caller Name: 
+&lt;li&gt;4.Callback: 
+&lt;li&gt;5.Troubleshooting:&lt;/ul&gt;&lt;/ul&gt;
+
+
+&lt;b&gt;Save the case&lt;/b&gt;
+
+&lt;b&gt;Escalate case to Contact Support by setting “Escalate to” field to “Contact Center Support”&lt;/b&gt;
+
+&lt;img src=&apos;/resource/RingCentralContactCenter2&apos; /&gt;
+
+ 
+
+ 
+Inform the customer that a ticket has been sent to Contact Center team and will be assisted by a specialiist during business hours.
+
+ 
+
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>RingCentral_Contact_Center_Handling_Guide</name>
+        <label>RingCentral Contact Center Handling Guide</label>
+        <locationX>180</locationX>
+        <locationY>66</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>WHAT_IS_CONTACT_CENTER_SOLUTIONS</targetReference>
+        </connector>
+        <fields>
+            <name>RingCentralContactCenterHandlingGuide</name>
+            <fieldText>This guide will walk you through the proper handling of a &lt;b&gt;&lt;u&gt;RingCentral Contact Center&lt;/u&gt;&lt;/b&gt; call.
+
+&lt;b&gt;Note&lt;/b&gt;: In the event that you encounter a road block or have additional questions when using this guide, please ask assistance from a Team Lead.
+
+
+Important:
+
+for more information kindly click go to our success site or the link &lt;a href=&quot;https://netstorage.ringcentral.com/datasheets/contact_center_datasheet.pdf&quot;; target=&quot;_blank&quot;&gt;RingCentral Contact Center&lt;/a&gt;
+
+for the updated calhhandling process for this issue kindly check email announcemet &lt;b&gt;RC 411 News Update No 1688 version 4 - RingCentral Contact Center Support Process&lt;/b&gt; click the link for more information  &lt;a href=&quot;https://wiki.ringcentral.com/display/public/RNU/RC+411+News+Update+No+1688+version+4+-+RingCentral+Contact+Center+Support+Process&quot;;target=&quot;_blank&quot;&gt;RingCentral Contact Center Support Process&lt;/a&gt; (use Okta credentials to log in to confluence).
+
+
+
+
+
+&lt;b&gt;RingCentral Contact Center Handling Guide&lt;/b&gt;
+Click &lt;b&gt;NEXT&lt;/b&gt; to continue.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>WHAT_IS_CONTACT_CENTER_SOLUTIONS</name>
+        <label>WHAT IS CONTACT CENTER SOLUTIONS</label>
+        <locationX>179</locationX>
+        <locationY>198</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Select_the_time_you_received_the_call1</targetReference>
+        </connector>
+        <fields>
+            <name>WHATISCONTACTCENTERSOLUTIONS</name>
+            <fieldText>&lt;b&gt;WHAT IS CONTACT CENTER SOLUTIONS&lt;/b&gt;
+
+The &lt;b&gt;RingCentral Contact Center&lt;/b&gt; is a solution integrated with RingCentral Office. It gives contact center agents the ability to engage customers through multiple channels including: voice, email, chat, and SMS.  Administrators have the ability to set up multi-channel, skills-based routing, and advanced IVR capabilities with a visual call flow editor. The real-time reporting capabilities also help administrators monitor key metrics and improve call center efficiencies or identify areas for business performance improvement.
+
+&lt;b&gt;HOW TO HANDLE RINGCENTRAL CONTACT CENTER CUSTOMERS&lt;/b&gt;
+
+If a customer calls in needing technical assistance with &lt;b&gt;&lt;u&gt;Contact Center Solutions&lt;/u&gt;&lt;/b&gt;, it must first be verified if they are a &lt;b&gt;&lt;u&gt;Contact Center Solutions&lt;/u&gt;&lt;/b&gt; customer.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;b&gt;&lt;u&gt;How to identify if an account has a Contact Center plan?&lt;/u&gt;&lt;/b&gt;:
+
+&lt;&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;1. Look under Account Highlights (Account view) or Case Highlights (Case view)
+&lt;li&gt;2. Under account view go to &quot;RingCentral Contact Center&quot; section and check for details (if populated with details the account has a Contact Center plan)
+
+
+If the customer has a Contact Center plan proceed to the next step, select time you recieve the call.
+
+&lt;b&gt;IMPORTANT&lt;/b&gt;:
+
+&lt;li&gt;&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Once the account is identified that is has a Contact Center Plan or is elgible for the paln, Do not change anything on the account
+&lt;li&gt;Chat and CSP agents will follow after hours handling regardless if the interaction is within business hours.&lt;/ul&gt;&lt;/ul&gt;&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Select_the_time_you_received_the_call</name>
+            <choiceReferences>BUSINESS_HOURS_7AM_5PM_PACIFIC_MONDAY_TO_FRIDAY</choiceReferences>
+            <choiceReferences>AFTER_HOURS</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Select the time you received the call</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <startElementReference>RingCentral_Contact_Center_Handling_Guide</startElementReference>
+    <status>Obsolete</status>
+</Flow>

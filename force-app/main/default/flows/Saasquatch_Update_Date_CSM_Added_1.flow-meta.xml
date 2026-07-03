@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Execute_Saasquatch_Apex_Action_Cancelled</name>
+        <label>Execute Saasquatch Apex Action Cancelled</label>
+        <locationX>578</locationX>
+        <locationY>431</locationY>
+        <actionName>saasquatch__SaaSquatchTrackEventById</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>accountId</name>
+            <value>
+                <elementReference>$Record.Saasquatch_Referral_Email_ID__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>key</name>
+            <value>
+                <stringValue>Cancelled</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>userId</name>
+            <value>
+                <elementReference>$Record.Saasquatch_Referral_Email_ID__c</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>saasquatch__SaaSquatchTrackEventById</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Execute_Saasquatch_Apex_Action_Paid</name>
+        <label>Execute Saasquatch Apex Action Paid</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <actionName>saasquatch__SaaSquatchTrackEventById</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>accountId</name>
+            <value>
+                <elementReference>$Record.Saasquatch_Referral_Email_ID__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>key</name>
+            <value>
+                <stringValue>Paid</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>userId</name>
+            <value>
+                <elementReference>$Record.Saasquatch_Referral_Email_ID__c</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>saasquatch__SaaSquatchTrackEventById</nameSegment>
+    </actionCalls>
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Closed_Date_condition</name>
+        <label>Closed Date condition</label>
+        <locationX>182</locationX>
+        <locationY>539</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Opp_was_closed_65_days_ago_or_less</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Opportunities.CloseDate</leftValueReference>
+                <operator>GreaterThanOrEqualTo</operator>
+                <rightValue>
+                    <elementReference>Today_minus_65_days</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Execute_Saasquatch_Apex_Action_Paid</targetReference>
+            </connector>
+            <label>Opp was closed 65 days ago or less</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>is_Paid_Or_Cancelled</name>
+        <label>is Paid Or Cancelled</label>
+        <locationX>380</locationX>
+        <locationY>323</locationY>
+        <defaultConnector>
+            <targetReference>Execute_Saasquatch_Apex_Action_Cancelled</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Cancelled</defaultConnectorLabel>
+        <rules>
+            <name>Paid</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RC_Account_Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Paid</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Opportunities</targetReference>
+            </connector>
+            <label>Paid</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>Today_minus_65_days</name>
+        <dataType>Date</dataType>
+        <expression>TODAY() - 65</expression>
+    </formulas>
+    <interviewLabel>Saasquatch Update Date CSM Added 1 {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Saasquatch Update Date CSM Added 1</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Opportunities</name>
+        <label>Get Opportunities</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Closed_Date_condition</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>StageName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>7. Closed Won</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Opportunity</object>
+        <sortField>CloseDate</sortField>
+        <sortOrder>Desc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>254</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>is_Paid_Or_Cancelled</targetReference>
+        </connector>
+        <filterFormula>({!$Record.Saasquatch_Referral_Email_ID__c} &lt;&gt; Null &amp;&amp;
+PRIORVALUE({!$Record.RC_Account_Status__c}) != &quot;Paid&quot; &amp;&amp;
+{!$Record.RC_Account_Status__c} &lt;&gt; Null &amp;&amp;
+ISCHANGED({!$Record.RC_Account_Status__c}) &amp;&amp;
+{!$Record.RC_Account_Status__c} = &quot;Paid&quot;) 
+|| 
+{!$Record.Saasquatch_Referral_Email_ID__c} &lt;&gt; Null &amp;&amp;
+PRIORVALUE({!$Record.RC_Account_Status__c}) != &quot;Cancelled&quot; &amp;&amp;
+{!$Record.RC_Account_Status__c} &lt;&gt; Null &amp;&amp;
+ISCHANGED({!$Record.RC_Account_Status__c} ) &amp;&amp;
+{!$Record.RC_Account_Status__c} = &quot;Cancelled&quot;</filterFormula>
+        <object>Account</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

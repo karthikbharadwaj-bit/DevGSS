@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SR-1593629 Create new flow to auto-populate Escalate to field</description>
+    <environments>Default</environments>
+    <interviewLabel>Automation to update Escalate {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Automation to update Escalate to field</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Record</name>
+        <label>Update Record</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <stringValue>00G80000002b4Kq</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Support_Escalate_To__c</field>
+            <value>
+                <stringValue>Sales to CCare</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Record</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>(1 OR 2 OR 3 OR 4 OR 5 OR 6 OR 7 OR 8) AND 9</filterLogic>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Technical Issue</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Porting Inquiries</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Customer Appeasement</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Missed Commitment/Unresponsive Rep</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Order Shipping</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Supervisor Request</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Support Agent Concern</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Case_Category__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CCare - Rental Phones</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>RecordTypeId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>01280000000UG7D</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

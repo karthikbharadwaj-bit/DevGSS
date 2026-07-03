@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>To_Update</name>
+        <label>To Update</label>
+        <locationX>374</locationX>
+        <locationY>288</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>checkRecordType</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>True</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Status_Update</targetReference>
+            </connector>
+            <label>Update</label>
+        </rules>
+    </decisions>
+    <description>SR-1073158 Set Case to Closed after 5 days</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>checkRecordType</name>
+        <dataType>String</dataType>
+        <expression>CASE({!$Record.RecordTypeName__c},
+&apos;Customer_Feedback&apos;, &apos;True&apos;,
+&apos;Support_Charter_SMB&apos;, &apos;True&apos;,
+&apos;Support_Charter&apos;, &apos;True&apos;,
+&apos;Support_Avaya&apos;, &apos;True&apos;,
+&apos;Support_Ecotel&apos;, &apos;True&apos;,
+&apos;Support_Frontier&apos;, &apos;True&apos;,
+&apos;Support_DT&apos;, &apos;True&apos;,
+&apos;Support_Glip&apos;, &apos;True&apos;,
+&apos;Support_Integrations&apos;, &apos;True&apos;,
+&apos;RCC_Issues&apos;, &apos;True&apos;,
+&apos;Support_T1&apos;, &apos;True&apos;,
+&apos;Support_T2&apos;, &apos;True&apos;,
+&apos;Support_T1_VAR_Partners&apos;, &apos;True&apos;,
+&apos;Reseller_VAR_Partners&apos;, &apos;True&apos;,
+&apos;Support_VIPFR&apos;, &apos;True&apos;,
+&apos;Support_Case&apos;, &apos;True&apos;,
+&apos;Support_Telus&apos;, &apos;True&apos;,
+&apos;Support_Chat&apos;, &apos;True&apos;,
+&apos;False&apos;
+)</expression>
+    </formulas>
+    <interviewLabel>Resolve to Close after 5 days {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Resolve to Close after 5 days</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Status_Update</name>
+        <label>Status Update</label>
+        <locationX>242</locationX>
+        <locationY>408</locationY>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Closed</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Resolved</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Reason_Why_Open__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>For monitoring</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>OwnerId</field>
+            <operator>StartsWith</operator>
+            <value>
+                <stringValue>005</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Update_Status</name>
+            <connector>
+                <targetReference>To_Update</targetReference>
+            </connector>
+            <label>Update Status</label>
+            <offsetNumber>5</offsetNumber>
+            <offsetUnit>Days</offsetUnit>
+            <timeSource>RecordTriggerEvent</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

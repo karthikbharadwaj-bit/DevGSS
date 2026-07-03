@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <description>Select template , subject.
+Note: Always enable Rich text formatted body.</description>
+        <name>Notify_Account_Owner_Changed_Action</name>
+        <label>Notify Account Owner Changed Action</label>
+        <locationX>50</locationX>
+        <locationY>455</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>NotifyAccountOwnerChanged</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record__Prior.Owner.Email</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <elementReference>senderEmailAddress</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>emailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>54.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>Check if account record type is equal to Customer Account.</description>
+        <name>is_Record_Type_Customer_Account</name>
+        <label>is Record Type Customer Account</label>
+        <locationX>182</locationX>
+        <locationY>335</locationY>
+        <defaultConnectorLabel>Customer Account False</defaultConnectorLabel>
+        <rules>
+            <name>Customer_Account_True</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>customerAccountRecordTypeName</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Notify_Account_Owner_Changed_Action</targetReference>
+            </connector>
+            <label>Customer Account True</label>
+        </rules>
+    </decisions>
+    <description>If Customer Account owner updated then send email to previous owner of an account.
+V2: template changed.</description>
+    <formulas>
+        <name>accountBaseURL</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Partner_Server_URL_260}, FIND( &apos;/services&apos;, {!$Api.Partner_Server_URL_260}))</expression>
+    </formulas>
+    <formulas>
+        <description>account base url + account Id</description>
+        <name>accountFullURL</name>
+        <dataType>String</dataType>
+        <expression>{!accountBaseURL}+{!$Record.Id}</expression>
+    </formulas>
+    <interviewLabel>Account Owner Changed Email Notification {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Account Owner Changed Email Notification</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>is_Record_Type_Customer_Account</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>OwnerId</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Account</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Obsolete</status>
+    <textTemplates>
+        <description>Notify Account Owner Changed Email Template</description>
+        <name>NotifyAccountOwnerChanged</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!$Record__Prior.Owner.Full_Name__c},&lt;/p&gt;
+&lt;p&gt;This is to inform you that the Account Owner for {!$Record.Name} has been changed from you to {!$Record.Owner.Full_Name__c}. If you have any concerns with this change, please reach out to your manager for assistance. Here is a link to the related account for reference: &lt;a href={!accountFullURL}&gt;{!accountFullURL}&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Thank you.&lt;/p&gt;</text>
+    </textTemplates>
+    <variables>
+        <description>Customer Account</description>
+        <name>customerAccountRecordTypeName</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <stringValue>Customer_Account</stringValue>
+        </value>
+    </variables>
+    <variables>
+        <name>emailSubject</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <stringValue>Account Owner - Notification Email</stringValue>
+        </value>
+    </variables>
+    <variables>
+        <description>email address noreply@ringcentral.com</description>
+        <name>senderEmailAddress</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <value>
+            <stringValue>noreply@ringcentral.com</stringValue>
+        </value>
+    </variables>
+</Flow>

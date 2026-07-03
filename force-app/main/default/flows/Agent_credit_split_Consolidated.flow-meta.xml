@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Consolidated_Decision</name>
+        <label>Consolidated Decision</label>
+        <locationX>762</locationX>
+        <locationY>368</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Commissionable_Period_to_180_Days</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Agent_Credit_Sub_Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Reseller Referral</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>IsNew</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Commissionable_Period_equals_180_Days</targetReference>
+            </connector>
+            <label>Commissionable Period to 180 Days</label>
+        </rules>
+        <rules>
+            <name>Commissionable_Period_to_30_Days</name>
+            <conditionLogic>(1 OR 2 OR 3) AND 4</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Market_Segment__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>VAR-to-Direct - Downmarket</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Market_Segment__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Direct-to-VAR - Downmarket</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Market_Segment__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Direct-to-VAR - Upmarket</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>IsNew</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Commissionable_Period_equals_30_Days</targetReference>
+            </connector>
+            <label>Commissionable Period to 30 Days</label>
+        </rules>
+        <rules>
+            <name>Populate_End_Date_of_Overlay_Shared</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Commissionable_Period__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Agent_Credit_Sub_Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Overlay Shared</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Populate_End_Date_of_OverlayShared</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>Populate End Date of Overlay Shared</label>
+        </rules>
+        <rules>
+            <name>Populate_End_Date_of_Reseller_Referral</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Override_End_Date__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Commissionable_Period__c</leftValueReference>
+                <operator>IsBlank</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Agent_Credit_Sub_Type__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Reseller Referral</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Populate_End_Date_of_ResellerReferral</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>Populate End Date of Reseller Referral</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>Begin_180</name>
+        <dataType>Date</dataType>
+        <expression>{!$Record.Begin_Date__c}+ 180</expression>
+    </formulas>
+    <formulas>
+        <name>Begin_Comissionable</name>
+        <dataType>Date</dataType>
+        <expression>{!$Record.Begin_Date__c}+ {!$Record.Commissionable_Period__c}</expression>
+    </formulas>
+    <formulas>
+        <name>IsNew</name>
+        <dataType>Boolean</dataType>
+        <expression>Isnew()</expression>
+    </formulas>
+    <interviewLabel>Agent credit split- Consolidated {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Agent credit split- Consolidated</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Commissionable_Period_equals_180_Days</name>
+        <label>Commissionable Period equals 180 Days</label>
+        <locationX>1155</locationX>
+        <locationY>517</locationY>
+        <inputAssignments>
+            <field>Commissionable_Period__c</field>
+            <value>
+                <numberValue>180.0</numberValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Commissionable_Period_equals_30_Days</name>
+        <label>Commissionable Period equals 30 Days</label>
+        <locationX>1256</locationX>
+        <locationY>346</locationY>
+        <inputAssignments>
+            <field>Commissionable_Period__c</field>
+            <value>
+                <numberValue>30.0</numberValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Populate_End_Date_of_OverlayShared</name>
+        <label>Populate End Date of OverlayShared</label>
+        <locationX>324</locationX>
+        <locationY>524</locationY>
+        <inputAssignments>
+            <field>End_Date__c</field>
+            <value>
+                <elementReference>Begin_Comissionable</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Populate_End_Date_of_ResellerReferral</name>
+        <label>Populate End Date of ResellerReferral</label>
+        <locationX>306</locationX>
+        <locationY>355</locationY>
+        <inputAssignments>
+            <field>End_Date__c</field>
+            <value>
+                <elementReference>Begin_180</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>644</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Consolidated_Decision</targetReference>
+        </connector>
+        <object>Account_Split__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

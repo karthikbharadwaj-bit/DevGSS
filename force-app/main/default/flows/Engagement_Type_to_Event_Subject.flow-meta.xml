@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>57.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>SG: https://ringcentral.freshservice.com/a/tickets/1441505 (Add Channel &amp; Expansion)
+DET: https://jira.ringcentral.com/browse/QTC-806</description>
+    <environments>Default</environments>
+    <interviewLabel>Engagement Type to Event Subject {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Engagement Type to Event Subject</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_the_Event_s_Subject</name>
+        <label>Update the Event&apos;s Subject</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>$Record.Engagement_Type__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_the_Event_s_Subject</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>AND(
+NOT(ISPICKVAL({!$Record.Engagement_Type__c}, &apos;&apos;)),
+
+OR(
+{!$Record.RecordType.DeveloperName} = &apos;Ent_Maj_MM&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;CE&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;SMB_Expansion&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;Security&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;CX&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;X3A_Channel_Mitel&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;AU_EMEA&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;ASE_CoE&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;APPS&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;RCV&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;VIP_Event&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;GSP_Event&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;Channel&apos;,
+{!$Record.RecordType.DeveloperName} = &apos;Expansion&apos;
+)
+)</filterFormula>
+        <object>Event</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

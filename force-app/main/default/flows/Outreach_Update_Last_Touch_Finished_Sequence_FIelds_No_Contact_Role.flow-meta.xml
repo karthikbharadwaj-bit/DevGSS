@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>56.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Updates the Opportunity with a Contact&apos;s Sequence data. Checks to see if the Last Touch Contact is fie, which is a lookup field. Use this automation if not using the standard Opportunity Contact Roles feature within Salesforce.</description>
+    <environments>Default</environments>
+    <interviewLabel>Outreach - Update Last Touch + Finished Sequence FIelds (No Contact Role) {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Outreach - Update Last Touch + Finished Sequence FIelds (No Contact Role)</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Sync_Sequence_Info_from_Contact</name>
+        <label>Sync Sequence Info from Contact</label>
+        <locationX>176</locationX>
+        <locationY>311</locationY>
+        <inputAssignments>
+            <field>Outreach_Attributed_Finished_Sequences__c</field>
+            <value>
+                <elementReference>$Record.Outreach_Last_Touch_Contact__r.Outreach_Finished_Sequences__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Outreach_Last_Touch_Sequence__c</field>
+            <value>
+                <elementReference>$Record.Outreach_Last_Touch_Contact__r.Current_Sequence_Name__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Sync_Sequence_Info_from_Contact</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Outreach_Last_Touch_Sequence__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Outreach_Last_Touch_Contact__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Opportunity</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

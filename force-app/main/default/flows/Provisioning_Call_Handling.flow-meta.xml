@@ -1,0 +1,902 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>CSR_0</name>
+        <choiceText>CSR 0</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>CSR_1</name>
+        <choiceText>CSR 1</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Hard_Phone</name>
+        <choiceText>Hard Phone</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Mobile_App</name>
+        <choiceText>Mobile App</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Soft_Phone</name>
+        <choiceText>Soft Phone</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Tier1</name>
+        <choiceText>Tier 1</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>Affected_Devices</name>
+        <label>Affected Devices</label>
+        <locationX>1102</locationX>
+        <locationY>563</locationY>
+        <defaultConnector>
+            <targetReference>Error_Message_No1</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Hard_Phone_Selected_01</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Hard_Phone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Hard_Phone_Selected</targetReference>
+            </connector>
+            <label>Hard Phone Selected 01</label>
+        </rules>
+        <rules>
+            <name>Mobile_App_Selected_01</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Mobile_App</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Error_Message_No1</targetReference>
+            </connector>
+            <label>Mobile App Selected 01</label>
+        </rules>
+        <rules>
+            <name>Soft_Phone_Selected_01</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Soft_Phone</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Error_Message_No1</targetReference>
+            </connector>
+            <label>Soft Phone Selected 01</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>DND_Mode_Enabled</name>
+        <label>DND Mode Enabled</label>
+        <locationX>490</locationX>
+        <locationY>1023</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>DNDEnabledYes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>DNDEnabledYes</targetReference>
+            </connector>
+            <label>DNDEnabledYes</label>
+        </rules>
+        <rules>
+            <name>DNDEnabledNo1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>DNDEnabledNo</targetReference>
+            </connector>
+            <label>DNDEnabledNo</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Error_Message</name>
+        <label>Error Message</label>
+        <locationX>1596</locationX>
+        <locationY>884</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Error_Message_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Error_Message_Yes1</targetReference>
+            </connector>
+            <label>Error Message Yes</label>
+        </rules>
+        <rules>
+            <name>Error_Message_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Error_Message_No1</targetReference>
+            </connector>
+            <label>Error Message No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Is_it_active1</name>
+        <label>Is it active?</label>
+        <locationX>780</locationX>
+        <locationY>876</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Is_it_active_Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Yes_on_device_enabled</targetReference>
+            </connector>
+            <label>Is it active?Yes</label>
+        </rules>
+        <rules>
+            <name>Is_it_active_No</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>No_on_device_enabled</targetReference>
+            </connector>
+            <label>Is it active?No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Restart_Phone</name>
+        <label>Restart Phone</label>
+        <locationX>1129</locationX>
+        <locationY>1199</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Restart_Yes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Restart_Yes</targetReference>
+            </connector>
+            <label>Restart Yes</label>
+        </rules>
+        <rules>
+            <name>Restart_No1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>No_on_device_enabled</targetReference>
+            </connector>
+            <label>Restart No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Tier_Selection</name>
+        <label>Tier Selection</label>
+        <locationX>1080</locationX>
+        <locationY>231</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>TSR_01</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Tier1</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TSR_1</targetReference>
+            </connector>
+            <label>TSR 1</label>
+        </rules>
+        <rules>
+            <name>CSR_04</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>CSR_0</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CSR_02</targetReference>
+            </connector>
+            <label>CSR 0</label>
+        </rules>
+        <rules>
+            <name>CSR_05</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>CSR_1</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>CSR_03</targetReference>
+            </connector>
+            <label>CSR 1</label>
+        </rules>
+    </decisions>
+    <description>Provisioning Call Handling flow</description>
+    <interviewLabel>Provisioning Call Handling {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Provisioning Call Handling</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>CSR_02</name>
+        <label>CSR 0</label>
+        <locationX>802</locationX>
+        <locationY>386</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>TSR_1</targetReference>
+        </connector>
+        <fields>
+            <name>CSR0</name>
+            <fieldText>&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Check if account is Active.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/AccountStatus01&apos; /&gt;
+&lt;/ul&gt;
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Check if the Digital Line is charged successfully.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/BillingStatus01&apos; /&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+
+
+&lt;/p&gt;
+
+
+&lt;b&gt;Please click &quot;NEXT&quot; to continue.&lt;/b&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>CSR_03</name>
+        <label>CSR  1</label>
+        <locationX>1360</locationX>
+        <locationY>378</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>TSR_1</targetReference>
+        </connector>
+        <fields>
+            <name>CSR1</name>
+            <fieldText>&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Check if account is Active.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/AccountStatus01&apos; /&gt;
+&lt;/ul&gt;
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Check if the Digital Line is charged successfully.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/BillingStatus01&apos; /&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+
+
+&lt;/p&gt;
+
+
+&lt;b&gt;Please click &quot;NEXT&quot; to continue.&lt;/b&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>DNDEnabledNo</name>
+        <label>DNDEnabledNo</label>
+        <locationX>492</locationX>
+        <locationY>1198</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Restart_Phone</targetReference>
+        </connector>
+        <fields>
+            <name>PhoneRestart1</name>
+            <fieldText>&lt;b&gt;Restart phone and do a test call.&lt;b&gt;
+&lt;p&gt;
+
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_it_working1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is it working?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>DNDEnabledYes</name>
+        <label>DNDEnabledYes</label>
+        <locationX>784</locationX>
+        <locationY>1026</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Restart_Phone</targetReference>
+        </connector>
+        <fields>
+            <name>PhoneRestart</name>
+            <fieldText>&lt;b&gt;After disabling DND&lt;b&gt;
+&lt;b&gt;Restart phone and do a test call.&lt;b&gt;
+&lt;p&gt;
+
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_it_working</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is it working?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Do_you_see_any_error_Message</name>
+        <label>Do you see any error Message?</label>
+        <locationX>1382</locationX>
+        <locationY>881</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Error_Message</targetReference>
+        </connector>
+        <fields>
+            <name>DoyouseeanyerrorMessage</name>
+            <fieldText>&lt;b&gt;Do you see any error Message?&lt;/b&gt;
+&lt;p&gt;
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Do_you_see_any_error_Message1</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Do you see any error Message?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Error_Message_No1</name>
+        <label>Error Message No</label>
+        <locationX>1873</locationX>
+        <locationY>894</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Restart_Yes</targetReference>
+        </connector>
+        <fields>
+            <name>NoError</name>
+            <fieldText>&lt;b&gt; Handle in place and proceed to appropriate Troubleshooting Tree &lt;/b&gt;
+
+
+
+
+
+
+&lt;b&gt; Click CONTINUE to add notes to an existing case or to create a new case for this issue &lt;/b&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Error_Message_Yes1</name>
+        <label>Error Message Yes</label>
+        <locationX>1602</locationX>
+        <locationY>1058</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>WithError</name>
+            <fieldText>&lt;b&gt; Transfer the call to Provisioning Team &lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt;Non - working newly received phone/s
+&lt;li&gt;URL call disabled
+&lt;li&gt;Network link is down
+&lt;li&gt;Checking DNS
+&lt;li&gt;Line unregistered
+&lt;li&gt;Application error
+&lt;li&gt;Initializing network
+&lt;li&gt;Time and Date out of sync
+&lt;li&gt;Blinking red light or Steady Orange light for Cisco
+&lt;li&gt;Presence, Intercom, Paging and Call Monitoring not working 
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;(NOTE: Presence don&apos;t really work if phones are under Shared Lines. Please educated accordingly.)
+&lt;/ul&gt;&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Call Features are not working (Transfer, Conference etc.)
+&lt;/ul&gt;
+
+
+
+
+
+&lt;b&gt;Click CONTINUE to add notes to an existing case or to create a new case for this issue&lt;/b&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Hard_Phone_Selected</name>
+        <label>Hard Phone Selected</label>
+        <locationX>1111</locationX>
+        <locationY>745</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Is_it_active1</targetReference>
+        </connector>
+        <fields>
+            <name>HardPhone</name>
+            <fieldText>Check the phone status from the online account and Amin Interface.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/PhoneStatusOnline&apos; /&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_it_active</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Is it active?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>No_on_device_enabled</name>
+        <label>No  on device enabled</label>
+        <locationX>1118</locationX>
+        <locationY>883</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Do_you_see_any_error_Message</targetReference>
+        </connector>
+        <fields>
+            <name>Ifphonenotmactive</name>
+            <fieldText>&lt;b&gt;Assist Accordingly and proceed to Next.&lt;/b&gt;
+&lt;p&gt;
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Provisioning_Call_Handling</name>
+        <label>Provisioning Call Handling</label>
+        <locationX>1076</locationX>
+        <locationY>63</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Tier_Selection</targetReference>
+        </connector>
+        <fields>
+            <name>Kindly_select_which_Tier_you_are_in</name>
+            <choiceReferences>Tier1</choiceReferences>
+            <choiceReferences>CSR_0</choiceReferences>
+            <choiceReferences>CSR_1</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Kindly select which Tier you are in.&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Restart_Yes</name>
+        <label>Restart Yes</label>
+        <locationX>1882</locationX>
+        <locationY>1198</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>RestartWorked</name>
+            <fieldText>&lt;b&gt; Click CONTINUE to add notes to an existing case or to create a new case for this issue. &lt;/b&gt;.</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>TSR_1</name>
+        <label>TSR 1</label>
+        <locationX>1093</locationX>
+        <locationY>383</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Affected_Devices</targetReference>
+        </connector>
+        <fields>
+            <name>TSR1</name>
+            <fieldText>&lt;b&gt;CONNECTION CHECKLIST:&lt;/B&gt;
+
+
+&lt;b&gt;Polycom Phones&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt; Ethernet cable must be connected to the &lt;b&gt;LAN&lt;/b&gt; port going to the modem or router.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/PolycomSample01&apos; /&gt;
+&lt;/ul&gt;
+
+
+&lt;b&gt;Cisco Phones&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt; Ethernet cable must be connected to the &lt;b&gt;SW&lt;/b&gt; port going to the modem or router.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/CiscoSample01&apos; /&gt;
+&lt;/ul&gt;
+
+
+&lt;b&gt;Cisco ATA&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+&lt;li&gt; Ethernet cable must be connected to the &lt;b&gt;INTERNET&lt;/b&gt; port going to the modem or router.
+&lt;/ul&gt;
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;
+&lt;li&gt;&lt;img src=&apos;/resource/CiscoSample02&apos; /&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Kindly_Identify_the_affected_device</name>
+            <choiceReferences>Hard_Phone</choiceReferences>
+            <choiceReferences>Mobile_App</choiceReferences>
+            <choiceReferences>Soft_Phone</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Kindly Identify the affected device.&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>Yes_on_device_enabled</name>
+        <label>Yes on device enabled</label>
+        <locationX>491</locationX>
+        <locationY>876</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>DND_Mode_Enabled</targetReference>
+        </connector>
+        <fields>
+            <name>CheckDNDStatus</name>
+            <fieldText>&lt;b&gt;Check if DND is Turned on..&lt;/b&gt; 
+
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;
+
+&lt;li&gt;Disabling DND on Cisco phone (link)
+
+&lt;li&gt;Disabling DND on Polycom (link)
+&lt;/ul&gt;
+&lt;p&gt;
+
+
+
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_DND_Mode_Enabled</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;DIV ALIGN=&quot;LEFT&quot;&gt;&lt;FONT FACE=&quot;Arial&quot; STYLE=&quot;font-size:12px&quot; COLOR=&quot;#000000&quot; LETTERSPACING=&quot;0&quot; KERNING=&quot;0&quot;&gt;&lt;B&gt;Is DND Mode Enabled?&lt;/B&gt;&lt;/FONT&gt;&lt;/DIV&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>Provisioning_Call_Handling</startElementReference>
+    <status>Obsolete</status>
+</Flow>

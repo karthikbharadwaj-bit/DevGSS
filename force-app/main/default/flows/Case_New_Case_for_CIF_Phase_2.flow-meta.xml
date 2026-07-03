@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>New_CIF_Phase_2_Immediate_alert</name>
+        <label>New CIF Phase 2 Immediate alert</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.New_CIF_Phase_2_Immediate_alert</actionName>
+        <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>New_CIF_Phase_2_Immediate_alert_Error</targetReference>
+        </faultConnector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.New_CIF_Phase_2_Immediate_alert</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>New_CIF_Phase_2_Time_triggered_alert</name>
+        <label>New CIF Phase 2 Time triggered alert</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.New_CIF_Phase_2_Time_triggered_alert</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.New_CIF_Phase_2_Time_triggered_alert</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>New_CIF_Phase_2_Immediate_alert_Error</name>
+        <label>New CIF Phase 2 Immediate alert Error</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>EmailError</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <description>This flow is created from the Case Workflow Rules - Phase 3</description>
+    <environments>Default</environments>
+    <interviewLabel>Case New Case for CIF (Phase 2) {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case New Case for CIF (Phase 2)</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>New CIF case Escalated to &quot;Escalate to CIF&quot; updates status to &quot;New&quot;</description>
+        <name>mainUpdate</name>
+        <label>Field Update</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>New_CIF_Phase_2_Immediate_alert</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Open</stringValue>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>mainUpdate</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterFormula>AND(
+    {!$Record.RecordTypeId} = &quot;01280000000UG7DAAW&quot;,
+    TEXT({!$Record.Support_Escalate_To__c}) = &quot;CERT&quot;,
+    OR(
+        TEXT({!$Record.Status}) = &quot;Open&quot;,
+        TEXT({!$Record.Status}) = &quot;Open - Endorsed&quot;,
+        TEXT({!$Record.Status}) = &quot;WIP by Support&quot;,
+        TEXT({!$Record.Status}) = &quot;Work in Progress&quot;
+    )
+)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>Scheduled_Path_1</name>
+            <connector>
+                <targetReference>New_CIF_Phase_2_Time_triggered_alert</targetReference>
+            </connector>
+            <label>Scheduled Path 1</label>
+            <offsetNumber>2</offsetNumber>
+            <offsetUnit>Hours</offsetUnit>
+            <timeSource>RecordTriggerEvent</timeSource>
+        </scheduledPaths>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>EmailError</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

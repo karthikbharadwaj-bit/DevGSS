@@ -1,0 +1,867 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>49.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>App_Desktop_app_and_or_Mobile_App</name>
+        <choiceText>App (Desktop app and/or Mobile App)</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Frequently_Asked_Questions</name>
+        <choiceText>Frequently Asked Questions</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Having_trouble_logging_into_SSO_enabled_App_Web_App_Integration</name>
+        <choiceText>Having trouble logging into SSO enabled App (Web/App/Integration)</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Inquiry_Not_Available</name>
+        <choiceText>Inquiry Not Available</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Integration_Google_and_or_Microsoft_Outlook</name>
+        <choiceText>Integration (Google and/or Microsoft Outlook)</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>No</name>
+        <choiceText>No</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>RingCentral_Web</name>
+        <choiceText>RingCentral Web</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <choices>
+        <name>Yes</name>
+        <choiceText>Yes</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>D1_Single_Sign_On_Walk_through_Guide</name>
+        <label>D1_Single Sign-On Walk-through Guide</label>
+        <locationX>182</locationX>
+        <locationY>228</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>FAQ</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Frequently_Asked_Questions</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S2_D1_1_Is_the_account_tier_Eligible</targetReference>
+            </connector>
+            <label>FAQ</label>
+        </rules>
+        <rules>
+            <name>Having_trouble_logging_in</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Having_trouble_logging_into_SSO_enabled_App_Web_App_Integration</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S6_D1_2</targetReference>
+            </connector>
+            <label>Having trouble logging in</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D2_Is_the_account_eligible_for_SSO</name>
+        <label>D2_Is the account eligible for SSO?</label>
+        <locationX>649</locationX>
+        <locationY>228</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S3_D2_1_Is_the_customer_need_help_setting_up_SSO</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S5_D3_2_Customer_Education</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+        <rules>
+            <name>Inquiry_Not_Available1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Inquiry_Not_Available</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D3_1_Escalate_the_case_to_Tier_2</targetReference>
+            </connector>
+            <label>Inquiry Not Available</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D3_Is_the_customer_need_help_setting_up_SSO</name>
+        <label>D3_Is the customer need help setting up SSO?</label>
+        <locationX>1065</locationX>
+        <locationY>224</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D3_1_Escalate_the_case_to_Tier_2</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No2</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S5_D3_2_Customer_Education</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D4_Determine_where_the_issue_is_encountered</name>
+        <label>D4_Determine where the issue is encountered</label>
+        <locationX>181</locationX>
+        <locationY>885</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>RingCentral_Web1</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>RingCentral_Web</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S7_D4_1_Log_in_to_your_RingCentral_Online_Account_with_Single_Sign_on</targetReference>
+            </connector>
+            <label>RingCentral Web</label>
+        </rules>
+        <rules>
+            <name>App</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>App_Desktop_app_and_or_Mobile_App</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S8_D4_2_Log_in_to_your_RingCentral_Mobile_and_Desktop_App_using_Single_Sign_On</targetReference>
+            </connector>
+            <label>App</label>
+        </rules>
+        <rules>
+            <name>Integration</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Integration_Google_and_or_Microsoft_Outlook</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S10_D4_3_Integrations_Google_Microsoft_Outlook</targetReference>
+            </connector>
+            <label>Integration</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D5_Are_they_able_to_Login_via_Web_using_SSO</name>
+        <label>D5_Are they able to Login via Web using SSO?</label>
+        <locationX>742</locationX>
+        <locationY>900</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes5</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D3_1_Escalate_the_case_to_Tier_2</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No6</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S7_D4_1_Log_in_to_your_RingCentral_Online_Account_with_Single_Sign_on</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D6_Are_they_being_redirected_to_their_IDP_host</name>
+        <label>D6_Are they being redirected to their IDP host?</label>
+        <locationX>603</locationX>
+        <locationY>613</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes4</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D3_1_Escalate_the_case_to_Tier_2</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No4</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S10_D6_2_Are_they_able_to_complete_the_SSO_set_up_before</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>D7_Are_they_able_to_complete_the_SSO_set_up_before</name>
+        <label>D7_Are they able to complete the SSO set up before?</label>
+        <locationX>457</locationX>
+        <locationY>363</locationY>
+        <defaultConnectorLabel>[Default Outcome]</defaultConnectorLabel>
+        <rules>
+            <name>Yes3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Yes</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S4_D3_1_Escalate_the_case_to_Tier_2</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+        <rules>
+            <name>No3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>No</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>S2_D1_1_Is_the_account_tier_Eligible</targetReference>
+            </connector>
+            <label>No</label>
+        </rules>
+    </decisions>
+    <description>using article for image source</description>
+    <interviewLabel>Integrations: Single Sign-On (SSO) Walk-through Guide {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Integrations: Single Sign-On (SSO) Walk-through Guide</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <screens>
+        <name>S10_D4_3_Integrations_Google_Microsoft_Outlook</name>
+        <label>S10_D4_3_Integrations(Google/Microsoft Outlook)</label>
+        <locationX>913</locationX>
+        <locationY>1224</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D5_Are_they_able_to_Login_via_Web_using_SSO</targetReference>
+        </connector>
+        <fields>
+            <name>IntegrationsGoogleMicrosoftOutlook</name>
+            <fieldText>&lt;b&gt;Integrations(Google/Microsoft Outlook)&lt;/b&gt;
+
+Logging in to your RingCentral Online Account with Google
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Click Google &gt; Log in
+&lt;li&gt;Enter your Google email and click Next.&lt;/ul&gt;
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: If your company uses Google G Suite, you will redirected to the Google G Suite login page. Enter your Google G Suite credentials there to proceed.
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Enter your password and click Next.&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;https://rc--c.na29.content.force.com/servlet/rtaImage?eid=ka23400000090nh&amp;feoid=00N80000004hxR2&amp;refid=0EM3400000046hI&apos; /&gt;&lt;/ul&gt;
+
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: If this is not a first time login, you may just click or enter your Google account and you will be automatically logged in to your RingCentral Online Account. If you have logged out from your Google account, you may need to enter your credentials again. 
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Are_they_able_to_Login_via_Web_using_SSO_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Are they able to Login via Web using SSO?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S10_D6_2_Are_they_able_to_complete_the_SSO_set_up_before</name>
+        <label>S10_D6_2_Are they able to complete the SSO set up before?</label>
+        <locationX>466</locationX>
+        <locationY>500</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D7_Are_they_able_to_complete_the_SSO_set_up_before</targetReference>
+        </connector>
+        <fields>
+            <name>Are_they_able_to_complete_the_SSO_set_up_before</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Are they able to complete the SSO set up before?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S1_Single_Sign_On_Walk_through_Guide</name>
+        <label>S1_Single Sign-On Walk-through Guide</label>
+        <locationX>180</locationX>
+        <locationY>115</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D1_Single_Sign_On_Walk_through_Guide</targetReference>
+        </connector>
+        <fields>
+            <name>SingleSignOnWalkthroughGuide</name>
+            <fieldText>&lt;b&gt;Single Sign-On Walk-through Guide&lt;/b&gt;
+
+&lt;b&gt;Single Sign-On&lt;/b&gt; (SSO) enables your users to log in with one set of validated credentials to access multiple work applications and tools. SSO leverages the stability of your network, using a centralised authentication point to provide better user security and reduce phishing activity over your network.
+
+With RingCentral Single Sign-On, your users will be able to securely log in automatically to RingCentral with their company credentials, removing the need to remember additional passwords, and reducing your team’s workload assisting users with password recovery.
+
+RingCentral Single Sign-On is available to all RingCentral Office Premium and Enterprise customers. Single SignOn works with your RingCentral online account, and all RingCentral apps—RingCentral mobile app, RingCentral for Desktop, RingCentral Meetings, Glip, as well as all RingCentral integration solution, including Salesforce, Google, Office 365, Zendesk, etc.
+
+ 
+
+This guide will help you to introduce Single Sign-on to our customers. It includes the following:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Single Sign-On Frequently Asked Questions
+&lt;li&gt;Self-Setup Walkthrough 
+&lt;li&gt;Having trouble logging into SSO enabled App (Web/APP/Integration)&lt;/ul&gt;
+ 
+
+&lt;b&gt;NOTE&lt;/b&gt;: Always ask your supervisor or manager for assistance.
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Single_Sign_On_Walk_through_Guide</name>
+            <choiceReferences>Frequently_Asked_Questions</choiceReferences>
+            <choiceReferences>Having_trouble_logging_into_SSO_enabled_App_Web_App_Integration</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Single Sign-On Walk-through Guide&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S2_D1_1_Is_the_account_tier_Eligible</name>
+        <label>S2_D1_1_Is the account tier Eligible?</label>
+        <locationX>466</locationX>
+        <locationY>183</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D2_Is_the_account_eligible_for_SSO</targetReference>
+        </connector>
+        <fields>
+            <name>IstheaccounttierEligible</name>
+            <fieldText>&lt;b&gt;Is the account tier Eligible?&lt;/b&gt;
+
+The reason why we need to ask this question is that, Not all RingCentral Tier includes Single Sing-On. RingCentral Office Premium and Ultimate accounts in US and Canada are eligible for SSO
+
+
+&lt;b&gt;Important&lt;/b&gt;: In the event the customer&apos;s account is not eligible and want to add Single Sign-On feature, Refer to their Account Manager 
+ 
+
+&lt;b&gt;NOTE&lt;/b&gt;: If the customer has any other questions, Go Back to FAQ&apos;s
+
+For Self-help click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/6748&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Overview | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>b_Is_the_account_eligible_for_SSO_b</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <choiceReferences>Inquiry_Not_Available</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the account eligible for SSO?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S3_D2_1_Is_the_customer_need_help_setting_up_SSO</name>
+        <label>S3_D2_1_Is the customer need help setting up SSO?</label>
+        <locationX>864</locationX>
+        <locationY>226</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D3_Is_the_customer_need_help_setting_up_SSO</targetReference>
+        </connector>
+        <fields>
+            <name>IsthecustomerneedhelpsettingupSSO</name>
+            <fieldText>&lt;b&gt;NOTE&lt;/b &gt;: If the customer has any other questions, Go Back to FAQ&apos;s
+
+For Self-help click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/6748&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Overview | RingCentral&lt;/a&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Is_the_customer_need_help_setting_up_SSO</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Is the customer need help setting up SSO?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S4_D3_1_Escalate_the_case_to_Tier_2</name>
+        <label>S4_D3_1_Escalate the case to Tier 2</label>
+        <locationX>1066</locationX>
+        <locationY>359</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>EscalatethecasetoTier2</name>
+            <fieldText>&lt;b&gt;Escalate the case to Tier 2&lt;/b&gt;
+
+&lt;b&gt;Important&lt;/b&gt;: Advice the customer to have their &lt;b&gt;SAML 2.0 metadata&lt;/b&gt; and &lt;b&gt;certificate&lt;/b&gt; ready.
+
+Reminders before escalating the case:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Attach the Metadata to T1 case 
+&lt;li&gt;Ensure that your case notes are detailed and concise.
+&lt;li&gt;Set expectations with the customer regarding their case being escalated.
+&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues.
+&lt;li&gt;Take ownership and appropriate action to ensure unresolved issues are handled correctly
+&lt;li&gt;Do not forget to to select the correct disposition based on how you handled the problem&lt;/ul&gt;
+ 
+
+
+&lt;b&gt;NOTE&lt;/b&gt;: If the customer has any other questions, Go Back to FAQ&apos;s
+
+For Self-help click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/6748&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Overview | RingCentral&lt;/a&gt;
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S5_D3_2_Customer_Education</name>
+        <label>S5_D3_2_Customer Education</label>
+        <locationX>1064</locationX>
+        <locationY>99</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>CustomerEducation</name>
+            <fieldText>&lt;b&gt;Customer Education&lt;/b&gt;
+
+Help the customer get more information about Single Sign-On by providing the recommended kb article. For self-help click the following links:
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;a href=&quot;https://netstorage.ringcentral.com/datasheets/sso_datasheet.pdf&quot;; target=&quot;_blank&quot;&gt;RingCentral Single Sign-on&lt;/a&gt;
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/1149&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Setup | RingCentral&lt;/a&gt;
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/Logging-in-to-your-RingCentral-account#logginginwithsso&quot;; target=&quot;_blank&quot;&gt;Log In to your RingCentral Account&lt;/a&gt;
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/5164#Using%20your%20Email%20Address&quot;; target=&quot;_blank&quot;&gt;RingCentral Phone Mobile - Logging in using your Phone Number
+&lt;/a&gt;
+&lt;li&gt;&lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/Logging-in-to-your-RingCentral-account#logginginwithgoogle&quot;; target=&quot;_blank&quot;&gt;Log In to your RingCentral Account&lt;/a&gt;&lt;/ul&gt;
+
+
+&lt;b&gt;Reminders&lt;/b&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Use probing questions to determine if the customer has any other unresolved issues. Take ownership and appropriate action to ensure unresolved issues are handled correctly.
+&lt;li&gt;Do not forget to to select the correct disposition based on how you handled the problem 
+&lt;li&gt;Promote Get Help option and provide the KB Article
+
+
+
+
+
+Click &lt;b&gt;NEXT&lt;/b&gt; to add notes to an existing case or to create a new case for this issue
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S6_D1_2</name>
+        <label>S6_D1_2_RingCentral Online Account, Desktop and Mobile App and RingCentral Integrations</label>
+        <locationX>183</locationX>
+        <locationY>753</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D4_Determine_where_the_issue_is_encountered</targetReference>
+        </connector>
+        <fields>
+            <name>RingCentralOnlineAccountDesktopandMobileAppandRingCentralIntegrations</name>
+            <fieldText>The &lt;b&gt;RingCentral Online Account&lt;/b&gt;, &lt;b&gt;Desktop&lt;/b&gt; and &lt;b&gt;Mobile App&lt;/b&gt; and &lt;b&gt;RingCentral Integrations&lt;/b&gt;, allows Users to access their fax and voicemail messages, and make changes to their personal call handling rules, greetings, and other settings. Additionally, it allows Account Administrators or Users with Administrator access to make changes to their company settings and call handling rules.
+&lt;p&gt;
+ 
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Determine_where_the_issue_is_encountered</name>
+            <choiceReferences>RingCentral_Web</choiceReferences>
+            <choiceReferences>App_Desktop_app_and_or_Mobile_App</choiceReferences>
+            <choiceReferences>Integration_Google_and_or_Microsoft_Outlook</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Determine where the issue is encountered</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S7_D4_1_Log_in_to_your_RingCentral_Online_Account_with_Single_Sign_on</name>
+        <label>S7_D4_1_Log in to your RingCentral Online Account with Single Sign-on</label>
+        <locationX>465</locationX>
+        <locationY>774</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D6_Are_they_being_redirected_to_their_IDP_host</targetReference>
+        </connector>
+        <fields>
+            <name>LogintoyourRingCentralOnlineAccountwithSingleSignon</name>
+            <fieldText>&lt;b&gt;Log in to your RingCentral Online Account with Single Sign-on&lt;/b&gt;
+
+Select this option only if your company uses Single Sign-on (SSO) to access RingCentral. SSO can only be enabled by your company Administrator. If you are a User and have questions, contact your Company Administrator. If you are an Administrator and want to know more information about SSO or for self-help click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/6748&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Overview | RingCentral&lt;/a&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Click Single Sign-On
+&lt;li&gt;Confirm your identity by entering your Email Address, and then click Submit 
+&lt;li&gt;You will be asked to enter your company&apos;s IdP login. Enter your Company Username and Password, and then click Sign In. &lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;https://rc--c.na29.content.force.com/servlet/rtaImage?eid=ka23400000090nh&amp;feoid=00N80000004hxR2&amp;refid=0EM3400000046h8&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Are_they_being_redirected</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Are they being redirected to their IDP host?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <name>S8_D4_2_Log_in_to_your_RingCentral_Mobile_and_Desktop_App_using_Single_Sign_On</name>
+        <label>S8_D4_2_Log in to your RingCentral Mobile and Desktop App using Single Sign-On</label>
+        <locationX>41</locationX>
+        <locationY>1184</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>D5_Are_they_able_to_Login_via_Web_using_SSO</targetReference>
+        </connector>
+        <fields>
+            <name>LogintoyourRingCentralMobileandDesktopAppusingSingleSignOn</name>
+            <fieldText>&lt;b&gt;Log in to your RingCentral Mobile and Desktop App using Single Sign-On&lt;/b&gt;
+
+
+Select this option only if your company uses Single Sign-on (SSO) to access RingCentral. SSO can only be enabled by your company Administrator. If you have questions, contact your company Administrator. If you are an Administrator and want to know more information about SSO or for self-help click the link &lt;a href=&quot;https://success.ringcentral.com/articles/RC_Knowledge_Article/6748&quot;; target=&quot;_blank&quot;&gt;Single Sign-On (SSO) - Overview | RingCentral&lt;/a&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:square;&amp;nbsp;&quot;&gt;&lt;li&gt;Tap the &lt;b&gt;Single Sign-On&lt;/b&gt; &gt; Enter your Email Address and then, tap &lt;b&gt;Continue&lt;/b&gt;&lt;/ul&gt;
+
+&lt;ul style=&quot;margin-left: 40px;list-style-type:blank;&amp;nbsp;&quot;&gt;&lt;li&gt;&lt;img src=&apos;https://rc--c.na29.content.force.com/servlet/rtaImage?eid=ka23400000090nh&amp;feoid=00N80000004hxR2&amp;refid=0EM3400000046hD&apos; /&gt;&lt;/ul&gt;
+&lt;p&gt;
+
+&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Are_they_able_to_Login_via_Web_using_SSO</name>
+            <choiceReferences>Yes</choiceReferences>
+            <choiceReferences>No</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>&lt;b&gt;Are they able to Login via Web using SSO?&lt;/b&gt;</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <startElementReference>S1_Single_Sign_On_Walk_through_Guide</startElementReference>
+    <status>Obsolete</status>
+</Flow>

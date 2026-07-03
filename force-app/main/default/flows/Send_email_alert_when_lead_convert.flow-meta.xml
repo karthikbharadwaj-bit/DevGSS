@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Enroll_in_CDP_for_Partner_Install</name>
+        <label>Enroll in CDP for Partner Install</label>
+        <locationX>244</locationX>
+        <locationY>693</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>cdpenrollEmailId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailAddressesArray</name>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>Deal Reg CDP Training Request - {!$Record.Partner_Account__r.Name}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>EnrollinCDPforPartnerInstallEmailbody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>Partner_Install_Certified_Delivery_Partner</name>
+        <label>Partner Install, Certified Delivery Partner</label>
+        <locationX>770</locationX>
+        <locationY>726</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>PartnersRecepiantEmailId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>Deal Reg Notification for CDP Install - {!Get_Converted_Opportunity.Name}.</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>PartnerInstallCertifiedDeliveryPartnerEmailbody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>RC_ProServices_Install</name>
+        <label>RC ProServices Install</label>
+        <locationX>513</locationX>
+        <locationY>823</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>PartnersRecepiantEmailId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>Deal Reg RC Proserv Request - {!Get_Converted_Opportunity.Name}</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>RCProServicesInstallEmailbody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Installation_Service_provider</name>
+        <label>Installation Service provider</label>
+        <locationX>501</locationX>
+        <locationY>575</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Is_RC_ProServices_Install</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Installation_Service_Provider__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>RC ProServices Install</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>RC_ProServices_Install</targetReference>
+            </connector>
+            <label>Is RC ProServices Install</label>
+        </rules>
+        <rules>
+            <name>Is</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Installation_Service_Provider__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Partner Install, Certified Delivery Partner</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Partner_Install_Certified_Delivery_Partner</targetReference>
+            </connector>
+            <label>Is Partner Install, Certified Delivery Partner</label>
+        </rules>
+        <rules>
+            <name>Is_Enroll_in_CDP_for_Partner_Install</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Installation_Service_Provider__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Enroll in CDP for Partner Install</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Enroll_in_CDP_for_Partner_Install</targetReference>
+            </connector>
+            <label>Is Enroll in CDP for Partner Install</label>
+        </rules>
+    </decisions>
+    <description>Send email alert when lead convert as per the installation service provider.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>cdpenrollEmailId</name>
+        <dataType>String</dataType>
+        <expression>IF(
+CONTAINS({!orgAccountLink}, &apos;sandbox&apos;), 
+&apos;cdpenrollment@ringcentral.com.invalid&apos;,
+&apos;cdpenrollment@ringcentral.com&apos;
+ )</expression>
+    </formulas>
+    <formulas>
+        <name>orgAccountLink</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Partner_Server_URL_260}, FIND( &apos;/services&apos;, {!$Api.Partner_Server_URL_260}))&amp;{!Get_Converted_Opportunity.Account.Id}</expression>
+    </formulas>
+    <formulas>
+        <name>OrgConvertedOppLink</name>
+        <dataType>String</dataType>
+        <expression>LEFT({!$Api.Partner_Server_URL_260}, FIND( &apos;/services&apos;, {!$Api.Partner_Server_URL_260}))&amp;{!Get_Converted_Opportunity.Id}</expression>
+    </formulas>
+    <formulas>
+        <name>PartnersRecepiantEmailId</name>
+        <dataType>String</dataType>
+        <expression>IF(
+CONTAINS({!orgAccountLink}, &apos;sandbox&apos;), 
+&apos;partner-install-alerts@ringcentral.com.invalid&apos;,
+&apos;partner-install-alerts@ringcentral.com&apos;
+ )</expression>
+    </formulas>
+    <interviewLabel>Send email alert when lead convert {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Send email alert when lead convert</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>FREE_FORM_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Converted_Opportunity</name>
+        <label>Get Converted Opportunity</label>
+        <locationX>525</locationX>
+        <locationY>400</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Installation_Service_provider</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.ConvertedOpportunityId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Opportunity</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Partner_Contact</name>
+        <label>Partner Contact</label>
+        <locationX>416</locationX>
+        <locationY>366</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Converted_Opportunity</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Partner_Contact__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contact</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>396</locationX>
+        <locationY>48</locationY>
+        <connector>
+            <targetReference>Partner_Contact</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>IsConverted</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Lead</object>
+        <recordTriggerType>Update</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>EnrollinCDPforPartnerInstallEmailbody</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Converted_Opportunity.Owner.Full_Name__c},&lt;/p&gt;&lt;p&gt;The partner has selected Enroll in CDP for Partner Install on this sales Opportunity - {!Get_Converted_Opportunity.Name}.&amp;nbsp;&lt;/p&gt;&lt;p&gt;Please reach out to the partner to scope training for CDP.&lt;/p&gt;&lt;p&gt;Below are some additional details related to this request:&lt;/p&gt;&lt;p&gt;                Partner Contact- {!Partner_Contact.Name} , Email :- {!$Record.Partner_Contact__r.Email}&lt;/p&gt;&lt;p&gt;                Opportunity Reference  - &lt;a href=&quot;{!OrgConvertedOppLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;                Account Name - &lt;a href=&quot;{!orgAccountLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Account.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;                Brand - {!$Record.Lead_Brand_Name__c}&lt;/p&gt;&lt;p&gt;Thanks!&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>PartnerInstallCertifiedDeliveryPartnerEmailbody</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Converted_Opportunity.Owner.Full_Name__c},&lt;/p&gt;&lt;p&gt;The partner has selected Partner Install, Certified Delivery Partner on this sales Opportunity :-{!Get_Converted_Opportunity.Name}.&amp;nbsp;&lt;/p&gt;&lt;p&gt;Please do not engage the customer to scope Professional Services for RingEX.&lt;/p&gt;&lt;p&gt;Below are some additional details related to this request:&lt;/p&gt;&lt;p&gt;             Partner Contact -  {!Partner_Contact.Name} ,  Email  -  {!$Record.Partner_Contact__r.Email}&lt;/p&gt;&lt;p&gt;            Opportunity Reference  - &lt;a href=&quot;{!OrgConvertedOppLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;             Account Name - &lt;a href=&quot;{!orgAccountLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Account.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Thanks!&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>RCProServicesInstallEmailbody</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Converted_Opportunity.Owner.Full_Name__c},&lt;/p&gt;&lt;p&gt;The partner has requested to initiate a Proserv quote on this sales Opportunity - {!Get_Converted_Opportunity.Name}&lt;/p&gt;&lt;p&gt;Please contact the partner for requested quote&lt;/p&gt;&lt;p&gt;Below are some additional details related to this request:&lt;/p&gt;&lt;p&gt;Partner Contact - {!Partner_Contact.Name} , Email :- {!$Record.Partner_Contact__r.Email}&lt;/p&gt;&lt;p&gt;Opportunity Reference - &lt;a href=&quot;{!OrgConvertedOppLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Account Name - &lt;a href=&quot;{!orgAccountLink}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;{!Get_Converted_Opportunity.Account.Name}&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Category Requested - {!$Record.Installation_Service_Provider__c}&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thanks!&lt;/p&gt;</text>
+    </textTemplates>
+</Flow>

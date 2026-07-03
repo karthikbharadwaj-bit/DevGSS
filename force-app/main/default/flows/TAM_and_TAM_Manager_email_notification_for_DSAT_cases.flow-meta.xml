@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Email_Notification</name>
+        <label>Email Notification</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>TAM_Manager_Checker</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>TAMEmail</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>TAMEmailNotification</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>TAM_Manager_Email</name>
+        <label>TAM Manager Email</label>
+        <locationX>50</locationX>
+        <locationY>647</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>TAMManagerEmail</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>EmailSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>TAMManagerNotification</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>58.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>TAM_Checker</name>
+        <label>TAM Checker</label>
+        <locationX>380</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>HasTAM</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account.Technical_Account_Manager__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.Technical_Account_Manager__r.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Email_Notification</targetReference>
+            </connector>
+            <label>HasTAM</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>TAM_Manager_Checker</name>
+        <label>TAM Manager Checker</label>
+        <locationX>182</locationX>
+        <locationY>539</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>TAMHasManager</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account.Technical_Account_Manager__r.ManagerId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account.Technical_Account_Manager__r.Manager.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>TAM_Manager_Email</targetReference>
+            </connector>
+            <label>TAMHasManager</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>EmailSubject</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Owner:User.FirstName} &amp; &quot; &quot; &amp; {!$Record.Owner:User.LastName} &amp; &quot; has predicted a customer DSAT on this case.&quot;</expression>
+    </formulas>
+    <formulas>
+        <name>TAMEmail</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Account.Technical_Account_Manager__r.Email}</expression>
+    </formulas>
+    <formulas>
+        <name>TAMEmailNotification</name>
+        <dataType>String</dataType>
+        <expression>&quot;Hi &quot; &amp;  {!$Record.Account.Technical_Account_Manager__r.FirstName} &amp; &quot; &quot; &amp; {!$Record.Account.Technical_Account_Manager__r.LastName}&amp;&quot;,&quot; &amp;br()
+&amp; br()
+&amp; {!$Record.Owner:User.Full_Name__c} &amp; &quot; has predicted a customer DSAT on this case. &quot; &amp; br()
+&amp; br()
+&amp; &quot;Case Number: &quot; &amp; {!$Record.CaseNumber} &amp; br()
+&amp; br()
+&amp; &quot;Subject: &quot; &amp; {!$Record.Subject} &amp; br()
+&amp; br()
+&amp; &quot;Description: &quot; &amp; {!$Record.Description} &amp; br()
+&amp; br()
+&amp; &quot;Company: &quot; &amp; {!$Record.Account_Name__c} &amp; br()
+&amp; br()
+&amp; &quot;UID: &quot; &amp; {!$Record.Account.RC_User_ID__c} &amp; br()
+&amp; br()
+
+&amp; &quot;Thank you! &quot; &amp; br()
+&amp; br()
+
+&amp;{!$Record.Owner:User.FirstName} &amp; &quot; &quot; &amp; {!$Record.Owner:User.LastName}</expression>
+    </formulas>
+    <formulas>
+        <name>TAMManagerEmail</name>
+        <dataType>String</dataType>
+        <expression>{!$Record.Account.Technical_Account_Manager__r.Manager.Email}</expression>
+    </formulas>
+    <formulas>
+        <name>TAMManagerNotification</name>
+        <dataType>String</dataType>
+        <expression>&quot;Hi &quot; &amp; {!$Record.Account.Technical_Account_Manager__r.Manager.FirstName}  &amp; &quot; &quot; &amp; {!$Record.Account.Technical_Account_Manager__r.Manager.LastName}&amp;&quot;,&quot; &amp;br()
+&amp; br()
+&amp; {!$Record.Owner:User.Full_Name__c} &amp; &quot; has predicted a customer DSAT on this case. &quot; &amp; br()
+&amp; br()
+&amp; &quot;Case Number: &quot; &amp; {!$Record.CaseNumber} &amp; br()
+&amp; br()
+&amp; &quot;Subject: &quot; &amp; {!$Record.Subject} &amp; br()
+&amp; br()
+&amp; &quot;Description: &quot; &amp; {!$Record.Description} &amp; br()
+&amp; br()
+&amp; &quot;Company: &quot; &amp; {!$Record.Account_Name__c} &amp; br()
+&amp; br()
+&amp; &quot;UID: &quot; &amp; {!$Record.Account.RC_User_ID__c} &amp; br()
+&amp; br()
+
+&amp; &quot;Thank you! &quot; &amp; br()
+&amp; br()
+
+&amp;{!$Record.Owner:User.FirstName} &amp; &quot; &quot; &amp; {!$Record.Owner:User.LastName}</expression>
+    </formulas>
+    <interviewLabel>TAM and TAM Manager email notification for DSAT cases {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>TAM and TAM Manager email notification for DSAT cases</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>254</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>TAM_Checker</targetReference>
+        </connector>
+        <filterLogic>(1 OR 2) AND (3 OR 4)</filterLogic>
+        <filters>
+            <field>CSAT_Prediction__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Detractor (0-6)</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CSAT_Prediction_after_Manager_Callback__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Detractor (0-6)</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CSAT_Prediction__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>CSAT_Prediction_after_Manager_Callback__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

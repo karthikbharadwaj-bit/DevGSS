@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <environments>Default</environments>
+    <formulas>
+        <name>currentDate</name>
+        <dataType>Date</dataType>
+        <expression>TODAY()</expression>
+    </formulas>
+    <interviewLabel>Onboarding: Autofill fields for RC and RC Canada accts on Creation {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Onboarding: Autofill fields for RC and RC Canada accts on Creation</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Update_Implementation_record</name>
+        <label>Update Implementation record</label>
+        <locationX>176</locationX>
+        <locationY>287</locationY>
+        <inputAssignments>
+            <field>Brand__c</field>
+            <value>
+                <elementReference>$Record.Account__r.RC_Brand__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Implementation_Status_2__c</field>
+            <value>
+                <stringValue>New</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Most_Recent_follow_up_Date__c</field>
+            <value>
+                <elementReference>currentDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <elementReference>$Record.Account__r.Name</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Update_Implementation_record</targetReference>
+        </connector>
+        <filterFormula>AND( {!$Record.Account__r.RecordType.DeveloperName} = &quot;Customer_Account&quot;  , OR( {!$Record.Account__r.RC_Brand__c} = &quot;RingCentral&quot; , {!$Record.Account__r.RC_Brand__c} = &quot;RingCentral Canada&quot;  ) )</filterFormula>
+        <object>Implementation__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

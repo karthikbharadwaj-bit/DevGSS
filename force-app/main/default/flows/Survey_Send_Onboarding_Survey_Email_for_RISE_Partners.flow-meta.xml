@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Send_survey_email</name>
+        <label>Send survey email</label>
+        <locationX>50</locationX>
+        <locationY>539</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <elementReference>$Record.Contact_Email__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <stringValue>How did we do? ( {!Rise_partner_settings.Identifier__c} with RingCentral Technical Onboarding)</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>SurveyEmailtemplate</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>useLineBreaks</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>60.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Check_send_email_flag</name>
+        <label>Check send email flag</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <defaultConnectorLabel>Send email disabled</defaultConnectorLabel>
+        <rules>
+            <name>Send_email_enabled</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Rise_partner_settings</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Rise_partner_settings.Send_Survey_Email__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Send_survey_email</targetReference>
+            </connector>
+            <label>Send email enabled</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <formulas>
+        <name>surveyPageUrl</name>
+        <dataType>String</dataType>
+        <expression>SUBSTITUTE(LEFT($Api.Partner_Server_URL_600,FIND(&quot;/services&quot;, $Api.Partner_Server_URL_600)),
+&apos;salesforce.com&apos;, &apos;salesforce-sites.com&apos;)+&apos;rcsurvey/ImplementationSurveyRiseReview?id=&apos;+{!$Record.Id}</expression>
+    </formulas>
+    <interviewLabel>Survey: Send Onboarding Survey Email for RISE Partners {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Survey: Send Onboarding Survey Email for RISE Partners</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Rise_partner_settings</name>
+        <label>Rise partner settings</label>
+        <locationX>182</locationX>
+        <locationY>323</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Check_send_email_flag</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Implementation__r.Sub_brand__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Rise_Partner_CRM_Configuration__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>56</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Rise_partner_settings</targetReference>
+        </connector>
+        <filterLogic>or</filterLogic>
+        <filters>
+            <field>Brand__c</field>
+            <operator>StartsWith</operator>
+            <value>
+                <stringValue>Rise</stringValue>
+            </value>
+        </filters>
+        <object>Survey__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>SurveyEmailtemplate</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>&lt;img src=&quot;{!Rise_partner_settings.Logo_URL__c}&quot; alt=&quot;{!Rise_partner_settings.Identifier__c} with RingCentral logo&quot;&gt;
+
+Hi {!$Record.Contact__r.FirstName} {!$Record.Contact__r.LastName},
+
+We are committed to providing you an excellent Technical Onboarding. Please let us know how we are doing by taking this very short 1 minute survey on your recent Onboarding. We value your input and use customer feedback to improve our services.
+
+To begin, please &lt;a href=&quot;{!surveyPageUrl}&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;click here&lt;/a&gt; to fill out our short survey.
+
+I look forward to hearing from you.
+
+
+Sincerely,
+&lt;strong&gt;{!Rise_partner_settings.Identifier__c} with RingCentral Technical Onboarding&lt;/strong&gt;
+For more information, check out &lt;a href=&quot;https://partnersupport.ringcentral.com&quot; rel=&quot;noopener noreferrer&quot; target=&quot;_blank&quot;&gt;Help site&lt;/a&gt; today!</text>
+    </textTemplates>
+</Flow>

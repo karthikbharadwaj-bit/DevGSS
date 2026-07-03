@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>61.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <choices>
+        <name>DSATeamRole</name>
+        <choiceText>DSA Expansion</choiceText>
+        <dataType>String</dataType>
+    </choices>
+    <decisions>
+        <name>MEMx_or_MMMx</name>
+        <label>MEMx or MMMx</label>
+        <locationX>446</locationX>
+        <locationY>242</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>No_Account_Team_member_Exist</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Member</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>No_Account_Team_Member</targetReference>
+            </connector>
+            <label>No Account Team member Exist</label>
+        </rules>
+        <rules>
+            <name>MEMx</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Member.TeamMemberRole</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>MEMx Expansion</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Delete_the_MEMx_Expansion_Team_Member</targetReference>
+            </connector>
+            <label>MEMx</label>
+        </rules>
+        <rules>
+            <name>MMMx</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Account_Team_Member.TeamMemberRole</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>MMMx Expansion</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Delete_the_MMMx_Expansion_Team_Member</targetReference>
+            </connector>
+            <label>MMMx</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <interviewLabel>MEMx/MMMx Expansion Team member Deletion Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>MEMx/MMMx Expansion Team member Deletion Flow</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordDeletes>
+        <description>This is to delete the Account Team Members on the Account whose Team Role is MEMx Expansion or MMMx Expansion.</description>
+        <name>Delete_the_Account_Team_Members</name>
+        <label>Delete the Account Team Members</label>
+        <locationX>446</locationX>
+        <locationY>650</locationY>
+        <filterLogic>1 AND ( 2 OR 3 )</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>MEMx Expansion</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>MMMx Expansion</stringValue>
+            </value>
+        </filters>
+        <object>AccountTeamMember</object>
+    </recordDeletes>
+    <recordLookups>
+        <name>Get_Account_Team_Member</name>
+        <label>Get Account Team Member</label>
+        <locationX>446</locationX>
+        <locationY>134</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>MEMx_or_MMMx</targetReference>
+        </connector>
+        <filterLogic>1 AND ( 2 OR 3 )</filterLogic>
+        <filters>
+            <field>AccountId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>MEMx Expansion</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>TeamMemberRole</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>MMMx Expansion</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>AccountTeamMember</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <runInMode>SystemModeWithoutSharing</runInMode>
+    <screens>
+        <name>Delete_the_MEMx_Expansion_Team_Member</name>
+        <label>Delete the MEMx Expansion Team Member</label>
+        <locationX>314</locationX>
+        <locationY>350</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Delete_the_Account_Team_Members</targetReference>
+        </connector>
+        <fields>
+            <name>Delete_the_MEMx_Expansion_Team_Member_on_Account</name>
+            <fieldText>&lt;p&gt;Account Team Member with Team Role as MEMx Expansion will get Deleted!&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>Finish</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>Delete_the_MMMx_Expansion_Team_Member</name>
+        <label>Delete the MMMx Expansion Team Member</label>
+        <locationX>578</locationX>
+        <locationY>350</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <connector>
+            <targetReference>Delete_the_Account_Team_Members</targetReference>
+        </connector>
+        <fields>
+            <name>Delete_MMMx_Expansion</name>
+            <fieldText>&lt;p&gt;Account Team Member with Team Role as MMMx Expansion will get Deleted!&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>Finish</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <screens>
+        <name>No_Account_Team_Member</name>
+        <label>No_Account_Team_Member</label>
+        <locationX>50</locationX>
+        <locationY>350</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>No_Account_Team_Member_Exists</name>
+            <fieldText>&lt;p&gt;No Account Team member Exist for this Account&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <nextOrFinishButtonLabel>Finish</nextOrFinishButtonLabel>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <start>
+        <locationX>320</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Account_Team_Member</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

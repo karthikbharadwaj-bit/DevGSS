@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Email_Notification_to_T3</name>
+        <label>Email Notification to T3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>emailAddresses</name>
+            <value>
+                <stringValue>tier3@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <stringValue>noreply@ringcentral.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>Subject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <elementReference>Body</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>sendRichBody</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+    </actionCalls>
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>#SR-1939726 Create a flow that will send notification to  tier3@ringcentral.com</description>
+    <environments>Default</environments>
+    <interviewLabel>Email notification when escalated to Tier 3 {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Email notification when escalated to Tier 3</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Email_Notification_to_T3</targetReference>
+        </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Support_Escalate_To__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Tier 3</stringValue>
+            </value>
+        </filters>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>Body</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>&lt;html&gt;
+    &lt;table style=&quot;border-collapse: collapse; width: 60%;&quot;&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px; width: 35%; vertical-align: top;&quot;&gt;&lt;b&gt;Case Subject:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Subject}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Case Number:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;
+          {!$Record.CaseNumber}  &lt;a href=&quot;https://rc.my.salesforce.com/{!$Record.Id}&quot; style=&quot;color: #0070d2;&quot;&gt;View Case&lt;/a&gt;
+        &lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Status:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Status}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Case Owner:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Owner:User.Full_Name__c}{!$Record.Owner:Group.Name}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Case Severity:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Case_Severity__c}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Case Description:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Description}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Created By:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.CreatedBy.Full_Name__c}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Created Date/Time:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.CreatedDate}&lt;/td&gt;
+      &lt;/tr&gt;
+      &lt;tr&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;&lt;b&gt;Brand:&lt;/b&gt;&lt;/td&gt;
+        &lt;td style=&quot;padding: 6px 10px;&quot;&gt;{!$Record.Brand_Account__c}&lt;/td&gt;
+      &lt;/tr&gt;      
+    &lt;/table&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Subject</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>New Case Escalated</text>
+    </textTemplates>
+</Flow>

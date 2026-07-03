@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>New_Case_Created_Information_sent_to_verizon_support</name>
+        <label>New Case Created Information sent to verizon support</label>
+        <locationX>176</locationX>
+        <locationY>431</locationY>
+        <actionName>Case.New_Case_Created_Information_sent_to_verizon_support</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.New_Case_Created_Information_sent_to_verizon_support</nameSegment>
+    </actionCalls>
+    <actionCalls>
+        <name>New_Verizon_Support_Case_Created</name>
+        <label>New Verizon Support Case Created</label>
+        <locationX>176</locationX>
+        <locationY>323</locationY>
+        <actionName>Case.New_Verizon_Support_Case_Created</actionName>
+        <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>New_Case_Created_Information_sent_to_verizon_support</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.New_Verizon_Support_Case_Created</nameSegment>
+    </actionCalls>
+    <apiVersion>58.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>When a new verizon case has been created, RC verizon support and verizon support receive email notifications</description>
+    <environments>Default</environments>
+    <interviewLabel>New Verizon Case Created {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>New Verizon Case Created</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>50</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>New_Verizon_Support_Case_Created</targetReference>
+        </connector>
+        <filterFormula>{!$Record.RecordType.Name} = &apos;Support Verizon&apos; &amp;&amp; (ISNEW())</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

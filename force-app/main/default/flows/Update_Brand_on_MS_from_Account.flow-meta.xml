@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <description>Check Sub-Brand/ Business Identity/ Brand on Account and populate the GSP Identifier on Medallia Survey</description>
+        <name>Populate_GSP_Identifier_from_Account</name>
+        <label>Populate GSP Identifier from Account</label>
+        <locationX>446</locationX>
+        <locationY>323</locationY>
+        <defaultConnectorLabel>Blank GSP Identifier</defaultConnectorLabel>
+        <rules>
+            <name>Sub_Brand_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Sub_Brand__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_GSP_Identifier_with_Sub_Brand</targetReference>
+            </connector>
+            <label>Sub-Brand Exists</label>
+        </rules>
+        <rules>
+            <name>Business_Identity_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account__r.BusinessIdentity__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_GSP_Identifier_with_BI</targetReference>
+            </connector>
+            <label>Business Identity Exists</label>
+        </rules>
+        <rules>
+            <name>Brand_Exists</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Account__r.RC_Brand__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.RC_Brand__c</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>Rise</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Update_GSP_Identifier_with_Brand</targetReference>
+            </connector>
+            <label>Brand Exists</label>
+        </rules>
+    </decisions>
+    <description>This Flow updates the GSP Identifier field on Medallia Survey record with related Account Sub-Brand/ Business Identity/ Brand/ PartnerId value.</description>
+    <interviewLabel>Update Brand on MS from Account {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Update Brand on MS from Account</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <description>Update GSP Identifier with Business Identity on account</description>
+        <name>Update_GSP_Identifier_with_BI</name>
+        <label>Update GSP Identifier with BI</label>
+        <locationX>314</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>GSP_Identifier__c</field>
+            <value>
+                <elementReference>$Record.Account__r.BusinessIdentity__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update GSP Identifier with Brand on account</description>
+        <name>Update_GSP_Identifier_with_Brand</name>
+        <label>Update GSP Identifier with Brand</label>
+        <locationX>578</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>GSP_Identifier__c</field>
+            <value>
+                <elementReference>$Record.Account__r.RC_Brand__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <description>Update Sub-Brand Identifier with Sub-Brand on account</description>
+        <name>Update_GSP_Identifier_with_Sub_Brand</name>
+        <label>Update GSP Identifier with Sub-Brand</label>
+        <locationX>50</locationX>
+        <locationY>431</locationY>
+        <inputAssignments>
+            <field>GSP_Identifier__c</field>
+            <value>
+                <elementReference>$Record.Account__r.Sub_Brand__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>320</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Populate_GSP_Identifier_from_Account</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Account__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <object>Medallia_Survey__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
