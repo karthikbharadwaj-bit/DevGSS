@@ -10,6 +10,9 @@
         <connector>
             <targetReference>myRule_3</targetReference>
         </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -30,6 +33,9 @@
         <connector>
             <targetReference>myRule_6</targetReference>
         </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -50,6 +56,9 @@
         <connector>
             <targetReference>myRule_8</targetReference>
         </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -67,6 +76,9 @@
         <locationY>0</locationY>
         <actionName>Case.GSS_Case_Email</actionName>
         <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -79,6 +91,16 @@
     </actionCalls>
     <apiVersion>67.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <customErrors>
+        <name>Fault_Handler</name>
+        <label>Handle flow fault</label>
+        <locationX>1000</locationX>
+        <locationY>200</locationY>
+        <customErrorMessages>
+            <errorMessage>Case Sales GSS Email After Save could not complete. {!$Flow.FaultMessage}</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
     <decisions>
         <name>myRule_1</name>
         <label>Sales Case New or Closed</label>

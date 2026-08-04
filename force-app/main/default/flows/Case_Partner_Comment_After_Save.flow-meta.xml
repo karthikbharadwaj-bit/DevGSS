@@ -117,6 +117,16 @@
             <targetReference>Create_Case_Comment</targetReference>
         </connector>
     </assignments>
+    <customErrors>
+        <name>Fault_Handler</name>
+        <label>Handle flow fault</label>
+        <locationX>1000</locationX>
+        <locationY>200</locationY>
+        <customErrorMessages>
+            <errorMessage>Case Partner Comment After Save could not complete. {!$Flow.FaultMessage}</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
     <decisions>
         <name>Priority_P1_P5</name>
         <label>Partner Comment Priority (P1-P5)</label>
@@ -276,6 +286,9 @@
         <label>Create Case Comment</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <inputAssignments>
             <field>CommentBody</field>
             <value>
@@ -306,6 +319,9 @@
         <connector>
             <targetReference>Asn_P3_Owner_Queue</targetReference>
         </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Id</field>
@@ -327,6 +343,9 @@
         <connector>
             <targetReference>Asn_P4_Owner_User</targetReference>
         </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Id</field>

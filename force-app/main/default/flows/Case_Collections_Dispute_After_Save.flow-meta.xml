@@ -7,6 +7,9 @@
         <locationY>0</locationY>
         <actionName>Case.Collections_Dispute_Escalated_to_Collections</actionName>
         <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -24,6 +27,9 @@
         <locationY>0</locationY>
         <actionName>Case.Collections_Dispute_Closed_Case</actionName>
         <actionType>emailAlert</actionType>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>SObjectRowId</name>
@@ -36,6 +42,16 @@
     </actionCalls>
     <apiVersion>67.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <customErrors>
+        <name>Fault_Handler</name>
+        <label>Handle flow fault</label>
+        <locationX>1000</locationX>
+        <locationY>200</locationY>
+        <customErrorMessages>
+            <errorMessage>Case Collections Dispute After Save could not complete. {!$Flow.FaultMessage}</errorMessage>
+            <isFieldError>false</isFieldError>
+        </customErrorMessages>
+    </customErrors>
     <decisions>
         <name>myRule_25</name>
         <label>Escalate to Collections</label>
