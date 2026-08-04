@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>myRule_25_A2</name>
+        <label>Escalated to Collections</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.Collections_Dispute_Escalated_to_Collections</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Collections_Dispute_Escalated_to_Collections</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>myRule_3_A1</name>
+        <label>Case Closed</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>Case.Collections_Dispute_Closed_Case</actionName>
+        <actionType>emailAlert</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>SObjectRowId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>Case.Collections_Dispute_Closed_Case</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>myRule_25</name>
+        <label>Escalate to Collections</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>FALSE_Escalate to Collections</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_25</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Collections</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_25_A2</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to Collections</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_3</name>
+        <label>Case Closed</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_25</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Case Closed</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_3</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Closed</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_3_A1</targetReference>
+            </connector>
+            <label>TRUE_Case Closed</label>
+        </rules>
+    </decisions>
+    <description>Migrated from the Collections Dispute Consolidated PB process using multiple criteria.</description>
+    <environments>Default</environments>
+    <interviewLabel>Case Collections Dispute After Save {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Collections Dispute After Save</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_3</targetReference>
+        </connector>
+        <filterFormula>{!$Record.RecordTypeId} = {!$Label.CaseRT_Collections_Id}
+&amp;&amp; (
+     ISPICKVAL({!$Record.Status}, &quot;Closed&quot;)
+  || ( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;Collections&quot;)
+    &amp;&amp; ( ISNEW()
+      || ISCHANGED({!$Record.Support_Escalate_To__c})
+      || ISCHANGED({!$Record.RecordTypeId}) ) )
+)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Draft</status>
+</Flow>

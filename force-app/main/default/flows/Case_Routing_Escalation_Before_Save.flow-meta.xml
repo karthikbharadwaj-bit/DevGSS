@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>myRule_15</name>
+        <label>Escalate to Contact Center</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_17</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Escalate to Contact Center</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_15</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Contact Center Support</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_15_A1</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to Contact Center</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_17</name>
+        <label>Escalate to SalesOps</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_19</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Escalate to SalesOps</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_17</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Internal_Business_Services_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SalesOps</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_17_A1</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to SalesOps</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_19</name>
+        <label>Escalate to SOED</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_53</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Escalate to SOED</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_19</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Internal_Business_Services_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SOED</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_19_A1</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to SOED</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_53</name>
+        <label>Escalate To Technical Account Engineering</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>FALSE_Escalate To Technical Account Engineering</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_53</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordType.DeveloperName</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Support_T2</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Technical Account Engineering</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.IsClosed</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_53_A2</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate To Technical Account Engineering</label>
+        </rules>
+    </decisions>
+    <description>Migrated from the Consolidated Case Routing/Escalation PB process using multiple criteria.</description>
+    <environments>Default</environments>
+    <interviewLabel>Case Routing Escalation Before Save {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Routing Escalation Before Save</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>myRule_15_A1</name>
+        <label>Assign to Contact Center Queue + Tier 2 RT</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_17</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_ContactCenter_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>$Label.CaseRT_Support_T2_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_17_A1</name>
+        <label>Escalate to SalesOps</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_19</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_SalesOps_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>$Label.CaseRT_Sales_Operations_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_19_A1</name>
+        <label>Escalate to SOED</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_53</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_SOED_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>$Label.CaseRT_Sales_Order_Except_Desk_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_53_A2</name>
+        <label>Technical Account Engineering Notification</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_TAE_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_15</targetReference>
+        </connector>
+        <filterFormula>   ( {!$Record.RecordTypeId} = {!$Label.CaseRT_Internal_Business_Services_Id}
+     &amp;&amp; ( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;SalesOps&quot;)
+       || ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;SOED&quot;) )
+     &amp;&amp; ( ISNEW()
+       || ISCHANGED({!$Record.Support_Escalate_To__c})
+       || ISCHANGED({!$Record.RecordTypeId}) ) )
+|| ( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;Contact Center Support&quot;)
+     &amp;&amp; ( ISNEW() || NOT(ISPICKVAL({!$Record__Prior.Support_Escalate_To__c}, &quot;Contact Center Support&quot;)) ) )
+|| ( ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;Technical Account Engineering&quot;)
+     &amp;&amp; NOT({!$Record.IsClosed}) &amp;&amp; ({!$Record.RecordType.DeveloperName} = &quot;Support_T2&quot;)
+     &amp;&amp; ( ISNEW()
+       || ISCHANGED({!$Record.Support_Escalate_To__c})
+       || ISCHANGED({!$Record.RecordTypeId})
+       || ISCHANGED({!$Record.Status}) ) )</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Draft</status>
+</Flow>

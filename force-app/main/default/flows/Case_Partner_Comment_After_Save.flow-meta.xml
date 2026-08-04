@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Asn_P1_Partner_Status</name>
+        <label>Set Comment - P1 Partner Status</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varCommentBody</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_P1_Body</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varIsPublished</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_IsPublished_RT</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Case_Comment</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Asn_P2_Case_Severity</name>
+        <label>Set Comment - P2 Case Severity</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varCommentBody</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_P2_Body</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varIsPublished</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_IsPublished_RT</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Case_Comment</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Asn_P3_Owner_Queue</name>
+        <label>Set Comment - P3 Owner Queue</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varCommentBody</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_P3_Body</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varIsPublished</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_IsPublished_RT</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Case_Comment</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Asn_P4_Owner_User</name>
+        <label>Set Comment - P4 Owner User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varCommentBody</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_P4_Body</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varIsPublished</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_IsPublished_RT</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Case_Comment</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Asn_P5_Status</name>
+        <label>Set Comment - P5 Status</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>varCommentBody</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>formula_P5_Body</elementReference>
+            </value>
+        </assignmentItems>
+        <assignmentItems>
+            <assignToReference>varIsPublished</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Create_Case_Comment</targetReference>
+        </connector>
+    </assignments>
+    <decisions>
+        <name>Priority_P1_P5</name>
+        <label>Partner Comment Priority (P1-P5)</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No Match</defaultConnectorLabel>
+        <rules>
+            <name>P1_Partner_Case_Status_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>formula_P1_Gate</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Asn_P1_Partner_Status</targetReference>
+            </connector>
+            <label>P1 Partner Case Status Update</label>
+        </rules>
+        <rules>
+            <name>P2_Case_Severity_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>formula_P2_Gate</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Asn_P2_Case_Severity</targetReference>
+            </connector>
+            <label>P2 Case Severity Update</label>
+        </rules>
+        <rules>
+            <name>P3_Case_Owner_Update_to_Queue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>formula_P3_Gate</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Owner_Queue</targetReference>
+            </connector>
+            <label>P3 Case Owner Update to Queue</label>
+        </rules>
+        <rules>
+            <name>P4_Case_Owner_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>formula_P4_Gate</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Owner_User</targetReference>
+            </connector>
+            <label>P4 Case Owner Update</label>
+        </rules>
+        <rules>
+            <name>P5_Case_Status_Update</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>formula_P5_Gate</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Asn_P5_Status</targetReference>
+            </connector>
+            <label>P5 Case Status Update</label>
+        </rules>
+    </decisions>
+    <description>F6 - manual Task 10 build replacing the Migrate to Flow donor (quick actions unsupported, G6). P1-P5 first-match priority, one CaseComment per save. P5 verbatim omits the ebonding exclusion (SO-3: port as-is). To exclude Customer EBonded Cases (P1-P4).</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>formula_IsPublished_RT</name>
+        <dataType>Boolean</dataType>
+        <expression>IF( (({!$Record.Original_RecordType__c} =&apos;Support_Purolator&apos;) || ({!$Record.Original_RecordType__c} =&apos;Support_Charter_SMB&apos;) || ({!$Record.Original_RecordType__c} =&apos;Support_Charter&apos;)) , True, False )</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P1_Body</name>
+        <dataType>String</dataType>
+        <expression>&quot;Partner Case Status Updated To:&quot;+&quot; &quot;+TEXT({!$Record.Partner_Case_Status__c} )</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P1_Gate</name>
+        <dataType>Boolean</dataType>
+        <expression>AND (NOT(ISBLANK( {!$Record.AccountId})), NOT( BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &apos;Rise&apos;)), {!$Record.Original_RecordType__c} &lt;&gt; &apos;Support_Customer_ebonding&apos;, ISCHANGED({!$Record.Partner_Case_Status__c}  ),ISBLANK({!$Record.Brand_Identifier__c} ))</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P2_Body</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Severity Updated To:&quot;+&quot; &quot;+TEXT({!$Record.Case_Severity__c} )</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P2_Gate</name>
+        <dataType>Boolean</dataType>
+        <expression>AND (NOT(ISBLANK( {!$Record.AccountId})),NOT( BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &apos;Rise&apos;)), {!$Record.Original_RecordType__c} &lt;&gt; &apos;Support_Customer_ebonding&apos;, ISCHANGED({!$Record.Case_Severity__c}  ),ISBLANK({!$Record.Brand_Identifier__c} ))</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P3_Body</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Owner Updated To:&quot;+&quot; &quot;+{!Get_Owner_Queue.Name}</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P3_Gate</name>
+        <dataType>Boolean</dataType>
+        <expression>AND (NOT(ISBLANK( {!$Record.AccountId})),NOT( BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &apos;Rise&apos;)), {!$Record.Original_RecordType__c} &lt;&gt; &apos;Support_Customer_ebonding&apos;, ISCHANGED({!$Record.OwnerId}  ),ISBLANK({!$Record.Brand_Identifier__c}), BEGINS({!$Record.OwnerId} , &quot;00G&quot;) )</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P4_Body</name>
+        <dataType>String</dataType>
+        <expression>&quot;Case Owner Updated To:&quot;+&quot; &quot;+{!Get_Owner_User.Full_Name__c}</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P4_Gate</name>
+        <dataType>Boolean</dataType>
+        <expression>AND (NOT(ISBLANK( {!$Record.AccountId})), NOT( BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &apos;Rise&apos;)), {!$Record.Original_RecordType__c} &lt;&gt; &apos;Support_Customer_ebonding&apos; , ISCHANGED({!$Record.OwnerId}  ),ISBLANK({!$Record.Brand_Identifier__c} ))</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P5_Body</name>
+        <dataType>String</dataType>
+        <expression>&quot;Status Updated To:&quot;+&quot; &quot;+TEXT({!$Record.Status})</expression>
+    </formulas>
+    <formulas>
+        <name>formula_P5_Gate</name>
+        <dataType>Boolean</dataType>
+        <expression>AND (NOT(ISBLANK( {!$Record.AccountId})), NOT(BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &apos;Rise&apos;)),   ISCHANGED({!$Record.Status} ),ISBLANK({!$Record.Brand_Identifier__c} ), (({!$Record.Original_RecordType__c} =&apos;Support_Charter_SMB&apos;) || ({!$Record.Original_RecordType__c} =&apos;Support_Charter&apos;)))</expression>
+    </formulas>
+    <interviewLabel>Case Partner Comment After Save {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Case Partner Comment After Save</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Create_Case_Comment</name>
+        <label>Create Case Comment</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>CommentBody</field>
+            <value>
+                <elementReference>varCommentBody</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>IsPublished</field>
+            <value>
+                <elementReference>varIsPublished</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ParentId</field>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>CaseComment</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <name>Get_Owner_Queue</name>
+        <label>Get Owner Queue</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Asn_P3_Owner_Queue</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Group</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Owner_User</name>
+        <label>Get Owner User</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Asn_P4_Owner_User</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.OwnerId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Priority_P1_P5</targetReference>
+        </connector>
+        <filterFormula>NOT(ISBLANK({!$Record.AccountId}))
+&amp;&amp; NOT(BEGINS(IF(ISBLANK({!$Record.Account.RC_Brand__c}), {!$Record.Brand_Identifier__c}, {!$Record.Account.RC_Brand__c}), &quot;Rise&quot;))
+&amp;&amp; ISBLANK({!$Record.Brand_Identifier__c})
+&amp;&amp; (
+     ( {!$Record.Original_RecordType__c} &lt;&gt; &quot;Support_Customer_ebonding&quot;
+       &amp;&amp; ( ISCHANGED({!$Record.Partner_Case_Status__c})
+         || ISCHANGED({!$Record.Case_Severity__c})
+         || ISCHANGED({!$Record.OwnerId}) ) )
+  || ( ISCHANGED({!$Record.Status})
+       &amp;&amp; ( {!$Record.Original_RecordType__c} = &quot;Support_Charter_SMB&quot;
+         || {!$Record.Original_RecordType__c} = &quot;Support_Charter&quot; ) )
+)</filterFormula>
+        <object>Case</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Draft</status>
+    <variables>
+        <name>varCommentBody</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>varIsPublished</name>
+        <dataType>Boolean</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>
