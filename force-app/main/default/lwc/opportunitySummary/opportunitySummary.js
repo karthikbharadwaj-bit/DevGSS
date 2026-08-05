@@ -85,11 +85,18 @@ function toStrings(value) {
     return list.map((item) => (item == null ? '' : String(item)).trim()).filter(Boolean);
 }
 
-function splitLabel(text) {
-    const separatorIndex = text.indexOf(':');
+export function splitLabel(text) {
+    let delimiter = ':';
+    let separatorIndex = text.indexOf(delimiter);
+
+    if (separatorIndex <= 0 || separatorIndex > LABEL_MAX_LENGTH) {
+        delimiter = '—';
+        separatorIndex = text.indexOf(delimiter);
+    }
+
     if (separatorIndex > 0 && separatorIndex <= LABEL_MAX_LENGTH) {
         const label = text.slice(0, separatorIndex).trim();
-        const remainder = text.slice(separatorIndex + 1).trim();
+        const remainder = text.slice(separatorIndex + delimiter.length).trim();
         if (label && remainder && !label.includes('.')) {
             return { label, text: remainder, hasLabel: true };
         }
