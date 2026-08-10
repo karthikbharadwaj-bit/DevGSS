@@ -327,7 +327,7 @@
             <name>TRUE_myRule_6</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.CreatedById</leftValueReference>
+                <leftValueReference>case_creator_id</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -341,10 +341,10 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Case_Originator__r.Id</leftValueReference>
+                <leftValueReference>$Record.Case_Originator__c</leftValueReference>
                 <operator>NotEqualTo</operator>
                 <rightValue>
-                    <elementReference>$Record.CreatedBy.CreatedById</elementReference>
+                    <elementReference>case_creator_id</elementReference>
                 </rightValue>
             </conditions>
             <connector>
@@ -401,6 +401,11 @@
     </decisions>
     <description>Migrated from the Collections Dispute Consolidated PB process using multiple criteria.</description>
     <environments>Default</environments>
+    <formulas>
+        <name>case_creator_id</name>
+        <dataType>String</dataType>
+        <expression>BLANKVALUE({!$Record.CreatedById}, {!$User.Id})</expression>
+    </formulas>
     <formulas>
         <name>last_modified_date</name>
         <dataType>Date</dataType>
@@ -526,7 +531,7 @@
         <inputAssignments>
             <field>OwnerId</field>
             <value>
-                <elementReference>$Record.Case_Originator__r.Id</elementReference>
+                <elementReference>$Record.Case_Originator__c</elementReference>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
@@ -555,7 +560,7 @@
         <inputAssignments>
             <field>Case_Originator__c</field>
             <value>
-                <elementReference>$Record.CreatedById</elementReference>
+                <elementReference>case_creator_id</elementReference>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
