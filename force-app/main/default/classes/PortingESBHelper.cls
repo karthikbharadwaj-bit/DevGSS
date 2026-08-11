@@ -119,13 +119,6 @@ public class PortingESBHelper {
 
             Boolean SYSTEM_ADMIN = prof.Name == 'System Administrator';
             //Boolean SUPPORT_PREMIUM_PORTING = prof.Name == 'Support Porting Shipping';
-            //Start of Addition for EU Phase 3
-            List<String> SPSList = new List<String>();
-            List<EU_Component_reference__mdt> profileList = [Select DeveloperName, Values__c from EU_Component_reference__mdt where Apex_Classes__c like '%PortingESBHelper%'];
-            for(EU_Component_reference__mdt profRec:profileList){
-            SPSList.addall(profRec.Values__c.contains(',')?profRec.Values__c.split(','):new List<String>{profRec.Values__c});
-            }
-            //End of Addition for EU Phase 3
             Boolean RCESB_USER = (UserInfo.getName() == integrationUserName || UserInfo.getName() == bizIntegrationUserName);
             Boolean TELEPORTER_USER = ((UserInfo.getName() == teleporterUserName || UserInfo.getName() == teleporterBizUserName) ? true : false);
 
