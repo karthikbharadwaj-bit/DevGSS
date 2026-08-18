@@ -399,17 +399,12 @@
             <label>TRUE_Populate Sales Rep</label>
         </rules>
     </decisions>
-    <description>Migrated from the Collections Dispute Consolidated PB process using multiple criteria.</description>
+    <description>CPU-limit remediation replacing the same-record update branches of Collections_Dispute_Consolidated_PB. Performs Collections routing, reopen handling, completion-date stamping, and Case originator, sales representative, and CSM updates before save to avoid recursive Case DML. Paired with Case_Collections_Dispute_After_Save for email alerts.</description>
     <environments>Default</environments>
     <formulas>
         <name>case_creator_id</name>
         <dataType>String</dataType>
         <expression>BLANKVALUE({!$Record.CreatedById}, {!$User.Id})</expression>
-    </formulas>
-    <formulas>
-        <name>last_modified_date</name>
-        <dataType>Date</dataType>
-        <expression>DATEVALUE({!$Record.LastModifiedDate})</expression>
     </formulas>
     <interviewLabel>Case Collections Dispute Before Save {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Case Collections Dispute Before Save</label>
@@ -544,7 +539,7 @@
         <inputAssignments>
             <field>Date_Completed__c</field>
             <value>
-                <elementReference>last_modified_date</elementReference>
+                <elementReference>$Flow.CurrentDate</elementReference>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
@@ -592,5 +587,5 @@
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordBeforeSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
 </Flow>
