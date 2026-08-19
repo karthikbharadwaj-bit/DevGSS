@@ -44,6 +44,7 @@
  * N5/N6 gate on ISCHANGED, which is false on create, so their tests are insert-then-update.
  * N7/N8/N9/N26 gate on plain equality and fire on create (the guard permits create).
  */
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
 @isTest
 private class Test_RoutingEscalationParity {
 

@@ -63,6 +63,7 @@
  * uses. Do not "simplify" this to Case.AccountId => account.Id; C4/C5/C9/C10 will silently stop
  * exercising their nodes and the validation rules CSM_required / Sales_Required will fire.
  */
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
 @isTest
 private class Test_CollectionsDisputeParity {
 

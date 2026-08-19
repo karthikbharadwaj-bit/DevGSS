@@ -50,6 +50,7 @@
  * for the full finding). Since every node here requires AccountId NOT blank, getting this wrong
  * would make all five silently stop firing.
  */
+@SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
 @isTest
 private class Test_PartnerCommentParity {
 
