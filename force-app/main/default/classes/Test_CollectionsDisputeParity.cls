@@ -116,17 +116,23 @@ private class Test_CollectionsDisputeParity {
     // ---------- helpers ----------
 
     private static List<Id> pickTwoActiveUserIds() {
+        Id runningUser = UserInfo.getUserId();
         List<User> otherUsers = [
             SELECT Id
             FROM User
             WHERE IsActive = true
-              AND Id != :UserInfo.getUserId()
+              AND Id != :runningUser
+              AND UserType = 'Standard'
+              AND ContactId = null
+            ORDER BY Id
             LIMIT 1
         ];
-        Id runningUser = UserInfo.getUserId();
-        return otherUsers.isEmpty()
-            ? new List<Id>{ runningUser, runningUser }
-            : new List<Id>{ runningUser, otherUsers[0].Id };
+        Assert.isFalse(
+            otherUsers.isEmpty(),
+            'Collections parity tests require a second active internal user who can own Cases '
+                + 'and be added to the Account team as its CSM'
+        );
+        return new List<Id>{ runningUser, otherUsers[0].Id };
     }
 
     private static Account parityAccount() {
