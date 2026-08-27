@@ -1,0 +1,1351 @@
+Compiled successfully.
+Executed successfully.
+
+67.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO
+Execute Anonymous: // Guaranteed-change bulk CPU repro for PBC-32071.
+Execute Anonymous: // Seed and prepare the mixed batch in separate transactions before running this file.
+Execute Anonymous: 
+Execute Anonymous: Integer EXPECTED_ROWS = 200;
+Execute Anonymous: Boolean QUALIFYING = false;
+Execute Anonymous: Boolean MIXED = true;
+Execute Anonymous: 
+Execute Anonymous: List<String> ESCALATION_CYCLE = new List<String>{
+Execute Anonymous:     'SOED',
+Execute Anonymous:     'Professional Services',
+Execute Anonymous:     'Billing'
+Execute Anonymous: };
+Execute Anonymous: Map<String, String> NEXT_ESCALATION_BY_CURRENT = new Map<String, String>{
+Execute Anonymous:     'SOED' => 'Professional Services',
+Execute Anonymous:     'Professional Services' => 'Billing',
+Execute Anonymous:     'Billing' => 'SOED'
+Execute Anonymous: };
+Execute Anonymous: 
+Execute Anonymous: // Generated outside the measured section. This makes Description different on every run.
+Execute Anonymous: String runToken = EncodingUtil.convertToHex(Crypto.generateAesKey(128));
+Execute Anonymous: 
+Execute Anonymous: List<Case> probes = [
+Execute Anonymous:     SELECT Id, Subject, Description, AccountId, ContactId, RecordTypeId,
+Execute Anonymous:            Support_Escalate_To__c
+Execute Anonymous:     FROM Case
+Execute Anonymous:     WHERE Subject LIKE '[LOADTEST]%'
+Execute Anonymous:     ORDER BY CreatedDate
+Execute Anonymous:     LIMIT :EXPECTED_ROWS
+Execute Anonymous: ];
+Execute Anonymous: 
+Execute Anonymous: if (probes.size() != EXPECTED_ROWS) {
+Execute Anonymous:     throw new System.IllegalArgumentException(
+Execute Anonymous:         'ABORT: found ' + probes.size() + ' [LOADTEST] cases, expected ' + EXPECTED_ROWS + '.'
+Execute Anonymous:     );
+Execute Anonymous: }
+Execute Anonymous: 
+Execute Anonymous: Integer noAccount = 0;
+Execute Anonymous: Integer noContact = 0;
+Execute Anonymous: for (Case c : probes) {
+Execute Anonymous:     if (c.AccountId == null) { noAccount++; }
+Execute Anonymous:     if (c.ContactId == null) { noContact++; }
+Execute Anonymous: }
+Execute Anonymous: if (noAccount > 0 || noContact > 0) {
+Execute Anonymous:     throw new System.IllegalArgumentException(
+Execute Anonymous:         'ABORT: ' + noAccount + ' cases without Account, ' + noContact + ' without Contact.'
+Execute Anonymous:     );
+Execute Anonymous: }
+Execute Anonymous: 
+Execute Anonymous: if (QUALIFYING) {
+Execute Anonymous:     Id ibsRecordTypeId = Schema.SObjectType.Case.getRecordTypeInfosByDeveloperName()
+Execute Anonymous:         .get('Internal_Business_Services').getRecordTypeId();
+Execute Anonymous:     Integer wrongRecordType = 0;
+Execute Anonymous:     for (Case c : probes) {
+Execute Anonymous:         if (c.RecordTypeId != ibsRecordTypeId) { wrongRecordType++; }
+Execute Anonymous:     }
+Execute Anonymous:     if (wrongRecordType > 0) {
+Execute Anonymous:         throw new System.IllegalArgumentException(
+Execute Anonymous:             'ABORT: QUALIFYING=true requires Internal_Business_Services cases, but ' +
+Execute Anonymous:             wrongRecordType + ' rows have a different record type.'
+Execute Anonymous:         );
+Execute Anonymous:     }
+Execute Anonymous: }
+Execute Anonymous: 
+Execute Anonymous: System.debug('===REPRO PRECONDITIONS OK: ' + probes.size() +
+Execute Anonymous:              ' cases, all with Account + Contact===');
+Execute Anonymous: 
+Execute Anonymous: Long cpuBefore = Limits.getCpuTime();
+Execute Anonymous: System.debug('===REPRO PHASE 1: BULK UPDATE ' + probes.size() +
+Execute Anonymous:              ' (qualifying=' + QUALIFYING + ')===' );
+Execute Anonymous: 
+Execute Anonymous: Id collectionsRecordTypeId = Schema.SObjectType.Case.getRecordTypeInfosByDeveloperName()
+Execute Anonymous:     .get('Collections_Dispute').getRecordTypeId();
+Execute Anonymous: 
+Execute Anonymous: Integer escalated = 0;
+Execute Anonymous: Integer changedDescriptions = 0;
+Execute Anonymous: Integer changedEscalations = 0;
+Execute Anonymous: 
+Execute Anonymous: for (Case c : probes) {
+Execute Anonymous:     String priorDescription = c.Description;
+Execute Anonymous:     c.Description = 'neutral touch ' + runToken + ' ' + c.Subject;
+Execute Anonymous:     if (c.Description != priorDescription) {
+Execute Anonymous:         changedDescriptions++;
+Execute Anonymous:     }
+Execute Anonymous: 
+Execute Anonymous:     if (QUALIFYING) {
+Execute Anonymous:         String priorEscalation = c.Support_Escalate_To__c;
+Execute Anonymous:         if (priorEscalation == 'SalesOps') {
+Execute Anonymous:             throw new System.IllegalArgumentException(
+Execute Anonymous:                 'ABORT: Case ' + c.Id +
+Execute Anonymous:                 ' already has SalesOps and cannot newly meet the QUALIFYING criterion. Reset it first.'
+Execute Anonymous:             );
+Execute Anonymous:         }
+Execute Anonymous:         c.Support_Escalate_To__c = 'SalesOps';
+Execute Anonymous:         if (c.Support_Escalate_To__c != priorEscalation) {
+Execute Anonymous:             changedEscalations++;
+Execute Anonymous:         }
+Execute Anonymous:     } else if (MIXED && c.RecordTypeId == collectionsRecordTypeId) {
+Execute Anonymous:         String priorEscalation = c.Support_Escalate_To__c;
+Execute Anonymous:         String nextEscalation = NEXT_ESCALATION_BY_CURRENT.get(priorEscalation);
+Execute Anonymous:         if (nextEscalation == null) {
+Execute Anonymous:             nextEscalation = ESCALATION_CYCLE[Math.mod(escalated, ESCALATION_CYCLE.size())];
+Execute Anonymous:         }
+Execute Anonymous: 
+Execute Anonymous:         c.Support_Escalate_To__c = nextEscalation;
+Execute Anonymous:         escalated++;
+Execute Anonymous:         if (nextEscalation != priorEscalation) {
+Execute Anonymous:             changedEscalations++;
+Execute Anonymous:         }
+Execute Anonymous:     }
+Execute Anonymous: }
+Execute Anonymous: 
+Execute Anonymous: if (changedDescriptions != EXPECTED_ROWS) {
+Execute Anonymous:     throw new System.IllegalArgumentException(
+Execute Anonymous:         'ABORT: only ' + changedDescriptions + ' of ' + EXPECTED_ROWS +
+Execute Anonymous:         ' Description values changed.'
+Execute Anonymous:     );
+Execute Anonymous: }
+Execute Anonymous: if (MIXED && escalated == 0) {
+Execute Anonymous:     throw new System.IllegalArgumentException(
+Execute Anonymous:         'ABORT: MIXED=true but no row carries the Collections Dispute record type.'
+Execute Anonymous:     );
+Execute Anonymous: }
+Execute Anonymous: if (MIXED && changedEscalations != escalated) {
+Execute Anonymous:     throw new System.IllegalArgumentException(
+Execute Anonymous:         'ABORT: only ' + changedEscalations + ' of ' + escalated +
+Execute Anonymous:         ' Collections rows received a different escalation value.'
+Execute Anonymous:     );
+Execute Anonymous: }
+Execute Anonymous: 
+Execute Anonymous: System.debug('===REPRO GUARANTEED CHANGES: descriptions=' + changedDescriptions +
+Execute Anonymous:              ', escalations=' + changedEscalations + '===');
+Execute Anonymous: System.debug('===REPRO MIXED: ' + escalated + ' of ' + probes.size() +
+Execute Anonymous:              ' rows escalated, ' + (probes.size() - escalated) + ' neutral===');
+Execute Anonymous: 
+Execute Anonymous: update probes;
+Execute Anonymous: 
+Execute Anonymous: System.debug('===REPRO CPU: ' + (Limits.getCpuTime() - cpuBefore) +
+Execute Anonymous:              'ms of ' + Limits.getLimitCpuTime() + 'ms limit===');
+Execute Anonymous: System.debug('===REPRO DONE: rows=' + probes.size() +
+Execute Anonymous:              ' qualifying=' + QUALIFYING + '===');
+23:44:43.37 (37911257)|USER_INFO|[EXTERNAL]|005Ot00000tJey9|karthik.bharadwaj@ringcentral.com.gci|(GMT-07:00) Pacific Daylight Time (America/Los_Angeles)|GMT-07:00
+23:44:43.37 (37928728)|EXECUTION_STARTED
+23:44:43.37 (37940148)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex
+23:44:43.37 (68749299)|USER_DEBUG|[64]|DEBUG|===REPRO PRECONDITIONS OK: 200 cases, all with Account + Contact===
+23:44:43.37 (68868260)|USER_DEBUG|[68]|DEBUG|===REPRO PHASE 1: BULK UPDATE 200 (qualifying=false)===
+23:44:43.37 (73685225)|USER_DEBUG|[130]|DEBUG|===REPRO GUARANTEED CHANGES: descriptions=200, escalations=50===
+23:44:43.37 (73715205)|USER_DEBUG|[132]|DEBUG|===REPRO MIXED: 50 of 200 rows escalated, 150 neutral===
+23:44:43.37 (525315013)|CODE_UNIT_STARTED|[EXTERNAL]|Flow:Case
+23:44:43.37 (735439509)|CODE_UNIT_FINISHED|Flow:Case
+23:44:43.749 (749115034)|CUMULATIVE_LIMIT_USAGE
+23:44:43.749 (749115034)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 2 out of 100
+  Number of query rows: 400 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 217 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:43.749 (749115034)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:43.37 (751073812)|CODE_UNIT_STARTED|[EXTERNAL]|01qD50000009cvF|CaseObject on Case trigger event BeforeUpdate|__sfdc_trigger/CaseObject
+23:44:43.37 (778018549)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.EntitleAssignmentOncase to Datetime
+23:44:44.107 (1107727351)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Integrations = Milestone = (First Response (Support-Integration), null, null)
+23:44:44.107 (1108577188)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - In (NeuStar) = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1109787039)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - T2 = Milestone = (Tier 2 First Response, Tier 2 Follow Up, Tier 2 Case Resolution)
+23:44:44.107 (1111299393)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - T1 (VAR & Partners) = Milestone = (null, VAR Follow Up, VAR Case Resolution)
+23:44:44.107 (1112467964)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - In (RC) = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1113639844)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - Out = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1114069408)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - T1 = Milestone = (null, T1 Follow Up, T1 Case Resolution)
+23:44:44.107 (1115289329)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Executive Response Team = Milestone = (ERT First Response, ERT Follow Up, ERT Case Resolution)
+23:44:44.107 (1116215838)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - VIPFR = Milestone = (null, VIPFR Follow Up, VIPFR Case Resolution)
+23:44:44.107 (1117305568)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - Phone = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1118217746)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - T3 = Milestone = (Tier 3 First Response, Tier 3 Follow Up, Tier 3 Case Resolution)
+23:44:44.107 (1119362176)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support-Case = Milestone = (CSP First Response, CSP Follow Up, CSP Case Resolution)
+23:44:44.107 (1120551197)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - In (RC UK) = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1120968641)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Porting - Vanity = Milestone = (null, NTD Follow Up, NTD Case Resolution)
+23:44:44.107 (1122072922)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - QoS = Milestone = (QoS First Response, QoS Follow Up, QoS Case Resolution)
+23:44:44.107 (1123354693)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support – IA Inbound = Milestone = (null, T1 Follow Up, T1 Case Resolution)
+23:44:44.107 (1123990399)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Telus = Milestone = (TELUS First Response, TELUS Follow Up, null)
+23:44:44.107 (1124589525)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - NWNC = Milestone = (NWNC First Response, NWNC Follow Up, null)
+23:44:44.107 (1125524473)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = RISE Partner Support = Milestone = (RISE Partner First Response, RISE Partner Follow Up, null)
+23:44:44.107 (1126407872)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Customer ebonding = Milestone = (Support - Customer Ebonding First Respone, null, null)
+23:44:44.107 (1127334030)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Charter Enterprise = Milestone = (Charter Enterprise First Response, null, null)
+23:44:44.107 (1128205528)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Charter - SMB = Milestone = (Charter SMB First Response, null, null)
+23:44:44.107 (1129342889)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support DT = Milestone = (DT-Unify First Response, null, null)
+23:44:44.107 (1130415808)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Frontier = Milestone = (Frontier First Response, null, null)
+23:44:44.107 (1130831002)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - MCM = Milestone = (MCM First Response, null, null)
+23:44:44.107 (1131231026)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support Versatel = Milestone = (Versatel First Response, null, null)
+23:44:44.107 (1132134574)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Vodafone = Milestone = (Vodafone First Response, null, null)
+23:44:44.107 (1133069452)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support Verizon = Milestone = (Verizon First Response, null, null)
+23:44:44.107 (1133979001)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support - Avaya = Milestone = (Avaya First Response, null, null)
+23:44:44.107 (1135465724)|USER_DEBUG|[59]|DEBUG|#### Case Record Type = Support AT&T = Milestone = (AT&T First Response, null, null)
+23:44:44.107 (1165134186)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.SetDateStarted to Datetime
+23:44:44.107 (1167845051)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PopulateCaseFieldsWithContactFields to Datetime
+23:44:44.107 (1364297931)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ValidateCaseStatusForDealAndOrderSupportRT to Datetime
+23:44:44.107 (1414743144)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PopulateFields to Datetime
+23:44:44.107 (1419043113)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ValidateCaseFieldsForProductIssues to Datetime
+23:44:44.107 (1420268824)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateAddressAndContactInfoFieldsForTelusBrand to Datetime
+23:44:44.107 (1765955602)|USER_DEBUG|[790]|DEBUG|#################### Error OCcured. Failed....#################
+23:44:44.107 (1766110584)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ValidateFieldsForPortingCase to Datetime
+23:44:44.107 (1862592597)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PopulateContactForPortingCase to Datetime
+23:44:44.107 (1869207428)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateRelatedOrders to Datetime
+23:44:44.107 (1870438379)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateInternalBusinessServiceCaseDescription to Datetime
+23:44:44.107 (1871289117)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.RoundRobinAssignment to Datetime
+23:44:44.107 (1879750494)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CommonHandlers to Datetime
+23:44:44.107 (1893096887)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.InsertManagerFieldForSupportRecordType to Datetime
+23:44:44.107 (1902657354)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PortOutCloseForCase to Datetime
+23:44:44.107 (1931594189)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.HandleEngageDigitalCaseUpdates to Datetime
+23:44:44.107 (1945254815)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateCaseOwnerAndManagerDetails to Datetime
+23:44:44.107 (1973224501)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.AssignUserDetailsToCase to Datetime
+23:44:44.107 (1976164787)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ChangeCaseOwnerForSupportT1User to Datetime
+23:44:44.107 (1984519444)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PopulateCasePortingFields to Datetime
+23:44:44.107 (1997990647)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateSurveysForPortingInRTCases to Datetime
+23:44:44.107 (2004630289)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateSurveysForSupportCSATRTCases to Datetime
+23:44:44.107 (2006182213)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateSurveysForITRTCases to Datetime
+23:44:44.107 (2007223252)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateSurveysForBizServRTCases to Datetime
+23:44:44.107 (2008312923)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateSurveysForSupportMedalliaCases to Datetime
+23:44:44.107 (2009696575)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateSupportCNRCases to Datetime
+23:44:44.107 (2010925886)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.UpdateDescriptionCodeForCases to Datetime
+23:44:44.107 (2014817382)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.PopulateCaseDates to Datetime
+23:44:45.22 (2022269540)|CUMULATIVE_LIMIT_USAGE
+23:44:45.22 (2022269540)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 21 out of 100
+  Number of query rows: 1496 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 757 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:45.22 (2022269540)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:44.107 (2038813961)|CODE_UNIT_FINISHED|CaseObject on Case trigger event BeforeUpdate|__sfdc_trigger/CaseObject
+23:44:45.47 (2047029087)|CUMULATIVE_LIMIT_USAGE
+23:44:45.47 (2047029087)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 21 out of 100
+  Number of query rows: 1496 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 757 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:45.47 (2047029087)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:45.444 (2444297668)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1d
+23:44:45.444 (2450525445)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1d
+23:44:45.444 (2450578676)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1e
+23:44:45.444 (2452109139)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1e
+23:44:45.444 (2452135660)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1f
+23:44:45.444 (2452704405)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1f
+23:44:45.444 (2452719825)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1g
+23:44:45.444 (2453242810)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1g
+23:44:45.444 (2453257190)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1h
+23:44:45.444 (2453810945)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1h
+23:44:45.444 (2453824745)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1i
+23:44:45.444 (2454335150)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1i
+23:44:45.444 (2454348930)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1j
+23:44:45.444 (2454852024)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1j
+23:44:45.444 (2454864515)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1k
+23:44:45.444 (2455362439)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1k
+23:44:45.444 (2455374269)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1l
+23:44:45.444 (2455907654)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1l
+23:44:45.444 (2455919684)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1m
+23:44:45.444 (2456422799)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1m
+23:44:45.444 (2456434869)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1n
+23:44:45.444 (2456938103)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1n
+23:44:45.444 (2456949563)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1o
+23:44:45.444 (2457444868)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1o
+23:44:45.444 (2457455828)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1p
+23:44:45.444 (2457986213)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1p
+23:44:45.444 (2457998103)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1q
+23:44:45.444 (2458514668)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1q
+23:44:45.444 (2458528338)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1r
+23:44:45.444 (2459029872)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1r
+23:44:45.444 (2459041923)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1s
+23:44:45.444 (2459573137)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1s
+23:44:45.444 (2459586958)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1t
+23:44:45.444 (2460109982)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1t
+23:44:45.444 (2460121543)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1u
+23:44:45.444 (2460619637)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1u
+23:44:45.444 (2460630237)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1v
+23:44:45.444 (2461135302)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1v
+23:44:45.444 (2461146762)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1w
+23:44:45.444 (2461642387)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1w
+23:44:45.444 (2461653037)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1x
+23:44:45.444 (2462185632)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1x
+23:44:45.444 (2462197522)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1y
+23:44:45.444 (2462695946)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1y
+23:44:45.444 (2462707206)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr1z
+23:44:45.444 (2463208481)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr1z
+23:44:45.444 (2463219571)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr20
+23:44:45.444 (2463727386)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr20
+23:44:45.444 (2463738686)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr21
+23:44:45.444 (2464264891)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr21
+23:44:45.444 (2464275691)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr22
+23:44:45.444 (2464777746)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr22
+23:44:45.444 (2464789166)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr23
+23:44:45.444 (2465293650)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr23
+23:44:45.444 (2465304520)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr24
+23:44:45.444 (2465799475)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr24
+23:44:45.444 (2465810205)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr25
+23:44:45.444 (2466329220)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr25
+23:44:45.444 (2466340380)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr26
+23:44:45.444 (2466835425)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr26
+23:44:45.444 (2466857105)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr27
+23:44:45.444 (2467353969)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr27
+23:44:45.444 (2467365359)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr28
+23:44:45.444 (2467867224)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr28
+23:44:45.444 (2467878354)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr29
+23:44:45.444 (2468413899)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr29
+23:44:45.444 (2468425369)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2A
+23:44:45.444 (2468939544)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2A
+23:44:45.444 (2468950934)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2B
+23:44:45.444 (2469475289)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2B
+23:44:45.444 (2469486779)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2C
+23:44:45.444 (2470017044)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2C
+23:44:45.444 (2470029094)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2D
+23:44:45.444 (2470705770)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2D
+23:44:45.444 (2470719660)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2E
+23:44:45.444 (2471251645)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2E
+23:44:45.444 (2471263535)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2F
+23:44:45.444 (2471804320)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2F
+23:44:45.444 (2471816240)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2G
+23:44:45.444 (2472360785)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2G
+23:44:45.444 (2472372315)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2H
+23:44:45.444 (2472947290)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2H
+23:44:45.444 (2472959610)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2I
+23:44:45.444 (2473511365)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2I
+23:44:45.444 (2473523006)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2J
+23:44:45.444 (2474085861)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2J
+23:44:45.444 (2474097871)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2K
+23:44:45.444 (2474666276)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2K
+23:44:45.444 (2474679066)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2L
+23:44:45.444 (2475294352)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2L
+23:44:45.444 (2475307892)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2M
+23:44:45.444 (2475898657)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2M
+23:44:45.444 (2475911567)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2N
+23:44:45.444 (2476504333)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2N
+23:44:45.444 (2476517573)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2O
+23:44:45.444 (2477115608)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2O
+23:44:45.444 (2477129038)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2P
+23:44:45.444 (2477767034)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2P
+23:44:45.444 (2477779744)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2Q
+23:44:45.444 (2478412900)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2Q
+23:44:45.444 (2478428050)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2R
+23:44:45.444 (2479056816)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2R
+23:44:45.444 (2479070796)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2S
+23:44:45.444 (2479703452)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2S
+23:44:45.444 (2479717372)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2T
+23:44:45.444 (2480368408)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2T
+23:44:45.444 (2480382308)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2U
+23:44:45.444 (2480992134)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2U
+23:44:45.444 (2481006164)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2V
+23:44:45.444 (2481637590)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2V
+23:44:45.444 (2481651550)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2W
+23:44:45.444 (2482251325)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2W
+23:44:45.444 (2482264306)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2X
+23:44:45.444 (2482870711)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2X
+23:44:45.444 (2482884201)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2Y
+23:44:45.444 (2483471637)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2Y
+23:44:45.444 (2483484077)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2Z
+23:44:45.444 (2484051902)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2Z
+23:44:45.444 (2484064272)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2a
+23:44:45.444 (2484617667)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2a
+23:44:45.444 (2484629427)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2b
+23:44:45.444 (2485206623)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2b
+23:44:45.444 (2485218753)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2c
+23:44:45.444 (2485760308)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2c
+23:44:45.444 (2485771748)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2d
+23:44:45.444 (2486319203)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2d
+23:44:45.444 (2486331363)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2e
+23:44:45.444 (2486864218)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2e
+23:44:45.444 (2486876088)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2f
+23:44:45.444 (2487432573)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2f
+23:44:45.444 (2487444813)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2g
+23:44:45.444 (2487967088)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2g
+23:44:45.444 (2487978508)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2h
+23:44:45.444 (2488510463)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2h
+23:44:45.444 (2488523133)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2i
+23:44:45.444 (2489042058)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2i
+23:44:45.444 (2489054148)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2j
+23:44:45.444 (2489583303)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2j
+23:44:45.444 (2489595233)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2k
+23:44:45.444 (2490092008)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2k
+23:44:45.444 (2490102898)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvr2l
+23:44:45.444 (2490600142)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvr2l
+23:44:45.444 (2490611602)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrCv
+23:44:45.444 (2491110877)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrCv
+23:44:45.444 (2491121847)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrCw
+23:44:45.444 (2491647432)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrCw
+23:44:45.444 (2491658542)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrCx
+23:44:45.444 (2492169276)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrCx
+23:44:45.444 (2492181057)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrCy
+23:44:45.444 (2492679771)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrCy
+23:44:45.444 (2492690531)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrCz
+23:44:45.444 (2493221326)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrCz
+23:44:45.444 (2493233216)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD0
+23:44:45.444 (2493768181)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD0
+23:44:45.444 (2493779951)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD1
+23:44:45.444 (2494278156)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD1
+23:44:45.444 (2494289436)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD2
+23:44:45.444 (2494785590)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD2
+23:44:45.444 (2494795390)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD3
+23:44:45.444 (2495288425)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD3
+23:44:45.444 (2495298455)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD4
+23:44:45.444 (2495822740)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD4
+23:44:45.444 (2495832820)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD5
+23:44:45.444 (2496330874)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD5
+23:44:45.444 (2496340884)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD6
+23:44:45.444 (2496842009)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD6
+23:44:45.444 (2496851869)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD7
+23:44:45.444 (2497352824)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD7
+23:44:45.444 (2497363274)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD8
+23:44:45.444 (2497885628)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD8
+23:44:45.444 (2497895638)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrD9
+23:44:45.444 (2498423753)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrD9
+23:44:45.444 (2498437093)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDA
+23:44:45.444 (2499795086)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDA
+23:44:45.444 (2499813336)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDB
+23:44:45.444 (2500330831)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDB
+23:44:45.444 (2500343281)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDC
+23:44:45.444 (2500869236)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDC
+23:44:45.444 (2500879216)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDD
+23:44:45.444 (2501381341)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDD
+23:44:45.444 (2501391491)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDE
+23:44:45.444 (2501888085)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDE
+23:44:45.444 (2501897915)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDF
+23:44:45.444 (2502400790)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDF
+23:44:45.444 (2502411470)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDG
+23:44:45.444 (2502932055)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDG
+23:44:45.444 (2502942065)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDH
+23:44:45.444 (2503448180)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDH
+23:44:45.444 (2503465220)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDI
+23:44:45.444 (2503964454)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDI
+23:44:45.444 (2503974415)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDJ
+23:44:45.444 (2504478079)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDJ
+23:44:45.444 (2504489509)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDK
+23:44:45.444 (2505011914)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDK
+23:44:45.444 (2505021714)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDL
+23:44:45.444 (2505523569)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDL
+23:44:45.444 (2505533659)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDM
+23:44:45.444 (2506031064)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDM
+23:44:45.444 (2506040974)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDN
+23:44:45.444 (2506539898)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDN
+23:44:45.444 (2506550678)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDO
+23:44:45.444 (2507086693)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDO
+23:44:45.444 (2507097503)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDP
+23:44:45.444 (2507611278)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDP
+23:44:45.444 (2507621508)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDQ
+23:44:45.444 (2508126663)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDQ
+23:44:45.444 (2508137033)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDR
+23:44:45.444 (2508677758)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDR
+23:44:45.444 (2508690988)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDS
+23:44:45.444 (2509218593)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDS
+23:44:45.444 (2509230253)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDT
+23:44:45.444 (2509979580)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDT
+23:44:45.444 (2509995470)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDU
+23:44:45.444 (2510502445)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDU
+23:44:45.444 (2510513055)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDV
+23:44:45.444 (2511013499)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDV
+23:44:45.444 (2511024839)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDW
+23:44:45.444 (2511554714)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDW
+23:44:45.444 (2511565664)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDX
+23:44:45.444 (2512062499)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDX
+23:44:45.444 (2512072849)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDY
+23:44:45.444 (2512569593)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDY
+23:44:45.444 (2512580243)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDZ
+23:44:45.444 (2513077128)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDZ
+23:44:45.444 (2513088898)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDa
+23:44:45.444 (2513610113)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDa
+23:44:45.444 (2513621593)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDb
+23:44:45.444 (2514117007)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDb
+23:44:45.444 (2514126857)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDc
+23:44:45.444 (2514621332)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDc
+23:44:45.444 (2514631172)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDd
+23:44:45.444 (2515295398)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDd
+23:44:45.444 (2515309098)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDe
+23:44:45.444 (2515847813)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDe
+23:44:45.444 (2515859543)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDf
+23:44:45.444 (2516361808)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDf
+23:44:45.444 (2516372258)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDg
+23:44:45.444 (2517057364)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDg
+23:44:45.444 (2517071734)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDh
+23:44:45.444 (2517585399)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDh
+23:44:45.444 (2517596659)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDi
+23:44:45.444 (2518129704)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDi
+23:44:45.444 (2518141254)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDj
+23:44:45.444 (2518675499)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDj
+23:44:45.444 (2518687999)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDk
+23:44:45.444 (2519199094)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDk
+23:44:45.444 (2519210684)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDl
+23:44:45.444 (2519726719)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDl
+23:44:45.444 (2519738699)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDm
+23:44:45.444 (2520270684)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDm
+23:44:45.444 (2520281964)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDn
+23:44:45.444 (2520791018)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDn
+23:44:45.444 (2520802238)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDo
+23:44:45.444 (2521296373)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDo
+23:44:45.444 (2521307823)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDp
+23:44:45.444 (2521806238)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDp
+23:44:45.444 (2521817278)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDq
+23:44:45.444 (2522337803)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDq
+23:44:45.444 (2522348983)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDr
+23:44:45.444 (2522845217)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDr
+23:44:45.444 (2522857077)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDs
+23:44:45.444 (2523352752)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDs
+23:44:45.444 (2523363542)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDt
+23:44:45.444 (2524035908)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDt
+23:44:45.444 (2524050869)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDu
+23:44:45.444 (2524597324)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDu
+23:44:45.444 (2524609664)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDv
+23:44:45.444 (2525112428)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDv
+23:44:45.444 (2525123958)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDw
+23:44:45.444 (2525621573)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDw
+23:44:45.444 (2525632573)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDx
+23:44:45.444 (2526134788)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDx
+23:44:45.444 (2526158178)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDy
+23:44:45.444 (2526849684)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDy
+23:44:45.444 (2526862314)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrDz
+23:44:45.444 (2527366479)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrDz
+23:44:45.444 (2527377239)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrE0
+23:44:45.444 (2527894974)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrE0
+23:44:45.444 (2527905594)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrE1
+23:44:45.444 (2528446509)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrE1
+23:44:45.444 (2528460999)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrE2
+23:44:45.444 (2528996284)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrE2
+23:44:45.444 (2529007804)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrE3
+23:44:45.444 (2529509549)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrE3
+23:44:45.444 (2529520619)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJN
+23:44:45.444 (2530012643)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJN
+23:44:45.444 (2530023343)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJO
+23:44:45.444 (2530521858)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJO
+23:44:45.444 (2530532638)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJP
+23:44:45.444 (2531053763)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJP
+23:44:45.444 (2531064153)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJQ
+23:44:45.444 (2531572968)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJQ
+23:44:45.444 (2531584898)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJR
+23:44:45.444 (2532104182)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJR
+23:44:45.444 (2532115762)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJS
+23:44:45.444 (2532624867)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJS
+23:44:45.444 (2532635827)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJT
+23:44:45.444 (2533157212)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJT
+23:44:45.444 (2533167362)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJU
+23:44:45.444 (2533670367)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJU
+23:44:45.444 (2533680277)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJV
+23:44:45.444 (2534183991)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJV
+23:44:45.444 (2534195711)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJW
+23:44:45.444 (2534699876)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJW
+23:44:45.444 (2534710316)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJX
+23:44:45.444 (2535240941)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJX
+23:44:45.444 (2535252091)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJY
+23:44:45.444 (2535760356)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJY
+23:44:45.444 (2535771046)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJZ
+23:44:45.444 (2536281010)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJZ
+23:44:45.444 (2536293020)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJa
+23:44:45.444 (2536816075)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJa
+23:44:45.444 (2536827865)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJb
+23:44:45.444 (2537380330)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJb
+23:44:45.444 (2537393870)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJc
+23:44:45.444 (2537996566)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJc
+23:44:45.444 (2538011796)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJd
+23:44:45.444 (2538559741)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJd
+23:44:45.444 (2538571851)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJe
+23:44:45.444 (2539086586)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJe
+23:44:45.444 (2539098886)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJf
+23:44:45.444 (2539638711)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJf
+23:44:45.444 (2539650391)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJg
+23:44:45.444 (2540154036)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJg
+23:44:45.444 (2540164626)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJh
+23:44:45.444 (2540662110)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJh
+23:44:45.444 (2540673711)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJi
+23:44:45.444 (2541175155)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJi
+23:44:45.444 (2541186515)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJj
+23:44:45.444 (2541706140)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJj
+23:44:45.444 (2541716860)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJk
+23:44:45.444 (2542213435)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJk
+23:44:45.444 (2542224335)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJl
+23:44:45.444 (2542725999)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJl
+23:44:45.444 (2542736790)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJm
+23:44:45.444 (2543233974)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJm
+23:44:45.444 (2543244614)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJn
+23:44:45.444 (2543796449)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJn
+23:44:45.444 (2543807769)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJo
+23:44:45.444 (2544305194)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJo
+23:44:45.444 (2544316264)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJp
+23:44:45.444 (2544814569)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJp
+23:44:45.444 (2544826059)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJq
+23:44:45.444 (2545322733)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJq
+23:44:45.444 (2545333334)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJr
+23:44:45.444 (2545855948)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJr
+23:44:45.444 (2545867119)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJs
+23:44:45.444 (2546379893)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJs
+23:44:45.444 (2546391093)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJt
+23:44:45.444 (2546913568)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJt
+23:44:45.444 (2546925068)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJu
+23:44:45.444 (2547454893)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJu
+23:44:45.444 (2547466803)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJv
+23:44:45.444 (2548000858)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJv
+23:44:45.444 (2548012548)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJw
+23:44:45.444 (2548533703)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJw
+23:44:45.444 (2548546173)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJx
+23:44:45.444 (2549083608)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJx
+23:44:45.444 (2549095258)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJy
+23:44:45.444 (2549596703)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJy
+23:44:45.444 (2549608153)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrJz
+23:44:45.444 (2550128238)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrJz
+23:44:45.444 (2550139148)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK0
+23:44:45.444 (2550642972)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK0
+23:44:45.444 (2550653992)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK1
+23:44:45.444 (2551159267)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK1
+23:44:45.444 (2551171077)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK2
+23:44:45.444 (2551691122)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK2
+23:44:45.444 (2551702262)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK3
+23:44:45.444 (2552245437)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK3
+23:44:45.444 (2552256937)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK4
+23:44:45.444 (2552774862)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK4
+23:44:45.444 (2552786652)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK5
+23:44:45.444 (2553307056)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK5
+23:44:45.444 (2553319357)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK6
+23:44:45.444 (2553841681)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK6
+23:44:45.444 (2553853301)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK7
+23:44:45.444 (2554402496)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK7
+23:44:45.444 (2554413827)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK8
+23:44:45.444 (2554928171)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK8
+23:44:45.444 (2554938891)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrK9
+23:44:45.444 (2555451796)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrK9
+23:44:45.444 (2555462996)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKA
+23:44:45.444 (2555964411)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKA
+23:44:45.444 (2555976161)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKB
+23:44:45.444 (2556502526)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKB
+23:44:45.444 (2556514056)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKC
+23:44:45.444 (2557019720)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKC
+23:44:45.444 (2557031350)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKD
+23:44:45.444 (2557531005)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKD
+23:44:45.444 (2557541895)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKE
+23:44:45.444 (2558041509)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKE
+23:44:45.444 (2558052920)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKF
+23:44:45.444 (2558594195)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKF
+23:44:45.444 (2558606565)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKG
+23:44:45.444 (2559108189)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKG
+23:44:45.444 (2559119859)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKH
+23:44:45.444 (2559827216)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKH
+23:44:45.444 (2559863926)|CODE_UNIT_STARTED|[EXTERNAL]|Validation:Case:500Ot00000qvrKI
+23:44:45.444 (2560528912)|CODE_UNIT_FINISHED|Validation:Case:500Ot00000qvrKI
+23:44:47.150 (4150481762)|CUMULATIVE_LIMIT_USAGE
+23:44:47.150 (4150481762)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 21 out of 100
+  Number of query rows: 1496 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 1289 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.150 (4150481762)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.150 (4150481762)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:47.152 (4152321488)|CUMULATIVE_LIMIT_USAGE
+23:44:47.152 (4152321488)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 21 out of 100
+  Number of query rows: 1496 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 1289 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.152 (4152321488)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.152 (4152321488)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:47.200 (4200549120)|CUMULATIVE_LIMIT_USAGE
+23:44:47.200 (4200549120)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 21 out of 100
+  Number of query rows: 1496 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 1289 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.200 (4200549120)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.200 (4200549120)|LIMIT_USAGE_FOR_NS|UniqueEntry|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.200 (4200549120)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:47.202 (4202044844)|CODE_UNIT_STARTED|[EXTERNAL]|01qD50000009cvF|CaseObject on Case trigger event AfterUpdate|__sfdc_trigger/CaseObject
+23:44:47.202 (4206433354)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CloseCaseMilestone to Datetime
+23:44:47.202 (4223274098)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ValidateOnAfterUpdateEvent to Datetime
+23:44:47.202 (4230059681)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ValidateByPassCase to Datetime
+23:44:47.202 (4232951938)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CloseCaseAssignedMilestone to Datetime
+23:44:47.202 (4316304702)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316377132)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316389442)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316399323)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316424673)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316434513)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316443973)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316453373)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316462823)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316471703)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316481073)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316490353)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316499473)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316508574)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316517824)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316527274)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316536434)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316545654)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316554724)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316564154)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316573344)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316582494)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316591534)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316600794)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316609904)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316618875)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316628095)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316637345)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316646295)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316655465)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316664855)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316673925)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316683165)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316692635)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316702125)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316711165)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316720536)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316729606)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316738766)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316747966)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316757296)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316766416)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316775726)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316784936)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316794136)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316816096)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316825346)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316834517)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316843647)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316852967)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316862087)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316871217)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316880397)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316889497)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316898587)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316907807)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316917107)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316926127)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316934927)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316944098)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316953558)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316962448)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316971678)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316980968)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316989898)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4316999028)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317008428)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317017678)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317026758)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317035688)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317044779)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317053879)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317063009)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317071899)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317081179)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317090379)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317099479)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317108309)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317117659)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317126659)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317135579)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317144509)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317153700)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317162960)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317171930)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317180950)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317190030)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317199140)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317208120)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317217150)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317226650)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317235450)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317244570)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317253700)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317262721)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317271661)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317281351)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317290311)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317305271)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317314601)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317323691)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317332801)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317342421)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317351501)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317360611)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317369852)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317378952)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317388022)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317397112)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317406542)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317415682)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317424512)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317433552)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317443012)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317452212)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317461252)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317470282)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317479713)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317488933)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317498113)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317507153)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317516483)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317528443)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317538083)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317547353)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317556483)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317566003)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317575303)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317584353)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317593734)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317603014)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317612174)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317621144)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317630424)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317639444)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317648624)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317657824)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317666794)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317675904)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317685164)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317694395)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317703445)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317712305)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317721715)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317730915)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317739935)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317749075)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317758225)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317767235)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317776405)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317785605)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317794565)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317803536)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317812616)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317821946)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317831026)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317840016)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317849416)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317858636)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317867706)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317876666)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317885906)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317895466)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317904546)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317913507)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317922577)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317931777)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317940917)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317949867)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317959177)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317968417)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317977557)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317986507)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4317995747)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318004877)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318014137)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318023258)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318032568)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318050428)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318060028)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318068918)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318078148)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318087198)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318096248)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318105198)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318114358)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318123498)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318132549)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318141979)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318150989)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318160239)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318169409)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318178639)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318187659)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318197009)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318207089)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318216659)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318226289)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318235670)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4318244870)|USER_DEBUG|[409]|DEBUG|### INSIDE MAP METHOD INITILIZED ###
+23:44:47.202 (4319201768)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.AutoSyncWithNGBS to Datetime
+23:44:47.202 (4329393111)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CheckForEmail to Datetime
+23:44:47.202 (4336579097)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1dIAA
+23:44:47.202 (4336701969)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1eIAA
+23:44:47.202 (4336714179)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1fIAA
+23:44:47.202 (4336723439)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1gIAA
+23:44:47.202 (4336732719)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1hIAA
+23:44:47.202 (4336741439)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1iIAA
+23:44:47.202 (4336750549)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1jIAA
+23:44:47.202 (4336759319)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1kIAA
+23:44:47.202 (4336767989)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1lIAA
+23:44:47.202 (4336776969)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1mIAA
+23:44:47.202 (4336785799)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1nIAA
+23:44:47.202 (4336794639)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1oIAA
+23:44:47.202 (4336804030)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1pIAA
+23:44:47.202 (4336813210)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1qIAA
+23:44:47.202 (4336822080)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1rIAA
+23:44:47.202 (4336831340)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1sIAA
+23:44:47.202 (4336840120)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1tIAA
+23:44:47.202 (4336849190)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1uIAA
+23:44:47.202 (4336858140)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1vIAA
+23:44:47.202 (4336867480)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1wIAA
+23:44:47.202 (4336876250)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1xIAA
+23:44:47.202 (4336884950)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1yIAA
+23:44:47.202 (4336893660)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr1zIAA
+23:44:47.202 (4336902370)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr20IAA
+23:44:47.202 (4336910860)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr21IAA
+23:44:47.202 (4336920051)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr22IAA
+23:44:47.202 (4336928911)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr23IAA
+23:44:47.202 (4336937751)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr24IAA
+23:44:47.202 (4336947001)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr25IAA
+23:44:47.202 (4336955811)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr26IAA
+23:44:47.202 (4336964671)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr27IAA
+23:44:47.202 (4336973531)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr28IAA
+23:44:47.202 (4336982611)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr29IAA
+23:44:47.202 (4336991341)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2AIAQ
+23:44:47.202 (4336999841)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2BIAQ
+23:44:47.202 (4337008751)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2CIAQ
+23:44:47.202 (4337017901)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2DIAQ
+23:44:47.202 (4337026692)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2EIAQ
+23:44:47.202 (4337036202)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2FIAQ
+23:44:47.202 (4337044952)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2GIAQ
+23:44:47.202 (4337053952)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2HIAQ
+23:44:47.202 (4337062942)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2IIAQ
+23:44:47.202 (4337071712)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2JIAQ
+23:44:47.202 (4337080732)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2KIAQ
+23:44:47.202 (4337089842)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2LIAQ
+23:44:47.202 (4337098492)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2MIAQ
+23:44:47.202 (4337107472)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2NIAQ
+23:44:47.202 (4337116392)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2OIAQ
+23:44:47.202 (4337125122)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2PIAQ
+23:44:47.202 (4337134573)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2QIAQ
+23:44:47.202 (4337143423)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2RIAQ
+23:44:47.202 (4337152063)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2SIAQ
+23:44:47.202 (4337160703)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2TIAQ
+23:44:47.202 (4337169193)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2UIAQ
+23:44:47.202 (4337178003)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2VIAQ
+23:44:47.202 (4337186423)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2WIAQ
+23:44:47.202 (4337195133)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2XIAQ
+23:44:47.202 (4337203643)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2YIAQ
+23:44:47.202 (4337212233)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2ZIAQ
+23:44:47.202 (4337220733)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2aIAA
+23:44:47.202 (4337229593)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2bIAA
+23:44:47.202 (4337238084)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2cIAA
+23:44:47.202 (4337246944)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2dIAA
+23:44:47.202 (4337255664)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2eIAA
+23:44:47.202 (4337264354)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2fIAA
+23:44:47.202 (4337272894)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2gIAA
+23:44:47.202 (4337281684)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2hIAA
+23:44:47.202 (4337290094)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2iIAA
+23:44:47.202 (4337299074)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2jIAA
+23:44:47.202 (4337307884)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2kIAA
+23:44:47.202 (4337316694)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvr2lIAA
+23:44:47.202 (4337325424)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrCvIAI
+23:44:47.202 (4337334264)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrCwIAI
+23:44:47.202 (4337343034)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrCxIAI
+23:44:47.202 (4337352475)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrCyIAI
+23:44:47.202 (4337361205)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrCzIAI
+23:44:47.202 (4337370365)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD0IAI
+23:44:47.202 (4337379175)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD1IAI
+23:44:47.202 (4337388095)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD2IAI
+23:44:47.202 (4337396705)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD3IAI
+23:44:47.202 (4337405405)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD4IAI
+23:44:47.202 (4337414185)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD5IAI
+23:44:47.202 (4337422755)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD6IAI
+23:44:47.202 (4337431305)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD7IAI
+23:44:47.202 (4337440095)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD8IAI
+23:44:47.202 (4337448725)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrD9IAI
+23:44:47.202 (4337457646)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDAIAY
+23:44:47.202 (4337466316)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDBIAY
+23:44:47.202 (4337475036)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDCIAY
+23:44:47.202 (4337484156)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDDIAY
+23:44:47.202 (4337492716)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDEIAY
+23:44:47.202 (4337501256)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDFIAY
+23:44:47.202 (4337510116)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDGIAY
+23:44:47.202 (4337518686)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDHIAY
+23:44:47.202 (4337527356)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDIIAY
+23:44:47.202 (4337536006)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDJIAY
+23:44:47.202 (4337544786)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDKIAY
+23:44:47.202 (4337555146)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDLIAY
+23:44:47.202 (4337564377)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDMIAY
+23:44:47.202 (4337573257)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDNIAY
+23:44:47.202 (4337582197)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDOIAY
+23:44:47.202 (4337590957)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDPIAY
+23:44:47.202 (4337600037)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDQIAY
+23:44:47.202 (4337608677)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDRIAY
+23:44:47.202 (4337617247)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDSIAY
+23:44:47.202 (4337625927)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDTIAY
+23:44:47.202 (4337634657)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDUIAY
+23:44:47.202 (4337643277)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDVIAY
+23:44:47.202 (4337651937)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDWIAY
+23:44:47.202 (4337660537)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDXIAY
+23:44:47.202 (4337669258)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDYIAY
+23:44:47.202 (4337677678)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDZIAY
+23:44:47.202 (4337686518)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDaIAI
+23:44:47.202 (4337695478)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDbIAI
+23:44:47.202 (4337704798)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDcIAI
+23:44:47.202 (4337713568)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDdIAI
+23:44:47.202 (4337722478)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDeIAI
+23:44:47.202 (4337731238)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDfIAI
+23:44:47.202 (4337740348)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDgIAI
+23:44:47.202 (4337749138)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDhIAI
+23:44:47.202 (4337757958)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDiIAI
+23:44:47.202 (4337766848)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDjIAI
+23:44:47.202 (4337775888)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDkIAI
+23:44:47.202 (4337785319)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDlIAI
+23:44:47.202 (4337794449)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDmIAI
+23:44:47.202 (4337803079)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDnIAI
+23:44:47.202 (4337812089)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDoIAI
+23:44:47.202 (4337820949)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDpIAI
+23:44:47.202 (4337829969)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDqIAI
+23:44:47.202 (4337838959)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDrIAI
+23:44:47.202 (4337847809)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDsIAI
+23:44:47.202 (4337856679)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDtIAI
+23:44:47.202 (4337865559)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDuIAI
+23:44:47.202 (4337874489)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDvIAI
+23:44:47.202 (4337883179)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDwIAI
+23:44:47.202 (4337892060)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDxIAI
+23:44:47.202 (4337900960)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDyIAI
+23:44:47.202 (4337910040)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrDzIAI
+23:44:47.202 (4337919130)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrE0IAI
+23:44:47.202 (4337928130)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrE1IAI
+23:44:47.202 (4337937110)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrE2IAI
+23:44:47.202 (4337945780)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrE3IAI
+23:44:47.202 (4337954710)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJNIAY
+23:44:47.202 (4337963350)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJOIAY
+23:44:47.202 (4337972270)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJPIAY
+23:44:47.202 (4337981170)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJQIAY
+23:44:47.202 (4337990060)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJRIAY
+23:44:47.202 (4337998831)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJSIAY
+23:44:47.202 (4338008031)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJTIAY
+23:44:47.202 (4338016931)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJUIAY
+23:44:47.202 (4338025861)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJVIAY
+23:44:47.202 (4338034431)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJWIAY
+23:44:47.202 (4338043741)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJXIAY
+23:44:47.202 (4338052681)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJYIAY
+23:44:47.202 (4338061421)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJZIAY
+23:44:47.202 (4338070111)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJaIAI
+23:44:47.202 (4338079111)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJbIAI
+23:44:47.202 (4338087861)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJcIAI
+23:44:47.202 (4338096701)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJdIAI
+23:44:47.202 (4338105442)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJeIAI
+23:44:47.202 (4338114452)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJfIAI
+23:44:47.202 (4338123062)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJgIAI
+23:44:47.202 (4338132022)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJhIAI
+23:44:47.202 (4338140972)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJiIAI
+23:44:47.202 (4338150062)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJjIAI
+23:44:47.202 (4338158982)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJkIAI
+23:44:47.202 (4338168092)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJlIAI
+23:44:47.202 (4338177122)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJmIAI
+23:44:47.202 (4338185972)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJnIAI
+23:44:47.202 (4338194782)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJoIAI
+23:44:47.202 (4338203982)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJpIAI
+23:44:47.202 (4338212683)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJqIAI
+23:44:47.202 (4338221493)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJrIAI
+23:44:47.202 (4338230433)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJsIAI
+23:44:47.202 (4338239173)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJtIAI
+23:44:47.202 (4338247983)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJuIAI
+23:44:47.202 (4338256833)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJvIAI
+23:44:47.202 (4338267723)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJwIAI
+23:44:47.202 (4338276623)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJxIAI
+23:44:47.202 (4338285363)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJyIAI
+23:44:47.202 (4338294543)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrJzIAI
+23:44:47.202 (4338303113)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK0IAI
+23:44:47.202 (4338312083)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK1IAI
+23:44:47.202 (4338320844)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK2IAI
+23:44:47.202 (4338329754)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK3IAI
+23:44:47.202 (4338338704)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK4IAI
+23:44:47.202 (4338347404)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK5IAI
+23:44:47.202 (4338356134)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK6IAI
+23:44:47.202 (4338364894)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK7IAI
+23:44:47.202 (4338373744)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK8IAI
+23:44:47.202 (4338409414)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrK9IAI
+23:44:47.202 (4338418634)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKAIAY
+23:44:47.202 (4338427655)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKBIAY
+23:44:47.202 (4338440795)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKCIAY
+23:44:47.202 (4338449395)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKDIAY
+23:44:47.202 (4338458275)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKEIAY
+23:44:47.202 (4338467645)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKFIAY
+23:44:47.202 (4338476585)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKGIAY
+23:44:47.202 (4338485105)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKHIAY
+23:44:47.202 (4338493955)|USER_DEBUG|[38]|DEBUG|thisId500Ot00000qvrKIIAY
+23:44:47.202 (4359431377)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.HandleCaseForTelus to Datetime
+23:44:47.202 (4447542433)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CalculateGraduationCompletionRateOverCase to Datetime
+23:44:47.202 (4526116283)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.CreateUpdateJuraIssue to Datetime
+23:44:47.202 (4528328463)|EXCEPTION_THROWN|[6]|System.TypeException: Invalid conversion from runtime type CaseTriggerHandler.ShareAttachments to Datetime
+23:44:47.528 (4528962679)|CUMULATIVE_LIMIT_USAGE
+23:44:47.528 (4528962679)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 32 out of 100
+  Number of query rows: 2728 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 1430 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.528 (4528962679)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.528 (4528962679)|LIMIT_USAGE_FOR_NS|UniqueEntry|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.528 (4528962679)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:47.202 (4529136141)|CODE_UNIT_FINISHED|CaseObject on Case trigger event AfterUpdate|__sfdc_trigger/CaseObject
+23:44:47.530 (4530031239)|CUMULATIVE_LIMIT_USAGE
+23:44:47.530 (4530031239)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 32 out of 100
+  Number of query rows: 2728 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 1430 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.530 (4530031239)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.530 (4530031239)|LIMIT_USAGE_FOR_NS|UniqueEntry|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:44:47.530 (4530031239)|CUMULATIVE_LIMIT_USAGE_END
+
+23:44:47.202 (4530271161)|CODE_UNIT_STARTED|[EXTERNAL]|Workflow:Case
+23:44:49.607 (6607580716)|CODE_UNIT_FINISHED|Workflow:Case
+23:44:49.607 (6608663716)|CODE_UNIT_STARTED|[EXTERNAL]|Flow:Case
+23:44:55.643 (12643451313)|CODE_UNIT_FINISHED|Flow:Case
+23:44:55.643 (12649152616)|CODE_UNIT_STARTED|[EXTERNAL]|SLA
+23:44:55.643 (12665378393)|CODE_UNIT_FINISHED|SLA
+23:44:55.643 (12980618710)|CODE_UNIT_STARTED|[EXTERNAL]|Flow:Case
+23:44:55.643 (13054180234)|CODE_UNIT_FINISHED|Flow:Case
+23:44:55.643 (13068026732)|USER_DEBUG|[137]|DEBUG|===REPRO CPU: 5147ms of 10000ms limit===
+23:44:55.643 (13068088652)|USER_DEBUG|[139]|DEBUG|===REPRO DONE: rows=200 qualifying=false===
+23:45:03.422 (20422909862)|CUMULATIVE_LIMIT_USAGE
+23:45:03.422 (20422909862)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 32 out of 100
+  Number of query rows: 2728 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 200 out of 10000
+  Maximum CPU time: 5157 out of 10000 ******* CLOSE TO LIMIT
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:45:03.422 (20422909862)|LIMIT_USAGE_FOR_NS|LeanData|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 1 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:45:03.422 (20422909862)|LIMIT_USAGE_FOR_NS|UniqueEntry|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of Publish Immediate DML: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+23:45:03.422 (20422909862)|CUMULATIVE_LIMIT_USAGE_END
+
+23:45:03.422 (20422969093)|CODE_UNIT_FINISHED|execute_anonymous_apex
+23:45:03.422 (20422990733)|EXECUTION_FINISHED
+
