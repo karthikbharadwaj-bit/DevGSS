@@ -49,6 +49,10 @@
  * AccountId is silently dropped on insert in Apex test context (see Test_CollectionsDisputeParity
  * for the full finding). Since every node here requires AccountId NOT blank, getting this wrong
  * would make all five silently stop firing.
+ *
+ * ASSIGNMENT RULES: Case creation and all non-owner qualifying saves invoke the active Case
+ * assignment rule. P3/P4 deliberately use direct owner reassignment without that header because
+ * assignment rules would replace the requested queue/user before F6 evaluates the final OwnerId.
  */
 @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
 @isTest
@@ -64,6 +68,7 @@ private class Test_PartnerCommentParity {
     private static final String STATUS_OPEN        = 'Open';
     private static final String STATUS_IN_PROGRESS = 'In Progress';
     private static final String ORIGIN_EMAIL       = 'Email';
+    private static final String ORIGIN_PHONE       = 'Phone';
 
     private static final String PARTNER_STATUS_IN_PROGRESS = 'In Progress';
     private static final String SEVERITY_HIGH              = 'Level 3 - High';
@@ -145,6 +150,29 @@ private class Test_PartnerCommentParity {
         ].Id;
     }
 
+    private static Database.DMLOptions assignmentRuleOptions() {
+        AssignmentRule assignmentRule = [
+            SELECT Id
+            FROM AssignmentRule
+            WHERE SobjectType = 'Case'
+                AND Active = true
+            LIMIT 1
+        ];
+        Database.DMLOptions dmlOptions = new Database.DMLOptions();
+        dmlOptions.assignmentRuleHeader.assignmentRuleId = assignmentRule.Id;
+        return dmlOptions;
+    }
+
+    private static void insertWithAssignmentRules(Case caseRecord) {
+        caseRecord.setOptions(assignmentRuleOptions());
+        insert caseRecord;
+    }
+
+    private static void updateWithAssignmentRules(Case caseRecord) {
+        caseRecord.setOptions(assignmentRuleOptions());
+        update caseRecord;
+    }
+
     /** Builds and inserts a partner case; the insert itself must not post a comment (ISCHANGED). */
     private static Case createPartnerCase(String nodeLabel, String originalRecordType, String contactLastName) {
         Case partnerCase = (Case) new SObjectBuilder(Case.SObjectType)
@@ -161,7 +189,7 @@ private class Test_PartnerCommentParity {
             )
             .build()
             .getRecord();
-        insert partnerCase;
+        insertWithAssignmentRules(partnerCase);
         return partnerCase;
     }
 
@@ -174,16 +202,28 @@ private class Test_PartnerCommentParity {
      * measures the whole org, and a negative test can fail on somebody else's comment. Every
      * assertion here filters on the body prefix the node under test produces.
      */
-    private static Id otherActiveUserId() {
+    private static Id otherActiveUserId(Id currentOwnerId) {
         List<User> otherUsers = [
             SELECT Id
             FROM User
             WHERE IsActive = true
               AND Id != :UserInfo.getUserId()
+              AND Id != :currentOwnerId
               AND Profile.UserLicense.Name = 'Salesforce'
             LIMIT 1
         ];
-        return otherUsers.isEmpty() ? UserInfo.getUserId() : otherUsers[0].Id;
+        String preconditionMessage = 'P4 needs an active Salesforce user distinct from both the '
+            + 'running user and the assignment-rule owner';
+        Assert.isFalse(otherUsers.isEmpty(), preconditionMessage);
+        return otherUsers[0].Id;
+    }
+
+    private static Id caseOwnerId(Id caseId) {
+        return [
+            SELECT OwnerId
+            FROM Case
+            WHERE Id = :caseId
+        ].OwnerId;
     }
 
     private static List<CaseComment> commentsOn(Id caseId, String bodyPrefix) {
@@ -208,7 +248,9 @@ private class Test_PartnerCommentParity {
         Case partnerCase = createPartnerCase('P1 status', RT_CHARTER, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = partnerCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = partnerCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(partnerCase.Id, BODY_PARTNER_STATUS);
@@ -224,12 +266,16 @@ private class Test_PartnerCommentParity {
         Case partnerCase = createPartnerCase('P1 published', RT_CHARTER, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = partnerCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = partnerCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(partnerCase.Id, BODY_PARTNER_STATUS);
+        String countMessage = 'P1: the published-path save must post exactly one status comment';
         String publishedMessage = 'P1: IsPublished must be TRUE when Original_RecordType__c is one '
             + 'of Support_Purolator / Support_Charter_SMB / Support_Charter';
+        Assert.areEqual(1, comments.size(), countMessage);
         Assert.isTrue(comments[0].IsPublished, publishedMessage);
     }
 
@@ -238,7 +284,9 @@ private class Test_PartnerCommentParity {
         Case internalCase = createPartnerCase('P1 unpublished', RT_PLAIN, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = internalCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = internalCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(internalCase.Id, BODY_PARTNER_STATUS);
@@ -256,7 +304,9 @@ private class Test_PartnerCommentParity {
         Case ebondingCase = createPartnerCase('P1 ebonding', RT_EBONDING, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = ebondingCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = ebondingCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         String excludedMessage = 'P1: an ebonding case must post no comment - '
@@ -271,7 +321,9 @@ private class Test_PartnerCommentParity {
         Case partnerCase = createPartnerCase('P2 severity', RT_CHARTER, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = partnerCase.Id, Case_Severity__c = SEVERITY_HIGH);
+            updateWithAssignmentRules(
+                new Case(Id = partnerCase.Id, Case_Severity__c = SEVERITY_HIGH)
+            );
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(partnerCase.Id, BODY_SEVERITY);
@@ -282,23 +334,53 @@ private class Test_PartnerCommentParity {
         Assert.areEqual(BODY_SEVERITY + SEVERITY_HIGH, comments[0].CommentBody, bodyMessage);
     }
 
+    @isTest
+    static void shouldPostOnlyPartnerStatusCommentWhenPrioritizedFieldsChangeTogether() {
+        Case partnerCase = createPartnerCase('P1 priority', RT_CHARTER, CONTACT_NAME);
+
+        Test.startTest();
+            updateWithAssignmentRules(
+                new Case(
+                    Id = partnerCase.Id,
+                    Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS,
+                    Case_Severity__c = SEVERITY_HIGH,
+                    Status = STATUS_IN_PROGRESS
+                )
+            );
+        Test.stopTest();
+
+        String p1Message = 'Priority: P1 must post exactly one partner-status comment when P1, '
+            + 'P2, and P5 all match the same save';
+        String p2Message = 'Priority: P2 must not post after P1 wins the first-match decision';
+        String p5Message = 'Priority: P5 must not post after P1 wins the first-match decision';
+        Assert.areEqual(1, commentsOn(partnerCase.Id, BODY_PARTNER_STATUS).size(), p1Message);
+        Assert.areEqual(0, commentsOn(partnerCase.Id, BODY_SEVERITY).size(), p2Message);
+        Assert.areEqual(0, commentsOn(partnerCase.Id, BODY_STATUS).size(), p5Message);
+    }
+
     // ---------- P3 / P4: owner changes, split by owner type ----------
 
     @isTest
     static void shouldPostQueueOwnerCommentWhenOwnerChangesToQueue() {
         // P3 adds BEGINS(OwnerId,'00G') and STOPs, so a queue owner is handled here, never by P4.
         Case partnerCase = createPartnerCase('P3 queue owner', RT_CHARTER, CONTACT_NAME);
+        Group expectedQueue = [
+            SELECT Name
+            FROM Group
+            WHERE Id = :Label.CaseEsc_SOED_Queue_Id
+        ];
 
         Test.startTest();
+            // Explicit owner reassignment is the real P3 event. Requesting assignment rules on
+            // this same DML would replace the requested queue before F6 evaluates OwnerId.
             update new Case(Id = partnerCase.Id, OwnerId = (Id) Label.CaseEsc_SOED_Queue_Id);
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(partnerCase.Id, BODY_OWNER);
         String countMessage = 'P3: an owner change to a QUEUE must post exactly one comment';
-        String bodyMessage = 'P3: the comment body must start with "' + BODY_OWNER
-            + '" and name the queue';
+        String bodyMessage = 'P3: the comment body must name the queue that owns the Case';
         Assert.areEqual(1, comments.size(), countMessage);
-        Assert.isTrue(comments[0].CommentBody.startsWith(BODY_OWNER), bodyMessage);
+        Assert.areEqual(BODY_OWNER + expectedQueue.Name, comments[0].CommentBody, bodyMessage);
     }
 
     @isTest
@@ -307,18 +389,24 @@ private class Test_PartnerCommentParity {
         Case partnerCase = createPartnerCase('P4 user owner', RT_CHARTER, CONTACT_NAME);
         // A DIFFERENT user: the case is already owned by the running user, so reassigning to
         // UserInfo.getUserId() is a no-op and ISCHANGED(OwnerId) would stay false.
-        Id nextOwner = otherActiveUserId();
+        Id nextOwner = otherActiveUserId(caseOwnerId(partnerCase.Id));
+        User expectedUser = [
+            SELECT Full_Name__c
+            FROM User
+            WHERE Id = :nextOwner
+        ];
 
         Test.startTest();
+            // Explicit owner reassignment is the real P4 event. Assignment rules are deliberately
+            // not requested because they would replace nextOwner before F6 evaluates OwnerId.
             update new Case(Id = partnerCase.Id, OwnerId = nextOwner);
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(partnerCase.Id, BODY_OWNER);
         String countMessage = 'P4: an owner change to a USER must post exactly one comment';
-        String bodyMessage = 'P4: the comment body must start with "' + BODY_OWNER
-            + '" and name the user';
+        String bodyMessage = 'P4: the comment body must name the user who owns the Case';
         Assert.areEqual(1, comments.size(), countMessage);
-        Assert.isTrue(comments[0].CommentBody.startsWith(BODY_OWNER), bodyMessage);
+        Assert.areEqual(BODY_OWNER + expectedUser.Full_Name__c, comments[0].CommentBody, bodyMessage);
     }
 
     // ---------- P5: status change, Charter-only, always published ----------
@@ -328,7 +416,9 @@ private class Test_PartnerCommentParity {
         Case charterCase = createPartnerCase('P5 charter', RT_CHARTER, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = charterCase.Id, Status = STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = charterCase.Id, Status = STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         List<CaseComment> comments = commentsOn(charterCase.Id, BODY_STATUS);
@@ -349,7 +439,9 @@ private class Test_PartnerCommentParity {
         Case plainCase = createPartnerCase('P5 non-charter', RT_PLAIN, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = plainCase.Id, Status = STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = plainCase.Id, Status = STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         String gateMessage = 'P5: a Status change on a non-Charter case must post no comment - the '
@@ -364,7 +456,9 @@ private class Test_PartnerCommentParity {
         Case riseCase = createPartnerCase('gate rise', RT_CHARTER, RISE_CONTACT_NAME);
 
         Test.startTest();
-            update new Case(Id = riseCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS);
+            updateWithAssignmentRules(
+                new Case(Id = riseCase.Id, Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS)
+            );
         Test.stopTest();
 
         String riseMessage = 'Shared gate: a Rise-branded account must post no comment - every node '
@@ -377,15 +471,48 @@ private class Test_PartnerCommentParity {
         Case brandedCase = createPartnerCase('gate brandId', RT_CHARTER, CONTACT_NAME);
 
         Test.startTest();
-            update new Case(
-                Id = brandedCase.Id,
-                Brand_Identifier__c = BRAND_IDENTIFIER,
-                Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS
+            updateWithAssignmentRules(
+                new Case(
+                    Id = brandedCase.Id,
+                    Brand_Identifier__c = BRAND_IDENTIFIER,
+                    Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS
+                )
             );
         Test.stopTest();
 
         String brandIdMessage = 'Shared gate: a populated Brand_Identifier__c must post no comment '
             + '- every node requires ISBLANK(Brand_Identifier__c)';
         Assert.areEqual(0, commentsOn(brandedCase.Id, BODY_PARTNER_STATUS).size(), brandIdMessage);
+    }
+
+    @isTest
+    static void shouldNotPostCommentWhenCaseHasNoAccount() {
+        Case noAccountCase = (Case) new SObjectBuilder(Case.SObjectType)
+            .quantity(1)
+            .setFields(
+                new Map<SObjectField, Object>{
+                    Case.Subject => SUBJECT_PREFIX + 'gate no account',
+                    Case.Status => STATUS_OPEN,
+                    Case.Origin => ORIGIN_PHONE,
+                    Case.RecordTypeId => (Id) Label.CaseRT_Support_T2_Id,
+                    Case.Original_RecordType__c => RT_CHARTER
+                }
+            )
+            .build()
+            .getRecord();
+        insertWithAssignmentRules(noAccountCase);
+
+        Test.startTest();
+            updateWithAssignmentRules(
+                new Case(
+                    Id = noAccountCase.Id,
+                    Partner_Case_Status__c = PARTNER_STATUS_IN_PROGRESS
+                )
+            );
+        Test.stopTest();
+
+        String accountMessage = 'Shared gate: a Case without an Account must post no partner '
+            + 'comment even when Partner_Case_Status__c changes';
+        Assert.areEqual(0, commentsOn(noAccountCase.Id, BODY_PARTNER_STATUS).size(), accountMessage);
     }
 }

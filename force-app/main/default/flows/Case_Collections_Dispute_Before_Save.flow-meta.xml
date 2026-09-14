@@ -7,9 +7,6 @@
         <label>Populate CSM</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_12</targetReference>
-        </defaultConnector>
         <defaultConnectorLabel>FALSE_Populate CSM</defaultConnectorLabel>
         <rules>
             <name>TRUE_myRule_10</name>
@@ -46,240 +43,6 @@
                 <targetReference>myRule_10_A1</targetReference>
             </connector>
             <label>TRUE_Populate CSM</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_12</name>
-        <label>Update Status To Resolved</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_15</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Update Status To Resolved</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_12</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Status</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>Resolved</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.OwnerId</leftValueReference>
-                <operator>IsChanged</operator>
-                <rightValue>
-                    <booleanValue>true</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_12_A1</targetReference>
-            </connector>
-            <label>TRUE_Update Status To Resolved</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_15</name>
-        <label>Escalate to SOED</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_17</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Escalate to SOED</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_15</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>SOED</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_15_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to SOED</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_17</name>
-        <label>Escalate to Professional Services</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_19</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Escalate to Professional Services</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_17</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>Professional Services</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_17_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to Professional Services</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_19</name>
-        <label>Escalate to Sales</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_21</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Escalate to Sales</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_19</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>Sales</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_19_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to Sales</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_21</name>
-        <label>Escalate to CSM</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_23</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Escalate to CSM</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_21</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>CSM</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_21_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to CSM</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_23</name>
-        <label>Escalate to Billing</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnector>
-            <targetReference>myRule_25</targetReference>
-        </defaultConnector>
-        <defaultConnectorLabel>FALSE_Escalate to Billing</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_23</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>Billing</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_23_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to Billing</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>myRule_25</name>
-        <label>Escalate to Collections</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnectorLabel>FALSE_Escalate to Collections</defaultConnectorLabel>
-        <rules>
-            <name>TRUE_myRule_25</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <stringValue>Collections</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.RecordTypeId</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <elementReference>$Label.CaseRT_Collections_Id</elementReference>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>myRule_25_A1</targetReference>
-            </connector>
-            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
-            <label>TRUE_Escalate to Collections</label>
         </rules>
     </decisions>
     <decisions>
@@ -399,7 +162,7 @@
             <label>TRUE_Populate Sales Rep</label>
         </rules>
     </decisions>
-    <description>CPU-limit remediation replacing the same-record update branches of Collections_Dispute_Consolidated_PB. Performs Collections routing, reopen handling, completion-date stamping, and Case originator, sales representative, and CSM updates before save to avoid recursive Case DML. Paired with Case_Collections_Dispute_After_Save for email alerts.</description>
+    <description>Performs the assignment-rule-independent before-save updates from Collections_Dispute_Consolidated_PB: completion date, Case originator, sales representative, and CSM. Reopen and owner-routing nodes C6-C12 run in Case_Collections_Dispute_After_Save to retain Process Builder precedence.</description>
     <environments>Default</environments>
     <formulas>
         <name>case_creator_id</name>
@@ -426,107 +189,10 @@
         <label>Update CSM</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <connector>
-            <targetReference>myRule_12</targetReference>
-        </connector>
         <inputAssignments>
             <field>CSM__c</field>
             <value>
                 <elementReference>$Record.Account.CSM__r.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_12_A1</name>
-        <label>Update Status to Open</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <connector>
-            <targetReference>myRule_15</targetReference>
-        </connector>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>Open</stringValue>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_15_A1</name>
-        <label>To SOED</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Label.CaseEsc_SOED_Queue_Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_17_A1</name>
-        <label>To ProServ</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Label.CaseEsc_ProServ_Queue_Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_19_A1</name>
-        <label>To Sales/Current Owner</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Record.Account_Current_Owner__r.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_21_A1</name>
-        <label>TO CSM/CSM</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Record.Account.CSM__r.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_23_A1</name>
-        <label>To Billing</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Label.CaseEsc_Billing_Queue_Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
-    <recordUpdates>
-        <name>myRule_25_A1</name>
-        <label>To Collections</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference>$Record.Case_Originator__c</elementReference>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
@@ -588,4 +254,5 @@
         <triggerType>RecordBeforeSave</triggerType>
     </start>
     <status>Active</status>
+    <triggerOrder>20</triggerOrder>
 </Flow>

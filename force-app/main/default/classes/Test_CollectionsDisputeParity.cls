@@ -62,6 +62,10 @@
  * is built through a Contact, which is also the pattern every existing Case test in this repo
  * uses. Do not "simplify" this to Case.AccountId => account.Id; C4/C5/C9/C10 will silently stop
  * exercising their nodes and the validation rules CSM_required / Sales_Required will fire.
+ *
+ * ASSIGNMENT RULES: C6-C12 execute their qualifying save with the active Case assignment rule,
+ * matching Case creation and UI saves that request assignment. The migrated owner/status writes
+ * must remain final after assignment rules have evaluated.
  */
 @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
 @isTest
@@ -191,13 +195,36 @@ private class Test_CollectionsDisputeParity {
         Assert.areEqual(expectedPrefix, actualPrefix, message);
     }
 
+    private static Database.DMLOptions assignmentRuleOptions() {
+        AssignmentRule assignmentRule = [
+            SELECT Id
+            FROM AssignmentRule
+            WHERE SobjectType = 'Case'
+                AND Active = true
+            LIMIT 1
+        ];
+        Database.DMLOptions dmlOptions = new Database.DMLOptions();
+        dmlOptions.assignmentRuleHeader.assignmentRuleId = assignmentRule.Id;
+        return dmlOptions;
+    }
+
+    private static void insertWithAssignmentRules(Case caseRecord) {
+        caseRecord.setOptions(assignmentRuleOptions());
+        insert caseRecord;
+    }
+
+    private static void updateWithAssignmentRules(Case caseRecord) {
+        caseRecord.setOptions(assignmentRuleOptions());
+        update caseRecord;
+    }
+
     /** C7/C8/C11/C12 share one shape: set the picklist on create, assert the resulting owner. */
     private static Case escalateOnCreate(String nodeLabel, String escalateTo) {
         Case escalatedCase = buildCollectionsCase(nodeLabel);
         escalatedCase.Support_Escalate_To__c = escalateTo;
 
         Test.startTest();
-            insert escalatedCase;
+            insertWithAssignmentRules(escalatedCase);
         Test.stopTest();
 
         return reload(escalatedCase.Id);
@@ -212,13 +239,22 @@ private class Test_CollectionsDisputeParity {
      */
     private static Case escalateOnUpdate(String nodeLabel, String escalateTo) {
         Case escalatedCase = buildCollectionsCase(nodeLabel);
-        insert escalatedCase;
+        insertWithAssignmentRules(escalatedCase);
 
         Test.startTest();
-            update new Case(Id = escalatedCase.Id, Support_Escalate_To__c = escalateTo);
+            updateWithAssignmentRules(
+                new Case(Id = escalatedCase.Id, Support_Escalate_To__c = escalateTo)
+            );
         Test.stopTest();
 
         return reload(escalatedCase.Id);
+    }
+
+    /** Produces the owner selected by assignment rules for an otherwise-unrouted control Case. */
+    private static Id assignmentRuleOwnerOnCreate(String nodeLabel) {
+        Case controlCase = buildCollectionsCase(nodeLabel);
+        insertWithAssignmentRules(controlCase);
+        return reload(controlCase.Id).OwnerId;
     }
 
     // ---------- data prerequisite ----------
@@ -243,16 +279,20 @@ private class Test_CollectionsDisputeParity {
     @isTest
     static void shouldNotRouteWhenRecordTypeIsNotCollectionsDispute() {
         Id otherRecordType = otherCaseRecordTypeId();
-        if (otherRecordType == null) {
-            return;                 // org exposes only the Collections record type; nothing to prove
-        }
+        String preconditionMessage = 'C1 blocker: characterising the blocker needs a second, '
+            + 'non-Collections Case record type to escalate - this org exposes none, so the node '
+            + 'cannot be verified here';
+        Assert.isNotNull(otherRecordType, preconditionMessage);
+
         Case foreignCase = buildCollectionsCase('C1 non-Collections');
         foreignCase.RecordTypeId = otherRecordType;
-        insert foreignCase;
+        insertWithAssignmentRules(foreignCase);
         Id ownerBefore = reload(foreignCase.Id).OwnerId;
 
         Test.startTest();
-            update new Case(Id = foreignCase.Id, Support_Escalate_To__c = ESC_SOED);
+            updateWithAssignmentRules(
+                new Case(Id = foreignCase.Id, Support_Escalate_To__c = ESC_SOED)
+            );
         Test.stopTest();
 
         String blockerMessage = 'C1 blocker: a non-Collections record type must stop the '
@@ -284,21 +324,28 @@ private class Test_CollectionsDisputeParity {
         closingCase.Status = STATUS_CLOSED;
 
         Test.startTest();
-            insert closingCase;
+            insertWithAssignmentRules(closingCase);
         Test.stopTest();
 
         String stampMessage = 'C2: closing a Collections case must stamp Date_Completed__c with '
             + 'the save date (PB: DATEVALUE(LastModifiedDate) after save)';
-        Assert.areEqual(Date.today(), reload(closingCase.Id).Date_Completed__c, stampMessage);
+        Case closedCase = reload(closingCase.Id);
+        String originatorStopMessage = 'C2 STOP: a closed Case must not continue to C3';
+        String salesRepStopMessage = 'C2 STOP: a closed Case must not continue to C4';
+        String csmStopMessage = 'C2 STOP: a closed Case must not continue to C5';
+        Assert.areEqual(Date.today(), closedCase.Date_Completed__c, stampMessage);
+        Assert.isNull(closedCase.Case_Originator__c, originatorStopMessage);
+        Assert.isNull(closedCase.Sales_Rep__c, salesRepStopMessage);
+        Assert.isNull(closedCase.CSM__c, csmStopMessage);
     }
 
     @isTest
     static void shouldStampDateCompletedWhenCollectionsCaseIsClosedOnUpdate() {
         Case closingCase = buildCollectionsCase('C2 closed on update');
-        insert closingCase;
+        insertWithAssignmentRules(closingCase);
 
         Test.startTest();
-            update new Case(Id = closingCase.Id, Status = STATUS_CLOSED);
+            updateWithAssignmentRules(new Case(Id = closingCase.Id, Status = STATUS_CLOSED));
         Test.stopTest();
 
         String stampMessage = 'C2: closing a Collections case on update must stamp Date_Completed__c';
@@ -312,7 +359,7 @@ private class Test_CollectionsDisputeParity {
         Case freshCase = buildCollectionsCase('C3 originator');
 
         Test.startTest();
-            insert freshCase;
+            insertWithAssignmentRules(freshCase);
         Test.stopTest();
 
         String originatorMessage = 'C3: Case_Originator__c must be set to the creating user';
@@ -325,7 +372,7 @@ private class Test_CollectionsDisputeParity {
         Case freshCase = buildCollectionsCase('C4 sales rep');
 
         Test.startTest();
-            insert freshCase;
+            insertWithAssignmentRules(freshCase);
         Test.stopTest();
 
         String salesRepMessage = 'C4: Sales_Rep__c must be copied from Account.Current_Owner__c';
@@ -343,7 +390,7 @@ private class Test_CollectionsDisputeParity {
         blankGateCase.Account_Current_Owner__c = null;
 
         Test.startTest();
-            insert blankGateCase;
+            insertWithAssignmentRules(blankGateCase);
         Test.stopTest();
 
         String gateMessage = 'C4 gate: with Case.Account_Current_Owner__c blank, Sales_Rep__c must '
@@ -357,7 +404,7 @@ private class Test_CollectionsDisputeParity {
         Case freshCase = buildCollectionsCase('C5 csm');
 
         Test.startTest();
-            insert freshCase;
+            insertWithAssignmentRules(freshCase);
         Test.stopTest();
 
         String csmMessage = 'C5: CSM__c must be copied from Account.CSM__c';
@@ -381,7 +428,9 @@ private class Test_CollectionsDisputeParity {
             : userPool[1];
 
         Test.startTest();
-            update new Case(Id = resolvedCase.Id, OwnerId = nextOwner, Status = STATUS_RESOLVED);
+            updateWithAssignmentRules(
+                new Case(Id = resolvedCase.Id, OwnerId = nextOwner, Status = STATUS_RESOLVED)
+            );
         Test.stopTest();
 
         String reopenMessage = 'C6 (via gate G1): a Resolved Collections case whose owner changes '
@@ -389,20 +438,82 @@ private class Test_CollectionsDisputeParity {
         Assert.areEqual(STATUS_OPEN, reload(resolvedCase.Id).Status, reopenMessage);
     }
 
+    @isTest
+    static void shouldRemainResolvedWhenAssignmentRulesDoNotChangeOwner() {
+        Case resolvedCase = buildCollectionsCase('C6 same owner');
+        insertWithAssignmentRules(resolvedCase);
+        updateWithAssignmentRules(new Case(Id = resolvedCase.Id, Status = STATUS_RESOLVED));
+        Id currentOwnerId = reload(resolvedCase.Id).OwnerId;
+
+        Test.startTest();
+            updateWithAssignmentRules(
+                new Case(
+                    Id = resolvedCase.Id,
+                    OwnerId = currentOwnerId,
+                    Status = STATUS_RESOLVED
+                )
+            );
+        Test.stopTest();
+
+        String gateMessage = 'C6 gate G1: a Resolved Case must remain Resolved when assignment '
+            + 'rules leave OwnerId unchanged';
+        Assert.areEqual(STATUS_RESOLVED, reload(resolvedCase.Id).Status, gateMessage);
+    }
+
     // ---------- C7-C12: escalation routing (all guarded, all STOP) ----------
 
     @isTest
     static void shouldRouteToSoedQueueWhenEscalatedToSoed() {
         Case routedCase = escalateOnCreate('C7 soed', ESC_SOED);
-        String routeMessage = 'C7: escalation to SOED must hand the case to the SOED queue';
+        String routeMessage = 'C7: escalation to SOED must leave the case on the SOED queue '
+            + 'after assignment rules run';
         assertSameId(Label.CaseEsc_SOED_Queue_Id, routedCase.OwnerId, routeMessage);
+    }
+
+    @isTest
+    static void shouldRouteExistingCaseToSoedQueueWhenEscalatedToSoed() {
+        Case routedCase = escalateOnUpdate('C7 soed update', ESC_SOED);
+        String routeMessage = 'C7 update: escalation to SOED must leave the existing case on the '
+            + 'SOED queue after assignment rules run';
+        assertSameId(Label.CaseEsc_SOED_Queue_Id, routedCase.OwnerId, routeMessage);
+    }
+
+    @isTest
+    static void shouldRouteWhenRecordTypeChangesIntoCollectionsWithExistingEscalation() {
+        Id otherRecordType = otherCaseRecordTypeId();
+        String preconditionMessage = 'Record-type entry coverage needs a non-Collections Case '
+            + 'record type that is available in this org';
+        Assert.isNotNull(otherRecordType, preconditionMessage);
+
+        Case routedCase = buildCollectionsCase('C7 record type entry');
+        routedCase.RecordTypeId = otherRecordType;
+        routedCase.Support_Escalate_To__c = ESC_SOED;
+        insertWithAssignmentRules(routedCase);
+
+        Test.startTest();
+            updateWithAssignmentRules(
+                new Case(Id = routedCase.Id, RecordTypeId = (Id) Label.CaseRT_Collections_Id)
+            );
+        Test.stopTest();
+
+        String routeMessage = 'C7 record-type entry: an existing SOED escalation must route when '
+            + 'the Case changes into the Collections record type';
+        assertSameId(Label.CaseEsc_SOED_Queue_Id, reload(routedCase.Id).OwnerId, routeMessage);
     }
 
     @isTest
     static void shouldRouteToProServQueueWhenEscalatedToProfessionalServices() {
         Case routedCase = escalateOnCreate('C8 proserv', ESC_PROSERV);
         String routeMessage = 'C8: escalation to Professional Services must hand the case to the '
-            + 'ProServ queue';
+            + 'ProServ queue after assignment rules run';
+        assertSameId(Label.CaseEsc_ProServ_Queue_Id, routedCase.OwnerId, routeMessage);
+    }
+
+    @isTest
+    static void shouldRouteExistingCaseToProServQueueWhenEscalatedToProfessionalServices() {
+        Case routedCase = escalateOnUpdate('C8 proserv update', ESC_PROSERV);
+        String routeMessage = 'C8 update: escalation to Professional Services must hand the '
+            + 'existing case to the ProServ queue after assignment rules run';
         assertSameId(Label.CaseEsc_ProServ_Queue_Id, routedCase.OwnerId, routeMessage);
     }
 
@@ -411,7 +522,7 @@ private class Test_CollectionsDisputeParity {
         // C9 writes OwnerId from the CASE field Account_Current_Owner__c, not from the Account.
         Case routedCase = escalateOnUpdate('C9 sales', ESC_SALES);
         String routeMessage = 'C9: escalation to Sales must hand the case to '
-            + 'Case.Account_Current_Owner__c';
+            + 'Case.Account_Current_Owner__c after assignment rules run';
         assertSameId(String.valueOf(routedCase.Account_Current_Owner__c), routedCase.OwnerId, routeMessage);
     }
 
@@ -420,14 +531,24 @@ private class Test_CollectionsDisputeParity {
         // C10 writes OwnerId from the ACCOUNT traversal Account.CSM__c, unlike C9.
         Account collectionsAccount = parityAccount();
         Case routedCase = escalateOnUpdate('C10 csm', ESC_CSM);
-        String routeMessage = 'C10: escalation to CSM must hand the case to Account.CSM__c';
+        String routeMessage = 'C10: escalation to CSM must hand the case to Account.CSM__c '
+            + 'after assignment rules run';
         assertSameId(String.valueOf(collectionsAccount.CSM__c), routedCase.OwnerId, routeMessage);
     }
 
     @isTest
     static void shouldRouteToBillingQueueWhenEscalatedToBilling() {
         Case routedCase = escalateOnCreate('C11 billing', ESC_BILLING);
-        String routeMessage = 'C11: escalation to Billing must hand the case to the Billing queue';
+        String routeMessage = 'C11: escalation to Billing must leave the case on the Billing '
+            + 'queue after assignment rules run';
+        assertSameId(Label.CaseEsc_Billing_Queue_Id, routedCase.OwnerId, routeMessage);
+    }
+
+    @isTest
+    static void shouldRouteExistingCaseToBillingQueueWhenEscalatedToBilling() {
+        Case routedCase = escalateOnUpdate('C11 billing update', ESC_BILLING);
+        String routeMessage = 'C11 update: escalation to Billing must leave the existing case on '
+            + 'the Billing queue after assignment rules run';
         assertSameId(Label.CaseEsc_Billing_Queue_Id, routedCase.OwnerId, routeMessage);
     }
 
@@ -436,8 +557,16 @@ private class Test_CollectionsDisputeParity {
         // C12's owner target is Case_Originator__c, which C3 populates in the same run.
         Case routedCase = escalateOnCreate('C12 collections', ESC_COLLECTION);
         String routeMessage = 'C12: escalation to Collections must hand the case to the case '
-            + 'originator';
+            + 'originator after assignment rules run';
         assertSameId(String.valueOf(UserInfo.getUserId()), routedCase.OwnerId, routeMessage);
+    }
+
+    @isTest
+    static void shouldRouteExistingCaseToOriginatorWhenEscalatedToCollections() {
+        Case routedCase = escalateOnUpdate('C12 collections update', ESC_COLLECTION);
+        String routeMessage = 'C12 update: escalation to Collections must hand the existing case '
+            + 'to its originator after assignment rules run';
+        assertSameId(String.valueOf(routedCase.Case_Originator__c), routedCase.OwnerId, routeMessage);
     }
 
     // ---------- the newly-met guard ----------
@@ -449,14 +578,51 @@ private class Test_CollectionsDisputeParity {
         // save again WITHOUT changing the escalation. The guard must suppress a re-route.
         Case escalatedCase = buildCollectionsCase('guard soed');
         escalatedCase.Support_Escalate_To__c = ESC_SOED;
-        insert escalatedCase;
+        insertWithAssignmentRules(escalatedCase);
+        Id expectedAssignmentOwner = assignmentRuleOwnerOnCreate('guard soed control');
 
         Test.startTest();
-            update new Case(Id = escalatedCase.Id, OwnerId = UserInfo.getUserId());
+            updateWithAssignmentRules(
+                new Case(Id = escalatedCase.Id, OwnerId = UserInfo.getUserId())
+            );
         Test.stopTest();
 
         String guardMessage = 'Newly-met guard: re-saving with an unchanged Support_Escalate_To__c '
-            + 'must NOT re-route to the SOED queue - the owner set by this save must survive';
-        assertSameId(String.valueOf(UserInfo.getUserId()), reload(escalatedCase.Id).OwnerId, guardMessage);
+            + 'must leave the same owner as an unrouted assignment-rule control save';
+        assertSameId(String.valueOf(expectedAssignmentOwner), reload(escalatedCase.Id).OwnerId, guardMessage);
+    }
+
+    // ---------- routing target validity ----------
+
+    /**
+     * Static queues F2 assigns as Case owner, keyed by label name so a failure names the label.
+     * C9/C10/C12 resolve their owner from record data instead, so they have no static target.
+     */
+    private static Map<String, String> collectionsQueueTargets() {
+        return new Map<String, String>{
+            'CaseEsc_SOED_Queue_Id' => Label.CaseEsc_SOED_Queue_Id,
+            'CaseEsc_ProServ_Queue_Id' => Label.CaseEsc_ProServ_Queue_Id,
+            'CaseEsc_Billing_Queue_Id' => Label.CaseEsc_Billing_Queue_Id
+        };
+    }
+
+    @isTest
+    static void shouldFindEveryCollectionsQueueCaseEnabledWhenFlowCanAssignIt() {
+        // A queue can hold a Case only when QueueSobject links it to the Case object.
+        Set<String> caseQueuePrefixes = new Set<String>();
+        for (QueueSobject queueLink : [
+            SELECT QueueId
+            FROM QueueSobject
+            WHERE SobjectType = 'Case'
+        ]) {
+            caseQueuePrefixes.add(String.valueOf(queueLink.QueueId).left(15));
+        }
+
+        Map<String, String> queueTargets = collectionsQueueTargets();
+        for (String labelName : queueTargets.keySet()) {
+            String enabledMessage = 'Collections target ' + labelName + ' must be a queue enabled '
+                + 'for Case - F2 makes it the owner, which fails if the queue cannot hold Cases';
+            Assert.isTrue(caseQueuePrefixes.contains(queueTargets.get(labelName).left(15)), enabledMessage);
+        }
     }
 }

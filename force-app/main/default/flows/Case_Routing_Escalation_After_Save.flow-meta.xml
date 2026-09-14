@@ -54,7 +54,7 @@
         <actionName>Case.Email_Notification_to_Contact_Center_Support_Queue</actionName>
         <actionType>emailAlert</actionType>
         <connector>
-            <targetReference>myRule_21</targetReference>
+            <targetReference>myRule_17</targetReference>
         </connector>
         <faultConnector>
             <targetReference>Fault_Handler</targetReference>
@@ -396,6 +396,9 @@
         <locationY>0</locationY>
         <actionName>Case.Escalate_to_Techninal_Account_Engineering</actionName>
         <actionType>emailAlert</actionType>
+        <connector>
+            <targetReference>myRule_53_A2</targetReference>
+        </connector>
         <faultConnector>
             <targetReference>Fault_Handler</targetReference>
         </faultConnector>
@@ -479,7 +482,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <defaultConnector>
-            <targetReference>myRule_21</targetReference>
+            <targetReference>myRule_17</targetReference>
         </defaultConnector>
         <defaultConnectorLabel>FALSE_Escalate to Contact Center</defaultConnectorLabel>
         <rules>
@@ -493,10 +496,76 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>myRule_15_A2</targetReference>
+                <targetReference>myRule_15_A1</targetReference>
             </connector>
             <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
             <label>TRUE_Escalate to Contact Center</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_17</name>
+        <label>Escalate to SalesOps</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_19</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Escalate to SalesOps</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_17</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Internal_Business_Services_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SalesOps</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_17_A1</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to SalesOps</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>myRule_19</name>
+        <label>Escalate to SOED</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>myRule_21</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>FALSE_Escalate to SOED</defaultConnectorLabel>
+        <rules>
+            <name>TRUE_myRule_19</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.RecordTypeId</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <elementReference>$Label.CaseRT_Internal_Business_Services_Id</elementReference>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Support_Escalate_To__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>SOED</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>myRule_19_A1</targetReference>
+            </connector>
+            <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+            <label>TRUE_Escalate to SOED</label>
         </rules>
     </decisions>
     <decisions>
@@ -952,7 +1021,7 @@
             <label>TRUE_Escalate To Technical Account Engineering</label>
         </rules>
     </decisions>
-    <description>CPU-limit remediation replacing the after-save routing and notification branches of Consolidated_Case_Routing_Escalation_PB. Preserves the coupled GSS GDPR and IT GSD update-and-email chains and sends Contact Center, Technical Account Engineering, and GDPR queue alerts. Paired with Case_Routing_Escalation_Before_Save for eligible owner and record-type updates.</description>
+    <description>Replaces the after-save routing and notification branches of Consolidated_Case_Routing_Escalation_PB. Runs owner and record-type routing after Case assignment and workflow rules so Contact Center, SalesOps, SOED, and Technical Account Engineering assignments retain Process Builder precedence. Preserves the coupled GSS GDPR and IT GSD update-and-email chains.</description>
     <environments>Default</environments>
     <formulas>
         <name>formula_TRUE_myRule_11</name>
@@ -1115,6 +1184,91 @@
         </inputAssignments>
         <inputReference>$Record</inputReference>
     </recordUpdates>
+    <recordUpdates>
+        <name>myRule_15_A1</name>
+        <label>Assign to Contact Center Queue + Tier 2 RT</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_15_A2</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_ContactCenter_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>$Label.CaseRT_Support_T2_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_17_A1</name>
+        <label>Escalate to SalesOps</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_19</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_SalesOps_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_19_A1</name>
+        <label>Escalate to SOED</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>myRule_21</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_SOED_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RecordTypeId</field>
+            <value>
+                <elementReference>$Label.CaseRT_Sales_Order_Except_Desk_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <recordUpdates>
+        <name>myRule_53_A2</name>
+        <label>Assign to Technical Account Engineering</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <faultConnector>
+            <targetReference>Fault_Handler</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference>$Label.CaseEsc_TAE_Queue_Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
@@ -1124,6 +1278,12 @@
         <filterFormula>(ISCHANGED({!$Record.Route_To__c}) &amp;&amp; ISPICKVAL({!$Record.Route_To__c}, &quot;GSS GDPR Request&quot;))
 || (ISCHANGED({!$Record.Support_Escalate_To__c}) &amp;&amp; ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;IT&quot;))
 || (ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;Contact Center Support&quot;) &amp;&amp; (ISNEW() || NOT(ISPICKVAL({!$Record__Prior.Support_Escalate_To__c}, &quot;Contact Center Support&quot;))))
+|| ({!$Record.RecordTypeId} = {!$Label.CaseRT_Internal_Business_Services_Id}
+    &amp;&amp; (ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;SalesOps&quot;)
+      || ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;SOED&quot;))
+    &amp;&amp; (ISNEW()
+      || ISCHANGED({!$Record.Support_Escalate_To__c})
+      || ISCHANGED({!$Record.RecordTypeId})))
 || (ISCHANGED({!$Record.OwnerId}) &amp;&amp; CONTAINS({!$Label.GDPR_Queue_Prefix_List}, &quot;;&quot; &amp; LEFT({!$Record.OwnerId}, 15) &amp; &quot;;&quot;))
 || (ISPICKVAL({!$Record.Support_Escalate_To__c}, &quot;Technical Account Engineering&quot;) &amp;&amp; ({!$Record.RecordType.DeveloperName} = &quot;Support_T2&quot;) &amp;&amp; NOT({!$Record.IsClosed}) &amp;&amp; (ISNEW() || ISCHANGED({!$Record.Support_Escalate_To__c}) || ISCHANGED({!$Record.RecordTypeId}) || ISCHANGED({!$Record.Status})))</filterFormula>
         <object>Case</object>
