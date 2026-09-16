@@ -1,0 +1,135 @@
+<template>
+    <lightning-card>
+        <div slot="title" class="card-title">
+            <span>Company Intelligence</span>
+            <span class="card-kicker">Public signals</span>
+        </div>
+
+        <lightning-button-icon
+            slot="actions"
+            data-testid="refresh"
+            icon-name="utility:refresh"
+            size="small"
+            alternative-text="Refresh Company Intelligence"
+            title="Refresh Company Intelligence"
+            disabled={disableRefresh}
+            onclick={handleRefresh}>
+        </lightning-button-icon>
+
+        <template lwc:if={isLoading}>
+            <div class="status" data-testid="loading">
+                <div class="spinner-wrap">
+                    <lightning-spinner
+                        alternative-text="Loading Company Intelligence"
+                        size="small">
+                    </lightning-spinner>
+                </div>
+                <span>Researching public sources…</span>
+            </div>
+        </template>
+
+        <template lwc:elseif={isError}>
+            <div class="status status_error" data-testid="error">
+                <lightning-icon icon-name="utility:error" variant="error" size="x-small"></lightning-icon>
+                <span>{errorMessage}</span>
+            </div>
+        </template>
+
+        <template lwc:elseif={showEmptyState}>
+            <div class="status" data-testid="empty">
+                <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                <span>{emptyMessage}</span>
+            </div>
+        </template>
+
+        <template lwc:elseif={hasContent}>
+            <div class="content" data-testid="content">
+                <div class="grounding-note">
+                    <span class="grounding-dot" aria-hidden="true"></span>
+                    Grounded in public web sources
+                </div>
+
+                <template lwc:if={sections.length}>
+                    <lightning-accordion
+                        class="intelligence-accordion"
+                        active-section-name={activeSectionName}>
+                        <template for:each={sections} for:item="section">
+                            <lightning-accordion-section
+                                key={section.key}
+                                data-section-key={section.key}
+                                name={section.key}
+                                label={section.title}>
+                                <ul class="signal-list">
+                                    <template for:each={section.items} for:item="item">
+                                        <li key={item.key}>{item.text}</li>
+                                    </template>
+                                </ul>
+                            </lightning-accordion-section>
+                        </template>
+                    </lightning-accordion>
+                </template>
+
+                <div class="disclosures">
+                    <template lwc:if={claims.length}>
+                        <details class="disclosure claims">
+                            <summary>{claimsLabel}</summary>
+                            <ul class="claim-list">
+                                <template for:each={claims} for:item="claim">
+                                    <li key={claim.key} class="claim">
+                                        <span>{claim.text}</span>
+                                        <template lwc:if={claim.sources.length}>
+                                            <span class="source-list" aria-label="Sources for claim">
+                                                <template for:each={claim.sources} for:item="source">
+                                                    <a
+                                                        key={source.key}
+                                                        data-source-index={source.index}
+                                                        href={source.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer">{source.label}</a>
+                                                </template>
+                                            </span>
+                                        </template>
+                                    </li>
+                                </template>
+                            </ul>
+                        </details>
+                    </template>
+
+                    <template lwc:if={sources.length}>
+                        <details class="disclosure sources">
+                            <summary>{sourcesLabel}</summary>
+                            <div class="source-list">
+                                <template for:each={sources} for:item="source">
+                                    <a
+                                        key={source.key}
+                                        data-source-index={source.index}
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer">{source.label}</a>
+                                </template>
+                            </div>
+                        </details>
+                    </template>
+
+                    <template lwc:if={searches.length}>
+                        <details class="disclosure searches">
+                            <summary>{searchesLabel}</summary>
+                            <ul class="search-list">
+                                <template for:each={searches} for:item="search">
+                                    <li key={search.key}>{search.text}</li>
+                                </template>
+                            </ul>
+                        </details>
+                    </template>
+                </div>
+
+                <template lwc:if={hasSearchSuggestionsMarkup}>
+                    <div class="search-suggestions-blocker" data-testid="search-suggestions-blocker" role="status">
+                        <lightning-icon icon-name="utility:warning" size="xx-small"></lightning-icon>
+                        <span>Google Search Suggestions aren’t shown because Lightning sanitizes the supplied markup.</span>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </lightning-card>
+</template>
