@@ -72,6 +72,7 @@ private class Test_PartnerCommentParity {
 
     private static final String PARTNER_STATUS_IN_PROGRESS = 'In Progress';
     private static final String SEVERITY_HIGH              = 'Level 3 - High';
+    private static final String ESC_TAE                    = 'Technical Account Engineering';
 
     private static final String BODY_PARTNER_STATUS = 'Partner Case Status Updated To: ';
     private static final String BODY_SEVERITY       = 'Case Severity Updated To: ';
@@ -407,6 +408,51 @@ private class Test_PartnerCommentParity {
         String bodyMessage = 'P4: the comment body must name the user who owns the Case';
         Assert.areEqual(1, comments.size(), countMessage);
         Assert.areEqual(BODY_OWNER + expectedUser.Full_Name__c, comments[0].CommentBody, bodyMessage);
+    }
+
+    @isTest
+    static void shouldPostOneOwnerCommentWhenAssignmentRulePrecedesTaeRouting() {
+        Case partnerCase = (Case) new SObjectBuilder(Case.SObjectType)
+            .quantity(1)
+            .setFields(
+                new Map<SObjectField, Object>{
+                    Case.Subject => SUBJECT_PREFIX + 'P3 assignment then TAE',
+                    Case.Status => STATUS_OPEN,
+                    Case.Origin => ORIGIN_EMAIL,
+                    Case.RecordTypeId => (Id) Label.CaseRT_Support_T2_Id,
+                    Case.ContactId => contactIdByLastName(CONTACT_NAME),
+                    Case.Original_RecordType__c => RT_CHARTER
+                }
+            )
+            .build()
+            .getRecord();
+        insert partnerCase;
+        Id ownerBeforeEscalation = caseOwnerId(partnerCase.Id);
+        Group taeQueue = [
+            SELECT Name
+            FROM Group
+            WHERE Id = :Label.CaseEsc_TAE_Queue_Id
+        ];
+
+        Test.startTest();
+            updateWithAssignmentRules(
+                new Case(
+                    Id = partnerCase.Id,
+                    Support_Escalate_To__c = ESC_TAE
+                )
+            );
+        Test.stopTest();
+
+        List<CaseComment> ownerComments = commentsOn(partnerCase.Id, BODY_OWNER);
+        String countMessage = 'Assignment rule owner changes followed by N26 routing must create '
+            + 'only the final TAE owner comment';
+        String ownerPreconditionMessage = 'The assignment-aware escalation must begin with the '
+            + 'running user as owner so the assignment rule can change OwnerId before N26';
+        String bodyMessage = 'The single owner comment must identify the final TAE queue, not the '
+            + 'intermediate assignment-rule owner';
+        Assert.areEqual(UserInfo.getUserId(), ownerBeforeEscalation, ownerPreconditionMessage);
+        Assert.areEqual(1, ownerComments.size(), countMessage);
+        Assert.areEqual(BODY_OWNER + taeQueue.Name, ownerComments[0].CommentBody, bodyMessage);
     }
 
     // ---------- P5: status change, Charter-only, always published ----------
