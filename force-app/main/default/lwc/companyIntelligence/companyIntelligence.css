@@ -1,160 +1,315 @@
+/*
+ * Design language is shared with c/opportunitySummary so the two AI cards read
+ * as siblings on the Opportunity page. Palette values are the same, but each is
+ * routed through an SLDS global styling hook with the shared value as fallback.
+ */
 :host {
-    --ci-border: #e5e5e5;
-    --ci-muted: #5f6b7a;
-    --ci-brand: #0b5cab;
+  display: block;
+
+  --ai-brand: var(--slds-g-color-brand-base-60, #0176d3);
+  --ai-brand-dark: var(--slds-g-color-brand-base-20, #032d60);
+  --ai-success: var(--slds-g-color-success-base-50, #2e844a);
+  --ai-risk: var(--slds-g-color-error-base-40, #ba0517);
+  --ai-ink: var(--slds-g-color-neutral-base-10, #181818);
+  --ai-muted: var(--slds-g-color-neutral-base-30, #5c5c5c);
+  --ai-border: var(--slds-g-color-border-base-1, #e3e7ed);
+  --ai-surface: var(--slds-g-color-neutral-base-100, #ffffff);
+  --ai-surface-sunken: var(--slds-g-color-neutral-base-95, #f7f8fa);
+  --ai-surface-accent: var(--slds-g-color-accent-container-1, #dbeaff);
+  --ai-shadow-focus: var(--slds-g-shadow-outset-focus-1, 0 0 0 2px #0176d3);
+
+  /* Spacing: 4px grid. */
+  --ai-space-3xs: var(--slds-g-spacing-1, 0.25rem);
+  --ai-space-2xs: var(--slds-g-spacing-2, 0.5rem);
+  --ai-space-xs: var(--slds-g-spacing-3, 0.75rem);
+  --ai-space-s: var(--slds-g-spacing-4, 1rem);
+
+  /* Type: four steps, matching the opportunitySummary scale. */
+  --ai-font-eyebrow: 0.7rem;
+  --ai-font-detail: 0.72rem;
+  --ai-font-body: 0.82rem;
+  --ai-font-title: 0.9rem;
+  --ai-leading-tight: 1.25;
+  --ai-leading-body: 1.45;
+  --ai-radius-pill: 999px;
+  --ai-radius-surface: 0.5rem;
+  --ai-duration: 150ms;
 }
 
-.card-title {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.05rem;
+/* ---------- Gradient header (mirrors opportunitySummary) ---------- */
+
+.ci-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ai-space-2xs);
+  padding: 0 var(--ai-space-xs);
+  background: linear-gradient(to right, #ffffff 0%, #0070d2 100%);
 }
 
-.card-kicker {
-    color: var(--ci-muted);
-    font-size: 0.625rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    line-height: 1;
-    text-transform: uppercase;
+.header-logo {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
 }
 
-.status {
-    display: flex;
-    min-height: 4.5rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    padding: 0.9rem 1rem 1.1rem;
-    color: var(--ci-muted);
-    font-size: 0.78rem;
-    line-height: 1.35;
-    text-align: center;
+.header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ai-ink);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: var(--ai-leading-tight);
 }
 
-.status_error {
-    color: #ba0517;
+.header-refresh {
+  flex-shrink: 0;
+}
+
+/* ---------- Status states ---------- */
+
+.page-status {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ai-space-xs);
+  min-height: 7rem;
+  padding: var(--ai-space-s) var(--ai-space-xs);
+  text-align: center;
 }
 
 .spinner-wrap {
-    position: relative;
-    width: 1.5rem;
-    height: 1.5rem;
-    flex: 0 0 1.5rem;
+  position: relative;
+  width: var(--ai-space-s);
+  height: var(--ai-space-s);
 }
 
-.content {
-    padding: 0 0.75rem 0.75rem;
+.status-text {
+  margin: 0;
+  color: var(--ai-muted);
+  font-size: var(--ai-font-body);
+  line-height: var(--ai-leading-body);
+}
+
+.status-error {
+  color: var(--ai-risk);
+}
+
+/* ---------- Grounding note ---------- */
+
+.ci-body {
+  padding-bottom: var(--ai-space-2xs);
 }
 
 .grounding-note {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.1rem 0.25rem 0.55rem;
-    color: var(--ci-muted);
-    font-size: 0.68rem;
+  display: flex;
+  align-items: center;
+  gap: var(--ai-space-3xs);
+  padding: var(--ai-space-2xs) var(--ai-space-xs);
+  color: var(--ai-muted);
+  font-size: var(--ai-font-eyebrow);
+  font-weight: 600;
 }
 
 .grounding-dot {
-    width: 0.4rem;
-    height: 0.4rem;
-    flex: 0 0 0.4rem;
-    border-radius: 50%;
-    background: #2e844a;
-    box-shadow: 0 0 0 2px #e6f7ec;
+  width: var(--ai-space-2xs);
+  height: var(--ai-space-2xs);
+  flex: 0 0 var(--ai-space-2xs);
+  border-radius: var(--ai-radius-pill);
+  background: var(--ai-success);
 }
+
+/* ---------- Accordion sections ---------- */
 
 .intelligence-accordion {
-    --slds-c-accordion-section-spacing-block-start: 0.35rem;
-    --slds-c-accordion-section-spacing-block-end: 0.55rem;
+  --slds-c-accordion-section-spacing-block-start: var(--ai-space-3xs);
+  --slds-c-accordion-section-spacing-block-end: var(--ai-space-2xs);
 }
 
-.signal-list,
+.section-count {
+  color: var(--ai-muted);
+  font-size: var(--ai-font-detail);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ai-leading-tight);
+}
+
+/* ---------- Labelled facts (copied from opportunitySummary) ---------- */
+
+.fact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ai-space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The sidebar is too narrow for the modal's two-column fact row, so the
+   label sits above its value instead of beside it. */
+.fact-row {
+  padding-bottom: var(--ai-space-2xs);
+  border-bottom: 1px solid var(--ai-border);
+  font-size: var(--ai-font-body);
+  line-height: var(--ai-leading-body);
+}
+
+.fact-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.fact-label {
+  display: block;
+  margin-bottom: var(--ai-space-3xs);
+  color: var(--ai-brand-dark);
+  font-size: var(--ai-font-detail);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: var(--ai-leading-tight);
+  text-transform: uppercase;
+}
+
+.fact-value {
+  display: block;
+  color: var(--ai-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Unlabelled items keep the bulleted signal treatment. */
+.fact-value_full {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.fact-value_full::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--ai-brand);
+  content: "•";
+  font-weight: 700;
+}
+
+/* ---------- Evidence footer ---------- */
+
+.evidence {
+  margin-top: var(--ai-space-2xs);
+  padding: var(--ai-space-xs);
+  border-top: 1px solid var(--ai-border);
+  background: var(--ai-surface-sunken);
+}
+
+.evidence__title {
+  margin-bottom: var(--ai-space-2xs);
+  color: var(--ai-muted);
+  font-size: var(--ai-font-detail);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.evidence .slds-section + .slds-section {
+  margin-top: var(--ai-space-3xs);
+}
+
+.evidence .slds-section__title-action {
+  width: 100%;
+  padding: var(--ai-space-3xs);
+  border-radius: var(--ai-radius-surface);
+  background: transparent;
+  color: var(--ai-brand);
+  font-size: var(--ai-font-detail);
+  font-weight: 600;
+  transition: background-color var(--ai-duration) ease-in-out;
+}
+
+.evidence .slds-section__title-action:hover {
+  background: var(--ai-surface-accent);
+}
+
+.evidence .slds-section__title-action:focus-visible {
+  box-shadow: var(--ai-shadow-focus);
+  outline: none;
+}
+
+/* Mirrors the SLDS section contract so state holds without the global sheet. */
+.evidence .slds-section__content {
+  display: none;
+  padding: var(--ai-space-2xs) var(--ai-space-3xs) var(--ai-space-3xs);
+}
+
+.evidence .slds-section.slds-is-open > .slds-section__content {
+  display: block;
+}
+
 .claim-list,
 .search-list {
-    margin: 0;
-    padding: 0 0 0 1rem;
-    color: #2e2e2e;
-    font-size: 0.76rem;
-    line-height: 1.45;
-}
-
-.signal-list li + li,
-.claim-list li + li,
-.search-list li + li {
-    margin-top: 0.4rem;
-}
-
-.disclosures {
-    margin-top: 0.25rem;
-    border-top: 1px solid var(--ci-border);
-}
-
-.disclosure {
-    border-bottom: 1px solid var(--ci-border);
-}
-
-.disclosure summary {
-    padding: 0.6rem 0.25rem;
-    color: var(--ci-brand);
-    cursor: pointer;
-    font-size: 0.72rem;
-    font-weight: 600;
-}
-
-.claim-list,
-.search-list,
-.disclosure > .source-list {
-    padding-bottom: 0.7rem;
-}
-
-.claim-list {
-    padding-left: 0.25rem;
-    list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ai-space-2xs);
+  margin: 0;
+  padding: 0;
+  color: var(--ai-ink);
+  font-size: var(--ai-font-detail);
+  line-height: var(--ai-leading-body);
+  list-style: none;
 }
 
 .claim {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ai-space-3xs);
 }
 
+.search-list li {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Source chips (mirrors .stage-chip) ---------- */
+
 .source-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ai-space-3xs);
 }
 
 .source-list a {
-    display: inline-flex;
-    max-width: 100%;
-    padding: 0.08rem 0.38rem;
-    border-radius: 1rem;
-    background: #eef4ff;
-    color: var(--ci-brand);
-    font-size: 0.66rem;
-    line-height: 1.35;
-    text-decoration: none;
-    overflow-wrap: anywhere;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--ai-radius-pill);
+  background: var(--ai-surface-accent);
+  color: var(--ai-brand-dark);
+  font-size: var(--ai-font-eyebrow);
+  font-weight: 600;
+  line-height: var(--ai-leading-tight);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  transition:
+    background-color var(--ai-duration) ease-in-out,
+    color var(--ai-duration) ease-in-out;
 }
 
-.source-list a:hover,
-.source-list a:focus {
-    background: #dce9f8;
-    text-decoration: underline;
+.source-list a:hover {
+  background: var(--ai-brand);
+  color: var(--ai-surface);
+  text-decoration: underline;
 }
+
+.source-list a:focus-visible {
+  box-shadow: var(--ai-shadow-focus);
+  outline: none;
+  text-decoration: underline;
+}
+
+/* ---------- Inline notification ---------- */
 
 .search-suggestions-blocker {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.4rem;
-    margin-top: 0.65rem;
-    padding: 0.55rem 0.65rem;
-    border-radius: 0.25rem;
-    background: #fff7e6;
-    color: #5f4b00;
-    font-size: 0.66rem;
-    line-height: 1.35;
+  margin: var(--ai-space-2xs) var(--ai-space-xs) 0;
+  color: var(--ai-muted);
+  font-size: var(--ai-font-detail);
+  line-height: var(--ai-leading-body);
 }
