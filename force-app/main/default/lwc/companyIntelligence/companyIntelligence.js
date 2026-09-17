@@ -1,10 +1,13 @@
 import { LightningElement, api } from "lwc";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
+import userId from "@salesforce/user/Id";
 import requestCompanyIntelligence from "@salesforce/apex/CompanyIntelligenceController.requestCompanyIntelligence";
 
 const GENERIC_ERROR =
   "Company Intelligence is temporarily unavailable. Try again later.";
 const EMPTY_MESSAGE = "No reliable public information found.";
+const CACHE_KEY_PREFIX = "companyIntelligence:v1";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 // A leading "Label: value" prefix is only treated as a label when it is short
 // enough to read as one. Mirrors c/opportunitySummary so both cards format alike.
 const LABEL_MAX_LENGTH = 42;
@@ -150,7 +153,8 @@ export default class CompanyIntelligence extends LightningElement {
   sources = [];
   searches = [];
   hasSearchSuggestionsMarkup = false;
-  activeSectionName = "";
+  activeSectionName = [];
+  isRegionCollapsed = false;
 
   @api
   get recordId() {
@@ -193,6 +197,46 @@ export default class CompanyIntelligence extends LightningElement {
 
   get disableRefresh() {
     return this.isLoading;
+  }
+
+  get showRegionContent() {
+    return !this.isRegionCollapsed;
+  }
+
+  get regionToggleIconName() {
+    return this.isRegionCollapsed ? "utility:chevrondown" : "utility:chevronup";
+  }
+
+  get regionToggleLabel() {
+    return this.isRegionCollapsed
+      ? "Expand Company Intelligence"
+      : "Collapse Company Intelligence";
+  }
+
+  get areAllSectionsExpanded() {
+    return (
+      this.sections.length > 0 &&
+      this.activeSectionName.length === this.sections.length &&
+      this.sections.every((section) =>
+        this.activeSectionName.includes(section.key)
+      )
+    );
+  }
+
+  get sectionsToggleIconName() {
+    return this.areAllSectionsExpanded
+      ? "utility:chevronup"
+      : "utility:chevrondown";
+  }
+
+  get sectionsToggleLabel() {
+    return this.areAllSectionsExpanded
+      ? "Collapse all sections"
+      : "Expand all sections";
+  }
+
+  get cacheKey() {
+    return `${CACHE_KEY_PREFIX}:${userId}:${this.recordId}`;
   }
 
   get claimsLabel() {
@@ -241,8 +285,20 @@ export default class CompanyIntelligence extends LightningElement {
   handleSectionToggle(event) {
     const openSections = event.detail && event.detail.openSections;
     this.activeSectionName = Array.isArray(openSections)
-      ? openSections[0] || ""
-      : openSections || "";
+      ? [...openSections]
+      : openSections
+        ? [openSections]
+        : [];
+  }
+
+  handleAllSectionsToggle() {
+    this.activeSectionName = this.areAllSectionsExpanded
+      ? []
+      : this.sections.map((section) => section.key);
+  }
+
+  handleRegionToggle() {
+    this.isRegionCollapsed = !this.isRegionCollapsed;
   }
 
   loadInitialIntelligence() {
@@ -250,7 +306,50 @@ export default class CompanyIntelligence extends LightningElement {
       return;
     }
     this._hasRequested = true;
+    const cachedIntelligence = this.readCachedIntelligence();
+    if (cachedIntelligence) {
+      this.applyIntelligence(cachedIntelligence);
+      return;
+    }
     this.fetchIntelligence();
+  }
+
+  readCachedIntelligence() {
+    try {
+      const serializedEntry = window.localStorage.getItem(this.cacheKey);
+      if (!serializedEntry) {
+        return null;
+      }
+
+      const entry = JSON.parse(serializedEntry);
+      const age = Date.now() - Number(entry.cachedAt);
+      const isValid =
+        Number.isFinite(age) &&
+        age >= 0 &&
+        age < CACHE_TTL_MS &&
+        entry.intelligence &&
+        typeof entry.intelligence === "object" &&
+        !Array.isArray(entry.intelligence);
+
+      if (isValid) {
+        return entry.intelligence;
+      }
+      window.localStorage.removeItem(this.cacheKey);
+    } catch {
+      // Storage can be unavailable or contain invalid JSON. Fall back to Apex.
+    }
+    return null;
+  }
+
+  cacheIntelligence(intelligence) {
+    try {
+      window.localStorage.setItem(
+        this.cacheKey,
+        JSON.stringify({ cachedAt: Date.now(), intelligence })
+      );
+    } catch {
+      // A storage failure must not prevent fresh intelligence from rendering.
+    }
   }
 
   fetchIntelligence() {
@@ -276,6 +375,7 @@ export default class CompanyIntelligence extends LightningElement {
       });
       if (result && result.success && result.intelligence) {
         this.applyIntelligence(result.intelligence);
+        this.cacheIntelligence(result.intelligence);
       } else {
         this.isError = true;
         this.errorMessage = (result && result.message) || GENERIC_ERROR;
@@ -298,7 +398,7 @@ export default class CompanyIntelligence extends LightningElement {
     this.sources = [];
     this.searches = [];
     this.hasSearchSuggestionsMarkup = false;
-    this.activeSectionName = "";
+    this.activeSectionName = [];
     this._expandedDisclosures = {};
   }
 
@@ -309,6 +409,6 @@ export default class CompanyIntelligence extends LightningElement {
     this.sources = viewModel.sources;
     this.searches = viewModel.searches;
     this.hasSearchSuggestionsMarkup = viewModel.hasSearchSuggestionsMarkup;
-    this.activeSectionName = this.sections.length ? this.sections[0].key : "";
+    this.activeSectionName = this.sections.length ? [this.sections[0].key] : [];
   }
 }

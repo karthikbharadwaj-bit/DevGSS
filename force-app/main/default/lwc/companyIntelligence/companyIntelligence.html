@@ -10,7 +10,7 @@
         </div>
         <div class="slds-media__body">
           <h2
-            class="slds-text-heading_small slds-truncate slds-text-color_inverse"
+            class="slds-text-heading_small slds-truncate"
             title="Company Intelligence"
           >
             <strong>Company Intelligence</strong>
@@ -18,304 +18,334 @@
         </div>
       </div>
       <div class="slds-no-flex">
+        <template lwc:if={showRegionContent}>
+          <lightning-button-icon
+            class="header-refresh"
+            data-testid="refresh"
+            icon-name="utility:refresh"
+            variant="bare-inverse"
+            size="small"
+            alternative-text="Refresh Company Intelligence"
+            title="Refresh Company Intelligence"
+            disabled={disableRefresh}
+            onclick={handleRefresh}
+          ></lightning-button-icon>
+        </template>
         <lightning-button-icon
-          class="header-refresh"
-          data-testid="refresh"
-          icon-name="utility:refresh"
+          data-testid="region-toggle"
+          icon-name={regionToggleIconName}
           variant="bare-inverse"
           size="small"
-          alternative-text="Refresh Company Intelligence"
-          title="Refresh Company Intelligence"
-          disabled={disableRefresh}
-          onclick={handleRefresh}
+          alternative-text={regionToggleLabel}
+          title={regionToggleLabel}
+          onclick={handleRegionToggle}
         ></lightning-button-icon>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <template lwc:if={isLoading}>
-      <div
-        class="slds-align_absolute-center slds-p-around_xx-large slds-is-relative"
-        data-testid="loading"
-      >
-        <lightning-spinner
-          alternative-text="Loading Company Intelligence"
-          size="small"
-        ></lightning-spinner>
-        <p class="slds-m-top_large slds-text-color_weak">
-          Researching public sources…
-        </p>
-      </div>
-    </template>
-
-    <!-- Error State -->
-    <template lwc:elseif={isError}>
-      <div
-        class="slds-align_absolute-center slds-p-around_large"
-        data-testid="error"
-      >
-        <lightning-icon
-          icon-name="utility:error"
-          variant="error"
-          size="small"
-          class="slds-m-right_x-small"
-        ></lightning-icon>
-        <p class="slds-text-color_error">{errorMessage}</p>
-      </div>
-    </template>
-
-    <!-- Empty State -->
-    <template lwc:elseif={showEmptyState}>
-      <div
-        class="slds-align_absolute-center slds-p-around_large"
-        data-testid="empty"
-      >
-        <lightning-icon
-          icon-name="utility:info"
-          size="small"
-          class="slds-m-right_x-small"
-        ></lightning-icon>
-        <p class="slds-text-color_weak">{emptyMessage}</p>
-      </div>
-    </template>
-
-    <!-- Main Content -->
-    <template lwc:elseif={hasContent}>
-      <div class="ci-body" data-testid="content">
-        <!-- Grounding Note -->
+    <template lwc:if={showRegionContent}>
+      <!-- Loading State -->
+      <template lwc:if={isLoading}>
         <div
-          class="slds-p-vertical_x-small slds-p-horizontal_small slds-border_bottom slds-grid slds-grid_vertical-align-center"
+          class="slds-align_absolute-center slds-p-around_xx-large slds-is-relative"
+          data-testid="loading"
         >
-          <span class="grounding-dot" aria-hidden="true"></span>
-          <p
-            class="slds-text-body_small slds-text-color_weak slds-m-left_x-small"
-          >
-            <strong>Grounded in public web sources</strong>
+          <lightning-spinner
+            alternative-text="Loading Company Intelligence"
+            size="small"
+          ></lightning-spinner>
+          <p class="slds-m-top_large slds-text-color_weak">
+            Researching public sources…
           </p>
         </div>
+      </template>
 
-        <!-- Intelligence Accordion -->
-        <template lwc:if={sections.length}>
-          <lightning-accordion
-            class="intelligence-accordion slds-m-top_xxx-small"
-            active-section-name={activeSectionName}
-            onsectiontoggle={handleSectionToggle}
-          >
-            <template for:each={sections} for:item="section">
-              <lightning-accordion-section
-                key={section.key}
-                data-section-key={section.key}
-                name={section.key}
-                label={section.title}
-              >
-                <!-- Badge for count -->
-                <span
-                  slot="actions"
-                  class="section-count slds-text-body_small slds-text-color_weak slds-p-right_small"
-                >
-                  {section.count}
-                </span>
-
-                <!-- Fact List (Using SLDS Form Elements) -->
-                <div
-                  class="slds-form slds-form_stacked slds-p-horizontal_small"
-                >
-                  <template for:each={section.items} for:item="item">
-                    <div
-                      key={item.key}
-                      class="slds-form-element slds-border_bottom slds-p-vertical_small slds-m-bottom_none fact-row"
-                    >
-                      <template lwc:if={item.hasLabel}>
-                        <span
-                          class="slds-form-element__label slds-text-title_caps fact-label"
-                        >
-                          {item.label}
-                        </span>
-                        <div
-                          class="slds-form-element__control slds-m-top_xxx-small"
-                        >
-                          <span
-                            class="slds-form-element__static slds-text-body_regular fact-value"
-                          >
-                            {item.text}
-                          </span>
-                        </div>
-                      </template>
-                      <template lwc:else>
-                        <div class="slds-form-element__control">
-                          <span
-                            class="slds-form-element__static slds-text-body_regular fact-value fact-value_full"
-                          >
-                            {item.text}
-                          </span>
-                        </div>
-                      </template>
-                    </div>
-                  </template>
-                </div>
-              </lightning-accordion-section>
-            </template>
-          </lightning-accordion>
-        </template>
-
-        <!-- Evidence Section -->
-        <div class="slds-p-around_small slds-m-top_small">
-          <p
-            class="slds-text-title_caps slds-m-bottom_small slds-text-color_weak"
-          >
-            <strong>Evidence</strong>
-          </p>
-
-          <template lwc:if={claims.length}>
-            <div class={claimsDisclosure.sectionClass}>
-              <h3 class="slds-section__title">
-                <button
-                  type="button"
-                  class="slds-button slds-section__title-action claims"
-                  aria-controls="evidence-claims"
-                  aria-expanded={claimsDisclosure.expanded}
-                  onclick={handleDisclosureToggle}
-                  data-disclosure="claims"
-                >
-                  <lightning-icon
-                    icon-name="utility:switch"
-                    size="xx-small"
-                    class="slds-section__title-action-icon slds-button__icon_left"
-                  ></lightning-icon>
-                  <span class="slds-truncate">{claimsLabel}</span>
-                </button>
-              </h3>
-              <div
-                id="evidence-claims"
-                class="slds-section__content claims slds-p-horizontal_small"
-              >
-                <ul class="slds-list_dotted">
-                  <template for:each={claims} for:item="claim">
-                    <li key={claim.key} class="slds-m-bottom_x-small">
-                      <span class="slds-text-body_regular">{claim.text}</span>
-                      <template lwc:if={claim.sources.length}>
-                        <span
-                          class="slds-m-left_xx-small"
-                          aria-label="Sources for claim"
-                        >
-                          <template for:each={claim.sources} for:item="source">
-                            <a
-                              key={source.key}
-                              data-source-index={source.index}
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="slds-m-right_xx-small"
-                            >
-                              {source.label}
-                            </a>
-                          </template>
-                        </span>
-                      </template>
-                    </li>
-                  </template>
-                </ul>
-              </div>
-            </div>
-          </template>
-
-          <template lwc:if={sources.length}>
-            <div class={sourcesDisclosure.sectionClass}>
-              <h3 class="slds-section__title">
-                <button
-                  type="button"
-                  class="slds-button slds-section__title-action sources"
-                  aria-controls="evidence-sources"
-                  aria-expanded={sourcesDisclosure.expanded}
-                  onclick={handleDisclosureToggle}
-                  data-disclosure="sources"
-                >
-                  <lightning-icon
-                    icon-name="utility:switch"
-                    size="xx-small"
-                    class="slds-section__title-action-icon slds-button__icon_left"
-                  ></lightning-icon>
-                  <span class="slds-truncate">{sourcesLabel}</span>
-                </button>
-              </h3>
-              <div
-                id="evidence-sources"
-                class="slds-section__content sources slds-p-horizontal_small"
-              >
-                <ul class="slds-list_dotted">
-                  <template for:each={sources} for:item="source">
-                    <li key={source.key} class="slds-m-bottom_xx-small">
-                      <a
-                        data-source-index={source.index}
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {source.label}
-                      </a>
-                    </li>
-                  </template>
-                </ul>
-              </div>
-            </div>
-          </template>
-
-          <template lwc:if={searches.length}>
-            <div class={searchesDisclosure.sectionClass}>
-              <h3 class="slds-section__title">
-                <button
-                  type="button"
-                  class="slds-button slds-section__title-action searches"
-                  aria-controls="evidence-searches"
-                  aria-expanded={searchesDisclosure.expanded}
-                  onclick={handleDisclosureToggle}
-                  data-disclosure="searches"
-                >
-                  <lightning-icon
-                    icon-name="utility:switch"
-                    size="xx-small"
-                    class="slds-section__title-action-icon slds-button__icon_left"
-                  ></lightning-icon>
-                  <span class="slds-truncate">{searchesLabel}</span>
-                </button>
-              </h3>
-              <div
-                id="evidence-searches"
-                class="slds-section__content searches slds-p-horizontal_small"
-              >
-                <ul class="slds-list_dotted">
-                  <template for:each={searches} for:item="search">
-                    <li key={search.key} class="slds-m-bottom_xx-small">
-                      {search.text}
-                    </li>
-                  </template>
-                </ul>
-              </div>
-            </div>
-          </template>
+      <!-- Error State -->
+      <template lwc:elseif={isError}>
+        <div
+          class="slds-align_absolute-center slds-p-around_large"
+          data-testid="error"
+        >
+          <lightning-icon
+            icon-name="utility:error"
+            variant="error"
+            size="small"
+            class="slds-m-right_x-small"
+          ></lightning-icon>
+          <p class="slds-text-color_error">{errorMessage}</p>
         </div>
+      </template>
 
-        <template lwc:if={hasSearchSuggestionsMarkup}>
+      <!-- Empty State -->
+      <template lwc:elseif={showEmptyState}>
+        <div
+          class="slds-align_absolute-center slds-p-around_large"
+          data-testid="empty"
+        >
+          <lightning-icon
+            icon-name="utility:info"
+            size="small"
+            class="slds-m-right_x-small"
+          ></lightning-icon>
+          <p class="slds-text-color_weak">{emptyMessage}</p>
+        </div>
+      </template>
+
+      <!-- Main Content -->
+      <template lwc:elseif={hasContent}>
+        <div class="ci-body" data-testid="content">
+          <!-- Grounding Note -->
           <div
-            class="slds-scoped-notification slds-media slds-media_center slds-m-around_small"
-            data-testid="search-suggestions-blocker"
-            role="status"
+            class="slds-p-vertical_x-small slds-p-horizontal_small slds-border_bottom slds-grid slds-grid_align-spread slds-grid_vertical-align-center"
           >
-            <div class="slds-media__figure">
-              <lightning-icon
-                icon-name="utility:info"
-                size="x-small"
-              ></lightning-icon>
-            </div>
-            <div class="slds-media__body">
-              <p>
-                Google Search Suggestions aren’t shown because Lightning
-                sanitizes the supplied markup.
+            <div class="slds-grid slds-grid_vertical-align-center">
+              <span class="grounding-dot" aria-hidden="true"></span>
+              <p
+                class="slds-text-body_small slds-text-color_weak slds-m-left_x-small"
+              >
+                <strong>Grounded in public web sources</strong>
               </p>
             </div>
+            <template lwc:if={sections.length}>
+              <lightning-button-icon
+                data-testid="sections-toggle"
+                icon-name={sectionsToggleIconName}
+                variant="bare"
+                size="small"
+                alternative-text={sectionsToggleLabel}
+                title={sectionsToggleLabel}
+                onclick={handleAllSectionsToggle}
+              ></lightning-button-icon>
+            </template>
           </div>
-        </template>
-      </div>
+
+          <!-- Intelligence Accordion -->
+          <template lwc:if={sections.length}>
+            <lightning-accordion
+              class="intelligence-accordion slds-m-top_xxx-small"
+              active-section-name={activeSectionName}
+              allow-multiple-sections-open
+              onsectiontoggle={handleSectionToggle}
+            >
+              <template for:each={sections} for:item="section">
+                <lightning-accordion-section
+                  key={section.key}
+                  data-section-key={section.key}
+                  name={section.key}
+                  label={section.title}
+                >
+                  <!-- Badge for count -->
+                  <span
+                    slot="actions"
+                    class="section-count slds-text-body_small slds-text-color_weak slds-p-right_small"
+                  >
+                    {section.count}
+                  </span>
+
+                  <!-- Fact List (Using SLDS Form Elements) -->
+                  <div
+                    class="slds-form slds-form_stacked slds-p-horizontal_small"
+                  >
+                    <template for:each={section.items} for:item="item">
+                      <div
+                        key={item.key}
+                        class="slds-form-element slds-border_bottom slds-p-vertical_small slds-m-bottom_none fact-row"
+                      >
+                        <template lwc:if={item.hasLabel}>
+                          <span
+                            class="slds-form-element__label slds-text-title_caps fact-label"
+                          >
+                            {item.label}
+                          </span>
+                          <div
+                            class="slds-form-element__control slds-m-top_xxx-small"
+                          >
+                            <span
+                              class="slds-form-element__static slds-text-body_regular fact-value"
+                            >
+                              {item.text}
+                            </span>
+                          </div>
+                        </template>
+                        <template lwc:else>
+                          <div class="slds-form-element__control">
+                            <span
+                              class="slds-form-element__static slds-text-body_regular fact-value fact-value_full"
+                            >
+                              {item.text}
+                            </span>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+                </lightning-accordion-section>
+              </template>
+            </lightning-accordion>
+          </template>
+
+          <!-- Evidence Section -->
+          <div class="slds-p-around_small slds-m-top_small">
+            <p
+              class="slds-text-title_caps slds-m-bottom_small slds-text-color_weak"
+            >
+              <strong>Evidence</strong>
+            </p>
+
+            <template lwc:if={claims.length}>
+              <div class={claimsDisclosure.sectionClass}>
+                <h3 class="slds-section__title">
+                  <button
+                    type="button"
+                    class="slds-button slds-section__title-action claims"
+                    aria-controls="evidence-claims"
+                    aria-expanded={claimsDisclosure.expanded}
+                    onclick={handleDisclosureToggle}
+                    data-disclosure="claims"
+                  >
+                    <lightning-icon
+                      icon-name="utility:switch"
+                      size="xx-small"
+                      class="slds-section__title-action-icon slds-button__icon_left"
+                    ></lightning-icon>
+                    <span class="slds-truncate">{claimsLabel}</span>
+                  </button>
+                </h3>
+                <div
+                  id="evidence-claims"
+                  class="slds-section__content claims slds-p-horizontal_small"
+                >
+                  <ul class="slds-list_dotted">
+                    <template for:each={claims} for:item="claim">
+                      <li key={claim.key} class="slds-m-bottom_x-small">
+                        <span class="slds-text-body_regular">{claim.text}</span>
+                        <template lwc:if={claim.sources.length}>
+                          <span
+                            class="slds-m-left_xx-small"
+                            aria-label="Sources for claim"
+                          >
+                            <template
+                              for:each={claim.sources}
+                              for:item="source"
+                            >
+                              <a
+                                key={source.key}
+                                data-source-index={source.index}
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="slds-m-right_xx-small"
+                              >
+                                {source.label}
+                              </a>
+                            </template>
+                          </span>
+                        </template>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </template>
+
+            <template lwc:if={sources.length}>
+              <div class={sourcesDisclosure.sectionClass}>
+                <h3 class="slds-section__title">
+                  <button
+                    type="button"
+                    class="slds-button slds-section__title-action sources"
+                    aria-controls="evidence-sources"
+                    aria-expanded={sourcesDisclosure.expanded}
+                    onclick={handleDisclosureToggle}
+                    data-disclosure="sources"
+                  >
+                    <lightning-icon
+                      icon-name="utility:switch"
+                      size="xx-small"
+                      class="slds-section__title-action-icon slds-button__icon_left"
+                    ></lightning-icon>
+                    <span class="slds-truncate">{sourcesLabel}</span>
+                  </button>
+                </h3>
+                <div
+                  id="evidence-sources"
+                  class="slds-section__content sources slds-p-horizontal_small"
+                >
+                  <ul class="slds-list_dotted">
+                    <template for:each={sources} for:item="source">
+                      <li key={source.key} class="slds-m-bottom_xx-small">
+                        <a
+                          data-source-index={source.index}
+                          href={source.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {source.label}
+                        </a>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </template>
+
+            <template lwc:if={searches.length}>
+              <div class={searchesDisclosure.sectionClass}>
+                <h3 class="slds-section__title">
+                  <button
+                    type="button"
+                    class="slds-button slds-section__title-action searches"
+                    aria-controls="evidence-searches"
+                    aria-expanded={searchesDisclosure.expanded}
+                    onclick={handleDisclosureToggle}
+                    data-disclosure="searches"
+                  >
+                    <lightning-icon
+                      icon-name="utility:switch"
+                      size="xx-small"
+                      class="slds-section__title-action-icon slds-button__icon_left"
+                    ></lightning-icon>
+                    <span class="slds-truncate">{searchesLabel}</span>
+                  </button>
+                </h3>
+                <div
+                  id="evidence-searches"
+                  class="slds-section__content searches slds-p-horizontal_small"
+                >
+                  <ul class="slds-list_dotted">
+                    <template for:each={searches} for:item="search">
+                      <li key={search.key} class="slds-m-bottom_xx-small">
+                        {search.text}
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <template lwc:if={hasSearchSuggestionsMarkup}>
+            <div
+              class="slds-scoped-notification slds-media slds-media_center slds-m-around_small"
+              data-testid="search-suggestions-blocker"
+              role="status"
+            >
+              <div class="slds-media__figure">
+                <lightning-icon
+                  icon-name="utility:info"
+                  size="x-small"
+                ></lightning-icon>
+              </div>
+              <div class="slds-media__body">
+                <p>
+                  Google Search Suggestions aren’t shown because Lightning
+                  sanitizes the supplied markup.
+                </p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
     </template>
   </div>
 </template>

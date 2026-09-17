@@ -7,8 +7,13 @@ jest.mock(
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
+jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
+  virtual: true
+});
 
 const RECORD_ID = "006000000000001AAA";
+const CACHE_KEY = `companyIntelligence:v1:005000000000001AAA:${RECORD_ID}`;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 const GOOGLE_REDIRECT_URL =
   "https://vertexaisearch.cloud.google.com/grounding-api-redirect/private-token";
 
@@ -83,6 +88,7 @@ async function createComponent(recordId = RECORD_ID) {
 
 describe("companyIntelligence", () => {
   beforeEach(() => {
+    localStorage.clear();
     requestCompanyIntelligence.mockResolvedValue(successfulResponse());
   });
 
@@ -120,6 +126,51 @@ describe("companyIntelligence", () => {
     await flushPromises();
   });
 
+  it("reuses successful intelligence from local storage for one day", async () => {
+    const firstElement = await createComponent();
+    document.body.removeChild(firstElement);
+
+    const secondElement = await createComponent();
+
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
+    expect(secondElement.shadowRoot.textContent).toContain(
+      "Public software company"
+    );
+    expect(JSON.parse(localStorage.getItem(CACHE_KEY))).toEqual({
+      cachedAt: expect.any(Number),
+      intelligence: successfulResponse().intelligence
+    });
+  });
+
+  it("requests fresh intelligence when the local cache is older than one day", async () => {
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({
+        cachedAt: Date.now() - ONE_DAY_MS - 1,
+        intelligence: successfulResponse({
+          summary: { companySnapshot: ["Stale company snapshot"] }
+        }).intelligence
+      })
+    );
+
+    const element = await createComponent();
+
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
+    expect(element.shadowRoot.textContent).toContain("Public software company");
+    expect(element.shadowRoot.textContent).not.toContain(
+      "Stale company snapshot"
+    );
+  });
+
+  it("ignores malformed local cache entries", async () => {
+    localStorage.setItem(CACHE_KEY, "not-json");
+
+    const element = await createComponent();
+
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
+    expect(element.shadowRoot.textContent).toContain("Public software company");
+  });
+
   it("renders a safe service error", async () => {
     requestCompanyIntelligence.mockResolvedValue({
       success: false,
@@ -153,7 +204,7 @@ describe("companyIntelligence", () => {
     ]);
     expect(
       element.shadowRoot.querySelector("lightning-accordion").activeSectionName
-    ).toBe("companySnapshot");
+    ).toEqual(["companySnapshot"]);
   });
 
   it("keeps the active section closed after the user collapses it", async () => {
@@ -167,7 +218,68 @@ describe("companyIntelligence", () => {
     );
     await flushPromises();
 
-    expect(accordion.activeSectionName).toBe("");
+    expect(accordion.activeSectionName).toEqual([]);
+  });
+
+  it("expands and collapses all intelligence sections", async () => {
+    const element = await createComponent();
+    const toggle = element.shadowRoot.querySelector(
+      '[data-testid="sections-toggle"]'
+    );
+
+    toggle.click();
+    await flushPromises();
+
+    expect(
+      element.shadowRoot.querySelector("lightning-accordion").activeSectionName
+    ).toEqual([
+      "companySnapshot",
+      "latestCompanyAnnouncements",
+      "executiveLeadershipAnnouncements",
+      "businessAndFinancialSignals",
+      "competitiveAndMarketContext",
+      "opportunityRelevance",
+      "informationGaps"
+    ]);
+    expect(
+      element.shadowRoot.querySelector('[data-testid="sections-toggle"]')
+        .alternativeText
+    ).toBe("Collapse all sections");
+
+    element.shadowRoot.querySelector('[data-testid="sections-toggle"]').click();
+    await flushPromises();
+
+    expect(
+      element.shadowRoot.querySelector("lightning-accordion").activeSectionName
+    ).toEqual([]);
+  });
+
+  it("collapses and restores the whole Company Intelligence region", async () => {
+    const element = await createComponent();
+    const toggle = element.shadowRoot.querySelector(
+      '[data-testid="region-toggle"]'
+    );
+
+    toggle.click();
+    await flushPromises();
+
+    expect(element.shadowRoot.textContent).toContain("Company Intelligence");
+    expect(
+      element.shadowRoot.querySelector('[data-testid="content"]')
+    ).toBeNull();
+    expect(
+      element.shadowRoot.querySelector('[data-testid="region-toggle"]')
+        .alternativeText
+    ).toBe("Expand Company Intelligence");
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
+
+    element.shadowRoot.querySelector('[data-testid="region-toggle"]').click();
+    await flushPromises();
+
+    expect(
+      element.shadowRoot.querySelector('[data-testid="content"]')
+    ).not.toBeNull();
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
   });
 
   it("hides empty sections and shows the concise empty state", async () => {
@@ -270,8 +382,17 @@ describe("companyIntelligence", () => {
       element.shadowRoot.querySelector('[data-testid="loading"]')
     ).not.toBeNull();
 
-    refreshResponse.resolve(successfulResponse());
+    refreshResponse.resolve(
+      successfulResponse({
+        summary: { companySnapshot: ["Freshly regenerated snapshot"] }
+      })
+    );
     await flushPromises();
+
+    expect(
+      JSON.parse(localStorage.getItem(CACHE_KEY)).intelligence.summary
+        .companySnapshot
+    ).toEqual(["Freshly regenerated snapshot"]);
   });
 
   it("expands and collapses an evidence disclosure on click", async () => {
