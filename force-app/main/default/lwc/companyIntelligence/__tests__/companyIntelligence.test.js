@@ -156,6 +156,20 @@ describe("companyIntelligence", () => {
     ).toBe("companySnapshot");
   });
 
+  it("keeps the active section closed after the user collapses it", async () => {
+    const element = await createComponent();
+    const accordion = element.shadowRoot.querySelector("lightning-accordion");
+
+    accordion.dispatchEvent(
+      new CustomEvent("sectiontoggle", {
+        detail: { openSections: [] }
+      })
+    );
+    await flushPromises();
+
+    expect(accordion.activeSectionName).toBe("");
+  });
+
   it("hides empty sections and shows the concise empty state", async () => {
     requestCompanyIntelligence.mockResolvedValue(
       successfulResponse({

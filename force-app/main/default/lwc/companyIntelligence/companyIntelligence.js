@@ -238,6 +238,13 @@ export default class CompanyIntelligence extends LightningElement {
     };
   }
 
+  handleSectionToggle(event) {
+    const openSections = event.detail && event.detail.openSections;
+    this.activeSectionName = Array.isArray(openSections)
+      ? openSections[0] || ""
+      : openSections || "";
+  }
+
   loadInitialIntelligence() {
     if (!this._isConnected || !this.recordId || this._hasRequested) {
       return;

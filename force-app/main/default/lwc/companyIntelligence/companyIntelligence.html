@@ -1,64 +1,105 @@
 <template>
-  <lightning-card>
-    <div class="ci-header">
-      <img src={aiInsightsLogo} alt="AI Insights" class="header-logo" />
-      <span class="header-title">Company Intelligence</span>
-      <lightning-button-icon
-        class="header-refresh"
-        data-testid="refresh"
-        icon-name="utility:refresh"
-        variant="bare-inverse"
-        size="small"
-        alternative-text="Refresh Company Intelligence"
-        title="Refresh Company Intelligence"
-        disabled={disableRefresh}
-        onclick={handleRefresh}
-      >
-      </lightning-button-icon>
+  <div class="slds-card slds-card_boundary ci-card-wrapper">
+    <!-- Edge-to-Edge Custom Brand Header -->
+    <div
+      class="slds-page-header slds-theme_brand ci-header slds-grid slds-grid_vertical-align-center"
+    >
+      <div class="slds-media slds-media_center slds-has-flexi-truncate">
+        <div class="slds-media__figure">
+          <img src={aiInsightsLogo} alt="AI Insights" class="header-logo" />
+        </div>
+        <div class="slds-media__body">
+          <h2
+            class="slds-text-heading_small slds-truncate slds-text-color_inverse"
+            title="Company Intelligence"
+          >
+            <strong>Company Intelligence</strong>
+          </h2>
+        </div>
+      </div>
+      <div class="slds-no-flex">
+        <lightning-button-icon
+          class="header-refresh"
+          data-testid="refresh"
+          icon-name="utility:refresh"
+          variant="bare-inverse"
+          size="small"
+          alternative-text="Refresh Company Intelligence"
+          title="Refresh Company Intelligence"
+          disabled={disableRefresh}
+          onclick={handleRefresh}
+        ></lightning-button-icon>
+      </div>
     </div>
 
+    <!-- Loading State -->
     <template lwc:if={isLoading}>
-      <div class="page-status" data-testid="loading">
-        <div class="spinner-wrap">
-          <lightning-spinner
-            alternative-text="Loading Company Intelligence"
-            size="small"
-          >
-          </lightning-spinner>
-        </div>
-        <p class="status-text">Researching public sources…</p>
+      <div
+        class="slds-align_absolute-center slds-p-around_xx-large slds-is-relative"
+        data-testid="loading"
+      >
+        <lightning-spinner
+          alternative-text="Loading Company Intelligence"
+          size="small"
+        ></lightning-spinner>
+        <p class="slds-m-top_large slds-text-color_weak">
+          Researching public sources…
+        </p>
       </div>
     </template>
 
+    <!-- Error State -->
     <template lwc:elseif={isError}>
-      <div class="page-status" data-testid="error">
+      <div
+        class="slds-align_absolute-center slds-p-around_large"
+        data-testid="error"
+      >
         <lightning-icon
           icon-name="utility:error"
           variant="error"
           size="small"
+          class="slds-m-right_x-small"
         ></lightning-icon>
-        <p class="status-text status-error">{errorMessage}</p>
+        <p class="slds-text-color_error">{errorMessage}</p>
       </div>
     </template>
 
+    <!-- Empty State -->
     <template lwc:elseif={showEmptyState}>
-      <div class="page-status" data-testid="empty">
-        <lightning-icon icon-name="utility:info" size="small"></lightning-icon>
-        <p class="status-text">{emptyMessage}</p>
+      <div
+        class="slds-align_absolute-center slds-p-around_large"
+        data-testid="empty"
+      >
+        <lightning-icon
+          icon-name="utility:info"
+          size="small"
+          class="slds-m-right_x-small"
+        ></lightning-icon>
+        <p class="slds-text-color_weak">{emptyMessage}</p>
       </div>
     </template>
 
+    <!-- Main Content -->
     <template lwc:elseif={hasContent}>
       <div class="ci-body" data-testid="content">
-        <p class="grounding-note">
+        <!-- Grounding Note -->
+        <div
+          class="slds-p-vertical_x-small slds-p-horizontal_small slds-border_bottom slds-grid slds-grid_vertical-align-center"
+        >
           <span class="grounding-dot" aria-hidden="true"></span>
-          Grounded in public web sources
-        </p>
+          <p
+            class="slds-text-body_small slds-text-color_weak slds-m-left_x-small"
+          >
+            <strong>Grounded in public web sources</strong>
+          </p>
+        </div>
 
+        <!-- Intelligence Accordion -->
         <template lwc:if={sections.length}>
           <lightning-accordion
-            class="intelligence-accordion"
+            class="intelligence-accordion slds-m-top_xxx-small"
             active-section-name={activeSectionName}
+            onsectiontoggle={handleSectionToggle}
           >
             <template for:each={sections} for:item="section">
               <lightning-accordion-section
@@ -67,31 +108,63 @@
                 name={section.key}
                 label={section.title}
               >
-                <span slot="actions" class="section-count"
-                  >{section.count}</span
+                <!-- Badge for count -->
+                <span
+                  slot="actions"
+                  class="section-count slds-text-body_small slds-text-color_weak slds-p-right_small"
                 >
-                <ul class="fact-list">
+                  {section.count}
+                </span>
+
+                <!-- Fact List (Using SLDS Form Elements) -->
+                <div
+                  class="slds-form slds-form_stacked slds-p-horizontal_small"
+                >
                   <template for:each={section.items} for:item="item">
-                    <li key={item.key} class="fact-row">
+                    <div
+                      key={item.key}
+                      class="slds-form-element slds-border_bottom slds-p-vertical_small slds-m-bottom_none fact-row"
+                    >
                       <template lwc:if={item.hasLabel}>
-                        <span class="fact-label">{item.label}</span>
-                        <span class="fact-value">{item.text}</span>
+                        <span
+                          class="slds-form-element__label slds-text-title_caps fact-label"
+                        >
+                          {item.label}
+                        </span>
+                        <div
+                          class="slds-form-element__control slds-m-top_xxx-small"
+                        >
+                          <span
+                            class="slds-form-element__static slds-text-body_regular fact-value"
+                          >
+                            {item.text}
+                          </span>
+                        </div>
                       </template>
                       <template lwc:else>
-                        <span class="fact-value fact-value_full"
-                          >{item.text}</span
-                        >
+                        <div class="slds-form-element__control">
+                          <span
+                            class="slds-form-element__static slds-text-body_regular fact-value fact-value_full"
+                          >
+                            {item.text}
+                          </span>
+                        </div>
                       </template>
-                    </li>
+                    </div>
                   </template>
-                </ul>
+                </div>
               </lightning-accordion-section>
             </template>
           </lightning-accordion>
         </template>
 
-        <div class="evidence">
-          <p class="evidence__title">Evidence</p>
+        <!-- Evidence Section -->
+        <div class="slds-p-around_small slds-m-top_small">
+          <p
+            class="slds-text-title_caps slds-m-bottom_small slds-text-color_weak"
+          >
+            <strong>Evidence</strong>
+          </p>
 
           <template lwc:if={claims.length}>
             <div class={claimsDisclosure.sectionClass}>
@@ -99,28 +172,30 @@
                 <button
                   type="button"
                   class="slds-button slds-section__title-action claims"
-                  data-disclosure="claims"
                   aria-controls="evidence-claims"
                   aria-expanded={claimsDisclosure.expanded}
                   onclick={handleDisclosureToggle}
+                  data-disclosure="claims"
                 >
                   <lightning-icon
                     icon-name="utility:switch"
                     size="xx-small"
                     class="slds-section__title-action-icon slds-button__icon_left"
-                  >
-                  </lightning-icon>
+                  ></lightning-icon>
                   <span class="slds-truncate">{claimsLabel}</span>
                 </button>
               </h3>
-              <div id="evidence-claims" class="slds-section__content claims">
-                <ul class="claim-list">
+              <div
+                id="evidence-claims"
+                class="slds-section__content claims slds-p-horizontal_small"
+              >
+                <ul class="slds-list_dotted">
                   <template for:each={claims} for:item="claim">
-                    <li key={claim.key} class="claim">
-                      <span>{claim.text}</span>
+                    <li key={claim.key} class="slds-m-bottom_x-small">
+                      <span class="slds-text-body_regular">{claim.text}</span>
                       <template lwc:if={claim.sources.length}>
                         <span
-                          class="source-list"
+                          class="slds-m-left_xx-small"
                           aria-label="Sources for claim"
                         >
                           <template for:each={claim.sources} for:item="source">
@@ -130,8 +205,10 @@
                               href={source.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              >{source.label}</a
+                              class="slds-m-right_xx-small"
                             >
+                              {source.label}
+                            </a>
                           </template>
                         </span>
                       </template>
@@ -148,33 +225,37 @@
                 <button
                   type="button"
                   class="slds-button slds-section__title-action sources"
-                  data-disclosure="sources"
                   aria-controls="evidence-sources"
                   aria-expanded={sourcesDisclosure.expanded}
                   onclick={handleDisclosureToggle}
+                  data-disclosure="sources"
                 >
                   <lightning-icon
                     icon-name="utility:switch"
                     size="xx-small"
                     class="slds-section__title-action-icon slds-button__icon_left"
-                  >
-                  </lightning-icon>
+                  ></lightning-icon>
                   <span class="slds-truncate">{sourcesLabel}</span>
                 </button>
               </h3>
-              <div id="evidence-sources" class="slds-section__content sources">
-                <div class="source-list">
+              <div
+                id="evidence-sources"
+                class="slds-section__content sources slds-p-horizontal_small"
+              >
+                <ul class="slds-list_dotted">
                   <template for:each={sources} for:item="source">
-                    <a
-                      key={source.key}
-                      data-source-index={source.index}
-                      href={source.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      >{source.label}</a
-                    >
+                    <li key={source.key} class="slds-m-bottom_xx-small">
+                      <a
+                        data-source-index={source.index}
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {source.label}
+                      </a>
+                    </li>
                   </template>
-                </div>
+                </ul>
               </div>
             </div>
           </template>
@@ -185,27 +266,28 @@
                 <button
                   type="button"
                   class="slds-button slds-section__title-action searches"
-                  data-disclosure="searches"
                   aria-controls="evidence-searches"
                   aria-expanded={searchesDisclosure.expanded}
                   onclick={handleDisclosureToggle}
+                  data-disclosure="searches"
                 >
                   <lightning-icon
                     icon-name="utility:switch"
                     size="xx-small"
                     class="slds-section__title-action-icon slds-button__icon_left"
-                  >
-                  </lightning-icon>
+                  ></lightning-icon>
                   <span class="slds-truncate">{searchesLabel}</span>
                 </button>
               </h3>
               <div
                 id="evidence-searches"
-                class="slds-section__content searches"
+                class="slds-section__content searches slds-p-horizontal_small"
               >
-                <ul class="search-list">
+                <ul class="slds-list_dotted">
                   <template for:each={searches} for:item="search">
-                    <li key={search.key}>{search.text}</li>
+                    <li key={search.key} class="slds-m-bottom_xx-small">
+                      {search.text}
+                    </li>
                   </template>
                 </ul>
               </div>
@@ -215,7 +297,7 @@
 
         <template lwc:if={hasSearchSuggestionsMarkup}>
           <div
-            class="slds-scoped-notification slds-media slds-media_center search-suggestions-blocker"
+            class="slds-scoped-notification slds-media slds-media_center slds-m-around_small"
             data-testid="search-suggestions-blocker"
             role="status"
           >
@@ -235,5 +317,5 @@
         </template>
       </div>
     </template>
-  </lightning-card>
+  </div>
 </template>
