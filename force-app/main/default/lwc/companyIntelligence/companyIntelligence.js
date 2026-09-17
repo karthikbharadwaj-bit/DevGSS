@@ -7,7 +7,10 @@ const GENERIC_ERROR =
   "Company Intelligence is temporarily unavailable. Try again later.";
 const EMPTY_MESSAGE = "No reliable public information found.";
 const CACHE_KEY_PREFIX = "companyIntelligence:v1";
+const CACHE_STORAGE_PREFIX = `${CACHE_KEY_PREFIX}:`;
+const CACHE_USER_KEY_PREFIX = `${CACHE_KEY_PREFIX}:${userId}:`;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const CACHE_MAX_BYTES = 512 * 1024;
 // A leading "Label: value" prefix is only treated as a label when it is short
 // enough to read as one. Mirrors c/opportunitySummary so both cards format alike.
 const LABEL_MAX_LENGTH = 42;
@@ -64,6 +67,11 @@ export function splitLabel(text) {
 function safeSourceUrl(value) {
   const url = String(value || "").trim();
   return /^https:\/\//i.test(url) ? url : "";
+}
+
+function storageEntryBytes(key, value) {
+  // Web Storage strings use UTF-16 code units. Include both key and value.
+  return (key.length + value.length) * 2;
 }
 
 export function buildCompanyViewModel(intelligence = {}) {
@@ -236,7 +244,7 @@ export default class CompanyIntelligence extends LightningElement {
   }
 
   get cacheKey() {
-    return `${CACHE_KEY_PREFIX}:${userId}:${this.recordId}`;
+    return `${CACHE_USER_KEY_PREFIX}${this.recordId}`;
   }
 
   get claimsLabel() {
@@ -343,13 +351,75 @@ export default class CompanyIntelligence extends LightningElement {
 
   cacheIntelligence(intelligence) {
     try {
-      window.localStorage.setItem(
-        this.cacheKey,
-        JSON.stringify({ cachedAt: Date.now(), intelligence })
+      const storage = window.localStorage;
+      const serializedEntry = JSON.stringify({
+        cachedAt: Date.now(),
+        intelligence
+      });
+      const incomingBytes = storageEntryBytes(this.cacheKey, serializedEntry);
+
+      if (incomingBytes > CACHE_MAX_BYTES) {
+        storage.removeItem(this.cacheKey);
+        return;
+      }
+
+      const existingEntries = this.getCompanyIntelligenceCacheEntries(
+        this.cacheKey
       );
+      let totalBytes =
+        incomingBytes +
+        existingEntries.reduce((total, entry) => total + entry.bytes, 0);
+
+      existingEntries.sort((left, right) => left.cachedAt - right.cachedAt);
+      while (totalBytes > CACHE_MAX_BYTES && existingEntries.length) {
+        const oldestEntry = existingEntries.shift();
+        storage.removeItem(oldestEntry.key);
+        totalBytes -= oldestEntry.bytes;
+      }
+
+      storage.setItem(this.cacheKey, serializedEntry);
     } catch {
       // A storage failure must not prevent fresh intelligence from rendering.
+      try {
+        window.localStorage.removeItem(this.cacheKey);
+      } catch {
+        // Storage is unavailable, so there is nothing else to clean up.
+      }
     }
+  }
+
+  getCompanyIntelligenceCacheEntries(excludedKey) {
+    const storage = window.localStorage;
+    const keys = [];
+    const entries = [];
+
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (key && key !== excludedKey && key.startsWith(CACHE_STORAGE_PREFIX)) {
+        keys.push(key);
+      }
+    }
+
+    keys.forEach((key) => {
+      const value = storage.getItem(key);
+      try {
+        const cachedAt = Number(JSON.parse(value).cachedAt);
+        const age = Date.now() - cachedAt;
+        if (!Number.isFinite(age) || age < 0 || age >= CACHE_TTL_MS) {
+          storage.removeItem(key);
+          return;
+        }
+        entries.push({
+          key,
+          cachedAt,
+          bytes: storageEntryBytes(key, value)
+        });
+      } catch {
+        storage.removeItem(key);
+      }
+    });
+
+    return entries;
   }
 
   fetchIntelligence() {

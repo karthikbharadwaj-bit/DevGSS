@@ -12,8 +12,11 @@ jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
 });
 
 const RECORD_ID = "006000000000001AAA";
+const SECOND_RECORD_ID = "006000000000002AAA";
 const CACHE_KEY = `companyIntelligence:v1:005000000000001AAA:${RECORD_ID}`;
+const SECOND_CACHE_KEY = `companyIntelligence:v1:005000000000001AAA:${SECOND_RECORD_ID}`;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_CACHE_BYTES = 512 * 1024;
 const GOOGLE_REDIRECT_URL =
   "https://vertexaisearch.cloud.google.com/grounding-api-redirect/private-token";
 
@@ -169,6 +172,76 @@ describe("companyIntelligence", () => {
 
     expect(requestCompanyIntelligence).toHaveBeenCalledTimes(1);
     expect(element.shadowRoot.textContent).toContain("Public software company");
+  });
+
+  it("keeps separate cached intelligence for multiple Opportunities", async () => {
+    requestCompanyIntelligence
+      .mockResolvedValueOnce(successfulResponse())
+      .mockResolvedValueOnce(
+        successfulResponse({
+          summary: { companySnapshot: ["Second Opportunity company"] }
+        })
+      );
+
+    const firstElement = await createComponent();
+    document.body.removeChild(firstElement);
+    const secondElement = await createComponent(SECOND_RECORD_ID);
+    document.body.removeChild(secondElement);
+    const reloadedFirstElement = await createComponent();
+
+    expect(requestCompanyIntelligence).toHaveBeenCalledTimes(2);
+    expect(requestCompanyIntelligence).toHaveBeenNthCalledWith(2, {
+      recordId: SECOND_RECORD_ID
+    });
+    expect(localStorage.getItem(CACHE_KEY)).not.toBeNull();
+    expect(localStorage.getItem(SECOND_CACHE_KEY)).not.toBeNull();
+    expect(reloadedFirstElement.shadowRoot.textContent).toContain(
+      "Public software company"
+    );
+  });
+
+  it("caps all Company Intelligence cache entries at 512 KiB", async () => {
+    const otherUserCacheKey = `companyIntelligence:v1:005000000000009AAA:${RECORD_ID}`;
+    localStorage.setItem(
+      otherUserCacheKey,
+      JSON.stringify({
+        cachedAt: Date.now() - 1000,
+        intelligence: successfulResponse({
+          summary: { companySnapshot: ["o".repeat(140000)] }
+        }).intelligence
+      })
+    );
+    requestCompanyIntelligence.mockResolvedValue(
+      successfulResponse({
+        summary: { companySnapshot: ["n".repeat(140000)] }
+      })
+    );
+
+    await createComponent(SECOND_RECORD_ID);
+
+    let cachedBytes = 0;
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key.startsWith("companyIntelligence:v1:")) {
+        cachedBytes += (key.length + localStorage.getItem(key).length) * 2;
+      }
+    }
+    expect(cachedBytes).toBeLessThanOrEqual(MAX_CACHE_BYTES);
+    expect(localStorage.getItem(otherUserCacheKey)).toBeNull();
+    expect(localStorage.getItem(SECOND_CACHE_KEY)).not.toBeNull();
+  });
+
+  it("does not cache an individual response larger than the cache cap", async () => {
+    requestCompanyIntelligence.mockResolvedValue(
+      successfulResponse({
+        summary: { companySnapshot: ["x".repeat(270000)] }
+      })
+    );
+
+    const element = await createComponent();
+
+    expect(element.shadowRoot.textContent).toContain("x".repeat(100));
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
   });
 
   it("renders a safe service error", async () => {
