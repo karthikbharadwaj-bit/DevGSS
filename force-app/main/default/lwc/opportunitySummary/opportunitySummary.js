@@ -40,6 +40,8 @@ const EVIDENCE_REFERENCE_PATTERN = /\[(E\d+)\]/g;
 const HIGHLIGHT_DURATION_MS = 1600;
 const SEARCH_SUGGESTIONS_LIMITATION =
   "Google Search Suggestions aren’t shown because Lightning Web Security sanitizes HTML and SVG strings inserted into the DOM. Showing the supplied markup would change it.";
+const AI_RESEARCH_DISCLAIMER =
+  "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
 
 const RESEARCH_GROUPS = [
   { kind: "leadership", label: "Current Leadership" },
@@ -113,7 +115,12 @@ function stringValue(value) {
 }
 
 function normalizedSourceIndex(value) {
-  if (value === null || value === undefined || value === "") {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    typeof value === "boolean"
+  ) {
     return null;
   }
   const index = typeof value === "number" ? value : Number(value);
@@ -191,6 +198,16 @@ function inferenceText(value) {
     return text;
   }
   return `Inference: ${text}`;
+}
+
+function humanizeKind(value) {
+  const normalized = stringValue(value)
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+  if (!normalized) {
+    return "Company Update";
+  }
+  return normalized.replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
 export function buildDateLabel(date, dateType) {
@@ -313,6 +330,7 @@ export function buildResearchViewModel(enrichment) {
   const rawFindingById = indexFindings(safeEnrichment.findings);
   const sourceByIndex = indexSources(rawSources);
   const referencedIndices = new Set();
+  const supplementalReferencedIndices = new Set();
   const findingById = new Map();
   const findingsByKind = new Map(
     RESEARCH_GROUPS.map((group) => [group.kind, []])
@@ -378,7 +396,7 @@ export function buildResearchViewModel(enrichment) {
   const referencedSources = allSources.filter((source) =>
     referencedIndices.has(String(source.index))
   );
-  const otherSources = allSources.filter(
+  let otherSources = allSources.filter(
     (source) => !referencedIndices.has(String(source.index))
   );
   const searchQueries = (
@@ -396,14 +414,93 @@ export function buildResearchViewModel(enrichment) {
     label: group.label,
     findings: findingsByKind.get(group.kind)
   })).filter((group) => group.findings.length);
+  const supplemental = isObject(safeEnrichment.supplemental_company_updates)
+    ? safeEnrichment.supplemental_company_updates
+    : {};
+  const supplementalUpdates = (
+    Array.isArray(supplemental.items) ? supplemental.items : []
+  )
+    .map((item, itemIndex) => {
+      if (!isObject(item) || !stringValue(item.fact)) {
+        return null;
+      }
+
+      const id = stringValue(item.id);
+      const personName = stringValue(item.person_name);
+      const role = stringValue(item.role);
+      const relevance = inferenceText(item.relevance);
+      const suggestedAction = inferenceText(item.suggested_action);
+      const resolvedSourceIndices = new Set();
+      const sources = (
+        Array.isArray(item.source_indices) ? item.source_indices : []
+      )
+        .map((rawIndex, relationIndex) => {
+          const sourceIndex = normalizedSourceIndex(rawIndex);
+          const sourceIndexKey = String(sourceIndex);
+          if (
+            sourceIndex === null ||
+            resolvedSourceIndices.has(sourceIndexKey)
+          ) {
+            return null;
+          }
+          const source = sourceByIndex.get(sourceIndexKey);
+          if (!source) {
+            return null;
+          }
+          resolvedSourceIndices.add(sourceIndexKey);
+          supplementalReferencedIndices.add(sourceIndexKey);
+          return sourceViewModel(
+            source,
+            `supplemental-${itemIndex}-source-${relationIndex}`
+          );
+        })
+        .filter(Boolean);
+
+      return {
+        key: `supplemental-${id || itemIndex}-${itemIndex}`,
+        id,
+        kindLabel: humanizeKind(item.kind),
+        dateLabel: buildDateLabel(item.date, item.date_type),
+        fact: stringValue(item.fact),
+        personLine: [personName, role].filter(Boolean).join(" · "),
+        hasPerson: Boolean(personName || role),
+        relevance,
+        hasRelevance: Boolean(relevance),
+        suggestedAction,
+        hasSuggestedAction: Boolean(suggestedAction),
+        sources,
+        hasSources: sources.length > 0
+      };
+    })
+    .filter(Boolean);
+  const supplementalRelationshipToOpportunity = stringValue(
+    supplemental.relationship_to_opportunity
+  ).toLowerCase();
+  otherSources = allSources.filter((source) => {
+    const indexKey = String(source.index);
+    return (
+      !referencedIndices.has(indexKey) &&
+      !supplementalReferencedIndices.has(indexKey)
+    );
+  });
+  const researchSourceCount = allSources.filter((source) => {
+    const indexKey = String(source.index);
+    return (
+      referencedIndices.has(indexKey) ||
+      !supplementalReferencedIndices.has(indexKey)
+    );
+  }).length;
 
   return {
     findingById,
     researchGroups,
     hasPublicResearch: findingById.size > 0,
+    supplementalUpdates,
+    hasSupplementalUpdates: supplementalUpdates.length > 0,
+    supplementalRelationshipToOpportunity,
     referencedSources,
     otherSources,
-    sourceCount: allSources.length,
+    sourceCount: researchSourceCount,
     searchQueries,
     hasSearchSuggestionsMarkup: Boolean(
       stringValue(searchEntryPoint.rendered_content)
@@ -506,7 +603,12 @@ export default class OpportunitySummary extends LightningElement {
   searchQueries = [];
   hasSearchSuggestionsMarkup = false;
   hasPublicResearch = false;
+  hasEnrichment = false;
+  supplementalUpdates = [];
+  hasSupplementalUpdates = false;
+  supplementalRelationshipToOpportunity = "";
   searchSuggestionsLimitation = SEARCH_SUGGESTIONS_LIMITATION;
+  aiResearchDisclaimer = AI_RESEARCH_DISCLAIMER;
 
   generatedAt = null;
   generatedLabel = "";
@@ -588,7 +690,9 @@ export default class OpportunitySummary extends LightningElement {
       this.closePlan.length ||
       this.history.length ||
       this.extraSections.length ||
-      this.hasPublicResearch
+      this.hasPublicResearch ||
+      this.hasEnrichment ||
+      this.hasSupplementalUpdates
     );
   }
 
@@ -755,6 +859,10 @@ export default class OpportunitySummary extends LightningElement {
     this.searchQueries = [];
     this.hasSearchSuggestionsMarkup = false;
     this.hasPublicResearch = false;
+    this.hasEnrichment = false;
+    this.supplementalUpdates = [];
+    this.hasSupplementalUpdates = false;
+    this.supplementalRelationshipToOpportunity = "";
     this._findingById = new Map();
     this._clearEvidenceHighlight();
     this.generatedAt = null;
@@ -764,6 +872,7 @@ export default class OpportunitySummary extends LightningElement {
   _buildSections(rawCards, enrichment) {
     this._resetSections();
 
+    this.hasEnrichment = isObject(enrichment);
     const research = buildResearchViewModel(enrichment);
     this.researchGroups = research.researchGroups;
     this.referencedResearchSources = research.referencedSources;
@@ -772,6 +881,10 @@ export default class OpportunitySummary extends LightningElement {
     this.searchQueries = research.searchQueries;
     this.hasSearchSuggestionsMarkup = research.hasSearchSuggestionsMarkup;
     this.hasPublicResearch = research.hasPublicResearch;
+    this.supplementalUpdates = research.supplementalUpdates;
+    this.hasSupplementalUpdates = research.hasSupplementalUpdates;
+    this.supplementalRelationshipToOpportunity =
+      research.supplementalRelationshipToOpportunity;
     this._findingById = research.findingById;
 
     rawCards.forEach((raw, index) => {

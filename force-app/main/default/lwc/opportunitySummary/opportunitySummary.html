@@ -481,6 +481,24 @@
                 </div>
               </div>
 
+              <template lwc:if={hasEnrichment}>
+                <div
+                  class="slds-notify slds-notify_alert slds-alert_warning enrichment-disclaimer"
+                  role="note"
+                  aria-label="AI-generated company research disclaimer"
+                  data-enrichment-disclaimer
+                >
+                  <lightning-icon
+                    icon-name="utility:warning"
+                    alternative-text="Warning"
+                    size="x-small"
+                    class="enrichment-disclaimer__icon"
+                  >
+                  </lightning-icon>
+                  <p>{aiResearchDisclaimer}</p>
+                </div>
+              </template>
+
               <template lwc:if={hasPublicResearch}>
                 <details class="panel research-panel" data-public-research open>
                   <summary class="research-summary">
@@ -703,6 +721,120 @@
                         <p>{searchSuggestionsLimitation}</p>
                       </section>
                     </template>
+                  </div>
+                </details>
+              </template>
+
+              <template lwc:if={hasSupplementalUpdates}>
+                <details
+                  class="panel supplemental-panel"
+                  data-supplemental-updates
+                  data-relationship-to-opportunity={supplementalRelationshipToOpportunity}
+                >
+                  <summary class="supplemental-summary">
+                    <span class="supplemental-heading">
+                      <span class="supplemental-heading__title">
+                        Additional Company Updates
+                      </span>
+                      <span class="supplemental-helper">
+                        These public company updates were not linked to the
+                        current opportunity by the AI analysis.
+                      </span>
+                    </span>
+                    <span class="research-summary__hint">
+                      Show or hide company updates
+                    </span>
+                  </summary>
+
+                  <div class="supplemental-content">
+                    <div class="supplemental-update-grid">
+                      <template
+                        for:each={supplementalUpdates}
+                        for:item="update"
+                      >
+                        <article key={update.key} class="supplemental-card">
+                          <div class="research-card__header">
+                            <span class="supplemental-kind"
+                              >{update.kindLabel}</span
+                            >
+                            <template lwc:if={update.dateLabel}>
+                              <span class="research-date"
+                                >{update.dateLabel}</span
+                              >
+                            </template>
+                          </div>
+
+                          <template lwc:if={update.hasPerson}>
+                            <p class="research-person">{update.personLine}</p>
+                          </template>
+
+                          <div class="research-field">
+                            <span class="research-field__label"
+                              >Public company update</span
+                            >
+                            <p>{update.fact}</p>
+                          </div>
+
+                          <template lwc:if={update.hasRelevance}>
+                            <div
+                              class="research-field research-field_inference"
+                            >
+                              <span class="research-field__label"
+                                >Opportunity relevance</span
+                              >
+                              <p>{update.relevance}</p>
+                            </div>
+                          </template>
+
+                          <template lwc:if={update.hasSuggestedAction}>
+                            <div
+                              class="research-field research-field_inference"
+                            >
+                              <span class="research-field__label"
+                                >Suggested action</span
+                              >
+                              <p>{update.suggestedAction}</p>
+                            </div>
+                          </template>
+
+                          <template lwc:if={update.hasSources}>
+                            <div class="finding-sources">
+                              <span class="research-field__label"
+                                >Supporting sources</span
+                              >
+                              <ul class="source-list source-list_inline">
+                                <template
+                                  for:each={update.sources}
+                                  for:item="source"
+                                >
+                                  <li key={source.key}>
+                                    <template lwc:if={source.hasLink}>
+                                      <a
+                                        data-source-index={source.index}
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        {source.label}
+                                      </a>
+                                    </template>
+                                    <template lwc:else>
+                                      <span
+                                        class="source-disabled"
+                                        data-source-index={source.index}
+                                        aria-disabled="true"
+                                      >
+                                        {source.label}
+                                      </span>
+                                    </template>
+                                  </li>
+                                </template>
+                              </ul>
+                            </div>
+                          </template>
+                        </article>
+                      </template>
+                    </div>
                   </div>
                 </details>
               </template>

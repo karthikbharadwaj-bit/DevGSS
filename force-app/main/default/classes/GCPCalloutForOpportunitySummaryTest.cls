@@ -617,6 +617,10 @@ private class GCPCalloutForOpportunitySummaryTest {
         '"opportunity_summary":{"Executive Summary":["Research-backed summary. [E1]"]},' +
         '"opportunity_enrichment":{' +
         '"findings":[{"id":"E1","kind":"leadership","fact":"Public fact","source_indices":[7]}],' +
+        '"supplemental_company_updates":{' +
+        '"relationship_to_opportunity":"not_established",' +
+        '"items":[{"id":"E2","kind":"leadership","fact":"Supplemental public fact","source_indices":[8]}]' +
+        '},' +
         '"sources":[{"index":7,"display_label":"example.com","url":"https://example.com"}],' +
         '"web_search_queries":["example leadership"],' +
         '"search_entry_point":{"rendered_content":"<style>.chip{}</style><a href=\\"https://google.com\\">Search</a>"}' +
@@ -635,9 +639,24 @@ private class GCPCalloutForOpportunitySummaryTest {
     Map<String, Object> searchEntryPoint = (Map<String, Object>) enrichment.get(
       'search_entry_point'
     );
+    Map<String, Object> supplementalUpdates = (Map<String, Object>) enrichment.get(
+      'supplemental_company_updates'
+    );
+    Map<String, Object> supplementalItem = (Map<String, Object>) ((List<Object>) supplementalUpdates.get(
+      'items'
+    ))[0];
 
     System.assertEquals(true, result.get('success'));
     System.assertEquals(7, ((List<Object>) finding.get('source_indices'))[0]);
+    System.assertEquals(
+      'not_established',
+      supplementalUpdates.get('relationship_to_opportunity')
+    );
+    System.assertEquals('E2', supplementalItem.get('id'));
+    System.assertEquals(
+      8,
+      ((List<Object>) supplementalItem.get('source_indices'))[0]
+    );
     System.assertEquals(
       '<style>.chip{}</style><a href="https://google.com">Search</a>',
       searchEntryPoint.get('rendered_content')

@@ -33,6 +33,8 @@ jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
 const RECORD_ID = "006000000000001AAA";
 const GOOGLE_REDIRECT_URL =
   "https://vertexaisearch.cloud.google.com/grounding-api-redirect/private-token";
+const AI_RESEARCH_DISCLAIMER =
+  "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
 
 function publicResearch(overrides = {}) {
   return {
@@ -97,6 +99,29 @@ function publicResearch(overrides = {}) {
       rendered_content:
         '<style>.provider-chip{color:blue}</style><svg></svg><a href="https://google.com">Search</a>'
     },
+    ...overrides
+  };
+}
+
+function supplementalCompanyUpdates(overrides = {}) {
+  return {
+    relationship_to_opportunity: "not_established",
+    items: [
+      {
+        id: "E2",
+        kind: "leadership",
+        date: "2026-09-22",
+        date_type: "as_of",
+        fact: "Example Person is the current Chief Operating Officer.",
+        relevance:
+          "Inference: No relationship to the supplied opportunity is established.",
+        suggested_action:
+          "Inference: No opportunity action is suggested from this update alone.",
+        person_name: "Example Person",
+        role: "Chief Operating Officer",
+        source_indices: [1]
+      }
+    ],
     ...overrides
   };
 }
@@ -301,6 +326,227 @@ describe("opportunitySummary public research", () => {
       userId: "005000000000001AAA",
       recordId: RECORD_ID
     });
+  });
+
+  it("shows the exact accessible AI research disclaimer whenever enrichment is present", async () => {
+    const element = await createComponent(
+      response({ enrichment: { findings: [] } })
+    );
+    const disclaimer = element.shadowRoot.querySelector(
+      "[data-enrichment-disclaimer]"
+    );
+
+    expect(disclaimer.textContent.replace(/\s+/g, " ").trim()).toBe(
+      AI_RESEARCH_DISCLAIMER
+    );
+    expect(disclaimer.getAttribute("role")).toBe("note");
+    expect(disclaimer.querySelector("lightning-icon").iconName).toBe(
+      "utility:warning"
+    );
+  });
+
+  it("renders supplemental company updates separately with their complete presentation", async () => {
+    const enrichment = publicResearch({
+      supplemental_company_updates: supplementalCompanyUpdates(),
+      sources: [
+        ...publicResearch().sources,
+        {
+          index: 1,
+          display_label: "Example Company Leadership",
+          title: "Leadership page",
+          url: "https://example.com/leadership"
+        }
+      ]
+    });
+    const element = await createComponent(response({ enrichment }));
+    const supplemental = element.shadowRoot.querySelector(
+      "[data-supplemental-updates]"
+    );
+    const research = element.shadowRoot.querySelector("[data-public-research]");
+
+    expect(supplemental.textContent).toContain("Additional Company Updates");
+    expect(supplemental.open).toBe(false);
+    expect(supplemental.dataset.relationshipToOpportunity).toBe(
+      "not_established"
+    );
+    expect(supplemental.textContent).toContain(
+      "These public company updates were not linked to the current opportunity by the AI analysis."
+    );
+    expect(supplemental.textContent).toContain("Leadership");
+    expect(supplemental.textContent).toContain("Current as of 2026-09-22");
+    expect(supplemental.textContent).toContain(
+      "Example Person · Chief Operating Officer"
+    );
+    expect(supplemental.textContent).toContain(
+      "Example Person is the current Chief Operating Officer."
+    );
+    expect(supplemental.textContent).toContain(
+      "Inference: No relationship to the supplied opportunity is established."
+    );
+    expect(supplemental.textContent).toContain(
+      "Inference: No opportunity action is suggested from this update alone."
+    );
+    const source = supplemental.querySelector('a[data-source-index="1"]');
+    expect(source.textContent.trim()).toBe("Example Company Leadership");
+    expect(source.target).toBe("_blank");
+    expect(source.rel).toBe("noopener noreferrer");
+    expect(research.textContent).not.toContain(
+      "Example Person is the current Chief Operating Officer."
+    );
+    expect(research.textContent).not.toContain("Example Company Leadership");
+    expect(
+      [...element.shadowRoot.querySelectorAll("[data-summary-section]")].some(
+        (section) =>
+          section.textContent.includes(
+            "Example Person is the current Chief Operating Officer."
+          )
+      )
+    ).toBe(false);
+    expect(
+      [
+        ...element.shadowRoot.querySelectorAll(
+          "[data-enrichment-disclaimer], [data-public-research], [data-supplemental-updates]"
+        )
+      ].map((section) => {
+        if (section.hasAttribute("data-enrichment-disclaimer")) {
+          return "disclaimer";
+        }
+        return section.hasAttribute("data-public-research")
+          ? "research"
+          : "supplemental";
+      })
+    ).toEqual(["disclaimer", "research", "supplemental"]);
+  });
+
+  it("resolves only unique valid supplemental source indices with safe label fallbacks", async () => {
+    const updates = supplementalCompanyUpdates({
+      items: [
+        {
+          ...supplementalCompanyUpdates().items[0],
+          source_indices: [1, true, -1, 99, 1, 2, 4]
+        }
+      ]
+    });
+    const enrichment = publicResearch({
+      findings: [],
+      supplemental_company_updates: updates,
+      sources: [
+        {
+          index: 1,
+          display_label: "Display Label",
+          title: "Ignored title",
+          url: "https://example.com/display-label"
+        },
+        {
+          index: 2,
+          title: "Title Fallback",
+          url: "https://example.com/title-fallback"
+        },
+        {
+          index: 4,
+          display_label: GOOGLE_REDIRECT_URL,
+          url: `${GOOGLE_REDIRECT_URL}-four`
+        }
+      ]
+    });
+    const element = await createComponent(response({ enrichment }));
+    const supplemental = element.shadowRoot.querySelector(
+      "[data-supplemental-updates]"
+    );
+    const sources = [
+      ...supplemental.querySelectorAll(".finding-sources [data-source-index]")
+    ];
+
+    expect(sources.map((source) => source.dataset.sourceIndex)).toEqual([
+      "1",
+      "2",
+      "4"
+    ]);
+    expect(sources.map((source) => source.textContent.trim())).toEqual([
+      "Display Label",
+      "Title Fallback",
+      "Source 5"
+    ]);
+    expect(supplemental.textContent).not.toContain(GOOGLE_REDIRECT_URL);
+    sources.forEach((source) => {
+      expect(source.target).toBe("_blank");
+      expect(source.rel).toBe("noopener noreferrer");
+    });
+  });
+
+  it("hides the supplemental section when items are missing or empty", async () => {
+    const withoutNode = await createComponent();
+    const emptyNode = await createComponent(
+      response({
+        enrichment: publicResearch({
+          supplemental_company_updates: supplementalCompanyUpdates({
+            items: []
+          })
+        })
+      })
+    );
+
+    expect(
+      withoutNode.shadowRoot.querySelector("[data-supplemental-updates]")
+    ).toBeNull();
+    expect(
+      emptyNode.shadowRoot.querySelector("[data-supplemental-updates]")
+    ).toBeNull();
+  });
+
+  it("shows the disclaimer and supplemental updates when findings are empty", async () => {
+    const element = await createComponent(
+      response({
+        enrichment: publicResearch({
+          findings: [],
+          supplemental_company_updates: supplementalCompanyUpdates()
+        })
+      })
+    );
+
+    expect(
+      element.shadowRoot.querySelector("[data-enrichment-disclaimer]")
+    ).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-supplemental-updates]")
+    ).not.toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-public-research]")
+    ).toBeNull();
+  });
+
+  it("shows leadership fields only when supplied and humanizes other kinds", async () => {
+    const updates = supplementalCompanyUpdates({
+      items: [
+        supplementalCompanyUpdates().items[0],
+        {
+          id: "E4",
+          kind: "market_expansion",
+          date: "2026-09-01",
+          date_type: "event",
+          fact: "The company entered a new market.",
+          relevance: "No opportunity relationship was established.",
+          suggested_action: "Verify before using this information."
+        }
+      ]
+    });
+    const element = await createComponent(
+      response({
+        enrichment: publicResearch({
+          supplemental_company_updates: updates
+        })
+      })
+    );
+    const cards = [
+      ...element.shadowRoot.querySelectorAll(".supplemental-card")
+    ];
+
+    expect(cards[0].querySelector(".research-person").textContent).toContain(
+      "Example Person · Chief Operating Officer"
+    );
+    expect(cards[1].querySelector(".research-person")).toBeNull();
+    expect(cards[1].textContent).toContain("Market Expansion");
+    expect(cards[1].textContent).toContain("Event date: 2026-09-01");
   });
 
   it("renders leadership and priority findings with inline evidence badges", async () => {
