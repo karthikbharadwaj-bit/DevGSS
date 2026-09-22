@@ -1,237 +1,719 @@
 <template>
-    <template lwc:if={isFeatureEnabled}>
-        <lightning-card>
-            <div class="opportunity-summary-header">
-                <img src={aiInsightsLogo} alt="AI Insights" class="header-logo" />
-                <span class="header-title">Opportunity Summary (Beta version)</span>
+  <template lwc:if={isFeatureEnabled}>
+    <lightning-card>
+      <div class="opportunity-summary-header">
+        <img src={aiInsightsLogo} alt="AI Insights" class="header-logo" />
+        <span class="header-title">Opportunity Summary (Beta version)</span>
+      </div>
+
+      <div
+        class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header"
+      >
+        <div
+          class="toggle-label"
+          role="button"
+          tabindex="0"
+          onclick={openModal}
+          onkeydown={handleShowKeydown}
+        >
+          Show
+        </div>
+        <div class="powered-by">Powered by <strong>AI</strong> ✨</div>
+      </div>
+    </lightning-card>
+
+    <template lwc:if={isModalOpen}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        aria-labelledby="ai-modal-title"
+        class="slds-modal slds-fade-in-open modal-animated"
+      >
+        <div class="slds-modal__container ai-modal__container">
+          <header class="slds-modal__header ai-modal__bar">
+            <div class="ai-modal__identity">
+              <img src={aiInsightsLogo} alt="" class="ai-modal__logo" />
+              <h2 id="ai-modal-title" class="ai-modal__title">
+                Opportunity Summary (Beta version)
+              </h2>
             </div>
 
-            <div class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header">
-                <div class="toggle-label" role="button" tabindex="0" onclick={openModal} onkeydown={handleShowKeydown}>
-                    Show
-                </div>
-                <div class="powered-by">
-                    Powered by <strong>AI</strong> ✨
-                </div>
+            <div class="ai-modal__tools">
+              <template lwc:if={generatedLabel}>
+                <span class="meta-chip">{generatedLabel}</span>
+              </template>
+
+              <button
+                type="button"
+                class="close-button"
+                title="Close"
+                onclick={closeModal}
+              >
+                <lightning-icon
+                  icon-name="utility:close"
+                  alternative-text="Close"
+                  variant="inverse"
+                  size="x-small"
+                >
+                </lightning-icon>
+                <span class="slds-assistive-text">Close</span>
+              </button>
             </div>
-        </lightning-card>
+          </header>
 
-        <template lwc:if={isModalOpen}>
-            <section
-                role="dialog"
-                tabindex="-1"
-                aria-modal="true"
-                aria-labelledby="ai-modal-title"
-                class="slds-modal slds-fade-in-open modal-animated">
-                <div class="slds-modal__container ai-modal__container">
+          <div class="slds-modal__content ai-modal__body">
+            <template lwc:if={isLoading}>
+              <div class="page-status">
+                <img
+                  src={Processing}
+                  alt="Generating summary"
+                  class="loading-logo"
+                />
+                <p class="loading-message">{loadingMessage}</p>
+              </div>
+            </template>
 
-                    <header class="slds-modal__header ai-modal__bar">
-                        <div class="ai-modal__identity">
-                            <img src={aiInsightsLogo} alt="" class="ai-modal__logo" />
-                            <h2 id="ai-modal-title" class="ai-modal__title">Opportunity Summary (Beta version)</h2>
-                        </div>
+            <template lwc:elseif={isError}>
+              <div class="page-status">
+                <lightning-icon
+                  icon-name="utility:error"
+                  variant="error"
+                  size="small"
+                ></lightning-icon>
+                <p class="status-text status-error">{errorMessage}</p>
+              </div>
+            </template>
 
-                        <div class="ai-modal__tools">
-                            <template lwc:if={generatedLabel}>
-                                <span class="meta-chip">{generatedLabel}</span>
+            <template lwc:elseif={showEmptyState}>
+              <div class="page-status">
+                <p class="status-text">{emptyMessage}</p>
+              </div>
+            </template>
+
+            <template lwc:else>
+              <div class="ai-grid">
+                <div class="ai-column">
+                  <template lwc:if={scoreCard}>
+                    <article
+                      class="panel panel_score"
+                      data-summary-section="score"
+                    >
+                      <h2 class="panel-title">Overall Deal Score</h2>
+                      <div class="score-layout">
+                        <template lwc:if={scoreCard.hasValue}>
+                          <div class="gauge">
+                            <svg
+                              viewBox="0 0 100 100"
+                              aria-hidden="true"
+                              focusable="false"
+                            >
+                              <circle
+                                class="gauge-track"
+                                cx="50"
+                                cy="50"
+                                r="42"
+                              ></circle>
+                              <circle
+                                class={scoreCard.gaugeClass}
+                                cx="50"
+                                cy="50"
+                                r="42"
+                                stroke-dasharray={scoreCard.dashArray}
+                                stroke-dashoffset={scoreCard.dashOffset}
+                              ></circle>
+                            </svg>
+                            <div class="gauge-readout">
+                              <span class="gauge-score">{scoreCard.value}</span>
+                              <span class="gauge-max"
+                                >out of {scoreCard.max}</span
+                              >
+                            </div>
+                          </div>
+                        </template>
+
+                        <div class="score-detail">
+                          <div class="score-detail__top">
+                            <template lwc:if={scoreCard.hasHealthLabel}>
+                              <span class={scoreCard.healthClass}
+                                >{scoreCard.healthLabel}</span
+                              >
                             </template>
-
-                            <button type="button" class="close-button" title="Close" onclick={closeModal}>
-                                <lightning-icon
-                                    icon-name="utility:close"
-                                    alternative-text="Close"
-                                    variant="inverse"
-                                    size="x-small">
-                                </lightning-icon>
-                                <span class="slds-assistive-text">Close</span>
-                            </button>
+                            <template lwc:else>
+                              <span class="panel-eyebrow"
+                                >{scoreCard.headline}</span
+                              >
+                            </template>
+                          </div>
+                          <template for:each={scoreCard.notes} for:item="note">
+                            <p key={note.key} class="score-note">
+                              <lightning-formatted-rich-text value={note.text}>
+                              </lightning-formatted-rich-text>
+                            </p>
+                          </template>
                         </div>
-                    </header>
+                      </div>
+                    </article>
+                  </template>
 
-                    <div class="slds-modal__content ai-modal__body">
-                    <template lwc:if={isLoading}>
-                        <div class="page-status">
-                            <img src={Processing} alt="Generating summary" class="loading-logo" />
-                            <p class="loading-message">{loadingMessage}</p>
-                        </div>
-                    </template>
-
-                    <template lwc:elseif={isError}>
-                        <div class="page-status">
-                            <lightning-icon icon-name="utility:error" variant="error" size="small"></lightning-icon>
-                            <p class="status-text status-error">{errorMessage}</p>
-                        </div>
-                    </template>
-
-                    <template lwc:elseif={showEmptyState}>
-                        <div class="page-status">
-                            <p class="status-text">{emptyMessage}</p>
-                        </div>
-                    </template>
-
-                    <template lwc:else>
-                        <div class="ai-grid">
-                            <div class="ai-column">
-                                <template lwc:if={scoreCard}>
-                                    <article class="panel panel_score">
-                                        <h2 class="panel-title">Overall Deal Score</h2>
-                                        <div class="score-layout">
-                                            <template lwc:if={scoreCard.hasValue}>
-                                                <div class="gauge">
-                                                    <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-                                                        <circle class="gauge-track" cx="50" cy="50" r="42"></circle>
-                                                        <circle
-                                                            class={scoreCard.gaugeClass}
-                                                            cx="50"
-                                                            cy="50"
-                                                            r="42"
-                                                            stroke-dasharray={scoreCard.dashArray}
-                                                            stroke-dashoffset={scoreCard.dashOffset}></circle>
-                                                    </svg>
-                                                    <div class="gauge-readout">
-                                                        <span class="gauge-score">{scoreCard.value}</span>
-                                                        <span class="gauge-max">out of {scoreCard.max}</span>
-                                                    </div>
-                                                </div>
-                                            </template>
-
-                                            <div class="score-detail">
-                                                <div class="score-detail__top">
-                                                    <template lwc:if={scoreCard.hasHealthLabel}>
-                                                        <span class={scoreCard.healthClass}>{scoreCard.healthLabel}</span>
-                                                    </template>
-                                                    <template lwc:else>
-                                                        <span class="panel-eyebrow">{scoreCard.headline}</span>
-                                                    </template>
-                                                </div>
-                                                <template for:each={scoreCard.notes} for:item="note">
-                                                    <p key={note.key} class="score-note">{note.text}</p>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </article>
+                  <template lwc:if={executiveFacts.length}>
+                    <article class="panel" data-summary-section="executive">
+                      <h2 class="panel-title">Executive Summary</h2>
+                      <ul class="fact-list">
+                        <template for:each={executiveFacts} for:item="fact">
+                          <li key={fact.key} class="fact-row">
+                            <template lwc:if={fact.hasLabel}>
+                              <span class="fact-label">{fact.label}</span>
+                              <span class="fact-value inline-parts">
+                                <template
+                                  for:each={fact.segments}
+                                  for:item="segment"
+                                >
+                                  <span
+                                    key={segment.key}
+                                    class={segment.cssClass}
+                                  >
+                                    <template lwc:if={segment.isEvidence}>
+                                      <button
+                                        type="button"
+                                        class="evidence-badge"
+                                        data-evidence-id={segment.evidenceId}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleEvidenceClick}
+                                      >
+                                        {segment.label}
+                                      </button>
+                                    </template>
+                                    <template lwc:else>
+                                      <lightning-formatted-rich-text
+                                        value={segment.content}
+                                      >
+                                      </lightning-formatted-rich-text>
+                                    </template>
+                                  </span>
                                 </template>
-
-                                <template lwc:if={executiveFacts.length}>
-                                    <article class="panel">
-                                        <h2 class="panel-title">Executive Summary</h2>
-                                        <ul class="fact-list">
-                                            <template for:each={executiveFacts} for:item="fact">
-                                                <li key={fact.key} class="fact-row">
-                                                    <template lwc:if={fact.hasLabel}>
-                                                        <span class="fact-label">{fact.label}</span>
-                                                        <span class="fact-value">{fact.text}</span>
-                                                    </template>
-                                                    <template lwc:else>
-                                                        <span class="fact-value fact-value_full">{fact.text}</span>
-                                                    </template>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </article>
+                              </span>
+                            </template>
+                            <template lwc:else>
+                              <span
+                                class="fact-value fact-value_full inline-parts"
+                              >
+                                <template
+                                  for:each={fact.segments}
+                                  for:item="segment"
+                                >
+                                  <span
+                                    key={segment.key}
+                                    class={segment.cssClass}
+                                  >
+                                    <template lwc:if={segment.isEvidence}>
+                                      <button
+                                        type="button"
+                                        class="evidence-badge"
+                                        data-evidence-id={segment.evidenceId}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleEvidenceClick}
+                                      >
+                                        {segment.label}
+                                      </button>
+                                    </template>
+                                    <template lwc:else>
+                                      <lightning-formatted-rich-text
+                                        value={segment.content}
+                                      >
+                                      </lightning-formatted-rich-text>
+                                    </template>
+                                  </span>
                                 </template>
+                              </span>
+                            </template>
+                          </li>
+                        </template>
+                      </ul>
+                    </article>
+                  </template>
 
-                                <template lwc:if={hasInsightColumn}>
-                                    <div class="ai-split">
-                                        <template lwc:if={winFactors.length}>
-                                            <article class="panel">
-                                                <h2 class="panel-title panel-title_win">Win Factors</h2>
-                                                <ul class="signal-list signal-list_win">
-                                                    <template for:each={winFactors} for:item="factor">
-                                                        <li key={factor.key}>{factor.text}</li>
-                                                    </template>
-                                                </ul>
-                                            </article>
-                                        </template>
-
-                                        <template lwc:if={riskFlags.length}>
-                                            <article class="panel">
-                                                <h2 class="panel-title panel-title_risk">Risk Flags</h2>
-                                                <ul class="signal-list signal-list_risk">
-                                                    <template for:each={riskFlags} for:item="flag">
-                                                        <li key={flag.key}>{flag.text}</li>
-                                                    </template>
-                                                </ul>
-                                            </article>
-                                        </template>
-                                    </div>
+                  <template lwc:if={hasInsightColumn}>
+                    <div class="ai-split">
+                      <template lwc:if={winFactors.length}>
+                        <article class="panel" data-summary-section="win">
+                          <h2 class="panel-title panel-title_win">
+                            Win Factors
+                          </h2>
+                          <ul class="signal-list signal-list_win">
+                            <template for:each={winFactors} for:item="factor">
+                              <li key={factor.key} class="inline-parts">
+                                <template
+                                  for:each={factor.segments}
+                                  for:item="segment"
+                                >
+                                  <span
+                                    key={segment.key}
+                                    class={segment.cssClass}
+                                  >
+                                    <template lwc:if={segment.isEvidence}>
+                                      <button
+                                        type="button"
+                                        class="evidence-badge"
+                                        data-evidence-id={segment.evidenceId}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleEvidenceClick}
+                                      >
+                                        {segment.label}
+                                      </button>
+                                    </template>
+                                    <template lwc:else>
+                                      <lightning-formatted-rich-text
+                                        value={segment.content}
+                                      >
+                                      </lightning-formatted-rich-text>
+                                    </template>
+                                  </span>
                                 </template>
-                            </div>
+                              </li>
+                            </template>
+                          </ul>
+                        </article>
+                      </template>
 
-                            <div class="ai-column">
-                                <template lwc:if={history.length}>
-                                    <article class="panel">
-                                        <h2 class="panel-title">Opportunity History &amp; Stage Journey</h2>
-
-                                        <template lwc:if={hasStageTrail}>
-                                            <div class="stage-rail">
-                                                <template for:each={stageTrail} for:item="stage">
-                                                    <span key={stage.key} class={stage.chipClass}>
-                                                        <template lwc:if={stage.showCheck}>
-                                                            <span class="stage-check" aria-hidden="true">✓</span>
-                                                        </template>
-                                                        {stage.label}
-                                                    </span>
-                                                </template>
-                                            </div>
-                                        </template>
-
-                                        <ul class="timeline timeline_muted">
-                                            <template for:each={history} for:item="entry">
-                                                <li key={entry.key}>{entry.text}</li>
-                                            </template>
-                                        </ul>
-                                    </article>
+                      <template lwc:if={riskFlags.length}>
+                        <article class="panel" data-summary-section="risk">
+                          <h2 class="panel-title panel-title_risk">
+                            Risk Flags
+                          </h2>
+                          <ul class="signal-list signal-list_risk">
+                            <template for:each={riskFlags} for:item="flag">
+                              <li key={flag.key} class="inline-parts">
+                                <template
+                                  for:each={flag.segments}
+                                  for:item="segment"
+                                >
+                                  <span
+                                    key={segment.key}
+                                    class={segment.cssClass}
+                                  >
+                                    <template lwc:if={segment.isEvidence}>
+                                      <button
+                                        type="button"
+                                        class="evidence-badge"
+                                        data-evidence-id={segment.evidenceId}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleEvidenceClick}
+                                      >
+                                        {segment.label}
+                                      </button>
+                                    </template>
+                                    <template lwc:else>
+                                      <lightning-formatted-rich-text
+                                        value={segment.content}
+                                      >
+                                      </lightning-formatted-rich-text>
+                                    </template>
+                                  </span>
                                 </template>
-
-                                <template lwc:if={nextActions.length}>
-                                    <article class="panel">
-                                        <h2 class="panel-title">Next Best Actions</h2>
-                                        <ol class="action-list">
-                                            <template for:each={nextActions} for:item="action">
-                                                <li key={action.key} class="action-card">
-                                                    <span class="action-number">{action.number}</span>
-                                                    <p class="action-text">{action.text}</p>
-                                                </li>
-                                            </template>
-                                        </ol>
-                                    </article>
-                                </template>
-
-                                <template lwc:if={closePlan.length}>
-                                    <article class="panel">
-                                        <h2 class="panel-title">Close Plan</h2>
-                                        <ul class="timeline">
-                                            <template for:each={closePlan} for:item="step">
-                                                <li key={step.key}>
-                                                    <template lwc:if={step.hasLabel}>
-                                                        <span class="timeline-label">{step.label}</span>
-                                                    </template>
-                                                    <span class="timeline-text">{step.text}</span>
-                                                </li>
-                                            </template>
-                                        </ul>
-                                    </article>
-                                </template>
-
-                                <template for:each={extraSections} for:item="section">
-                                    <article key={section.key} class="panel">
-                                        <h2 class="panel-title">{section.title}</h2>
-                                        <ul class="signal-list">
-                                            <template for:each={section.items} for:item="item">
-                                                <li key={item.key}>{item.text}</li>
-                                            </template>
-                                        </ul>
-                                    </article>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
+                              </li>
+                            </template>
+                          </ul>
+                        </article>
+                      </template>
                     </div>
-
+                  </template>
                 </div>
-            </section>
-            <div class="slds-backdrop slds-backdrop_open backdrop-animated" onclick={closeModal}></div>
-        </template>
+
+                <div class="ai-column">
+                  <template lwc:if={history.length}>
+                    <article class="panel" data-summary-section="history">
+                      <h2 class="panel-title">
+                        Opportunity History &amp; Stage Journey
+                      </h2>
+
+                      <template lwc:if={hasStageTrail}>
+                        <div class="stage-rail">
+                          <template for:each={stageTrail} for:item="stage">
+                            <span key={stage.key} class={stage.chipClass}>
+                              <template lwc:if={stage.showCheck}>
+                                <span class="stage-check" aria-hidden="true"
+                                  >✓</span
+                                >
+                              </template>
+                              {stage.label}
+                            </span>
+                          </template>
+                        </div>
+                      </template>
+
+                      <ul class="timeline timeline_muted">
+                        <template for:each={history} for:item="entry">
+                          <li key={entry.key}>
+                            <lightning-formatted-rich-text value={entry.text}>
+                            </lightning-formatted-rich-text>
+                          </li>
+                        </template>
+                      </ul>
+                    </article>
+                  </template>
+
+                  <template lwc:if={nextActions.length}>
+                    <article class="panel" data-summary-section="actions">
+                      <h2 class="panel-title">Next Best Actions</h2>
+                      <ol class="action-list">
+                        <template for:each={nextActions} for:item="action">
+                          <li key={action.key} class="action-card">
+                            <span class="action-number">{action.number}</span>
+                            <p class="action-text inline-parts">
+                              <template
+                                for:each={action.segments}
+                                for:item="segment"
+                              >
+                                <span
+                                  key={segment.key}
+                                  class={segment.cssClass}
+                                >
+                                  <template lwc:if={segment.isEvidence}>
+                                    <button
+                                      type="button"
+                                      class="evidence-badge"
+                                      data-evidence-id={segment.evidenceId}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleEvidenceClick}
+                                    >
+                                      {segment.label}
+                                    </button>
+                                  </template>
+                                  <template lwc:else>
+                                    <lightning-formatted-rich-text
+                                      value={segment.content}
+                                    >
+                                    </lightning-formatted-rich-text>
+                                  </template>
+                                </span>
+                              </template>
+                            </p>
+                          </li>
+                        </template>
+                      </ol>
+                    </article>
+                  </template>
+
+                  <template lwc:if={closePlan.length}>
+                    <article class="panel" data-summary-section="plan">
+                      <h2 class="panel-title">Close Plan</h2>
+                      <ul class="timeline">
+                        <template for:each={closePlan} for:item="step">
+                          <li key={step.key}>
+                            <template lwc:if={step.hasLabel}>
+                              <span class="timeline-label">{step.label}</span>
+                            </template>
+                            <span class="timeline-text inline-parts">
+                              <template
+                                for:each={step.segments}
+                                for:item="segment"
+                              >
+                                <span
+                                  key={segment.key}
+                                  class={segment.cssClass}
+                                >
+                                  <template lwc:if={segment.isEvidence}>
+                                    <button
+                                      type="button"
+                                      class="evidence-badge"
+                                      data-evidence-id={segment.evidenceId}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleEvidenceClick}
+                                    >
+                                      {segment.label}
+                                    </button>
+                                  </template>
+                                  <template lwc:else>
+                                    <lightning-formatted-rich-text
+                                      value={segment.content}
+                                    >
+                                    </lightning-formatted-rich-text>
+                                  </template>
+                                </span>
+                              </template>
+                            </span>
+                          </li>
+                        </template>
+                      </ul>
+                    </article>
+                  </template>
+
+                  <template for:each={extraSections} for:item="section">
+                    <article
+                      key={section.key}
+                      class="panel"
+                      data-summary-section="extra"
+                    >
+                      <h2 class="panel-title">{section.title}</h2>
+                      <ul class="signal-list">
+                        <template for:each={section.items} for:item="item">
+                          <li key={item.key} class="inline-parts">
+                            <template
+                              for:each={item.segments}
+                              for:item="segment"
+                            >
+                              <span key={segment.key} class={segment.cssClass}>
+                                <template lwc:if={segment.isEvidence}>
+                                  <button
+                                    type="button"
+                                    class="evidence-badge"
+                                    data-evidence-id={segment.evidenceId}
+                                    aria-label={segment.ariaLabel}
+                                    onclick={handleEvidenceClick}
+                                  >
+                                    {segment.label}
+                                  </button>
+                                </template>
+                                <template lwc:else>
+                                  <lightning-formatted-rich-text
+                                    value={segment.content}
+                                  >
+                                  </lightning-formatted-rich-text>
+                                </template>
+                              </span>
+                            </template>
+                          </li>
+                        </template>
+                      </ul>
+                    </article>
+                  </template>
+                </div>
+              </div>
+
+              <template lwc:if={hasPublicResearch}>
+                <details class="panel research-panel" data-public-research open>
+                  <summary class="research-summary">
+                    <span class="research-summary__title"
+                      >Public Research Used</span
+                    >
+                    <span class="research-summary__hint"
+                      >Show or hide research details</span
+                    >
+                  </summary>
+
+                  <div class="research-content">
+                    <p class="research-helper">
+                      Public information used to enrich this opportunity
+                      summary. Public signals do not prove customer
+                      requirements, budget, buying intent, or decision
+                      authority.
+                    </p>
+
+                    <template for:each={researchGroups} for:item="group">
+                      <section
+                        key={group.key}
+                        class="research-group"
+                        data-research-group={group.key}
+                      >
+                        <h3 class="research-group__title">{group.label}</h3>
+                        <div class="research-findings">
+                          <template
+                            for:each={group.findings}
+                            for:item="finding"
+                          >
+                            <article
+                              key={finding.key}
+                              id={finding.domId}
+                              class="research-card"
+                              data-evidence-id={finding.id}
+                              data-research-finding={finding.id}
+                              tabindex="-1"
+                            >
+                              <div class="research-card__header">
+                                <span class="research-id">{finding.id}</span>
+                                <template lwc:if={finding.dateLabel}>
+                                  <span class="research-date"
+                                    >{finding.dateLabel}</span
+                                  >
+                                </template>
+                              </div>
+
+                              <template lwc:if={finding.hasPerson}>
+                                <p class="research-person">
+                                  {finding.personLine}
+                                </p>
+                              </template>
+
+                              <div class="research-field">
+                                <span class="research-field__label"
+                                  >Supported public fact</span
+                                >
+                                <p>{finding.fact}</p>
+                              </div>
+
+                              <template lwc:if={finding.hasRelevance}>
+                                <div
+                                  class="research-field research-field_inference"
+                                >
+                                  <span class="research-field__label"
+                                    >Opportunity relevance</span
+                                  >
+                                  <p>{finding.relevance}</p>
+                                </div>
+                              </template>
+
+                              <template lwc:if={finding.hasSuggestedAction}>
+                                <div
+                                  class="research-field research-field_inference"
+                                >
+                                  <span class="research-field__label"
+                                    >Suggested action</span
+                                  >
+                                  <p>{finding.suggestedAction}</p>
+                                </div>
+                              </template>
+
+                              <template lwc:if={finding.hasSources}>
+                                <div class="finding-sources">
+                                  <span class="research-field__label"
+                                    >Supporting sources</span
+                                  >
+                                  <ul class="source-list source-list_inline">
+                                    <template
+                                      for:each={finding.sources}
+                                      for:item="source"
+                                    >
+                                      <li key={source.key}>
+                                        <template lwc:if={source.hasLink}>
+                                          <a
+                                            data-source-index={source.index}
+                                            href={source.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                          >
+                                            {source.label}
+                                          </a>
+                                        </template>
+                                        <template lwc:else>
+                                          <span
+                                            class="source-disabled"
+                                            data-source-index={source.index}
+                                            aria-disabled="true"
+                                          >
+                                            {source.label}
+                                          </span>
+                                        </template>
+                                      </li>
+                                    </template>
+                                  </ul>
+                                </div>
+                              </template>
+                            </article>
+                          </template>
+                        </div>
+                      </section>
+                    </template>
+
+                    <template lwc:if={researchSourceCount}>
+                      <details
+                        class="research-disclosure"
+                        data-testid="research-sources"
+                      >
+                        <summary>{sourcesLabel}</summary>
+                        <div class="research-disclosure__content">
+                          <template lwc:if={referencedResearchSources.length}>
+                            <h4>Sources referenced by findings</h4>
+                            <ul class="source-list">
+                              <template
+                                for:each={referencedResearchSources}
+                                for:item="source"
+                              >
+                                <li key={source.key}>
+                                  <template lwc:if={source.hasLink}>
+                                    <a
+                                      data-source-index={source.index}
+                                      href={source.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </template>
+                                  <template lwc:else>
+                                    <span
+                                      class="source-disabled"
+                                      data-source-index={source.index}
+                                      aria-disabled="true"
+                                    >
+                                      {source.label}
+                                    </span>
+                                  </template>
+                                </li>
+                              </template>
+                            </ul>
+                          </template>
+                          <template lwc:if={otherResearchSources.length}>
+                            <h4>All research sources</h4>
+                            <ul class="source-list">
+                              <template
+                                for:each={otherResearchSources}
+                                for:item="source"
+                              >
+                                <li key={source.key}>
+                                  <template lwc:if={source.hasLink}>
+                                    <a
+                                      data-source-index={source.index}
+                                      href={source.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {source.label}
+                                    </a>
+                                  </template>
+                                  <template lwc:else>
+                                    <span
+                                      class="source-disabled"
+                                      data-source-index={source.index}
+                                      aria-disabled="true"
+                                    >
+                                      {source.label}
+                                    </span>
+                                  </template>
+                                </li>
+                              </template>
+                            </ul>
+                          </template>
+                        </div>
+                      </details>
+                    </template>
+
+                    <template lwc:if={searchQueries.length}>
+                      <details
+                        class="research-disclosure"
+                        data-testid="research-searches"
+                      >
+                        <summary>{searchesLabel}</summary>
+                        <ul
+                          class="research-disclosure__content search-query-list"
+                        >
+                          <template for:each={searchQueries} for:item="query">
+                            <li key={query.key}>{query.text}</li>
+                          </template>
+                        </ul>
+                      </details>
+                    </template>
+
+                    <template lwc:if={hasSearchSuggestionsMarkup}>
+                      <section
+                        class="search-suggestions"
+                        data-testid="search-suggestions-blocker"
+                      >
+                        <h3>Google Search Suggestions</h3>
+                        <p>{searchSuggestionsLimitation}</p>
+                      </section>
+                    </template>
+                  </div>
+                </details>
+              </template>
+            </template>
+          </div>
+        </div>
+      </section>
+      <div
+        class="slds-backdrop slds-backdrop_open backdrop-animated"
+        onclick={closeModal}
+      ></div>
     </template>
+  </template>
 </template>
