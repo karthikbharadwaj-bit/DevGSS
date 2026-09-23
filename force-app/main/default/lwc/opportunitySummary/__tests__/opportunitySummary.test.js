@@ -31,6 +31,9 @@ jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
 });
 
 const RECORD_ID = "006000000000001AAA";
+const CACHE_KEY = `opportunitySummary:v1:005000000000001AAA:${RECORD_ID}`;
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const MAX_CACHE_BYTES = 512 * 1024;
 const GOOGLE_REDIRECT_URL =
   "https://vertexaisearch.cloud.google.com/grounding-api-redirect/private-token";
 const AI_RESEARCH_DISCLAIMER =
@@ -157,6 +160,29 @@ function response({
   return JSON.stringify(value);
 }
 
+function cachedSummaryEntry(options = {}) {
+  const cachedAt = options.cachedAt ?? Date.now();
+  const cards = options.cards ?? summaryCards();
+  const enrichment = Object.prototype.hasOwnProperty.call(options, "enrichment")
+    ? options.enrichment
+    : publicResearch();
+  const summary = { cards };
+  if (enrichment !== undefined) {
+    summary.opportunity_enrichment = enrichment;
+  }
+  return { cachedAt, summary };
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, resolve, reject };
+}
+
 async function flushPromises() {
   await Promise.resolve();
   await Promise.resolve();
@@ -174,6 +200,7 @@ async function mountComponent() {
 }
 
 async function createComponent(result = response()) {
+  localStorage.removeItem(CACHE_KEY);
   makeGCPCallout.mockResolvedValue(result);
   const element = await mountComponent();
 
@@ -301,6 +328,7 @@ describe("opportunitySummary helpers", () => {
 
 describe("opportunitySummary public research", () => {
   beforeEach(() => {
+    localStorage.clear();
     isOpportunitySummaryEnabled.mockResolvedValue(true);
     logAIHEvent.mockResolvedValue();
   });
@@ -349,6 +377,174 @@ describe("opportunitySummary public research", () => {
 
     expect(element.shadowRoot.querySelector(".slds-modal")).not.toBeNull();
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+  });
+
+  it("restores a cached summary for one hour without calling GCP", async () => {
+    const cachedAt = Date.now() - 30 * 60 * 1000;
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cachedAt,
+          cards: [
+            {
+              title: "Executive Summary",
+              items: ["Source: Restored from the one-hour cache"]
+            }
+          ],
+          enrichment: undefined
+        })
+      )
+    );
+    makeGCPCallout.mockResolvedValue(response());
+
+    const element = await mountComponent();
+
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+    expect(
+      element.shadowRoot.querySelector("[data-summary-ready]")
+    ).not.toBeNull();
+    expect(element.shadowRoot.textContent).toContain(
+      "Generated 30 minutes ago"
+    );
+
+    element.shadowRoot.querySelector("[data-view-summary]").click();
+    await flushPromises();
+    expect(formattedValues(element.shadowRoot)).toContain(
+      "Restored from the one-hour cache"
+    );
+  });
+
+  it("discards expired cache entries and waits for an on-demand request", async () => {
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({ cachedAt: Date.now() - ONE_HOUR_MS - 1 })
+      )
+    );
+    makeGCPCallout.mockResolvedValue(response());
+
+    const element = await mountComponent();
+
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+    expect(
+      element.shadowRoot.querySelector("[data-generate-summary]")
+    ).not.toBeNull();
+  });
+
+  it("ignores malformed cache entries without blocking generation", async () => {
+    localStorage.setItem(CACHE_KEY, "not-json");
+    makeGCPCallout.mockResolvedValue(response());
+
+    const element = await mountComponent();
+
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+    element.shadowRoot.querySelector("[data-generate-summary]").click();
+    await flushPromises();
+    expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+  });
+
+  it("force-invalidates the cache and coalesces duplicate refresh clicks", async () => {
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cards: [
+            {
+              title: "Executive Summary",
+              items: ["Status: Cached summary"]
+            }
+          ],
+          enrichment: undefined
+        })
+      )
+    );
+    const refreshResponse = deferred();
+    makeGCPCallout.mockReturnValue(refreshResponse.promise);
+    const element = await mountComponent();
+    const refreshButton = element.shadowRoot.querySelector(
+      "[data-refresh-summary]"
+    );
+
+    refreshButton.click();
+    refreshButton.click();
+    await flushPromises();
+
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+    expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+    expect(element.shadowRoot.querySelector(".slds-modal")).toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-summary-progress]")
+    ).not.toBeNull();
+
+    refreshResponse.resolve(
+      response({
+        cards: [
+          {
+            title: "Executive Summary",
+            items: ["Status: Freshly regenerated summary"]
+          }
+        ],
+        enrichment: undefined
+      })
+    );
+    await flushPromises();
+
+    const refreshedEntry = JSON.parse(localStorage.getItem(CACHE_KEY));
+    expect(refreshedEntry.summary.cards[0].items).toEqual([
+      "Status: Freshly regenerated summary"
+    ]);
+    expect(
+      element.shadowRoot.querySelector("[data-summary-ready]")
+    ).not.toBeNull();
+  });
+
+  it("caps all Opportunity Summary entries at ten percent of browser storage", async () => {
+    const otherCacheKey =
+      "opportunitySummary:v1:005000000000009AAA:006000000000009AAA";
+    localStorage.setItem(
+      otherCacheKey,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cachedAt: Date.now() - 1000,
+          cards: [
+            {
+              title: "Executive Summary",
+              items: [`Old: ${"o".repeat(140000)}`]
+            }
+          ],
+          enrichment: undefined
+        })
+      )
+    );
+    makeGCPCallout.mockResolvedValue(
+      response({
+        cards: [
+          {
+            title: "Executive Summary",
+            items: [`New: ${"n".repeat(140000)}`]
+          }
+        ],
+        enrichment: undefined
+      })
+    );
+    const element = await mountComponent();
+
+    element.shadowRoot.querySelector("[data-generate-summary]").click();
+    await flushPromises();
+
+    let cachedBytes = 0;
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key.startsWith("opportunitySummary:v1:")) {
+        cachedBytes += (key.length + localStorage.getItem(key).length) * 2;
+      }
+    }
+    expect(cachedBytes).toBeLessThanOrEqual(MAX_CACHE_BYTES);
+    expect(localStorage.getItem(otherCacheKey)).toBeNull();
+    expect(localStorage.getItem(CACHE_KEY)).not.toBeNull();
   });
 
   it("keeps the existing response unchanged when enrichment is absent", async () => {
@@ -820,12 +1016,15 @@ describe("opportunitySummary public research", () => {
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
   });
 
-  it("does not write enrichment or summary data to browser storage", async () => {
-    const localStorageWrite = jest.spyOn(Storage.prototype, "setItem");
-
+  it("caches one raw response without duplicating enrichment sources", async () => {
     await createComponent();
 
-    expect(localStorageWrite).not.toHaveBeenCalled();
-    localStorageWrite.mockRestore();
+    const cachedEntry = JSON.parse(localStorage.getItem(CACHE_KEY));
+    expect(cachedEntry.cachedAt).toEqual(expect.any(Number));
+    expect(cachedEntry.summary.cards).toEqual(summaryCards());
+    expect(cachedEntry.summary.opportunity_enrichment).toEqual(
+      publicResearch()
+    );
+    expect(cachedEntry.summary.opportunity_enrichment.sources).toHaveLength(5);
   });
 });

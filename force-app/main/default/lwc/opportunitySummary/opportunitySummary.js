@@ -41,6 +41,11 @@ const SEARCH_SUGGESTIONS_LIMITATION =
   "Google Search Suggestions aren’t shown because Lightning Web Security sanitizes HTML and SVG strings inserted into the DOM. Showing the supplied markup would change it.";
 const AI_RESEARCH_DISCLAIMER =
   "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
+const CACHE_KEY_PREFIX = "opportunitySummary:v1";
+const CACHE_STORAGE_PREFIX = `${CACHE_KEY_PREFIX}:`;
+const CACHE_USER_KEY_PREFIX = `${CACHE_KEY_PREFIX}:${USER_ID}:`;
+const CACHE_TTL_MS = 60 * 60 * 1000;
+const CACHE_MAX_BYTES = 512 * 1024;
 
 const RESEARCH_GROUPS = [
   { kind: "leadership", label: "Current Leadership" },
@@ -111,6 +116,11 @@ function isObject(value) {
 
 function stringValue(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function storageEntryBytes(key, value) {
+  // Web Storage strings use UTF-16 code units. Include both key and value.
+  return (key.length + value.length) * 2;
 }
 
 function normalizedSourceIndex(value) {
@@ -574,6 +584,7 @@ function healthVariant(label) {
 
 export default class OpportunitySummary extends LightningElement {
   _recordId;
+  _isConnected = false;
 
   aiInsightsLogo = aiInsightsLogo;
   loggedInUserId = USER_ID;
@@ -647,12 +658,19 @@ export default class OpportunitySummary extends LightningElement {
     this._stopLoadingMessages();
     this._unbindEscape();
     this._resetSections();
+    if (this._isConnected && this.isFeatureEnabled) {
+      this.restoreCachedSummary();
+    }
   }
 
   connectedCallback() {
+    this._isConnected = true;
     isOpportunitySummaryEnabled()
       .then((enabled) => {
         this.isFeatureEnabled = enabled === true;
+        if (this.isFeatureEnabled && this._isConnected) {
+          this.restoreCachedSummary();
+        }
       })
       .catch(() => {
         this.isFeatureEnabled = false;
@@ -751,11 +769,16 @@ export default class OpportunitySummary extends LightningElement {
     return `Sources (${this.researchSourceCount})`;
   }
 
+  get cacheKey() {
+    return `${CACHE_USER_KEY_PREFIX}${this.recordId}`;
+  }
+
   get searchesLabel() {
     return `Searches performed (${this.searchQueries.length})`;
   }
 
   disconnectedCallback() {
+    this._isConnected = false;
     this._stopClock();
     this._stopElapsedClock();
     this._stopLoadingMessages();
@@ -784,6 +807,14 @@ export default class OpportunitySummary extends LightningElement {
     this.isModalOpen = false;
     this._unbindEscape();
     this.fetchSummary();
+  }
+
+  handleRefresh() {
+    if (this.isLoading) {
+      return;
+    }
+    this.invalidateCachedSummary();
+    this.startGeneration();
   }
 
   async fetchSummary() {
@@ -828,6 +859,7 @@ export default class OpportunitySummary extends LightningElement {
         this.generatedAt = Date.now();
         this._updateGeneratedLabel();
         this._startClock();
+        this.cacheSummary(parsed, this.generatedAt);
       } else if (parsed && parsed.success === false && parsed.message) {
         this.isError = true;
         this.errorMessage = parsed.message;
@@ -875,6 +907,143 @@ export default class OpportunitySummary extends LightningElement {
     this.generatedAt = null;
     this.generatedLabel = "";
     this.generationElapsedLabel = "00:00 elapsed";
+  }
+
+  restoreCachedSummary() {
+    if (!this.recordId || this.hasFetched || this.isLoading) {
+      return false;
+    }
+
+    const entry = this.readCachedSummary();
+    if (!entry) {
+      return false;
+    }
+
+    this._buildSections(
+      entry.summary.cards,
+      entry.summary.opportunity_enrichment
+    );
+    this.hasFetched = true;
+    this.generatedAt = entry.cachedAt;
+    this._updateGeneratedLabel();
+    this._startClock();
+    return true;
+  }
+
+  readCachedSummary() {
+    try {
+      const serializedEntry = window.localStorage.getItem(this.cacheKey);
+      if (!serializedEntry) {
+        return null;
+      }
+
+      const entry = JSON.parse(serializedEntry);
+      const age = Date.now() - Number(entry.cachedAt);
+      const isValid =
+        Number.isFinite(age) &&
+        age >= 0 &&
+        age < CACHE_TTL_MS &&
+        isObject(entry.summary) &&
+        Array.isArray(entry.summary.cards);
+
+      if (isValid) {
+        return entry;
+      }
+      window.localStorage.removeItem(this.cacheKey);
+    } catch {
+      try {
+        window.localStorage.removeItem(this.cacheKey);
+      } catch {
+        // Storage is unavailable, so there is nothing else to clean up.
+      }
+    }
+    return null;
+  }
+
+  cacheSummary(parsedResponse, cachedAt) {
+    try {
+      const storage = window.localStorage;
+      const summary = { cards: parsedResponse.cards };
+      if (
+        Object.prototype.hasOwnProperty.call(
+          parsedResponse,
+          "opportunity_enrichment"
+        )
+      ) {
+        summary.opportunity_enrichment = parsedResponse.opportunity_enrichment;
+      }
+      const serializedEntry = JSON.stringify({ cachedAt, summary });
+      const incomingBytes = storageEntryBytes(this.cacheKey, serializedEntry);
+
+      if (incomingBytes > CACHE_MAX_BYTES) {
+        storage.removeItem(this.cacheKey);
+        return;
+      }
+
+      const existingEntries = this.getOpportunitySummaryCacheEntries(
+        this.cacheKey
+      );
+      let totalBytes =
+        incomingBytes +
+        existingEntries.reduce((total, entry) => total + entry.bytes, 0);
+
+      existingEntries.sort((left, right) => left.cachedAt - right.cachedAt);
+      while (totalBytes > CACHE_MAX_BYTES && existingEntries.length) {
+        const oldestEntry = existingEntries.shift();
+        storage.removeItem(oldestEntry.key);
+        totalBytes -= oldestEntry.bytes;
+      }
+
+      storage.setItem(this.cacheKey, serializedEntry);
+    } catch {
+      try {
+        window.localStorage.removeItem(this.cacheKey);
+      } catch {
+        // Storage failures must not prevent a fresh summary from rendering.
+      }
+    }
+  }
+
+  getOpportunitySummaryCacheEntries(excludedKey) {
+    const storage = window.localStorage;
+    const keys = [];
+    const entries = [];
+
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (key && key !== excludedKey && key.startsWith(CACHE_STORAGE_PREFIX)) {
+        keys.push(key);
+      }
+    }
+
+    keys.forEach((key) => {
+      const value = storage.getItem(key);
+      try {
+        const cachedAt = Number(JSON.parse(value).cachedAt);
+        const age = Date.now() - cachedAt;
+        if (!Number.isFinite(age) || age < 0 || age >= CACHE_TTL_MS) {
+          storage.removeItem(key);
+          return;
+        }
+        entries.push({
+          key,
+          cachedAt,
+          bytes: storageEntryBytes(key, value)
+        });
+      } catch {
+        storage.removeItem(key);
+      }
+    });
+
+    return entries;
+  }
+
+  invalidateCachedSummary() {
+    try {
+      window.localStorage.removeItem(this.cacheKey);
+    } catch {
+      // Refresh still proceeds when browser storage is unavailable.
+    }
   }
 
   _buildSections(rawCards, enrichment) {
