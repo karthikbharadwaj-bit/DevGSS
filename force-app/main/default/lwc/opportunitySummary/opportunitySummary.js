@@ -4,7 +4,6 @@ import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
 import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
 import STAGE_NAME_FIELD from "@salesforce/schema/Opportunity.StageName";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
-import Processing from "@salesforce/resourceUrl/Processing";
 import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
 import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
@@ -574,7 +573,6 @@ function healthVariant(label) {
 }
 
 export default class OpportunitySummary extends LightningElement {
-  Processing = Processing;
   _recordId;
 
   aiInsightsLogo = aiInsightsLogo;
@@ -612,12 +610,15 @@ export default class OpportunitySummary extends LightningElement {
 
   generatedAt = null;
   generatedLabel = "";
+  generationElapsedLabel = "00:00 elapsed";
   loadingMessage = LOADING_MESSAGES[0];
 
   stageOptions = [];
   currentStage = null;
 
   _clockId = null;
+  _elapsedClockId = null;
+  _generationStartedAt = null;
   _loadingMessageId = null;
   _escapeHandler = null;
   _findingById = new Map();
@@ -640,11 +641,12 @@ export default class OpportunitySummary extends LightningElement {
     this.isLoading = false;
     this.isError = false;
     this.errorMessage = "";
+    this.isModalOpen = false;
+    this._stopClock();
+    this._stopElapsedClock();
     this._stopLoadingMessages();
+    this._unbindEscape();
     this._resetSections();
-    if (this.isModalOpen && value) {
-      this.fetchSummary();
-    }
   }
 
   connectedCallback() {
@@ -755,33 +757,33 @@ export default class OpportunitySummary extends LightningElement {
 
   disconnectedCallback() {
     this._stopClock();
+    this._stopElapsedClock();
     this._stopLoadingMessages();
     this._unbindEscape();
     this._clearEvidenceHighlight();
   }
 
   openModal() {
+    if (!this.hasFetched || this.isLoading || this.isError) {
+      return;
+    }
     this.isModalOpen = true;
     this._logView();
     this._bindEscape();
-    this._startClock();
-
-    if (!this.hasFetched) {
-      this.fetchSummary();
-    }
   }
 
   closeModal() {
     this.isModalOpen = false;
-    this._stopClock();
     this._unbindEscape();
   }
 
-  handleShowKeydown(event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      this.openModal();
+  startGeneration() {
+    if (this.isLoading) {
+      return;
     }
+    this.isModalOpen = false;
+    this._unbindEscape();
+    this.fetchSummary();
   }
 
   async fetchSummary() {
@@ -795,8 +797,11 @@ export default class OpportunitySummary extends LightningElement {
     this.isLoading = true;
     this.isError = false;
     this.errorMessage = "";
+    this.hasFetched = false;
+    this._stopClock();
     this._resetSections();
     this._startLoadingMessages();
+    this._startElapsedClock();
 
     try {
       const result = await makeGCPCallout({
@@ -822,6 +827,7 @@ export default class OpportunitySummary extends LightningElement {
         this.hasFetched = true;
         this.generatedAt = Date.now();
         this._updateGeneratedLabel();
+        this._startClock();
       } else if (parsed && parsed.success === false && parsed.message) {
         this.isError = true;
         this.errorMessage = parsed.message;
@@ -838,6 +844,7 @@ export default class OpportunitySummary extends LightningElement {
     } finally {
       if (requestToken === this._requestToken) {
         this._stopLoadingMessages();
+        this._stopElapsedClock();
         this.isLoading = false;
       }
     }
@@ -867,6 +874,7 @@ export default class OpportunitySummary extends LightningElement {
     this._clearEvidenceHighlight();
     this.generatedAt = null;
     this.generatedLabel = "";
+    this.generationElapsedLabel = "00:00 elapsed";
   }
 
   _buildSections(rawCards, enrichment) {
@@ -1062,6 +1070,42 @@ export default class OpportunitySummary extends LightningElement {
       clearInterval(this._loadingMessageId);
       this._loadingMessageId = null;
     }
+  }
+
+  _updateGenerationElapsedLabel() {
+    if (!this._generationStartedAt) {
+      this.generationElapsedLabel = "00:00 elapsed";
+      return;
+    }
+
+    const totalSeconds = Math.max(
+      0,
+      Math.floor((Date.now() - this._generationStartedAt) / 1000)
+    );
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    this.generationElapsedLabel = `${String(minutes).padStart(2, "0")}:${String(
+      seconds
+    ).padStart(2, "0")} elapsed`;
+  }
+
+  _startElapsedClock() {
+    this._stopElapsedClock();
+    this._generationStartedAt = Date.now();
+    this._updateGenerationElapsedLabel();
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    this._elapsedClockId = setInterval(
+      () => this._updateGenerationElapsedLabel(),
+      1000
+    );
+  }
+
+  _stopElapsedClock() {
+    if (this._elapsedClockId) {
+      clearInterval(this._elapsedClockId);
+      this._elapsedClockId = null;
+    }
+    this._generationStartedAt = null;
   }
 
   _startClock() {

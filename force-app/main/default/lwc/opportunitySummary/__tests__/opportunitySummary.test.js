@@ -163,16 +163,23 @@ async function flushPromises() {
   await Promise.resolve();
 }
 
-async function createComponent(result = response()) {
-  makeGCPCallout.mockResolvedValue(result);
+async function mountComponent() {
   const element = createElement("c-opportunity-summary", {
     is: OpportunitySummary
   });
   element.recordId = RECORD_ID;
   document.body.appendChild(element);
   await flushPromises();
+  return element;
+}
 
-  element.shadowRoot.querySelector(".toggle-label").click();
+async function createComponent(result = response()) {
+  makeGCPCallout.mockResolvedValue(result);
+  const element = await mountComponent();
+
+  element.shadowRoot.querySelector("[data-generate-summary]").click();
+  await flushPromises();
+  element.shadowRoot.querySelector("[data-view-summary]").click();
   await flushPromises();
   return element;
 }
@@ -303,6 +310,45 @@ describe("opportunitySummary public research", () => {
       document.body.removeChild(document.body.firstChild);
     }
     jest.clearAllMocks();
+  });
+
+  it("runs on demand without opening the modal and presents completed results on demand", async () => {
+    let resolveCallout;
+    makeGCPCallout.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCallout = resolve;
+      })
+    );
+    const element = await mountComponent();
+
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+    const generateButton = element.shadowRoot.querySelector(
+      "[data-generate-summary]"
+    );
+    generateButton.click();
+    await flushPromises();
+
+    expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+    expect(element.shadowRoot.querySelector(".slds-modal")).toBeNull();
+    expect(
+      element.shadowRoot.querySelector("[data-summary-progress]").textContent
+    ).toContain("Building your opportunity brief");
+
+    resolveCallout(response());
+    await flushPromises();
+
+    expect(element.shadowRoot.querySelector(".slds-modal")).toBeNull();
+    const viewButton = element.shadowRoot.querySelector("[data-view-summary]");
+    expect(viewButton.textContent).toContain("View Summary");
+    expect(
+      element.shadowRoot.querySelector("[data-summary-ready]")
+    ).not.toBeNull();
+
+    viewButton.click();
+    await flushPromises();
+
+    expect(element.shadowRoot.querySelector(".slds-modal")).not.toBeNull();
+    expect(makeGCPCallout).toHaveBeenCalledTimes(1);
   });
 
   it("keeps the existing response unchanged when enrichment is absent", async () => {
@@ -768,7 +814,7 @@ describe("opportunitySummary public research", () => {
 
     element.shadowRoot.querySelector(".evidence-badge").click();
     element.shadowRoot.querySelector(".close-button").click();
-    element.shadowRoot.querySelector(".toggle-label").click();
+    element.shadowRoot.querySelector("[data-view-summary]").click();
     await flushPromises();
 
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);

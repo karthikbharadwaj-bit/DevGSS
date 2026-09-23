@@ -1,26 +1,124 @@
 <template>
   <template lwc:if={isFeatureEnabled}>
-    <lightning-card>
+    <article class="summary-launcher" data-summary-launcher>
       <div class="opportunity-summary-header">
-        <img src={aiInsightsLogo} alt="AI Insights" class="header-logo" />
-        <span class="header-title">Opportunity Summary (Beta version)</span>
+        <div class="header-identity">
+          <img src={aiInsightsLogo} alt="" class="header-logo" />
+          <span class="header-title">Opportunity Summary</span>
+        </div>
+        <span class="beta-chip">Beta</span>
       </div>
 
-      <div
-        class="slds-grid slds-grid_align-spread slds-p-around_small toggle-header"
-      >
-        <div
-          class="toggle-label"
-          role="button"
-          tabindex="0"
-          onclick={openModal}
-          onkeydown={handleShowKeydown}
+      <template lwc:if={isLoading}>
+        <section
+          class="launcher-state launcher-state_working"
+          data-summary-progress
+          role="status"
+          aria-live="polite"
         >
-          Show
-        </div>
-        <div class="powered-by">Powered by <strong>AI</strong> ✨</div>
-      </div>
-    </lightning-card>
+          <div class="signal-beacon" aria-hidden="true">
+            <span class="signal-orbit"></span>
+            <span class="signal-core">AI</span>
+          </div>
+          <div class="launcher-copy launcher-copy_working">
+            <p class="launcher-eyebrow">Request in flight</p>
+            <h2 class="launcher-title">Building your opportunity brief</h2>
+            <p class="launcher-message">{loadingMessage}</p>
+            <div class="launcher-meta">
+              <span class="launcher-meta__pill">You can keep working</span>
+              <span class="launcher-meta__pill" aria-hidden="true"
+                >{generationElapsedLabel}</span
+              >
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template lwc:elseif={isError}>
+        <section class="launcher-state launcher-state_error" role="alert">
+          <div class="launcher-status-icon launcher-status-icon_error">
+            <lightning-icon
+              icon-name="utility:error"
+              alternative-text="Error"
+              variant="inverse"
+              size="x-small"
+            ></lightning-icon>
+          </div>
+          <div class="launcher-copy">
+            <p class="launcher-eyebrow">Summary interrupted</p>
+            <h2 class="launcher-title">We couldn’t finish this request</h2>
+            <p class="launcher-message">{errorMessage}</p>
+          </div>
+          <button
+            type="button"
+            class="launcher-action launcher-action_error"
+            data-generate-summary
+            onclick={startGeneration}
+          >
+            Try Again
+          </button>
+        </section>
+      </template>
+
+      <template lwc:elseif={hasFetched}>
+        <section
+          class="launcher-state launcher-state_ready"
+          data-summary-ready
+          role="status"
+          aria-live="polite"
+        >
+          <div class="ready-identity">
+            <div class="launcher-status-icon launcher-status-icon_ready">
+              <lightning-icon
+                icon-name="utility:success"
+                alternative-text="Ready"
+                variant="inverse"
+                size="x-small"
+              ></lightning-icon>
+            </div>
+            <div class="launcher-copy launcher-copy_ready">
+              <p class="launcher-eyebrow">Ready to review</p>
+              <h2 class="launcher-title">Your opportunity summary is ready</h2>
+              <p class="launcher-message">
+                {generatedLabel} · Open whenever you’re ready.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="launcher-action launcher-action_ready"
+            data-view-summary
+            onclick={openModal}
+          >
+            View Summary
+          </button>
+        </section>
+      </template>
+
+      <template lwc:else>
+        <section class="launcher-state launcher-state_idle">
+          <div class="launcher-copy">
+            <p class="launcher-eyebrow">Decision-ready deal intelligence</p>
+            <h2 class="launcher-title">Build a fresh opportunity brief</h2>
+            <p class="launcher-message">
+              Review deal health, risks, stakeholder context, and recommended
+              next steps while continuing to work on this record.
+            </p>
+          </div>
+          <div class="launcher-actions">
+            <button
+              type="button"
+              class="launcher-action"
+              data-generate-summary
+              onclick={startGeneration}
+            >
+              Generate Summary
+            </button>
+            <span class="powered-by">Powered by <strong>AI</strong> ✨</span>
+          </div>
+        </section>
+      </template>
+    </article>
 
     <template lwc:if={isModalOpen}>
       <section
@@ -63,18 +161,7 @@
           </header>
 
           <div class="slds-modal__content ai-modal__body">
-            <template lwc:if={isLoading}>
-              <div class="page-status">
-                <img
-                  src={Processing}
-                  alt="Generating summary"
-                  class="loading-logo"
-                />
-                <p class="loading-message">{loadingMessage}</p>
-              </div>
-            </template>
-
-            <template lwc:elseif={isError}>
+            <template lwc:if={isError}>
               <div class="page-status">
                 <lightning-icon
                   icon-name="utility:error"

@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opportunity Summary Status — Throwaway Prototype</title>
+    <!--
+      THROWAWAY PROTOTYPE
+      Question: How should Opportunity Summary remain noticeable while a long-running
+      request is in progress, then make completion unmistakable without auto-opening?
+    -->
+    <style>
+      :root {
+        --color-page: #d8e7f5;
+        --color-surface: #ffffff;
+        --color-surface-muted: #f3f6f9;
+        --color-border: #c9d3df;
+        --color-ink: #181818;
+        --color-muted: #5c6773;
+        --color-brand: #0176d3;
+        --color-brand-deep: #032d60;
+        --color-signal: #00d4ff;
+        --color-signal-soft: #9cecff;
+        --color-running-start: #032d60;
+        --color-running-end: #075985;
+        --color-success: #2e844a;
+        --color-success-deep: #14532d;
+        --color-success-soft: #e8f7ee;
+        --color-success-ring: #91dbac;
+        --color-error: #ba0517;
+        --color-error-soft: #fef1ee;
+        --color-white: #ffffff;
+        --color-overlay: rgba(3, 45, 96, 0.62);
+        --color-shimmer: rgba(255, 255, 255, 0.16);
+        --color-focus: #ffb75d;
+        --font-display: ui-rounded, "Trebuchet MS", sans-serif;
+        --font-body:
+          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --text-xs: 0.6875rem;
+        --text-sm: 0.8125rem;
+        --text-md: 0.9375rem;
+        --text-lg: 1.125rem;
+        --text-xl: 1.5rem;
+        --weight-medium: 600;
+        --weight-bold: 750;
+        --space-1: 0.25rem;
+        --space-2: 0.5rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.5rem;
+        --space-6: 2rem;
+        --radius-sm: 0.375rem;
+        --radius-md: 0.75rem;
+        --radius-pill: 999px;
+        --border-thin: 1px;
+        --border-accent: 3px;
+        --shadow-card: 0 0.25rem 1rem rgba(3, 45, 96, 0.14);
+        --shadow-running: 0 0.5rem 2rem rgba(0, 166, 221, 0.28);
+        --shadow-success: 0 0.5rem 1.75rem rgba(46, 132, 74, 0.22);
+        --transition-fast: 180ms;
+        --transition-state: 320ms;
+        --animation-orbit: 2.4s;
+        --animation-shimmer: 3.2s;
+        --animation-breathe: 1.8s;
+        --card-width: 31rem;
+        --beacon-size: 4.5rem;
+        --beacon-core: 2.25rem;
+        --control-height: 2.25rem;
+        --header-height: 2.75rem;
+        --content-max: 92rem;
+        --modal-width: 52rem;
+        --z-controls: 10;
+        --z-modal: 20;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 0;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--color-ink);
+        background: var(--color-page);
+        font-family: var(--font-body);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      button:focus-visible {
+        outline: var(--border-accent) solid var(--color-focus);
+        outline-offset: var(--space-1);
+      }
+
+      .prototype-note {
+        padding: var(--space-2) var(--space-4);
+        color: var(--color-white);
+        background: var(--color-brand-deep);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-medium);
+        text-align: center;
+      }
+
+      .record-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+        max-width: var(--content-max);
+        margin: var(--space-3) auto;
+        padding: var(--space-3) var(--space-4);
+        border: var(--border-thin) solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-card);
+      }
+
+      .record-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+
+      .record-icon {
+        display: grid;
+        width: var(--control-height);
+        height: var(--control-height);
+        place-items: center;
+        border-radius: var(--radius-sm);
+        color: var(--color-white);
+        background: #f36f3d;
+        font-weight: var(--weight-bold);
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: var(--color-muted);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-bold);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .record-title h1 {
+        margin: var(--space-1) 0 0;
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(20rem, var(--card-width));
+        gap: var(--space-3);
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding-bottom: calc(var(--space-6) * 3);
+      }
+
+      .workspace,
+      .company-card {
+        border: var(--border-thin) solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-card);
+      }
+
+      .workspace {
+        min-height: 30rem;
+        padding: var(--space-5);
+      }
+
+      .tab-line {
+        display: flex;
+        gap: var(--space-5);
+        padding-bottom: var(--space-3);
+        border-bottom: var(--border-thin) solid var(--color-border);
+        color: var(--color-muted);
+        font-size: var(--text-sm);
+      }
+
+      .tab-line strong {
+        color: var(--color-brand-deep);
+      }
+
+      .skeleton-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+        margin-top: var(--space-5);
+      }
+
+      .skeleton {
+        height: var(--control-height);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-muted);
+      }
+
+      .right-rail {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-3);
+      }
+
+      .summary-card {
+        position: relative;
+        overflow: hidden;
+        border: var(--border-thin) solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-card);
+        transition:
+          border-color var(--transition-state) ease,
+          box-shadow var(--transition-state) ease,
+          background var(--transition-state) ease;
+      }
+
+      .summary-header {
+        display: flex;
+        min-height: var(--header-height);
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-3);
+        padding: var(--space-2) var(--space-4);
+        color: var(--color-white);
+        background: linear-gradient(
+          90deg,
+          var(--color-brand-deep),
+          var(--color-brand)
+        );
+      }
+
+      .summary-identity {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .summary-mark {
+        color: var(--color-signal-soft);
+        font-size: var(--text-xl);
+        line-height: 1;
+      }
+
+      .summary-header h2 {
+        overflow: hidden;
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: var(--text-md);
+        font-weight: var(--weight-bold);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .beta-chip {
+        flex-shrink: 0;
+        padding: var(--space-1) var(--space-2);
+        border-radius: var(--radius-pill);
+        color: var(--color-brand-deep);
+        background: var(--color-white);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-bold);
+      }
+
+      .state-panel {
+        display: none;
+        min-height: 12rem;
+        padding: var(--space-5);
+      }
+
+      .summary-card[data-state="idle"] .state-idle,
+      .summary-card[data-state="working"] .state-working,
+      .summary-card[data-state="ready"] .state-ready,
+      .summary-card[data-state="error"] .state-error {
+        display: flex;
+      }
+
+      .state-idle,
+      .state-error {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: var(--space-3);
+      }
+
+      .state-title {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: var(--text-xl);
+        font-weight: var(--weight-bold);
+        line-height: 1.15;
+      }
+
+      .state-copy {
+        max-width: 35rem;
+        margin: 0;
+        color: var(--color-muted);
+        font-size: var(--text-sm);
+        line-height: 1.5;
+      }
+
+      .primary-action {
+        min-height: var(--control-height);
+        padding: var(--space-2) var(--space-4);
+        border: var(--border-thin) solid transparent;
+        border-radius: var(--radius-sm);
+        color: var(--color-white);
+        background: var(--color-brand);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-bold);
+        cursor: pointer;
+        transition:
+          transform var(--transition-fast) ease,
+          filter var(--transition-fast) ease;
+      }
+
+      .primary-action:hover {
+        filter: brightness(0.9);
+        transform: translateY(calc(var(--space-1) * -0.5));
+      }
+
+      .state-working {
+        position: relative;
+        isolation: isolate;
+        align-items: center;
+        gap: var(--space-4);
+        color: var(--color-white);
+        background: linear-gradient(
+          125deg,
+          var(--color-running-start),
+          var(--color-running-end)
+        );
+      }
+
+      .summary-card[data-state="working"] {
+        border-color: var(--color-signal);
+        box-shadow: var(--shadow-running);
+      }
+
+      .state-working::before {
+        position: absolute;
+        z-index: -1;
+        width: 45%;
+        height: 180%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--color-shimmer),
+          transparent
+        );
+        content: "";
+        transform: rotate(18deg);
+        animation: scan var(--animation-shimmer) linear infinite;
+      }
+
+      .beacon {
+        display: grid;
+        position: relative;
+        flex: 0 0 var(--beacon-size);
+        width: var(--beacon-size);
+        height: var(--beacon-size);
+        place-items: center;
+      }
+
+      .beacon-core {
+        display: grid;
+        z-index: 2;
+        width: var(--beacon-core);
+        height: var(--beacon-core);
+        place-items: center;
+        border: var(--border-thin) solid var(--color-signal-soft);
+        border-radius: var(--radius-pill);
+        color: var(--color-brand-deep);
+        background: var(--color-signal);
+        font-size: var(--text-lg);
+        font-weight: var(--weight-bold);
+        box-shadow: 0 0 var(--space-5) var(--color-signal);
+        animation: breathe var(--animation-breathe) ease-in-out infinite;
+      }
+
+      .orbit {
+        position: absolute;
+        inset: 0;
+        border: var(--border-thin) solid var(--color-signal-soft);
+        border-radius: var(--radius-pill);
+        opacity: 0.66;
+        animation: orbit var(--animation-orbit) linear infinite;
+      }
+
+      .orbit::after {
+        position: absolute;
+        top: calc(var(--space-1) * -1);
+        left: 50%;
+        width: var(--space-2);
+        height: var(--space-2);
+        border-radius: var(--radius-pill);
+        background: var(--color-white);
+        box-shadow: 0 0 var(--space-3) var(--color-signal);
+        content: "";
+      }
+
+      .working-copy {
+        min-width: 0;
+      }
+
+      .working-copy .eyebrow {
+        color: var(--color-signal-soft);
+      }
+
+      .working-copy .state-title {
+        margin-top: var(--space-1);
+      }
+
+      .working-message {
+        min-height: 2.5rem;
+        margin: var(--space-2) 0 0;
+        color: var(--color-white);
+        font-size: var(--text-sm);
+        line-height: 1.5;
+      }
+
+      .working-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+      }
+
+      .meta-pill {
+        padding: var(--space-1) var(--space-2);
+        border: var(--border-thin) solid var(--color-shimmer);
+        border-radius: var(--radius-pill);
+        color: var(--color-white);
+        background: var(--color-shimmer);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-medium);
+      }
+
+      .state-ready {
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+        border-left: var(--border-accent) solid var(--color-success);
+        background: var(--color-success-soft);
+      }
+
+      .summary-card[data-state="ready"] {
+        border-color: var(--color-success-ring);
+        box-shadow: var(--shadow-success);
+      }
+
+      .ready-copy {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: var(--space-3);
+      }
+
+      .ready-check {
+        display: grid;
+        flex: 0 0 var(--beacon-core);
+        width: var(--beacon-core);
+        height: var(--beacon-core);
+        place-items: center;
+        border-radius: var(--radius-pill);
+        color: var(--color-white);
+        background: var(--color-success);
+        font-size: var(--text-lg);
+        font-weight: var(--weight-bold);
+        box-shadow: 0 0 0 var(--space-2) var(--color-success-ring);
+      }
+
+      .ready-text .eyebrow {
+        color: var(--color-success-deep);
+      }
+
+      .ready-text .state-title {
+        margin-top: var(--space-1);
+        color: var(--color-success-deep);
+      }
+
+      .ready-text .state-copy {
+        margin-top: var(--space-2);
+        color: var(--color-success-deep);
+      }
+
+      .state-ready .primary-action {
+        flex-shrink: 0;
+        background: var(--color-success-deep);
+      }
+
+      .state-error {
+        border-left: var(--border-accent) solid var(--color-error);
+        background: var(--color-error-soft);
+      }
+
+      .state-error .eyebrow,
+      .state-error .state-title {
+        color: var(--color-error);
+      }
+
+      .company-card {
+        overflow: hidden;
+      }
+
+      .company-header {
+        padding: var(--space-3) var(--space-4);
+        color: var(--color-brand-deep);
+        background: #9ac9eb;
+        font-family: var(--font-display);
+        font-size: var(--text-md);
+        font-weight: var(--weight-bold);
+      }
+
+      .company-content {
+        padding: var(--space-4);
+      }
+
+      .company-content .skeleton + .skeleton {
+        margin-top: var(--space-2);
+      }
+
+      .prototype-controls {
+        display: flex;
+        position: fixed;
+        z-index: var(--z-controls);
+        right: 50%;
+        bottom: var(--space-4);
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-2);
+        border-radius: var(--radius-pill);
+        color: var(--color-white);
+        background: var(--color-brand-deep);
+        box-shadow: var(--shadow-card);
+        transform: translateX(50%);
+      }
+
+      .prototype-controls span {
+        padding: 0 var(--space-2);
+        font-size: var(--text-xs);
+        font-weight: var(--weight-bold);
+        text-transform: uppercase;
+      }
+
+      .prototype-controls button {
+        min-height: var(--control-height);
+        padding: var(--space-2) var(--space-3);
+        border: var(--border-thin) solid var(--color-shimmer);
+        border-radius: var(--radius-pill);
+        color: var(--color-white);
+        background: transparent;
+        font-size: var(--text-xs);
+        font-weight: var(--weight-bold);
+        cursor: pointer;
+      }
+
+      .prototype-controls button:hover,
+      .prototype-controls button[aria-pressed="true"] {
+        color: var(--color-brand-deep);
+        background: var(--color-white);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: var(--z-modal);
+        inset: 0;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-4);
+        background: var(--color-overlay);
+      }
+
+      .modal.is-open {
+        display: flex;
+      }
+
+      .modal-dialog {
+        width: min(100%, var(--modal-width));
+        overflow: hidden;
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        box-shadow: var(--shadow-card);
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-3) var(--space-4);
+        color: var(--color-white);
+        background: var(--color-brand-deep);
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: var(--text-lg);
+      }
+
+      .modal-header button {
+        width: var(--control-height);
+        height: var(--control-height);
+        border: 0;
+        border-radius: var(--radius-pill);
+        color: var(--color-white);
+        background: var(--color-shimmer);
+        cursor: pointer;
+      }
+
+      .modal-content {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-3);
+        padding: var(--space-4);
+        background: var(--color-surface-muted);
+      }
+
+      .result-block {
+        min-height: 7rem;
+        padding: var(--space-4);
+        border: var(--border-thin) solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+      }
+
+      .result-block strong {
+        color: var(--color-brand-deep);
+      }
+
+      @keyframes orbit {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes breathe {
+        50% {
+          transform: scale(1.08);
+        }
+      }
+
+      @keyframes scan {
+        from {
+          left: -60%;
+        }
+
+        to {
+          left: 120%;
+        }
+      }
+
+      @media (max-width: 48rem) {
+        .shell {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 0 var(--space-3) calc(var(--space-6) * 4);
+        }
+
+        .workspace {
+          display: none;
+        }
+
+        .record-header {
+          margin: var(--space-3);
+        }
+
+        .state-ready {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .prototype-controls {
+          width: calc(100% - var(--space-4));
+          justify-content: center;
+          overflow-x: auto;
+        }
+      }
+
+      @media (max-width: 22.5rem) {
+        .record-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .state-working {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .modal-content,
+        .skeleton-grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="prototype-note">
+      Throwaway design prototype · Use the state controls below to compare the
+      complete request lifecycle
+    </div>
+
+    <header class="record-header">
+      <div class="record-title">
+        <div class="record-icon" aria-hidden="true">$</div>
+        <div>
+          <p class="eyebrow">Opportunity</p>
+          <h1>aaaa</h1>
+        </div>
+      </div>
+      <button class="primary-action" type="button">Edit opportunity</button>
+    </header>
+
+    <main class="shell">
+      <section class="workspace" aria-label="Opportunity details context">
+        <div class="tab-line">
+          <strong>Details</strong><span>Activity</span><span>Chatter</span
+          ><span>Quote</span>
+        </div>
+        <div class="skeleton-grid" aria-hidden="true">
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+          <div class="skeleton"></div>
+        </div>
+      </section>
+
+      <aside class="right-rail" aria-label="Opportunity intelligence">
+        <article id="summary-card" class="summary-card" data-state="working">
+          <header class="summary-header">
+            <div class="summary-identity">
+              <span class="summary-mark" aria-hidden="true">✦</span>
+              <h2>Opportunity Summary</h2>
+            </div>
+            <span class="beta-chip">Beta</span>
+          </header>
+
+          <section class="state-panel state-idle">
+            <p class="eyebrow">Decision-ready deal intelligence</p>
+            <h3 class="state-title">Build a fresh opportunity brief</h3>
+            <p class="state-copy">
+              Review deal health, risks, stakeholder context, and recommended
+              next steps without leaving the record.
+            </p>
+            <button id="generate" class="primary-action" type="button">
+              Generate summary
+            </button>
+          </section>
+
+          <section
+            class="state-panel state-working"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="beacon" aria-hidden="true">
+              <span class="orbit"></span>
+              <span class="beacon-core">AI</span>
+            </div>
+            <div class="working-copy">
+              <p class="eyebrow">Request in flight</p>
+              <h3 class="state-title">Building your opportunity brief</h3>
+              <p id="working-message" class="working-message">
+                Reviewing recent activity and stakeholder engagement…
+              </p>
+              <div class="working-meta">
+                <span class="meta-pill">You can keep working</span>
+                <span id="elapsed" class="meta-pill">00:00 elapsed</span>
+              </div>
+            </div>
+          </section>
+
+          <section
+            class="state-panel state-ready"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="ready-copy">
+              <span class="ready-check" aria-hidden="true">✓</span>
+              <div class="ready-text">
+                <p class="eyebrow">Ready to review</p>
+                <h3 class="state-title">Your opportunity summary is ready</h3>
+                <p class="state-copy">
+                  Completed just now · This highlight remains until opened.
+                </p>
+              </div>
+            </div>
+            <button id="view-summary" class="primary-action" type="button">
+              View summary
+            </button>
+          </section>
+
+          <section class="state-panel state-error" role="alert">
+            <p class="eyebrow">Summary interrupted</p>
+            <h3 class="state-title">We couldn’t finish this request</h3>
+            <p class="state-copy">
+              Your opportunity data is unchanged. Try generating the summary
+              again.
+            </p>
+            <button id="retry" class="primary-action" type="button">
+              Try again
+            </button>
+          </section>
+        </article>
+
+        <section class="company-card" aria-label="Company Intelligence context">
+          <div class="company-header">✦ Company Intelligence</div>
+          <div class="company-content" aria-hidden="true">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <nav class="prototype-controls" aria-label="Prototype state controls">
+      <span>State</span>
+      <button type="button" data-set-state="idle">Idle</button>
+      <button type="button" data-set-state="working">Working</button>
+      <button type="button" data-set-state="ready">Ready</button>
+      <button type="button" data-set-state="error">Error</button>
+    </nav>
+
+    <div
+      id="result-modal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
+      <div class="modal-dialog">
+        <header class="modal-header">
+          <h2 id="modal-title">Opportunity Summary</h2>
+          <button id="close-modal" type="button" aria-label="Close summary">
+            ×
+          </button>
+        </header>
+        <div class="modal-content">
+          <div class="result-block"><strong>Overall Deal Score</strong></div>
+          <div class="result-block"><strong>Opportunity History</strong></div>
+          <div class="result-block"><strong>Executive Summary</strong></div>
+          <div class="result-block"><strong>Next Best Actions</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const card = document.querySelector("#summary-card");
+      const controls = [...document.querySelectorAll("[data-set-state]")];
+      const elapsed = document.querySelector("#elapsed");
+      const workingMessage = document.querySelector("#working-message");
+      const modal = document.querySelector("#result-modal");
+      const messages = [
+        "Reviewing recent activity and stakeholder engagement…",
+        "Mapping stage movement, risks, and win signals…",
+        "Checking public company research and supporting sources…",
+        "Assembling the decision-ready summary…"
+      ];
+      let startedAt = Date.now();
+      let messageIndex = 0;
+
+      function setState(state) {
+        card.dataset.state = state;
+        controls.forEach((button) => {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.setState === state)
+          );
+        });
+        const url = new URL(window.location.href);
+        url.searchParams.set("state", state);
+        window.history.replaceState({}, "", url);
+        if (state === "working") {
+          startedAt = Date.now();
+          messageIndex = 0;
+          workingMessage.textContent = messages[messageIndex];
+        }
+      }
+
+      controls.forEach((button) => {
+        button.addEventListener("click", () =>
+          setState(button.dataset.setState)
+        );
+      });
+
+      document.querySelector("#generate").addEventListener("click", () => {
+        setState("working");
+        window.setTimeout(() => setState("ready"), 12000);
+      });
+      document
+        .querySelector("#retry")
+        .addEventListener("click", () => setState("working"));
+      document.querySelector("#view-summary").addEventListener("click", () => {
+        modal.classList.add("is-open");
+        document.querySelector("#close-modal").focus();
+      });
+      document.querySelector("#close-modal").addEventListener("click", () => {
+        modal.classList.remove("is-open");
+        document.querySelector("#view-summary").focus();
+      });
+
+      window.setInterval(() => {
+        if (card.dataset.state !== "working") return;
+        const totalSeconds = Math.floor((Date.now() - startedAt) / 1000);
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        elapsed.textContent = `${minutes}:${seconds} elapsed`;
+      }, 1000);
+
+      window.setInterval(() => {
+        if (card.dataset.state !== "working") return;
+        messageIndex = (messageIndex + 1) % messages.length;
+        workingMessage.textContent = messages[messageIndex];
+      }, 3200);
+
+      const initialState = new URL(window.location.href).searchParams.get(
+        "state"
+      );
+      setState(
+        ["idle", "working", "ready", "error"].includes(initialState)
+          ? initialState
+          : "working"
+      );
+    </script>
+  </body>
+</html>
