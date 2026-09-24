@@ -63,6 +63,16 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals(1, lineItems.size());
     System.assertEquals('Example Product', lineItems[0].get('productName'));
     System.assertEquals(false, lineItems[0].containsKey('productFamily'));
+    System.assertEquals(false, lineItems[0].containsKey('productSubgroup'));
+    System.assertEquals(false, lineItems[0].containsKey('productGroup'));
+    System.assertEquals(false, lineItems[0].containsKey('productDescription'));
+    System.assertEquals(
+      false,
+      lineItems[0].containsKey('productCatalogDescription')
+    );
+    System.assertEquals(false, lineItems[0].containsKey('productCategoryName'));
+    System.assertEquals(false, lineItems[0].containsKey('licenseGroups'));
+    System.assertEquals(false, lineItems[0].containsKey('serviceCategory'));
     System.assertEquals(false, lineItems[0].containsKey('productCapabilities'));
 
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new FailingParticipantProvider();
@@ -123,12 +133,32 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void mapsProductFamilyWithoutInventingCapabilities() {
+  static void mapsProductCatalogContextWithoutInventingCapabilities() {
     List<Map<String, Object>> populated = GCPCalloutForOpportunitySummary.buildLineItemRows(
-      new List<SObject>{ lineItemWithProduct(true) },
+      new List<SObject>{ lineItemWithProductContext() },
       true
     );
     System.assertEquals('Collaboration', populated[0].get('productFamily'));
+    System.assertEquals('[210] Main', populated[0].get('productSubgroup'));
+    System.assertEquals('[200] Services', populated[0].get('productGroup'));
+    System.assertEquals(
+      'Customer-facing product description',
+      populated[0].get('productDescription')
+    );
+    System.assertEquals(
+      1001,
+      ((String) populated[0].get('productCatalogDescription')).length(),
+      'The existing text limit applies to catalogue descriptions.'
+    );
+    System.assertEquals(
+      'Collaboration Services',
+      populated[0].get('productCategoryName')
+    );
+    System.assertEquals(
+      new List<String>{ 'Core Licenses', 'Digital Lines' },
+      (List<String>) populated[0].get('licenseGroups')
+    );
+    System.assertEquals('OFFICE_LICENSE', populated[0].get('serviceCategory'));
     System.assertEquals(false, populated[0].containsKey('productCapabilities'));
 
     List<Map<String, Object>> unavailable = GCPCalloutForOpportunitySummary.buildLineItemRows(
@@ -136,6 +166,22 @@ private class GCPCalloutForOpportunitySummaryTest {
       true
     );
     System.assertEquals(false, unavailable[0].containsKey('productFamily'));
+    System.assertEquals(false, unavailable[0].containsKey('productSubgroup'));
+    System.assertEquals(false, unavailable[0].containsKey('productGroup'));
+    System.assertEquals(
+      false,
+      unavailable[0].containsKey('productDescription')
+    );
+    System.assertEquals(
+      false,
+      unavailable[0].containsKey('productCatalogDescription')
+    );
+    System.assertEquals(
+      false,
+      unavailable[0].containsKey('productCategoryName')
+    );
+    System.assertEquals(false, unavailable[0].containsKey('licenseGroups'));
+    System.assertEquals(false, unavailable[0].containsKey('serviceCategory'));
     System.assertEquals('Example Product', unavailable[0].get('productName'));
   }
 
@@ -715,6 +761,40 @@ private class GCPCalloutForOpportunitySummaryTest {
     if (includeFamily) {
       productFields.put('Family', 'Collaboration');
     }
+    Map<String, Object> lineItemFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{
+        'type' => 'OpportunityLineItem'
+      },
+      'Id' => LINE_ITEM_ID,
+      'Name' => 'Example Product',
+      'Product2Id' => PRODUCT_ID,
+      'Quantity' => 25,
+      'UnitPrice' => 20,
+      'TotalPrice' => 500,
+      'Discount' => 10,
+      'Description' => 'Commercial description',
+      'Product2' => productFields
+    };
+    return (OpportunityLineItem) JSON.deserialize(
+      JSON.serialize(lineItemFields),
+      OpportunityLineItem.class
+    );
+  }
+
+  private static OpportunityLineItem lineItemWithProductContext() {
+    Map<String, Object> productFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{ 'type' => 'Product2' },
+      'Id' => PRODUCT_ID,
+      'Name' => 'Example Product',
+      'Family' => 'Collaboration',
+      'Subgroup__c' => '[210] Main',
+      'Group__c' => '[200] Services',
+      'Description' => 'Customer-facing product description',
+      'Product_Description__c' => 'p'.repeat(1001),
+      'CategoryName__c' => 'Collaboration Services',
+      'LicenseGroup__c' => 'Core Licenses;Digital Lines;Core Licenses',
+      'ServiceCategory__c' => 'OFFICE_LICENSE'
+    };
     Map<String, Object> lineItemFields = new Map<String, Object>{
       'attributes' => new Map<String, Object>{
         'type' => 'OpportunityLineItem'

@@ -111,10 +111,16 @@ public with sharing class GCPCalloutForOpportunitySummary {
     System.debug(
       'Opportunity Summary request bytes:: ' + Blob.valueOf(requestBody).size()
     );
+    System.debug(
+      'Opportunity Summary request body:: ' + Json.serialize(requestBody)
+    );
 
     Http h = new Http();
     HttpResponse res = h.send(req);
     System.debug('Opportunity Summary response status::' + res.getStatusCode());
+    System.debug(
+      'Opportunity Summary response body::' + json.serialize(res.getBody())
+    );
 
     if (res.getStatusCode() != 200) {
       throw new CalloutException(
@@ -732,7 +738,18 @@ public with sharing class GCPCalloutForOpportunitySummary {
     List<SObject> lineItems = stripReadable(
       new OpportunityLineItemSelector()
         .selectLineItemsByOpportunityIdForSummary(recordId)
-        .selectFields(new List<String>{ 'Product2.Family' })
+        .selectFields(
+          new List<String>{
+            'Product2.Family',
+            'Product2.Subgroup__c',
+            'Product2.Group__c',
+            'Product2.Description',
+            'Product2.Product_Description__c',
+            'Product2.CategoryName__c',
+            'Product2.LicenseGroup__c',
+            'Product2.ServiceCategory__c'
+          }
+        )
         .setLimit(MAX_LINE_ITEMS + 1)
         .executeQuery()
     );
@@ -765,10 +782,60 @@ public with sharing class GCPCalloutForOpportunitySummary {
       };
       if (enrichmentEnabled) {
         putIfPresent(row, 'productFamily', readableField(product, 'Family'));
+        putIfPresent(
+          row,
+          'productSubgroup',
+          readableField(product, 'Subgroup__c')
+        );
+        putIfPresent(row, 'productGroup', readableField(product, 'Group__c'));
+        putIfPresent(
+          row,
+          'productDescription',
+          truncateText((String) readableField(product, 'Description'))
+        );
+        putIfPresent(
+          row,
+          'productCatalogDescription',
+          truncateText(
+            (String) readableField(product, 'Product_Description__c')
+          )
+        );
+        putIfPresent(
+          row,
+          'productCategoryName',
+          readableField(product, 'CategoryName__c')
+        );
+        List<String> licenseGroups = splitMultiSelect(
+          readableField(product, 'LicenseGroup__c')
+        );
+        if (!licenseGroups.isEmpty()) {
+          row.put('licenseGroups', licenseGroups);
+        }
+        putIfPresent(
+          row,
+          'serviceCategory',
+          readableField(product, 'ServiceCategory__c')
+        );
       }
       rows.add(row);
     }
     return rows;
+  }
+
+  private static List<String> splitMultiSelect(Object rawValue) {
+    List<String> values = new List<String>();
+    if (!(rawValue instanceof String) || String.isBlank((String) rawValue)) {
+      return values;
+    }
+
+    Set<String> seen = new Set<String>();
+    for (String candidate : ((String) rawValue).split(';')) {
+      String normalized = candidate == null ? null : candidate.trim();
+      if (String.isNotBlank(normalized) && seen.add(normalized)) {
+        values.add(normalized);
+      }
+    }
+    return values;
   }
 
   public virtual class ActivityParticipantProvider {
