@@ -63,6 +63,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals(1, lineItems.size());
     System.assertEquals('Example Product', lineItems[0].get('productName'));
     System.assertEquals(false, lineItems[0].containsKey('productFamily'));
+    System.assertEquals(false, lineItems[0].containsKey('productLine'));
     System.assertEquals(false, lineItems[0].containsKey('productSubgroup'));
     System.assertEquals(false, lineItems[0].containsKey('productGroup'));
     System.assertEquals(false, lineItems[0].containsKey('productDescription'));
@@ -119,9 +120,11 @@ private class GCPCalloutForOpportunitySummaryTest {
       true
     );
     System.assertEquals(
-      'https://www.example.invalid',
+      'https://www.example.com',
       populated.get('accountWebsite')
     );
+    System.assertEquals('Technology', populated.get('accountIndustry'));
+    System.assertEquals('United States', populated.get('accountCountry'));
     System.assertEquals('California', populated.get('accountState'));
 
     Map<String, Object> inaccessible = GCPCalloutForOpportunitySummary.buildOpportunityMap(
@@ -133,12 +136,153 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  static void mapsCampaignDerivedProductAndValidatedWebsiteFallback() {
+    Opportunity fallbackOpportunity = opportunityWithIdentity(
+      ' Example Co ',
+      null,
+      'https://research.example.com/company?tracking=1#overview',
+      ' RingCX '
+    );
+    Map<String, Object> fallback = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      fallbackOpportunity,
+      true
+    );
+
+    System.assertEquals('Example Co', fallback.get('accountName'));
+    System.assertEquals('RingCX', fallback.get('intendedProduct'));
+    System.assertEquals(
+      'https://research.example.com/company',
+      fallback.get('accountWebsite')
+    );
+
+    Opportunity accountWebsitePreferred = opportunityWithIdentity(
+      'Example Co',
+      'https://official.example.com/about?source=crm#company',
+      'https://fallback.example.com',
+      null
+    );
+    Map<String, Object> preferred = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      accountWebsitePreferred,
+      true
+    );
+    System.assertEquals(
+      'https://official.example.com/about',
+      preferred.get('accountWebsite')
+    );
+    System.assertEquals(false, preferred.containsKey('intendedProduct'));
+
+    Opportunity invalidAccountWebsite = opportunityWithIdentity(
+      'Example Co',
+      'javascript:alert(1)',
+      'https://fallback.example.com',
+      null
+    );
+    Map<String, Object> invalid = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      invalidAccountWebsite,
+      true
+    );
+    System.assertEquals(
+      false,
+      invalid.containsKey('accountWebsite'),
+      'Opportunity.Website__c is used only when Account.Website is blank.'
+    );
+  }
+
+  @IsTest
+  static void disablesOnlyEnrichmentForUnresolvedCompanyIdentity() {
+    Opportunity placeholder = opportunityWithIdentity(
+      ' NEW COMPANY ',
+      null,
+      null,
+      null
+    );
+    System.assertEquals(
+      false,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        placeholder
+      )
+    );
+    Map<String, Object> placeholderPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      placeholder,
+      false
+    );
+    System.assertEquals('Example Opportunity', placeholderPayload.get('name'));
+    System.assertEquals(false, placeholderPayload.containsKey('accountName'));
+
+    Opportunity genericDomainWithoutWebsite = opportunityWithIdentity(
+      'yahoo.com',
+      null,
+      null,
+      null
+    );
+    System.assertEquals(
+      false,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        genericDomainWithoutWebsite
+      )
+    );
+
+    Opportunity genericDomainWithWebsite = opportunityWithIdentity(
+      'yahoo.com',
+      'https://verified-company.example.com',
+      null,
+      null
+    );
+    System.assertEquals(
+      true,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        genericDomainWithWebsite
+      )
+    );
+    System.assertEquals(
+      false,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        false,
+        genericDomainWithWebsite
+      ),
+      'Company identity must never override the configured feature toggle.'
+    );
+  }
+
+  @IsTest
+  static void rejectsPrivateCredentialedAndNonHttpWebsites() {
+    System.assertEquals(
+      null,
+      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+        'https://user:secret@example.com'
+      )
+    );
+    System.assertEquals(
+      null,
+      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+        'http://192.168.1.10/internal'
+      )
+    );
+    System.assertEquals(
+      null,
+      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+        'ftp://example.com/file'
+      )
+    );
+    System.assertEquals(
+      'https://www.example.com/public',
+      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+        ' https://www.example.com/public?token=removed#section '
+      )
+    );
+  }
+
+  @IsTest
   static void mapsProductCatalogContextWithoutInventingCapabilities() {
     List<Map<String, Object>> populated = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{ lineItemWithProductContext() },
       true
     );
-    System.assertEquals('Collaboration', populated[0].get('productFamily'));
+    System.assertEquals('Service', populated[0].get('productFamily'));
+    System.assertEquals('Contact Center', populated[0].get('productLine'));
     System.assertEquals('[210] Main', populated[0].get('productSubgroup'));
     System.assertEquals('[200] Services', populated[0].get('productGroup'));
     System.assertEquals(
@@ -166,6 +310,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       true
     );
     System.assertEquals(false, unavailable[0].containsKey('productFamily'));
+    System.assertEquals(false, unavailable[0].containsKey('productLine'));
     System.assertEquals(false, unavailable[0].containsKey('productSubgroup'));
     System.assertEquals(false, unavailable[0].containsKey('productGroup'));
     System.assertEquals(
@@ -183,6 +328,34 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals(false, unavailable[0].containsKey('licenseGroups'));
     System.assertEquals(false, unavailable[0].containsKey('serviceCategory'));
     System.assertEquals('Example Product', unavailable[0].get('productName'));
+
+    List<Map<String, Object>> inactiveFamily = GCPCalloutForOpportunitySummary.buildLineItemRows(
+      new List<SObject>{ lineItemWithProductValues('Overage', ' Main ') },
+      true
+    );
+    System.assertEquals(
+      false,
+      inactiveFamily[0].containsKey('productFamily'),
+      'Inactive or historical family values are not promoted into research context.'
+    );
+    System.assertEquals('Main', inactiveFamily[0].get('productLine'));
+  }
+
+  @IsTest
+  static void mapsMultipleLineItemsWithoutQueriesInTheLoop() {
+    Integer queriesBefore = Limits.getQueries();
+    List<Map<String, Object>> rows = GCPCalloutForOpportunitySummary.buildLineItemRows(
+      new List<SObject>{
+        lineItemWithProductContext(),
+        lineItemWithProductValues('Service', 'Main')
+      },
+      true
+    );
+
+    System.assertEquals(2, rows.size());
+    System.assertEquals('Contact Center', rows[0].get('productLine'));
+    System.assertEquals('Main', rows[1].get('productLine'));
+    System.assertEquals(queriesBefore, Limits.getQueries());
   }
 
   @IsTest
@@ -734,7 +907,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'BillingCountry' => 'United States'
     };
     if (includeOptional) {
-      accountFields.put('Website', 'https://www.example.invalid');
+      accountFields.put('Website', 'https://www.example.com');
       accountFields.put('BillingState', 'California');
     }
     Map<String, Object> opportunityFields = new Map<String, Object>{
@@ -759,7 +932,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Name' => 'Example Product'
     };
     if (includeFamily) {
-      productFields.put('Family', 'Collaboration');
+      productFields.put('Family', 'Service');
     }
     Map<String, Object> lineItemFields = new Map<String, Object>{
       'attributes' => new Map<String, Object>{
@@ -781,12 +954,79 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
   }
 
+  private static Opportunity opportunityWithIdentity(
+    String accountName,
+    String accountWebsite,
+    String opportunityWebsite,
+    String intendedProduct
+  ) {
+    Map<String, Object> accountFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{ 'type' => 'Account' },
+      'Id' => ACCOUNT_ID,
+      'Name' => accountName,
+      'Industry' => 'Technology',
+      'BillingCity' => 'San Mateo',
+      'BillingState' => 'California',
+      'BillingCountry' => 'United States'
+    };
+    if (accountWebsite != null) {
+      accountFields.put('Website', accountWebsite);
+    }
+    Map<String, Object> opportunityFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{ 'type' => 'Opportunity' },
+      'Id' => OPPORTUNITY_ID,
+      'Name' => 'Example Opportunity',
+      'AccountId' => ACCOUNT_ID,
+      'Account' => accountFields
+    };
+    if (opportunityWebsite != null) {
+      opportunityFields.put('Website__c', opportunityWebsite);
+    }
+    if (intendedProduct != null) {
+      opportunityFields.put('Intended_Product__c', intendedProduct);
+    }
+    return (Opportunity) JSON.deserialize(
+      JSON.serialize(opportunityFields),
+      Opportunity.class
+    );
+  }
+
+  private static OpportunityLineItem lineItemWithProductValues(
+    String family,
+    String productLine
+  ) {
+    Map<String, Object> productFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{ 'type' => 'Product2' },
+      'Id' => PRODUCT_ID,
+      'Name' => 'Example Product',
+      'Family' => family,
+      'Sub_Category__c' => productLine
+    };
+    Map<String, Object> lineItemFields = new Map<String, Object>{
+      'attributes' => new Map<String, Object>{
+        'type' => 'OpportunityLineItem'
+      },
+      'Id' => LINE_ITEM_ID,
+      'Name' => 'Example Product',
+      'Product2Id' => PRODUCT_ID,
+      'Quantity' => 1,
+      'UnitPrice' => 1,
+      'TotalPrice' => 1,
+      'Product2' => productFields
+    };
+    return (OpportunityLineItem) JSON.deserialize(
+      JSON.serialize(lineItemFields),
+      OpportunityLineItem.class
+    );
+  }
+
   private static OpportunityLineItem lineItemWithProductContext() {
     Map<String, Object> productFields = new Map<String, Object>{
       'attributes' => new Map<String, Object>{ 'type' => 'Product2' },
       'Id' => PRODUCT_ID,
       'Name' => 'Example Product',
-      'Family' => 'Collaboration',
+      'Family' => 'Service',
+      'Sub_Category__c' => 'Contact Center',
       'Subgroup__c' => '[210] Main',
       'Group__c' => '[200] Services',
       'Description' => 'Customer-facing product description',

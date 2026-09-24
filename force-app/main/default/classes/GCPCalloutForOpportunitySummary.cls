@@ -4,6 +4,28 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final String ENRICHMENT_SWITCH_FIELD = 'Enable_Opportunity_Summary_Enrichment__c';
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
   private static final String RECENT_DAYS_FIELD = 'Opportunity_Summary_Recent_Days__c';
+  private static final Set<String> UNRESOLVED_ACCOUNT_NAMES = new Set<String>{
+    'NEW COMPANY',
+    'FIRST NAME LAST NAME',
+    '[NONE]',
+    'NONE',
+    'RINGCENTRAL / DINS'
+  };
+  private static final Set<String> GENERIC_EMAIL_DOMAINS = new Set<String>{
+    'aol.com',
+    'gmail.com',
+    'hotmail.com',
+    'icloud.com',
+    'live.com',
+    'mac.com',
+    'me.com',
+    'msn.com',
+    'outlook.com',
+    'privaterelay.appleid.com',
+    'proton.me',
+    'protonmail.com',
+    'yahoo.com'
+  };
 
   // Cases closed within this window are sent to the model for trend context.
   private static final Integer RECENTLY_CLOSED_MONTHS = 6;
@@ -150,9 +172,12 @@ public with sharing class GCPCalloutForOpportunitySummary {
     String username,
     Id recordId
   ) {
-    Boolean enrichmentEnabled = isOpportunitySummaryEnrichmentEnabled();
-    Integer recentEvidenceDays = getRecentEvidenceLookbackDays();
     Opportunity opp = getOpportunity(recordId);
+    Boolean enrichmentEnabled = effectiveEnrichmentEnabled(
+      isOpportunitySummaryEnrichmentEnabled(),
+      opp
+    );
+    Integer recentEvidenceDays = getRecentEvidenceLookbackDays();
     // AccountId may have been stripped for FLS; fall back to null (no related account context).
     Id accountId = (Id) readableField(opp, 'AccountId');
 
@@ -224,6 +249,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
           'LastModifiedDate',
           'NextStep',
           'Description',
+          'Intended_Product__c',
+          'Website__c',
           'OwnerId',
           'Owner.Name',
           'AccountId',
@@ -272,17 +299,22 @@ public with sharing class GCPCalloutForOpportunitySummary {
       'ownerId' => readableField(opp, 'OwnerId'),
       'ownerName' => readableField(owner, 'Name'),
       'accountId' => readableField(opp, 'AccountId'),
-      'accountName' => readableField(account, 'Name'),
       'accountIndustry' => readableField(account, 'Industry'),
       'accountCity' => readableField(account, 'BillingCity'),
       'accountCountry' => readableField(account, 'BillingCountry')
     };
+    putIfPresent(opportunityMap, 'accountName', resolvedAccountName(opp));
+    putIfPresent(
+      opportunityMap,
+      'intendedProduct',
+      normalizedText(readableField(opp, 'Intended_Product__c'))
+    );
 
     if (enrichmentEnabled) {
       putIfPresent(
         opportunityMap,
         'accountWebsite',
-        readableField(account, 'Website')
+        resolvedAccountWebsite(opp)
       );
       putIfPresent(
         opportunityMap,
@@ -291,6 +323,112 @@ public with sharing class GCPCalloutForOpportunitySummary {
       );
     }
     return opportunityMap;
+  }
+
+  @TestVisible
+  private static Boolean effectiveEnrichmentEnabled(
+    Boolean configuredValue,
+    Opportunity opp
+  ) {
+    return configuredValue == true && hasUsableCompanyIdentity(opp);
+  }
+
+  private static Boolean hasUsableCompanyIdentity(Opportunity opp) {
+    String accountName = resolvedAccountName(opp);
+    if (String.isBlank(accountName)) {
+      return false;
+    }
+    return !isGenericEmailDomainName(accountName) ||
+      String.isNotBlank(resolvedAccountWebsite(opp));
+  }
+
+  private static String resolvedAccountName(Opportunity opp) {
+    SObject account = readableRelated(opp, 'Account');
+    String accountName = normalizedText(readableField(account, 'Name'));
+    return String.isBlank(accountName) ||
+      UNRESOLVED_ACCOUNT_NAMES.contains(accountName.toUpperCase())
+      ? null
+      : accountName;
+  }
+
+  private static Boolean isGenericEmailDomainName(String accountName) {
+    String normalized = accountName == null
+      ? null
+      : accountName.trim().toLowerCase();
+    if (String.isBlank(normalized)) {
+      return false;
+    }
+    for (String domain : GENERIC_EMAIL_DOMAINS) {
+      if (
+        normalized == domain ||
+        normalized == domain.substringBefore('.') ||
+        normalized.endsWith('@' + domain)
+      ) {
+        return true;
+      }
+    }
+    return normalized.contains('apple private relay');
+  }
+
+  private static String resolvedAccountWebsite(Opportunity opp) {
+    SObject account = readableRelated(opp, 'Account');
+    String accountWebsite = normalizedText(readableField(account, 'Website'));
+    if (String.isNotBlank(accountWebsite)) {
+      return sanitizedPublicWebsite(accountWebsite);
+    }
+    return sanitizedPublicWebsite(
+      normalizedText(readableField(opp, 'Website__c'))
+    );
+  }
+
+  @TestVisible
+  private static String sanitizedPublicWebsite(String rawWebsite) {
+    String candidate = normalizedText(rawWebsite);
+    if (String.isBlank(candidate)) {
+      return null;
+    }
+    try {
+      Url parsed = new Url(candidate);
+      String protocol = parsed.getProtocol()?.toLowerCase();
+      String authority = parsed.getAuthority();
+      String host = parsed.getHost()?.toLowerCase();
+      if (
+        (protocol != 'http' &&
+        protocol != 'https') ||
+        String.isBlank(authority) ||
+        authority.contains('@') ||
+        isInternalWebsiteHost(host)
+      ) {
+        return null;
+      }
+      String path = parsed.getPath();
+      return protocol +
+        '://' +
+        authority.toLowerCase() +
+        (String.isBlank(path) ? '' : path);
+    } catch (Exception ignored) {
+      return null;
+    }
+  }
+
+  private static Boolean isInternalWebsiteHost(String host) {
+    return String.isBlank(host) ||
+      !host.contains('.') ||
+      host == 'localhost' ||
+      host.endsWith('.internal') ||
+      host.endsWith('.invalid') ||
+      host.endsWith('.local') ||
+      host.endsWith('.localhost') ||
+      host.endsWith('.test') ||
+      Pattern.matches('^\\d{1,3}(\\.\\d{1,3}){3}$', host);
+  }
+
+  private static String normalizedText(Object rawValue) {
+    if (!(rawValue instanceof String)) {
+      return null;
+    }
+    String normalized = ((String) rawValue).trim();
+    return String.isBlank(normalized) ? null : normalized;
   }
 
   private static List<Map<String, Object>> getStageHistory(Id recordId) {
@@ -741,6 +879,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         .selectFields(
           new List<String>{
             'Product2.Family',
+            'Product2.Sub_Category__c',
             'Product2.Subgroup__c',
             'Product2.Group__c',
             'Product2.Description',
@@ -781,7 +920,16 @@ public with sharing class GCPCalloutForOpportunitySummary {
         'description' => truncateText((String) readableField(li, 'Description'))
       };
       if (enrichmentEnabled) {
-        putIfPresent(row, 'productFamily', readableField(product, 'Family'));
+        putIfPresent(
+          row,
+          'productFamily',
+          activeProductFamily(readableField(product, 'Family'))
+        );
+        putIfPresent(
+          row,
+          'productLine',
+          normalizedText(readableField(product, 'Sub_Category__c'))
+        );
         putIfPresent(
           row,
           'productSubgroup',
@@ -820,6 +968,22 @@ public with sharing class GCPCalloutForOpportunitySummary {
       rows.add(row);
     }
     return rows;
+  }
+
+  private static String activeProductFamily(Object rawValue) {
+    String candidate = normalizedText(rawValue);
+    if (String.isBlank(candidate)) {
+      return null;
+    }
+    for (
+      Schema.PicklistEntry entry : Product2.Family.getDescribe()
+        .getPicklistValues()
+    ) {
+      if (entry.isActive() && entry.getValue().equalsIgnoreCase(candidate)) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 
   private static List<String> splitMultiSelect(Object rawValue) {
