@@ -38,7 +38,7 @@ Nothing was deployed, committed, pushed, or changed in GCP.
 - `force-app/main/default/lwc/opportunitySummary/opportunitySummary.css` — evidence badge, finding-card, disclosure, focus, and highlight styling.
 - `force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummary.test.js` — helper and component coverage for legacy and enriched response paths.
 - `force-app/main/default/objects/GCP_Feature_Toggle__c/fields/Enable_Opportunity_Summary_Enrichment__c.field-meta.xml` — disabled-by-default hierarchy custom-setting switch.
-- `force-app/main/default/objects/GCP_Feature_Toggle__c/fields/Opportunity_Summary_Recent_Days__c.field-meta.xml` — configurable recent conversation-evidence window, default 90 days.
+- `OpportunitySummaryRecentDays` Custom Label — configurable recent conversation-evidence window, default 90 days. Supersedes runtime reads of the retained `Opportunity_Summary_Recent_Days__c` field. See [label configuration](opportunity-summary-label-configuration.md).
 - `docs/opportunity-summary-enrichment-gcp-handoff.md` — this integration handoff.
 
 ## 3. Exact final JSON contract
@@ -476,7 +476,7 @@ To add transcript or summary sources, Salesforce and GCP owners must agree on th
 Hierarchy custom setting: `GCP_Feature_Toggle__c`
 
 - `Enable_Opportunity_Summary_Enrichment__c` — Checkbox, default `false`. When false, optional enrichment evidence is omitted and the request carries only the new top-level control `enableOpportunitySummaryEnrichment: false`.
-- `Opportunity_Summary_Recent_Days__c` — Number(3,0), default `90`. Accepted runtime range is 1–365; missing, zero, negative, nonnumeric, or greater-than-365 values fall back to 90.
+- `OpportunitySummaryRecentDays` — Custom Label, default `90`. Accepted runtime range is integer 1–365; missing, zero, negative, fractional, nonnumeric, or greater-than-365 values fall back to 90. The legacy `Opportunity_Summary_Recent_Days__c` field is retained but no longer read by this flow; migrate any desired override to the label before deployment.
 
 The existing Opportunity Summary feature switch `Enable_Opportunity_Summary__c`, authentication, endpoint configuration, service account, certificate, token exchange, and redaction flag remain unchanged. No credentials, endpoint URLs, IDs, or environment-specific values were added.
 

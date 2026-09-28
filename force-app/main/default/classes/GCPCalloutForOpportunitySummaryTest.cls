@@ -753,34 +753,434 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void featureSettingDefaultsOffAndConfiguresRecentWindow() {
+  private static void shouldUseLabelWindowWhenLegacySettingDiffers() {
     GCP_Feature_Toggle__c setting = new GCP_Feature_Toggle__c(
       SetupOwnerId = UserInfo.getOrganizationId()
     );
     setting.put('Enable_Opportunity_Summary_Enrichment__c', false);
-    setting.put('Opportunity_Summary_Recent_Days__c', 0);
+    setting.put('Opportunity_Summary_Recent_Days__c', 45);
     insert setting;
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'RecentDays',
+      '30'
+    );
+    String labelMessage = 'The recent evidence label must supersede the legacy setting.';
+    String toggleMessage = 'Enrichment enablement must still honor the existing feature setting.';
 
+    Test.startTest();
+    System.assertEquals(
+      30,
+      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
+      labelMessage
+    );
     System.assertEquals(
       false,
-      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled()
+      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
+      toggleMessage
     );
-    System.assertEquals(
-      90,
-      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays()
-    );
-
     setting.put('Enable_Opportunity_Summary_Enrichment__c', true);
-    setting.put('Opportunity_Summary_Recent_Days__c', 45);
     update setting;
     System.assertEquals(
       true,
-      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled()
+      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
+      toggleMessage
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'RecentDays',
+      '366'
     );
     System.assertEquals(
-      45,
-      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays()
+      90,
+      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
+      'Invalid lookback must use the default.'
     );
+    Test.stopTest();
+    resetTestHooks();
+  }
+
+  @IsTest
+  private static void shouldUseDefaultsWhenNumericLabelsAreInvalid() {
+    String fallbackMessage = 'Malformed or unsafe numeric configuration must use the default.';
+    Test.startTest();
+    for (
+      String raw : new List<String>{
+        null,
+        '',
+        ' ',
+        '0',
+        '-1',
+        '1.5',
+        '51',
+        '50 days',
+        '1e1',
+        '999999999999999999'
+      }
+    ) {
+      System.assertEquals(
+        50,
+        GCPCalloutForOpportunitySummary.parsePositiveInteger(raw, 50, 50),
+        fallbackMessage
+      );
+    }
+    System.assertEquals(
+      1,
+      GCPCalloutForOpportunitySummary.parsePositiveInteger(' 1 ', 50, 50),
+      'The lower bound must be accepted.'
+    );
+    System.assertEquals(
+      50,
+      GCPCalloutForOpportunitySummary.parsePositiveInteger('50', 50, 50),
+      'The upper bound must be accepted.'
+    );
+    System.assertEquals(
+      15,
+      GCPCalloutForOpportunitySummary.parsePositiveInteger('15', 50, 50),
+      'A lower valid cap must be accepted.'
+    );
+    Test.stopTest();
+  }
+
+  @IsTest
+  private static void shouldNormalizeListsAndPreserveFallbackWhenMalformed() {
+    Set<String> fallback = new Set<String>{ 'GMAIL.COM' };
+    String fallbackMessage = 'Invalid domain configuration must retain the safe fallback.';
+    Test.startTest();
+    System.assertEquals(
+      new Set<String>{ 'example.com', 'mail.example.org' },
+      GCPCalloutForOpportunitySummary.parseConfigurationList(
+        ' Example.com\n\nMAIL.EXAMPLE.ORG\r\nexample.com ',
+        fallback,
+        true
+      ),
+      'Lists must normalize case and whitespace and remove duplicates.'
+    );
+    System.assertEquals(
+      new Set<String>{ 'gmail.com' },
+      GCPCalloutForOpportunitySummary.parseConfigurationList(
+        '  ',
+        fallback,
+        true
+      ),
+      fallbackMessage
+    );
+    System.assertEquals(
+      new Set<String>{ 'gmail.com' },
+      GCPCalloutForOpportunitySummary.parseConfigurationList(
+        'example.com\nhttps://unsafe.example.com',
+        fallback,
+        true
+      ),
+      fallbackMessage
+    );
+    Test.stopTest();
+  }
+
+  @IsTest
+  private static void shouldApplyConfiguredIdentityExclusions() {
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'UnresolvedNames',
+      ' Placeholder Customer\nPLACEHOLDER CUSTOMER '
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'GenericEmailDomains',
+      'personal.example'
+    );
+    Test.startTest();
+    System.assertEquals(
+      false,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        opportunityWithIdentity('placeholder customer', null, null, null)
+      ),
+      'Configured placeholder names must disable enrichment.'
+    );
+    System.assertEquals(
+      false,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        opportunityWithIdentity('personal.example', null, null, null)
+      ),
+      'Configured generic domains must require a company website.'
+    );
+    System.assertEquals(
+      true,
+      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+        true,
+        opportunityWithIdentity(
+          'personal.example',
+          'https://company.example',
+          null,
+          null
+        )
+      ),
+      'A usable website must retain the existing identity behavior.'
+    );
+    Test.stopTest();
+    resetTestHooks();
+  }
+
+  @IsTest
+  private static void shouldApplyConfiguredActivityAndConversationCaps() {
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'MaxActivities',
+      '4'
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'MaxConversationItems',
+      '1'
+    );
+    Datetime windowEnd = Datetime.now();
+    List<SObject> tasks = new List<SObject>();
+    Map<Id, List<Map<String, Object>>> participants = new Map<Id, List<Map<String, Object>>>();
+    for (Integer sequence = 1; sequence <= 2; sequence++) {
+      Id taskId = syntheticId('00T', sequence);
+      tasks.add(
+        taskRecord(
+          taskId,
+          CONTACT_ID,
+          USER_ID,
+          true,
+          windowEnd.addHours(-sequence),
+          'Customer discussion'
+        )
+      );
+      participants.put(
+        taskId,
+        participantMap(taskId, CONTACT_ID, 'unknown').get(taskId)
+      );
+    }
+    Test.startTest();
+    String query = GCPCalloutForOpportunitySummary.buildTaskQuery(
+        OPPORTUNITY_ID,
+        windowEnd.addDays(-30)
+      )
+      .setQuery()
+      .getQuery();
+    GCPCalloutForOpportunitySummary.ConversationResult result = GCPCalloutForOpportunitySummary.buildConversationEvidence(
+      tasks,
+      new List<SObject>(),
+      participants,
+      windowEnd.addDays(-30),
+      windowEnd
+    );
+    Test.stopTest();
+    System.assert(
+      query.toLowerCase().contains('limit 5'),
+      'Query must request the configured cap plus one overflow row.'
+    );
+    System.assertEquals(
+      1,
+      result.items.size(),
+      'Conversation cap must come from the label.'
+    );
+    System.assertEquals(
+      true,
+      result.isTruncated,
+      'Coverage must still report truncation under configured caps.'
+    );
+    resetTestHooks();
+  }
+
+  @IsTest
+  private static void shouldApplyLabelLimitsToOutgoingRequest() {
+    new SObjectBuilder(ByPassTrigger__c.SObjectType)
+      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
+      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
+      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
+      .create();
+    new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
+      .setField(
+        GCP_Feature_Toggle__c.SetupOwnerId,
+        UserInfo.getOrganizationId()
+      )
+      .setField(
+        GCP_Feature_Toggle__c.Enable_Opportunity_Summary_Enrichment__c,
+        true
+      )
+      .create();
+    Account account = (Account) new SObjectBuilder(Account.SObjectType)
+      .setField(
+        Account.Name,
+        ValueProviderBuilder.provideUniqueString('Summary company')
+      )
+      .setField(Account.Website, 'https://example.com')
+      .create()
+      .getRecord();
+    List<Opportunity> opportunities = (List<Opportunity>) new SObjectBuilder(
+        Opportunity.SObjectType
+      )
+      .setField(Opportunity.AccountId, account.Id)
+      .setField(Opportunity.CloseDate, Date.today().addDays(30))
+      .quantity(3)
+      .create()
+      .getRecords();
+    Opportunity opportunity = opportunities[0];
+    new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, opportunity.Id)
+      .setField(
+        Task.Subject,
+        ValueProviderBuilder.provideUniqueString('Summary task')
+      )
+      .setField(Task.Status, 'Not Started')
+      .setField(Task.ActivityDate, Date.today())
+      .quantity(2)
+      .create();
+    new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, opportunity.Id)
+      .setField(
+        Event.Subject,
+        ValueProviderBuilder.provideUniqueString('Summary meeting')
+      )
+      .setField(Event.StartDateTime, Datetime.now().addHours(-2))
+      .setField(Event.EndDateTime, Datetime.now().addHours(-1))
+      .setField(
+        Event.Description,
+        'Customer confirmed the next evaluation step.'
+      )
+      .quantity(2)
+      .create();
+
+    for (
+      String suffix : new List<String>{
+        'MaxActivities',
+        'MaxHistoryRows',
+        'MaxOpenCases',
+        'MaxClosedCases',
+        'MaxRelatedOpps',
+        'MaxLineItems',
+        'MaxStakeholders',
+        'MaxConversationItems'
+      }
+    ) {
+      GCPCalloutForOpportunitySummary.configurationOverrides.put(suffix, '1');
+    }
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'TimeoutSeconds',
+      '45'
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'ActivityDays',
+      '30'
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'RecentDays',
+      '14'
+    );
+    GCPCalloutForOpportunitySummary.configurationOverrides.put(
+      'ClosedCaseMonths',
+      '3'
+    );
+    Test.setMock(
+      HttpCalloutMock.class,
+      new ConfiguredSummaryCalloutMock(opportunity.Id)
+    );
+
+    Test.startTest();
+    String rawResult = GCPCalloutForOpportunitySummary.callCloudRun(
+      'summary-test@example.com',
+      opportunity.Id,
+      'test-token',
+      'https://service.example.invalid'
+    );
+    Test.stopTest();
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      rawResult
+    );
+    System.assertEquals(
+      true,
+      result.get('success'),
+      'Configured request must still return the standard summary response.'
+    );
+    resetTestHooks();
+  }
+
+  private class ConfiguredSummaryCalloutMock implements HttpCalloutMock {
+    private Id expectedOpportunityId;
+
+    private ConfiguredSummaryCalloutMock(Id opportunityId) {
+      expectedOpportunityId = opportunityId;
+    }
+
+    public HttpResponse respond(HttpRequest request) {
+      System.assertEquals(
+        'https://service.example.invalid/api/v1/opportunity_summary',
+        request.getEndpoint(),
+        'Configuration must preserve the existing endpoint path.'
+      );
+      Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
+        request.getBody()
+      );
+      System.assertEquals(
+        String.valueOf(expectedOpportunityId),
+        payload.get('recordId'),
+        'Request record must be preserved.'
+      );
+      System.assertEquals(
+        true,
+        payload.get('enableOpportunitySummaryEnrichment'),
+        'Feature toggle must retain its existing behavior.'
+      );
+      Map<String, Object> activities = (Map<String, Object>) payload.get(
+        'activities'
+      );
+      System.assertEquals(
+        1,
+        ((List<Object>) activities.get('tasks')).size(),
+        'Configured activity cap must trim tasks.'
+      );
+      System.assertEquals(
+        1,
+        ((List<Object>) activities.get('events')).size(),
+        'Configured activity cap must trim events.'
+      );
+      System.assertEquals(
+        1,
+        ((List<Object>) payload.get('relatedOpportunities')).size(),
+        'Configured related-opportunity cap must reach SOQL.'
+      );
+      Map<String, Object> coverage = (Map<String, Object>) payload.get(
+        'dataCoverage'
+      );
+      Map<String, Object> activityCoverage = (Map<String, Object>) coverage.get(
+        'activities'
+      );
+      Map<String, Object> conversationCoverage = (Map<String, Object>) coverage.get(
+        'conversations'
+      );
+      System.assertEquals(
+        true,
+        activityCoverage.get('isTruncated'),
+        'Truncated activities must still be reported in data coverage.'
+      );
+      Datetime windowEnd = (Datetime) JSON.deserialize(
+        JSON.serialize(activityCoverage.get('windowEnd')),
+        Datetime.class
+      );
+      Datetime activityStart = (Datetime) JSON.deserialize(
+        JSON.serialize(activityCoverage.get('windowStart')),
+        Datetime.class
+      );
+      Datetime conversationStart = (Datetime) JSON.deserialize(
+        JSON.serialize(conversationCoverage.get('windowStart')),
+        Datetime.class
+      );
+      System.assertEquals(
+        windowEnd.addDays(-30),
+        activityStart,
+        'Activity lookback must use its label.'
+      );
+      System.assertEquals(
+        windowEnd.addDays(-14),
+        conversationStart,
+        'Conversation lookback must use its label.'
+      );
+      HttpResponse response = new HttpResponse();
+      response.setStatusCode(200);
+      response.setBody(
+        '{"body":{"opportunity_summary":{"Executive Summary":["Configured summary"]}}}'
+      );
+      return response;
+    }
   }
 
   @IsTest
@@ -1205,6 +1605,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   private static void resetTestHooks() {
+    GCPCalloutForOpportunitySummary.configurationOverrides.clear();
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new GCPCalloutForOpportunitySummary.ActivityParticipantProvider();
     GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 2 * 1024 * 1024;
   }

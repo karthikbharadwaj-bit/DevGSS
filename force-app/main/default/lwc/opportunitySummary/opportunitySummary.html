@@ -14,8 +14,8 @@
               icon-name="utility:refresh"
               variant="bare-inverse"
               size="small"
-              alternative-text="Refresh Opportunity Summary"
-              title="Refresh Opportunity Summary"
+              alternative-text={labels.refreshButton}
+              title={labels.refreshButton}
               onclick={handleRefresh}
             ></lightning-button-icon>
           </template>
@@ -35,11 +35,11 @@
             <span class="signal-core">AI</span>
           </div>
           <div class="launcher-copy launcher-copy_working">
-            <p class="launcher-eyebrow">Request in flight</p>
-            <h2 class="launcher-title">Building your opportunity brief</h2>
+            <p class="launcher-eyebrow">{labels.workingEyebrow}</p>
+            <h2 class="launcher-title">{labels.workingTitle}</h2>
             <p class="launcher-message">{loadingMessage}</p>
             <div class="launcher-meta">
-              <span class="launcher-meta__pill">You can keep working</span>
+              <span class="launcher-meta__pill">{labels.workingHint}</span>
               <span class="launcher-meta__pill" aria-hidden="true"
                 >{generationElapsedLabel}</span
               >
@@ -53,14 +53,14 @@
           <div class="launcher-status-icon launcher-status-icon_error">
             <lightning-icon
               icon-name="utility:error"
-              alternative-text="Error"
+              alternative-text={labels.errorIcon}
               variant="inverse"
               size="x-small"
             ></lightning-icon>
           </div>
           <div class="launcher-copy">
-            <p class="launcher-eyebrow">Summary interrupted</p>
-            <h2 class="launcher-title">We couldn’t finish this request</h2>
+            <p class="launcher-eyebrow">{labels.errorEyebrow}</p>
+            <h2 class="launcher-title">{labels.errorTitle}</h2>
             <p class="launcher-message">{errorMessage}</p>
           </div>
           <button
@@ -69,7 +69,7 @@
             data-generate-summary
             onclick={startGeneration}
           >
-            Try Again
+            {labels.retryButton}
           </button>
         </section>
       </template>
@@ -85,16 +85,16 @@
             <div class="launcher-status-icon launcher-status-icon_ready">
               <lightning-icon
                 icon-name="utility:success"
-                alternative-text="Ready"
+                alternative-text={labels.readyIcon}
                 variant="inverse"
                 size="x-small"
               ></lightning-icon>
             </div>
             <div class="launcher-copy launcher-copy_ready">
-              <p class="launcher-eyebrow">Ready to review</p>
-              <h2 class="launcher-title">Your opportunity summary is ready</h2>
+              <p class="launcher-eyebrow">{labels.readyEyebrow}</p>
+              <h2 class="launcher-title">{labels.readyTitle}</h2>
               <p class="launcher-message">
-                {generatedLabel} · Open whenever you’re ready.
+                {generatedLabel} · {labels.readyHint}
               </p>
             </div>
           </div>
@@ -104,7 +104,7 @@
             data-view-summary
             onclick={openModal}
           >
-            View Summary
+            {labels.viewButton}
           </button>
         </section>
       </template>
@@ -112,12 +112,9 @@
       <template lwc:else>
         <section class="launcher-state launcher-state_idle">
           <div class="launcher-copy">
-            <p class="launcher-eyebrow">Decision-ready deal intelligence</p>
-            <h2 class="launcher-title">Build a fresh opportunity brief</h2>
-            <p class="launcher-message">
-              Review deal health, risks, stakeholder context, and recommended
-              next steps while continuing to work on this record.
-            </p>
+            <p class="launcher-eyebrow">{labels.idleEyebrow}</p>
+            <h2 class="launcher-title">{labels.idleTitle}</h2>
+            <p class="launcher-message">{labels.idleHint}</p>
           </div>
           <div class="launcher-actions">
             <button
@@ -126,9 +123,11 @@
               data-generate-summary
               onclick={startGeneration}
             >
-              Generate Summary
+              {labels.generateButton}
             </button>
-            <span class="powered-by">Powered by <strong>AI</strong> ✨</span>
+            <span class="powered-by"
+              >{labels.poweredBy} <strong>AI</strong> ✨</span
+            >
           </div>
         </section>
       </template>
@@ -612,12 +611,7 @@
                   </summary>
 
                   <div class="research-content">
-                    <p class="research-helper">
-                      Public information used to enrich this opportunity
-                      summary. Public signals do not prove customer
-                      requirements, budget, buying intent, or decision
-                      authority.
-                    </p>
+                    <p class="research-helper">{labels.researchHelper}</p>
 
                     <template for:each={researchGroups} for:item="group">
                       <section
@@ -838,8 +832,7 @@
                         Additional Company Updates
                       </span>
                       <span class="supplemental-helper">
-                        These public company updates were not linked to the
-                        current opportunity by the AI analysis.
+                        {labels.supplementalHelper}
                       </span>
                     </span>
                     <span class="research-summary__hint">

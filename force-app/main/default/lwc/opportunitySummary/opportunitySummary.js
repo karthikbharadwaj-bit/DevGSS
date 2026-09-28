@@ -9,22 +9,15 @@ import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.mak
 import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
 import isOpportunitySummaryEnabled from "@salesforce/apex/GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled";
 
-const SUBFEATURE = "Opportunity Summary";
-const GENERIC_ERROR =
-  "We're having trouble generating this summary right now. Please try again later.";
-const EMPTY_MESSAGE = "No summary is available for this opportunity yet.";
+import {
+  getCachePolicy,
+  getResearchGroups,
+  getUiLabels,
+  getLoadingMessages,
+  formatLabel
+} from "./opportunitySummaryConfig";
 
-// Progress narration shown under the spinner while the Cloud Run call is in flight.
-const LOADING_MESSAGES = [
-  "Gathering opportunity details and stage history…",
-  "Reviewing recent activities, tasks, and meetings…",
-  "Mapping the buying group and stakeholder engagement…",
-  "Checking related cases and prior opportunities on this account…",
-  "Securing sensitive details with advanced protection checks…",
-  "Activating Gemini to score deal health, risks, and win factors…",
-  "Shaping your next best actions and close plan…",
-  "Almost there — assembling your decision-ready summary."
-];
+const SUBFEATURE = "Opportunity Summary";
 const LOADING_INTERVAL_MS = 3900;
 
 // Circumference of the gauge arc (2 * PI * r) for the r=42 circle in the template.
@@ -37,20 +30,9 @@ const LABEL_MAX_LENGTH = 42;
 const EVIDENCE_ID_PATTERN = /^E\d+$/;
 const EVIDENCE_REFERENCE_PATTERN = /\[(E\d+)\]/g;
 const HIGHLIGHT_DURATION_MS = 1600;
-const SEARCH_SUGGESTIONS_LIMITATION =
-  "Google Search Suggestions aren’t shown because Lightning Web Security sanitizes HTML and SVG strings inserted into the DOM. Showing the supplied markup would change it.";
-const AI_RESEARCH_DISCLAIMER =
-  "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
 const CACHE_KEY_PREFIX = "opportunitySummary:v1";
 const CACHE_STORAGE_PREFIX = `${CACHE_KEY_PREFIX}:`;
 const CACHE_USER_KEY_PREFIX = `${CACHE_KEY_PREFIX}:${USER_ID}:`;
-const CACHE_TTL_MS = 60 * 60 * 1000;
-const CACHE_MAX_BYTES = 512 * 1024;
-
-const RESEARCH_GROUPS = [
-  { kind: "leadership", label: "Current Leadership" },
-  { kind: "priority", label: "Company Direction and Priorities" }
-];
 
 const HEALTH_VARIANTS = [
   {
@@ -237,7 +219,7 @@ export function buildDateLabel(date, dateType) {
   }
 }
 
-export function indexFindings(findings) {
+export function indexFindings(findings, researchGroups = getResearchGroups()) {
   const findingById = new Map();
   if (!Array.isArray(findings)) {
     return findingById;
@@ -252,7 +234,7 @@ export function indexFindings(findings) {
     const fact = stringValue(finding.fact);
     if (
       !EVIDENCE_ID_PATTERN.test(id) ||
-      !RESEARCH_GROUPS.some((group) => group.kind === kind) ||
+      !researchGroups.some((group) => group.kind === kind) ||
       !fact ||
       findingById.has(id)
     ) {
@@ -336,13 +318,17 @@ export function buildResearchViewModel(enrichment) {
   const rawSources = Array.isArray(safeEnrichment.sources)
     ? safeEnrichment.sources
     : [];
-  const rawFindingById = indexFindings(safeEnrichment.findings);
+  const configuredGroups = getResearchGroups();
+  const rawFindingById = indexFindings(
+    safeEnrichment.findings,
+    configuredGroups
+  );
   const sourceByIndex = indexSources(rawSources);
   const referencedIndices = new Set();
   const supplementalReferencedIndices = new Set();
   const findingById = new Map();
   const findingsByKind = new Map(
-    RESEARCH_GROUPS.map((group) => [group.kind, []])
+    configuredGroups.map((group) => [group.kind, []])
   );
 
   rawFindingById.forEach((finding, id) => {
@@ -418,11 +404,13 @@ export function buildResearchViewModel(enrichment) {
   const searchEntryPoint = isObject(safeEnrichment.search_entry_point)
     ? safeEnrichment.search_entry_point
     : {};
-  const researchGroups = RESEARCH_GROUPS.map((group) => ({
-    key: group.kind,
-    label: group.label,
-    findings: findingsByKind.get(group.kind)
-  })).filter((group) => group.findings.length);
+  const researchGroups = configuredGroups
+    .map((group) => ({
+      key: group.kind,
+      label: group.label,
+      findings: findingsByKind.get(group.kind)
+    }))
+    .filter((group) => group.findings.length);
   const supplemental = isObject(safeEnrichment.supplemental_company_updates)
     ? safeEnrichment.supplemental_company_updates
     : {};
@@ -586,6 +574,8 @@ export default class OpportunitySummary extends LightningElement {
   _recordId;
   _isConnected = false;
 
+  labels = getUiLabels();
+  loadingMessages = getLoadingMessages();
   aiInsightsLogo = aiInsightsLogo;
   loggedInUserId = USER_ID;
 
@@ -616,13 +606,13 @@ export default class OpportunitySummary extends LightningElement {
   supplementalUpdates = [];
   hasSupplementalUpdates = false;
   supplementalRelationshipToOpportunity = "";
-  searchSuggestionsLimitation = SEARCH_SUGGESTIONS_LIMITATION;
-  aiResearchDisclaimer = AI_RESEARCH_DISCLAIMER;
+  searchSuggestionsLimitation = this.labels.searchLimitation;
+  aiResearchDisclaimer = this.labels.researchDisclaimer;
 
   generatedAt = null;
   generatedLabel = "";
-  generationElapsedLabel = "00:00 elapsed";
-  loadingMessage = LOADING_MESSAGES[0];
+  generationElapsedLabel = formatLabel(this.labels.elapsed, "00:00");
+  loadingMessage = this.loadingMessages[0];
 
   stageOptions = [];
   currentStage = null;
@@ -721,7 +711,7 @@ export default class OpportunitySummary extends LightningElement {
   }
 
   get emptyMessage() {
-    return EMPTY_MESSAGE;
+    return this.labels.emptyMessage;
   }
 
   get hasInsightColumn() {
@@ -820,7 +810,7 @@ export default class OpportunitySummary extends LightningElement {
   async fetchSummary() {
     if (!this.recordId) {
       this.isError = true;
-      this.errorMessage = "No opportunity record is available.";
+      this.errorMessage = this.labels.missingRecord;
       return;
     }
 
@@ -849,7 +839,7 @@ export default class OpportunitySummary extends LightningElement {
         parsed = JSON.parse(result);
       } catch {
         this.isError = true;
-        this.errorMessage = GENERIC_ERROR;
+        this.errorMessage = this.labels.genericError;
         return;
       }
 
@@ -865,13 +855,14 @@ export default class OpportunitySummary extends LightningElement {
         this.errorMessage = parsed.message;
       } else {
         this.isError = true;
-        this.errorMessage = GENERIC_ERROR;
+        this.errorMessage = this.labels.genericError;
       }
     } catch (error) {
       if (requestToken === this._requestToken) {
         this.isError = true;
         this.errorMessage =
-          (error && error.body && error.body.message) || GENERIC_ERROR;
+          (error && error.body && error.body.message) ||
+          this.labels.genericError;
       }
     } finally {
       if (requestToken === this._requestToken) {
@@ -906,7 +897,7 @@ export default class OpportunitySummary extends LightningElement {
     this._clearEvidenceHighlight();
     this.generatedAt = null;
     this.generatedLabel = "";
-    this.generationElapsedLabel = "00:00 elapsed";
+    this.generationElapsedLabel = formatLabel(this.labels.elapsed, "00:00");
   }
 
   restoreCachedSummary() {
@@ -931,6 +922,7 @@ export default class OpportunitySummary extends LightningElement {
   }
 
   readCachedSummary() {
+    const { ttlMs } = getCachePolicy();
     try {
       const serializedEntry = window.localStorage.getItem(this.cacheKey);
       if (!serializedEntry) {
@@ -942,7 +934,7 @@ export default class OpportunitySummary extends LightningElement {
       const isValid =
         Number.isFinite(age) &&
         age >= 0 &&
-        age < CACHE_TTL_MS &&
+        age < ttlMs &&
         isObject(entry.summary) &&
         Array.isArray(entry.summary.cards);
 
@@ -961,6 +953,7 @@ export default class OpportunitySummary extends LightningElement {
   }
 
   cacheSummary(parsedResponse, cachedAt) {
+    const { maxBytes } = getCachePolicy();
     try {
       const storage = window.localStorage;
       const summary = { cards: parsedResponse.cards };
@@ -975,7 +968,7 @@ export default class OpportunitySummary extends LightningElement {
       const serializedEntry = JSON.stringify({ cachedAt, summary });
       const incomingBytes = storageEntryBytes(this.cacheKey, serializedEntry);
 
-      if (incomingBytes > CACHE_MAX_BYTES) {
+      if (incomingBytes > maxBytes) {
         storage.removeItem(this.cacheKey);
         return;
       }
@@ -988,7 +981,7 @@ export default class OpportunitySummary extends LightningElement {
         existingEntries.reduce((total, entry) => total + entry.bytes, 0);
 
       existingEntries.sort((left, right) => left.cachedAt - right.cachedAt);
-      while (totalBytes > CACHE_MAX_BYTES && existingEntries.length) {
+      while (totalBytes > maxBytes && existingEntries.length) {
         const oldestEntry = existingEntries.shift();
         storage.removeItem(oldestEntry.key);
         totalBytes -= oldestEntry.bytes;
@@ -1005,6 +998,7 @@ export default class OpportunitySummary extends LightningElement {
   }
 
   getOpportunitySummaryCacheEntries(excludedKey) {
+    const { ttlMs } = getCachePolicy();
     const storage = window.localStorage;
     const keys = [];
     const entries = [];
@@ -1021,7 +1015,7 @@ export default class OpportunitySummary extends LightningElement {
       try {
         const cachedAt = Number(JSON.parse(value).cachedAt);
         const age = Date.now() - cachedAt;
-        if (!Number.isFinite(age) || age < 0 || age >= CACHE_TTL_MS) {
+        if (!Number.isFinite(age) || age < 0 || age >= ttlMs) {
           storage.removeItem(key);
           return;
         }
@@ -1208,12 +1202,20 @@ export default class OpportunitySummary extends LightningElement {
 
     const minutes = Math.floor((Date.now() - this.generatedAt) / 60000);
     if (minutes < 1) {
-      this.generatedLabel = "Generated just now";
+      this.generatedLabel = this.labels.generatedNow;
     } else if (minutes < 60) {
-      this.generatedLabel = `Generated ${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+      this.generatedLabel = formatLabel(
+        minutes === 1
+          ? this.labels.generatedMinute
+          : this.labels.generatedMinutes,
+        minutes
+      );
     } else {
       const hours = Math.floor(minutes / 60);
-      this.generatedLabel = `Generated ${hours} hour${hours === 1 ? "" : "s"} ago`;
+      this.generatedLabel = formatLabel(
+        hours === 1 ? this.labels.generatedHour : this.labels.generatedHours,
+        hours
+      );
     }
   }
 
@@ -1223,12 +1225,12 @@ export default class OpportunitySummary extends LightningElement {
     this._stopLoadingMessages();
 
     let index = 0;
-    this.loadingMessage = LOADING_MESSAGES[0];
+    this.loadingMessage = this.loadingMessages[0];
     // eslint-disable-next-line @lwc/lwc/no-async-operation
     this._loadingMessageId = setInterval(() => {
       index += 1;
-      this.loadingMessage = LOADING_MESSAGES[index];
-      if (index >= LOADING_MESSAGES.length - 1) {
+      this.loadingMessage = this.loadingMessages[index];
+      if (index >= this.loadingMessages.length - 1) {
         this._stopLoadingMessages();
       }
     }, LOADING_INTERVAL_MS);
@@ -1243,7 +1245,7 @@ export default class OpportunitySummary extends LightningElement {
 
   _updateGenerationElapsedLabel() {
     if (!this._generationStartedAt) {
-      this.generationElapsedLabel = "00:00 elapsed";
+      this.generationElapsedLabel = formatLabel(this.labels.elapsed, "00:00");
       return;
     }
 
@@ -1253,9 +1255,10 @@ export default class OpportunitySummary extends LightningElement {
     );
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    this.generationElapsedLabel = `${String(minutes).padStart(2, "0")}:${String(
-      seconds
-    ).padStart(2, "0")} elapsed`;
+    this.generationElapsedLabel = formatLabel(
+      this.labels.elapsed,
+      `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+    );
   }
 
   _startElapsedClock() {

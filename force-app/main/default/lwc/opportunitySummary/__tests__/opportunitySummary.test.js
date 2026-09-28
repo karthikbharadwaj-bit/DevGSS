@@ -1,4 +1,9 @@
+import {
+  resetLabels,
+  setLabel
+} from "../../../../../../test/jest-mocks/opportunitySummaryLabels";
 import { createElement } from "lwc";
+import * as summaryConfig from "../opportunitySummaryConfig";
 import OpportunitySummary, {
   buildDateLabel,
   buildResearchViewModel,
@@ -38,6 +43,21 @@ const GOOGLE_REDIRECT_URL =
   "https://vertexaisearch.cloud.google.com/grounding-api-redirect/private-token";
 const AI_RESEARCH_DISCLAIMER =
   "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
+
+function reloadConfiguration() {
+  let configured;
+  jest.isolateModules(() => {
+    configured = require("../opportunitySummaryConfig");
+  });
+  [
+    "getCachePolicy",
+    "getUiLabels",
+    "getResearchGroups",
+    "getLoadingMessages"
+  ].forEach((method) => {
+    jest.spyOn(summaryConfig, method).mockImplementation(configured[method]);
+  });
+}
 
 function publicResearch(overrides = {}) {
   return {
@@ -328,6 +348,7 @@ describe("opportunitySummary helpers", () => {
 
 describe("opportunitySummary public research", () => {
   beforeEach(() => {
+    resetLabels();
     localStorage.clear();
     isOpportunitySummaryEnabled.mockResolvedValue(true);
     logAIHEvent.mockResolvedValue();
@@ -338,6 +359,7 @@ describe("opportunitySummary public research", () => {
       document.body.removeChild(document.body.firstChild);
     }
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   it("runs on demand without opening the modal and presents completed results on demand", async () => {
@@ -377,6 +399,96 @@ describe("opportunitySummary public research", () => {
 
     expect(element.shadowRoot.querySelector(".slds-modal")).not.toBeNull();
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+  });
+
+  it("restores a 90-minute-old summary when the cache label permits two hours", async () => {
+    setLabel("CacheHours", "2");
+    reloadConfiguration();
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cachedAt: Date.now() - 90 * 60 * 1000
+        })
+      )
+    );
+    const element = await mountComponent();
+    expect(
+      element.shadowRoot.querySelector("[data-summary-ready]")
+    ).not.toBeNull();
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+  });
+
+  it("discards a summary when the configured shorter TTL has expired", async () => {
+    setLabel("CacheHours", "0.25");
+    reloadConfiguration();
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cachedAt: Date.now() - 20 * 60 * 1000
+        })
+      )
+    );
+    const element = await mountComponent();
+    expect(
+      element.shadowRoot.querySelector("[data-generate-summary]")
+    ).not.toBeNull();
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+  });
+
+  it("renders fresh results even when a configured smaller cache budget rejects them", async () => {
+    setLabel("CacheMaxKB", "1");
+    reloadConfiguration();
+    const element = await createComponent(response());
+    expect(element.shadowRoot.querySelector(".slds-modal")).not.toBeNull();
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+  });
+
+  it("renders configured UI copy and research kinds without changing the request", async () => {
+    setLabel("GenerateButton", "Prepare brief");
+    setLabel("ReadyTitle", "Your brief is ready");
+    setLabel("ResearchDisclaimer", "Configured research disclaimer");
+    setLabel(
+      "ResearchGroups",
+      JSON.stringify([{ kind: "expansion", label: "Growth news", order: 1 }])
+    );
+    reloadConfiguration();
+    const element = await mountComponent();
+    expect(
+      element.shadowRoot.querySelector("[data-generate-summary]").textContent
+    ).toContain("Prepare brief");
+    makeGCPCallout.mockResolvedValue(
+      response({
+        enrichment: publicResearch({
+          findings: [
+            {
+              id: "E8",
+              kind: "expansion",
+              fact: "A new office opened.",
+              source_indices: [0]
+            }
+          ]
+        })
+      })
+    );
+    element.shadowRoot.querySelector("[data-generate-summary]").click();
+    await flushPromises();
+    expect(element.shadowRoot.textContent).toContain("Your brief is ready");
+    element.shadowRoot.querySelector("[data-view-summary]").click();
+    await flushPromises();
+    expect(
+      element.shadowRoot.querySelector("[data-research-group=expansion]")
+        .textContent
+    ).toContain("Growth news");
+    expect(
+      element.shadowRoot.querySelector("[data-enrichment-disclaimer]")
+        .textContent
+    ).toContain("Configured research disclaimer");
+    expect(makeGCPCallout).toHaveBeenCalledWith({
+      userId: "005000000000001AAA",
+      recordId: RECORD_ID
+    });
   });
 
   it("restores a cached summary for one hour without calling GCP", async () => {
@@ -501,7 +613,7 @@ describe("opportunitySummary public research", () => {
     ).not.toBeNull();
   });
 
-  it("caps all Opportunity Summary entries at ten percent of browser storage", async () => {
+  it("caps all Opportunity Summary entries at the default 512 KiB budget", async () => {
     const otherCacheKey =
       "opportunitySummary:v1:005000000000009AAA:006000000000009AAA";
     localStorage.setItem(

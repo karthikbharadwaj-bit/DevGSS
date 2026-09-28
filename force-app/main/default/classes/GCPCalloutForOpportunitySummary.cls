@@ -3,7 +3,6 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final String ENDPOINT_PATH = '/api/v1/opportunity_summary';
   private static final String ENRICHMENT_SWITCH_FIELD = 'Enable_Opportunity_Summary_Enrichment__c';
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
-  private static final String RECENT_DAYS_FIELD = 'Opportunity_Summary_Recent_Days__c';
   private static final Set<String> UNRESOLVED_ACCOUNT_NAMES = new Set<String>{
     'NEW COMPANY',
     'FIRST NAME LAST NAME',
@@ -28,21 +27,61 @@ public with sharing class GCPCalloutForOpportunitySummary {
   };
 
   // Cases closed within this window are sent to the model for trend context.
-  private static final Integer RECENTLY_CLOSED_MONTHS = 6;
+  private static Integer closedCaseMonths {
+    get {
+      return configuredInteger('ClosedCaseMonths', 6, 24);
+    }
+  }
 
   // Caps keep heap and callout body size in check on busy accounts.
-  private static final Integer ACTIVITY_LOOKBACK_DAYS = 180;
-  private static final Integer MAX_ACTIVITIES = 50;
-  private static final Integer MAX_HISTORY_ROWS = 50;
-  private static final Integer MAX_OPEN_CASES = 50;
-  private static final Integer MAX_CLOSED_CASES = 50;
-  private static final Integer MAX_RELATED_OPPS = 25;
-  private static final Integer MAX_LINE_ITEMS = 50;
-  private static final Integer MAX_STAKEHOLDERS = 25;
+  private static Integer activityLookbackDays {
+    get {
+      return configuredInteger('ActivityDays', 180, 365);
+    }
+  }
+  private static Integer maxActivities {
+    get {
+      return configuredInteger('MaxActivities', 50, 50);
+    }
+  }
+  private static Integer maxHistoryRows {
+    get {
+      return configuredInteger('MaxHistoryRows', 50, 50);
+    }
+  }
+  private static Integer maxOpenCases {
+    get {
+      return configuredInteger('MaxOpenCases', 50, 50);
+    }
+  }
+  private static Integer maxClosedCases {
+    get {
+      return configuredInteger('MaxClosedCases', 50, 50);
+    }
+  }
+  private static Integer maxRelatedOpps {
+    get {
+      return configuredInteger('MaxRelatedOpps', 25, 25);
+    }
+  }
+  private static Integer maxLineItems {
+    get {
+      return configuredInteger('MaxLineItems', 50, 50);
+    }
+  }
+  private static Integer maxStakeholders {
+    get {
+      return configuredInteger('MaxStakeholders', 25, 25);
+    }
+  }
   private static final Integer MAX_DESCRIPTION_LENGTH = 1000;
   private static final Integer DEFAULT_RECENT_EVIDENCE_DAYS = 90;
   private static final Integer MAX_RECENT_EVIDENCE_DAYS = 365;
-  private static final Integer MAX_CONVERSATION_ITEMS = 10;
+  private static Integer maxConversationItems {
+    get {
+      return configuredInteger('MaxConversationItems', 10, 10);
+    }
+  }
   private static final Integer MAX_CONVERSATION_TEXT_LENGTH = 4000;
   private static final Integer MAX_ACTIVITY_RELATIONS = 250;
   private static final Integer MAX_REQUEST_BYTES = 2 * 1024 * 1024;
@@ -56,7 +95,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
   // Technical failures (callout, config, query, parsing) are logged for support and
   // reported to the user with this message only — endpoints, status codes and stack
   // details must never reach the UI.
-  private static final String USER_FACING_ERROR = 'We\'re experiencing a temporary issue with summary generation. Please contact your administrator if this continues.';
+  private static String userFacingError {
+    get {
+      return System.Label.OpportunitySummaryServerError;
+    }
+  }
 
   @AuraEnabled(cacheable=false)
   public static String makeGCPCallout(String userId, String recordId) {
@@ -66,7 +109,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
           LoggingLevel.ERROR,
           'Opportunity Summary called without a record Id.'
         );
-        return errorJson(USER_FACING_ERROR);
+        return errorJson(userFacingError);
       }
 
       String username = getUsername(userId);
@@ -106,6 +149,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     return users.isEmpty() ? null : users[0].Username;
   }
 
+  @TestVisible
   private static String callCloudRun(
     String username,
     Id recordId,
@@ -128,7 +172,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     req.setHeader('Content-Type', 'application/json');
     req.setHeader('Authorization', 'Bearer ' + idToken);
     req.setBody(requestBody);
-    req.setTimeout(120000);
+    req.setTimeout(configuredInteger('TimeoutSeconds', 120, 120) * 1000);
 
     System.debug(
       'Opportunity Summary request bytes:: ' + Blob.valueOf(requestBody).size()
@@ -152,7 +196,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
     String responseBody = res.getBody();
     if (String.isBlank(responseBody)) {
-      return errorJson(USER_FACING_ERROR);
+      return errorJson(userFacingError);
     }
 
     String result = buildResult(JSON.deserializeUntyped(responseBody));
@@ -346,7 +390,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
     SObject account = readableRelated(opp, 'Account');
     String accountName = normalizedText(readableField(account, 'Name'));
     return String.isBlank(accountName) ||
-      UNRESOLVED_ACCOUNT_NAMES.contains(accountName.toUpperCase())
+      configuredList('UnresolvedNames', UNRESOLVED_ACCOUNT_NAMES, false)
+        .contains(accountName.toLowerCase())
       ? null
       : accountName;
   }
@@ -358,7 +403,13 @@ public with sharing class GCPCalloutForOpportunitySummary {
     if (String.isBlank(normalized)) {
       return false;
     }
-    for (String domain : GENERIC_EMAIL_DOMAINS) {
+    for (
+      String domain : configuredList(
+        'GenericEmailDomains',
+        GENERIC_EMAIL_DOMAINS,
+        true
+      )
+    ) {
       if (
         normalized == domain ||
         normalized == domain.substringBefore('.') ||
@@ -437,7 +488,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     List<SObject> histories = stripReadable(
       new OpportunityHistorySelector()
         .selectStageHistoryByOpportunityId(recordId)
-        .setLimit(MAX_HISTORY_ROWS)
+        .setLimit(maxHistoryRows)
         .executeQuery()
     );
     for (Integer i = histories.size() - 1; i >= 0; i--) {
@@ -466,7 +517,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     List<SObject> histories = stripReadable(
       new OpportunityFieldHistorySelector()
         .selectFieldHistoryByOpportunityIdAndFields(recordId, trackedFields)
-        .setLimit(MAX_HISTORY_ROWS)
+        .setLimit(maxHistoryRows)
         .executeQuery()
     );
     for (Integer i = histories.size() - 1; i >= 0; i--) {
@@ -489,11 +540,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Integer recentEvidenceDays
   ) {
     Datetime windowEnd = Datetime.now();
-    Datetime activitySince = windowEnd.addDays(-ACTIVITY_LOOKBACK_DAYS);
+    Datetime activitySince = windowEnd.addDays(-activityLookbackDays);
     List<SObject> tasks = stripReadable(
       buildTaskQuery(recordId, activitySince).executeQuery()
     );
-    Boolean tasksTruncated = trimOverflow(tasks, MAX_ACTIVITIES);
+    Boolean tasksTruncated = trimOverflow(tasks, maxActivities);
     Map<Id, Datetime> taskCompletionTimesById = enrichmentEnabled
       ? loadTaskCompletionTimes(tasks)
       : new Map<Id, Datetime>();
@@ -525,10 +576,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
           new List<Object>{ new Set<Id>{ recordId }, activitySince }
         )
         .addOrdering(Event.StartDateTime, QueryFactory.SortOrder.DESCENDING)
-        .setLimit(MAX_ACTIVITIES + 1)
+        .setLimit(maxActivities + 1)
         .executeQuery()
     );
-    Boolean eventsTruncated = trimOverflow(events, MAX_ACTIVITIES);
+    Boolean eventsTruncated = trimOverflow(events, maxActivities);
 
     Set<Id> ownerIds = new Set<Id>();
     for (SObject sobj : events) {
@@ -589,7 +640,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       .selectFields(new List<String>{ 'Id', 'WhoId', 'IsClosed' })
       .setCondition('WhatId = :bind0 AND CreatedDate >= :bind1')
       .setQueryBindings(new List<Object>{ recordId, activitySince })
-      .setLimit(MAX_ACTIVITIES + 1);
+      .setLimit(maxActivities + 1);
   }
 
   @TestVisible
@@ -773,10 +824,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
           OpportunityContactRole.IsPrimary,
           QueryFactory.SortOrder.DESCENDING
         )
-        .setLimit(MAX_STAKEHOLDERS + 1)
+        .setLimit(maxStakeholders + 1)
         .executeQuery()
     );
-    data.isTruncated = trimOverflow(roles, MAX_STAKEHOLDERS);
+    data.isTruncated = trimOverflow(roles, maxStakeholders);
     for (SObject sobj : roles) {
       OpportunityContactRole r = (OpportunityContactRole) sobj;
       SObject contact = readableRelated(r, 'Contact');
@@ -809,7 +860,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       };
     }
 
-    Date closedSince = Date.today().addMonths(-RECENTLY_CLOSED_MONTHS);
+    Date closedSince = Date.today().addMonths(-closedCaseMonths);
     List<SObject> cases = stripReadable(
       new CaseSelector()
         .selectCases()
@@ -833,7 +884,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         )
         .addOrdering(Case.CreatedDate, QueryFactory.SortOrder.DESCENDING)
         .setQueryBindings(new List<Object>{ accountId, closedSince })
-        .setLimit(MAX_OPEN_CASES + MAX_CLOSED_CASES)
+        .setLimit(maxOpenCases + maxClosedCases)
         .executeQuery()
     );
 
@@ -854,10 +905,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
       // IsClosed may be stripped; treat missing as open so we do not drop the row.
       Boolean isClosed = (Boolean) readableField(c, 'IsClosed');
       if (isClosed == true) {
-        if (recentlyClosed.size() < MAX_CLOSED_CASES) {
+        if (recentlyClosed.size() < maxClosedCases) {
           recentlyClosed.add(row);
         }
-      } else if (openCases.size() < MAX_OPEN_CASES) {
+      } else if (openCases.size() < maxOpenCases) {
         openCases.add(row);
       }
     }
@@ -889,10 +940,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
             'Product2.ServiceCategory__c'
           }
         )
-        .setLimit(MAX_LINE_ITEMS + 1)
+        .setLimit(maxLineItems + 1)
         .executeQuery()
     );
-    data.isTruncated = trimOverflow(lineItems, MAX_LINE_ITEMS);
+    data.isTruncated = trimOverflow(lineItems, maxLineItems);
     data.rows = buildLineItemRows(lineItems, enrichmentEnabled);
     data.isAccessible = OpportunityLineItem.SObjectType.getDescribe()
       .isAccessible();
@@ -1305,7 +1356,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     ConversationResult result = new ConversationResult();
     Boolean textWasTruncated = false;
     for (Integer i = 0; i < candidates.size(); i++) {
-      if (i >= MAX_CONVERSATION_ITEMS) {
+      if (i >= maxConversationItems) {
         result.isTruncated = true;
         break;
       }
@@ -1315,9 +1366,9 @@ public with sharing class GCPCalloutForOpportunitySummary {
       }
     }
     result.isTruncated = result.isTruncated || textWasTruncated;
-    if (candidates.size() > MAX_CONVERSATION_ITEMS && textWasTruncated) {
+    if (candidates.size() > maxConversationItems && textWasTruncated) {
       result.reasonCode = 'item_and_text_limits';
-    } else if (candidates.size() > MAX_CONVERSATION_ITEMS) {
+    } else if (candidates.size() > maxConversationItems) {
       result.reasonCode = 'item_limit';
     } else if (textWasTruncated) {
       result.reasonCode = 'text_limit';
@@ -1752,7 +1803,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         .setCondition('AccountId = :bind0 AND Id != :bind1')
         .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING)
         .setQueryBindings(new List<Object>{ accountId, currentOppId })
-        .setLimit(MAX_RELATED_OPPS)
+        .setLimit(maxRelatedOpps)
         .executeQuery()
     );
     for (SObject sobj : related) {
@@ -1862,7 +1913,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       );
     }
 
-    return errorJson(USER_FACING_ERROR);
+    return errorJson(userFacingError);
   }
 
   private static List<Object> extractCards(Object raw) {
@@ -2005,7 +2056,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       LoggingLevel.ERROR,
       'Opportunity Summary failed: ' + context + '.'
     );
-    return errorJson(USER_FACING_ERROR);
+    return errorJson(userFacingError);
   }
 
   // ---------------- Feature toggle & telemetry ----------------
@@ -2019,22 +2070,94 @@ public with sharing class GCPCalloutForOpportunitySummary {
   }
 
   @TestVisible
-  private static Integer getRecentEvidenceLookbackDays() {
-    GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
-    Object configuredValue = settingField(setting, RECENT_DAYS_FIELD);
-    if (configuredValue == null) {
-      return DEFAULT_RECENT_EVIDENCE_DAYS;
+  private static Map<String, String> configurationOverrides = new Map<String, String>();
+
+  /* Technical labels always use the base language so translations cannot change behavior. */
+  private static String configurationLabel(String suffix) {
+    if (Test.isRunningTest() && configurationOverrides.containsKey(suffix)) {
+      return configurationOverrides.get(suffix);
     }
     try {
-      Integer days = Decimal.valueOf(String.valueOf(configuredValue))
-        .intValue();
-      return days > 0 &&
-        days <= MAX_RECENT_EVIDENCE_DAYS
-        ? days
-        : DEFAULT_RECENT_EVIDENCE_DAYS;
+      return System.Label.get('', 'OpportunitySummary' + suffix, 'en_US');
     } catch (Exception ignored) {
-      return DEFAULT_RECENT_EVIDENCE_DAYS;
+      return null;
     }
+  }
+
+  private static Integer configuredInteger(
+    String suffix,
+    Integer fallback,
+    Integer maximum
+  ) {
+    return parsePositiveInteger(configurationLabel(suffix), fallback, maximum);
+  }
+
+  @TestVisible
+  private static Integer parsePositiveInteger(
+    String raw,
+    Integer fallback,
+    Integer maximum
+  ) {
+    if (String.isBlank(raw) || !Pattern.matches('[0-9]+', raw.trim())) {
+      return fallback;
+    }
+    try {
+      Integer value = Integer.valueOf(raw.trim());
+      return value > 0 && value <= maximum ? value : fallback;
+    } catch (Exception ignored) {
+      return fallback;
+    }
+  }
+
+  private static Set<String> configuredList(
+    String suffix,
+    Set<String> fallback,
+    Boolean isDomainList
+  ) {
+    return parseConfigurationList(
+      configurationLabel(suffix),
+      fallback,
+      isDomainList
+    );
+  }
+
+  @TestVisible
+  private static Set<String> parseConfigurationList(
+    String raw,
+    Set<String> fallback,
+    Boolean isDomainList
+  ) {
+    Set<String> normalizedFallback = new Set<String>();
+    for (String entry : fallback) {
+      normalizedFallback.add(entry.trim().toLowerCase());
+    }
+    if (String.isBlank(raw)) {
+      return normalizedFallback;
+    }
+    Set<String> result = new Set<String>();
+    for (String entry : raw.split('[\\r\\n]+')) {
+      String value = entry.trim().toLowerCase();
+      if (String.isBlank(value)) {
+        continue;
+      }
+      if (
+        isDomainList &&
+        !Pattern.matches('[a-z0-9]+([.-][a-z0-9]+)*[.][a-z]{2,}', value)
+      ) {
+        return normalizedFallback;
+      }
+      result.add(value);
+    }
+    return result.isEmpty() ? normalizedFallback : result;
+  }
+
+  @TestVisible
+  private static Integer getRecentEvidenceLookbackDays() {
+    return configuredInteger(
+      'RecentDays',
+      DEFAULT_RECENT_EVIDENCE_DAYS,
+      MAX_RECENT_EVIDENCE_DAYS
+    );
   }
 
   private static Object settingField(SObject setting, String fieldApiName) {
