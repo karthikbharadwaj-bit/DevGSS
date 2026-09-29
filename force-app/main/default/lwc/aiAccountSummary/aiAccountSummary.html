@@ -1,0 +1,704 @@
+<template>
+  <template lwc:if={isFeatureEnabled}>
+    <article class="summary-launcher" data-summary-launcher>
+      <div class="account-summary-header">
+        <div class="header-identity">
+          <img src={aiInsightsLogo} alt="" class="header-logo" />
+          <span class="header-title">{labels.title}</span>
+        </div>
+        <div class="header-actions">
+          <template lwc:if={hasFetched}>
+            <lightning-button-icon
+              class="header-refresh"
+              data-refresh-summary
+              icon-name="utility:refresh"
+              variant="bare-inverse"
+              size="small"
+              alternative-text={labels.refreshButton}
+              title={labels.refreshButton}
+              onclick={handleRefresh}
+            ></lightning-button-icon>
+          </template>
+          <span class="beta-chip">{labels.betaChip}</span>
+        </div>
+      </div>
+
+      <template lwc:if={isLoading}>
+        <section
+          class="launcher-state launcher-state_working"
+          data-summary-progress
+          role="status"
+          aria-live="polite"
+        >
+          <div class="signal-beacon" aria-hidden="true">
+            <span class="signal-orbit"></span>
+            <span class="signal-core">AI</span>
+          </div>
+          <div class="launcher-copy launcher-copy_working">
+            <p class="launcher-eyebrow">{labels.workingEyebrow}</p>
+            <h2 class="launcher-title">{labels.workingTitle}</h2>
+            <p class="launcher-message">{loadingMessage}</p>
+            <div class="launcher-meta">
+              <span class="launcher-meta__pill">{labels.workingHint}</span>
+              <span class="launcher-meta__pill" aria-hidden="true"
+                >{generationElapsedLabel}</span
+              >
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template lwc:elseif={isError}>
+        <section class="launcher-state launcher-state_error" role="alert">
+          <div class="launcher-status-icon launcher-status-icon_error">
+            <lightning-icon
+              icon-name="utility:error"
+              alternative-text={labels.errorIcon}
+              variant="inverse"
+              size="x-small"
+            ></lightning-icon>
+          </div>
+          <div class="launcher-copy">
+            <p class="launcher-eyebrow">{labels.errorEyebrow}</p>
+            <h2 class="launcher-title">{labels.errorTitle}</h2>
+            <p class="launcher-message">{errorMessage}</p>
+          </div>
+          <button
+            type="button"
+            class="launcher-action launcher-action_error"
+            data-generate-summary
+            onclick={startGeneration}
+          >
+            {labels.retryButton}
+          </button>
+        </section>
+      </template>
+
+      <template lwc:elseif={hasFetched}>
+        <section
+          class="launcher-state launcher-state_ready"
+          data-summary-ready
+          role="status"
+          aria-live="polite"
+        >
+          <div class="ready-identity">
+            <div class="launcher-status-icon launcher-status-icon_ready">
+              <lightning-icon
+                icon-name="utility:success"
+                alternative-text={labels.readyIcon}
+                variant="inverse"
+                size="x-small"
+              ></lightning-icon>
+            </div>
+            <div class="launcher-copy launcher-copy_ready">
+              <p class="launcher-eyebrow">{labels.readyEyebrow}</p>
+              <h2 class="launcher-title">{labels.readyTitle}</h2>
+              <p class="launcher-message">
+                {generatedLabel} · {labels.readyHint}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="launcher-action launcher-action_ready"
+            data-view-summary
+            onclick={openModal}
+          >
+            {labels.viewButton}
+          </button>
+        </section>
+      </template>
+
+      <template lwc:else>
+        <section class="launcher-state launcher-state_idle">
+          <div class="launcher-copy">
+            <p class="launcher-eyebrow">{labels.idleEyebrow}</p>
+            <h2 class="launcher-title">{labels.idleTitle}</h2>
+            <p class="launcher-message">{labels.idleHint}</p>
+          </div>
+          <div class="launcher-actions">
+            <button
+              type="button"
+              class="launcher-action"
+              data-generate-summary
+              onclick={startGeneration}
+            >
+              {labels.generateButton}
+            </button>
+            <span class="powered-by"
+              >{labels.poweredBy} <strong>AI</strong> ✨</span
+            >
+          </div>
+        </section>
+      </template>
+    </article>
+
+    <template lwc:if={isModalOpen}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        aria-labelledby="account-summary-modal-title"
+        class="slds-modal slds-fade-in-open modal-animated"
+      >
+        <div class="slds-modal__container ai-modal__container">
+          <header class="slds-modal__header ai-modal__bar">
+            <div class="ai-modal__identity">
+              <img src={aiInsightsLogo} alt="" class="ai-modal__logo" />
+              <h2 id="account-summary-modal-title" class="ai-modal__title">
+                {labels.modalTitle}
+              </h2>
+            </div>
+            <div class="ai-modal__tools">
+              <template lwc:if={view.asOfLabel}>
+                <span class="meta-chip">{view.asOfLabel}</span>
+              </template>
+              <template lwc:if={generatedLabel}>
+                <span class="meta-chip">{generatedLabel}</span>
+              </template>
+              <button
+                type="button"
+                class="close-button"
+                title={labels.closeButton}
+                onclick={closeModal}
+              >
+                <lightning-icon
+                  icon-name="utility:close"
+                  alternative-text={labels.closeButton}
+                  variant="inverse"
+                  size="x-small"
+                ></lightning-icon>
+                <span class="slds-assistive-text">{labels.closeButton}</span>
+              </button>
+            </div>
+          </header>
+
+          <div class="slds-modal__content ai-modal__body">
+            <template lwc:if={showEmptyState}>
+              <div class="page-status">
+                <p class="status-text">{labels.emptyMessage}</p>
+              </div>
+            </template>
+
+            <template lwc:else>
+              <div class="as-stack">
+                <div class="as-grid as-grid_5-7">
+                  <article class="panel" data-summary-section="header">
+                    <h3 class="panel-title">
+                      <span class="sec">§1</span>{labels.sectionHeader}
+                    </h3>
+                    <dl class="kv">
+                      <template for:each={view.header.rows} for:item="row">
+                        <div key={row.key} class="kv-row">
+                          <dt>{row.label}</dt>
+                          <dd class={row.valueClass}>{row.value}</dd>
+                        </div>
+                      </template>
+                    </dl>
+                    <template lwc:if={view.header.narrative.length}>
+                      <div class="narrative" data-summary-narrative>
+                        <template
+                          for:each={view.header.narrative}
+                          for:item="line"
+                        >
+                          <p key={line.key} class="narr">
+                            <lightning-formatted-rich-text
+                              value={line.html}
+                            ></lightning-formatted-rich-text>
+                          </p>
+                        </template>
+                      </div>
+                    </template>
+                  </article>
+
+                  <article class="panel" data-summary-section="flag">
+                    <h3 class="panel-title">
+                      <span class="sec">§7</span>{labels.sectionFlag}
+                      <template lwc:if={view.flag.band}>
+                        <span class={view.flag.bandChipClass}
+                          >{view.flag.band}</span
+                        >
+                      </template>
+                    </h3>
+                    <template lwc:if={view.flag.hasOverride}>
+                      <div
+                        class={view.flag.overrideClass}
+                        data-summary-override
+                      >
+                        <p class="override-title">{view.flag.overrideTitle}</p>
+                        <lightning-formatted-rich-text
+                          class="override-text"
+                          value={view.flag.overrideExplanation}
+                        ></lightning-formatted-rich-text>
+                      </div>
+                    </template>
+                    <div class="dial-row">
+                      <template lwc:if={view.flag.hasScore}>
+                        <div class="dial">
+                          <svg
+                            width="84"
+                            height="84"
+                            viewBox="0 0 84 84"
+                            aria-hidden="true"
+                          >
+                            <circle
+                              class="dial-track"
+                              cx="42"
+                              cy="42"
+                              r="35"
+                            ></circle>
+                            <circle
+                              class={view.flag.dialClass}
+                              cx="42"
+                              cy="42"
+                              r="35"
+                              stroke-dasharray={view.flag.dialDash}
+                            ></circle>
+                          </svg>
+                          <div class="dial-readout">
+                            <b data-summary-score>{view.flag.score}</b>
+                            <span>{labels.scoreOf}</span>
+                          </div>
+                        </div>
+                      </template>
+                      <div class="dial-meta">
+                        <p class="score-label">{view.flag.scoreLabel}</p>
+                        <template lwc:if={view.flag.amberFloor}>
+                          <p class="sub">{view.flag.amberFloor}</p>
+                        </template>
+                      </div>
+                    </div>
+                    <template lwc:if={hasBars}>
+                      <div class="bars">
+                        <template for:each={view.flag.bars} for:item="bar">
+                          <div key={bar.key} class={bar.barClass}>
+                            <span class="bar-label">{bar.label}</span>
+                            <span class="bar-track"
+                              ><span
+                                class={bar.fillClass}
+                                style={bar.fillStyle}
+                              ></span
+                            ></span>
+                            <span class="bar-points">{bar.points}</span>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <template lwc:if={hasRouting}>
+                      <p class="subhead">{labels.routingHeading}</p>
+                      <ul class="route">
+                        <template for:each={view.flag.routing} for:item="step">
+                          <li key={step.key}>
+                            <span class="route-kind">{step.kind}</span>
+                            <lightning-formatted-rich-text
+                              value={step.text}
+                            ></lightning-formatted-rich-text>
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                  </article>
+                </div>
+
+                <article class="panel" data-summary-section="metrics">
+                  <h3 class="panel-title">
+                    <span class="sec">§2</span>{labels.sectionMetrics}
+                  </h3>
+                  <div class="tiles">
+                    <template for:each={view.tiles} for:item="tile">
+                      <div key={tile.key} class={tile.tileClass}>
+                        <span class="tile-label">{tile.label}</span>
+                        <span class={tile.valueClass}>{tile.value}</span>
+                        <span class="tile-detail">{tile.detail}</span>
+                      </div>
+                    </template>
+                  </div>
+                </article>
+
+                <div class="as-grid as-grid_7-5">
+                  <article class="panel" data-summary-section="signals">
+                    <h3 class="panel-title">
+                      <span class="sec">§3</span>{labels.sectionSignals}
+                    </h3>
+                    <div class="as-grid as-grid_2">
+                      <div>
+                        <p class="subhead subhead_first">{labels.risks}</p>
+                        <template lwc:if={hasRisks}>
+                          <ul class="signal-list signal-list_risk">
+                            <template for:each={view.risks} for:item="item">
+                              <li key={item.key}>
+                                <b>{item.title}</b>
+                                <lightning-formatted-rich-text
+                                  class="signal-detail"
+                                  value={item.detail}
+                                ></lightning-formatted-rich-text>
+                                <span class="src">{item.source}</span>
+                              </li>
+                            </template>
+                          </ul>
+                        </template>
+                        <template lwc:else>
+                          <p class="sub">{labels.noRisks}</p>
+                        </template>
+                      </div>
+                      <div>
+                        <p class="subhead subhead_first">{labels.growth}</p>
+                        <template lwc:if={hasGrowth}>
+                          <ul class="signal-list signal-list_growth">
+                            <template for:each={view.growth} for:item="item">
+                              <li key={item.key}>
+                                <b>{item.title}</b>
+                                <lightning-formatted-rich-text
+                                  class="signal-detail"
+                                  value={item.detail}
+                                ></lightning-formatted-rich-text>
+                                <span class="src">{item.source}</span>
+                              </li>
+                            </template>
+                          </ul>
+                        </template>
+                        <template lwc:else>
+                          <p class="sub">{labels.noGrowth}</p>
+                        </template>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article class="panel" data-summary-section="actions">
+                    <h3 class="panel-title">
+                      <span class="sec">§8</span>{labels.sectionActions}
+                      <span class="count">{actionCount}</span>
+                    </h3>
+                    <div class="actions">
+                      <template for:each={view.actions} for:item="action">
+                        <div key={action.key} class={action.cardClass}>
+                          <div class="action-chips">
+                            <span class={action.chipClass}
+                              ><span class="dot"></span>{action.whenLabel}</span
+                            >
+                            <template lwc:if={action.laneLabel}>
+                              <span class="chip chip_outline"
+                                >{action.laneLabel}</span
+                              >
+                            </template>
+                          </div>
+                          <h4 class="action-title">{action.title}</h4>
+                          <lightning-formatted-rich-text
+                            class="action-detail"
+                            value={action.detail}
+                          ></lightning-formatted-rich-text>
+                          <span class="src">{action.source}</span>
+                        </div>
+                      </template>
+                    </div>
+                  </article>
+                </div>
+
+                <div class="as-grid as-grid_2">
+                  <article class="panel" data-summary-section="opportunities">
+                    <h3 class="panel-title">
+                      <span class="sec">§4</span>{labels.sectionOpportunities}
+                      <span class="count">{opportunityCount}</span>
+                    </h3>
+                    <template lwc:if={hasOpportunities}>
+                      <div class="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{labels.colName}</th>
+                              <th>{labels.colStage}</th>
+                              <th class="num">{labels.colAmount}</th>
+                              <th>{labels.colCloseDate}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template
+                              for:each={view.opportunities.rows}
+                              for:item="row"
+                            >
+                              <tr key={row.key}>
+                                <td>
+                                  <a
+                                    class="lnk"
+                                    href={row.url}
+                                    target="_blank"
+                                    rel="noopener"
+                                    >{row.name}</a
+                                  >
+                                  <span class="sub block">{row.owner}</span>
+                                  <span class="sub block"
+                                    >{labels.nextStep}:
+                                    <span class={row.nextStepClass}
+                                      >{row.nextStepDisplay}</span
+                                    ></span
+                                  >
+                                </td>
+                                <td>
+                                  {row.stage}
+                                  <span class="sub block">{row.forecast}</span>
+                                </td>
+                                <td class={row.amountClass}>{row.amount}</td>
+                                <td>
+                                  {row.closeDate}
+                                  <template lwc:if={row.overdueLabel}>
+                                    <span class="chip chip_red block-chip"
+                                      >{row.overdueLabel}</span
+                                    >
+                                  </template>
+                                </td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <p class="sub">{labels.noOpenOpportunities}</p>
+                    </template>
+                    <template lwc:if={view.opportunities.agreementText}>
+                      <p class="subhead">{labels.agreementHeading}</p>
+                      <p class="narr">{view.opportunities.agreementText}</p>
+                    </template>
+                  </article>
+
+                  <article class="panel" data-summary-section="cases">
+                    <h3 class="panel-title">
+                      <span class="sec">§5</span>{labels.sectionCases}
+                    </h3>
+                    <p class="subhead subhead_first">
+                      {view.cases.openHeading}
+                    </p>
+                    <template lwc:if={hasOpenCases}>
+                      <div class="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{labels.colSubject}</th>
+                              <th>{labels.colPriority}</th>
+                              <th>{labels.colOwner}</th>
+                              <th class="num">{labels.colAge}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template for:each={view.cases.open} for:item="row">
+                              <tr key={row.key}>
+                                <td>
+                                  <a
+                                    class="lnk"
+                                    href={row.url}
+                                    target="_blank"
+                                    rel="noopener"
+                                    >{row.subject}</a
+                                  >
+                                  <span class="sub block">{row.detail}</span>
+                                </td>
+                                <td>
+                                  <span class={row.priorityClass}
+                                    >{row.priority}</span
+                                  >
+                                  <template lwc:if={row.isEscalated}>
+                                    <span class="chip chip_red block-chip"
+                                      >{labels.escalatedChip}</span
+                                    >
+                                  </template>
+                                </td>
+                                <td>{row.owner}</td>
+                                <td class="num">{row.age}</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <p class="sub">{labels.noOpenCases}</p>
+                    </template>
+                    <template lwc:if={view.cases.detailNote}>
+                      <p class="sub note">{view.cases.detailNote}</p>
+                    </template>
+                    <p class="subhead">{view.cases.closedHeading}</p>
+                    <template lwc:if={hasClosedCases}>
+                      <div class="table-wrap">
+                        <table>
+                          <tbody>
+                            <template
+                              for:each={view.cases.closed}
+                              for:item="row"
+                            >
+                              <tr key={row.key}>
+                                <td>
+                                  <a
+                                    class="lnk"
+                                    href={row.url}
+                                    target="_blank"
+                                    rel="noopener"
+                                    >{row.subject}</a
+                                  >
+                                </td>
+                                <td>
+                                  <span class="chip chip_grey"
+                                    >{row.priority}</span
+                                  >
+                                </td>
+                                <td class="num sub">{row.closedMonth}</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <p class="sub">{labels.noClosedCases}</p>
+                    </template>
+                  </article>
+                </div>
+
+                <div class="as-grid as-grid_7-5">
+                  <article class="panel" data-summary-section="history">
+                    <h3 class="panel-title">{labels.sectionHistory}</h3>
+                    <template lwc:if={hasHistory}>
+                      <div class="ledger">
+                        <template for:each={view.history} for:item="group">
+                          <div key={group.key} class="period">
+                            <span class="period-label"
+                              >{group.periodLabel}</span
+                            >
+                            <template for:each={group.events} for:item="event">
+                              <div key={event.key} class={event.eventClass}>
+                                <span class="event-title">{event.title}</span>
+                                <template lwc:if={event.chip}>
+                                  <span class={event.chipClass}
+                                    >{event.chip}</span
+                                  >
+                                </template>
+                                <span class="sub">{event.date}</span>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <p class="sub">{labels.noHistory}</p>
+                    </template>
+                  </article>
+
+                  <article class="panel" data-summary-section="contacts">
+                    <h3 class="panel-title">
+                      <span class="sec">§6</span>{labels.sectionContacts}
+                      <span class="count">{contactCount}</span>
+                    </h3>
+                    <template lwc:if={hasContacts}>
+                      <div class="table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>{labels.colContact}</th>
+                              <th>{labels.colRole}</th>
+                              <th>{labels.colLastActivity}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template
+                              for:each={view.contacts.contacts}
+                              for:item="row"
+                            >
+                              <tr key={row.key}>
+                                <td>
+                                  <a
+                                    class="lnk"
+                                    href={row.url}
+                                    target="_blank"
+                                    rel="noopener"
+                                    >{row.name}</a
+                                  >
+                                  <span class={row.titleClass}
+                                    >{row.title}</span
+                                  >
+                                </td>
+                                <td>
+                                  <span class={row.roleClass}>{row.role}</span>
+                                </td>
+                                <td class={row.lastActivityClass}>
+                                  {row.lastActivity}
+                                </td>
+                              </tr>
+                            </template>
+                          </tbody>
+                        </table>
+                      </div>
+                    </template>
+                    <template lwc:else>
+                      <p class="sub">{labels.noContacts}</p>
+                    </template>
+                    <template lwc:if={hasAccountTeam}>
+                      <p class="subhead">{labels.accountTeamHeading}</p>
+                      <ul class="team">
+                        <template
+                          for:each={view.contacts.team}
+                          for:item="member"
+                        >
+                          <li key={member.key}>
+                            <span class="team-name">{member.name}</span>
+                            <span class="sub">{member.role}</span>
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                    <template lwc:if={view.contacts.roleNote}>
+                      <p class="sub note">{view.contacts.roleNote}</p>
+                    </template>
+                  </article>
+                </div>
+
+                <template lwc:if={view.research.hasResearch}>
+                  <article class="panel" data-summary-section="research">
+                    <h3 class="panel-title">{labels.sectionResearch}</h3>
+                    <p class="research-disclaimer">
+                      {labels.researchDisclaimer}
+                    </p>
+                    <ul class="research-list">
+                      <template
+                        for:each={view.research.findings}
+                        for:item="finding"
+                      >
+                        <li key={finding.key}>
+                          <span class="evidence-id">{finding.id}</span>
+                          <span>{finding.fact}</span>
+                          <span class="sub block">{finding.meta}</span>
+                        </li>
+                      </template>
+                    </ul>
+                    <template lwc:if={view.research.sources.length}>
+                      <p class="subhead">{labels.researchSources}</p>
+                      <ul class="source-list">
+                        <template
+                          for:each={view.research.sources}
+                          for:item="source"
+                        >
+                          <li key={source.key}>
+                            <a
+                              class="lnk"
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              >{source.label}</a
+                            >
+                          </li>
+                        </template>
+                      </ul>
+                    </template>
+                  </article>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+      </section>
+      <div
+        class="slds-backdrop slds-backdrop_open backdrop-animated"
+        onclick={closeModal}
+      ></div>
+    </template>
+  </template>
+</template>
