@@ -705,27 +705,56 @@ export function buildHistory(history, labels, locale) {
     .filter((group) => group.events.length);
 }
 
-/* Each finding carries its own source links so an evidence chip lands on everything it needs. */
-export function buildResearch(enrichment, labels, locale) {
-  const source = asObject(enrichment);
-  const indexToSource = new Map(
-    asArray(source.sources)
-      .filter(
-        (entry) =>
-          isObject(entry) && SAFE_URL_PATTERN.test(String(entry.url || ""))
+function toSourceLink(entry, key) {
+  const publisherUrl = String(entry.publisher_url || "");
+  const redirectUrl = String(entry.url || "");
+  /* Link to the real article when the service resolved it; the redirect stays as fallback. */
+  const url = SAFE_URL_PATTERN.test(publisherUrl)
+    ? publisherUrl
+    : SAFE_URL_PATTERN.test(redirectUrl)
+      ? redirectUrl
+      : "";
+  return url
+    ? {
+        key,
+        url,
+        label: String(
+          entry.publisher_domain || entry.display_label || entry.title || url
+        )
+      }
+    : null;
+}
+
+/*
+ * A finding either carries its own sources or points into the shared sources list by
+ * index; both shapes are accepted so the drawer keeps its links while the service moves
+ * from one to the other.
+ */
+function findingSources(finding, id, indexToSource) {
+  if (Array.isArray(finding.sources)) {
+    return finding.sources
+      .filter(isObject)
+      .map((entry, index) =>
+        toSourceLink(entry, `finding-${id}-source-${index}`)
       )
-      .map((entry) => [
-        entry.index,
-        {
-          url: String(entry.url),
-          label: String(entry.display_label || entry.title || entry.url)
-        }
-      ])
-  );
-  const findings = asArray(source.findings)
+      .filter(Boolean);
+  }
+  return asArray(finding.source_indices)
+    .filter((sourceIndex) => indexToSource.has(sourceIndex))
+    .map((sourceIndex) =>
+      toSourceLink(
+        indexToSource.get(sourceIndex),
+        `finding-${id}-source-${sourceIndex}`
+      )
+    )
+    .filter(Boolean);
+}
+
+function buildFindings(findings, keyPrefix, labels, locale, indexToSource) {
+  return asArray(findings)
     .filter((finding) => isObject(finding) && hasValue(finding.fact))
     .map((finding, index) => {
-      const id = text(finding.id) || `F${index + 1}`;
+      const id = text(finding.id) || `${keyPrefix}${index + 1}`;
       return {
         key: `finding-${id}`,
         id,
@@ -738,18 +767,49 @@ export function buildResearch(enrichment, labels, locale) {
           finding.role,
           formatDate(finding.date, locale)
         ]),
-        sources: asArray(finding.source_indices)
-          .filter((sourceIndex) => indexToSource.has(sourceIndex))
-          .map((sourceIndex) => ({
-            key: `finding-${id}-source-${sourceIndex}`,
-            ...indexToSource.get(sourceIndex)
-          }))
+        sources: findingSources(finding, id, indexToSource)
       };
     });
+}
+
+/* Cited findings back the summary's evidence chips; additional ones are context only. */
+export function buildResearch(enrichment, labels, locale) {
+  const source = asObject(enrichment);
+  const indexToSource = new Map(
+    asArray(source.sources)
+      .filter(isObject)
+      .map((entry) => [entry.index, entry])
+  );
+  const cited = buildFindings(
+    source.findings,
+    "C",
+    labels,
+    locale,
+    indexToSource
+  );
+  const citedIds = new Set(cited.map((finding) => finding.id));
+  const additional = buildFindings(
+    source.supplemental_findings,
+    "S",
+    labels,
+    locale,
+    indexToSource
+  ).filter((finding) => !citedIds.has(finding.id));
   return {
-    findings,
-    hasResearch: findings.length > 0,
-    summary: formatLabel(labels.researchSummary, findings.length)
+    findings: cited,
+    additional,
+    hasCited: cited.length > 0,
+    hasAdditional: additional.length > 0,
+    hasResearch: cited.length > 0 || additional.length > 0,
+    summary: formatLabel(
+      labels.researchSummary,
+      cited.length,
+      additional.length
+    ),
+    additionalHeading: formatLabel(
+      labels.researchAdditionalHeading,
+      additional.length
+    )
   };
 }
 
@@ -758,7 +818,10 @@ export function buildAccountViewModel(response, labels, locale) {
   const summary = asObject(payload.account_summary);
   const research = buildResearch(payload.account_enrichment, labels, locale);
   const findingById = new Map(
-    research.findings.map((finding) => [finding.id, finding])
+    [...research.findings, ...research.additional].map((finding) => [
+      finding.id,
+      finding
+    ])
   );
   const signals = buildSignals(
     summary.risk_growth_signals,

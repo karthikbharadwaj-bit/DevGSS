@@ -223,22 +223,24 @@ export default class AiAccountSummary extends LightningElement {
 
   /*
    * Evidence chips point at a finding inside the research drawer, which is collapsed by
-   * default, so the drawer is opened before the finding is scrolled to and highlighted.
+   * default, so its sections are opened before the finding is scrolled to and highlighted.
    */
   handleEvidenceClick(event) {
     const evidenceId = event.currentTarget.dataset.evidenceId;
     if (!EVIDENCE_ID_PATTERN.test(String(evidenceId || ""))) {
       return;
     }
-    const drawer = this.template.querySelector("[data-public-research]");
-    if (drawer) {
-      drawer.open = true;
-    }
     const target = this.template.querySelector(
       `[data-research-finding="${evidenceId}"]`
     );
     if (!target) {
       return;
+    }
+    /* Open every collapsed section around the finding, including the additional group. */
+    for (let node = target.parentElement; node; node = node.parentElement) {
+      if (node.tagName === "DETAILS") {
+        node.open = true;
+      }
     }
     if (typeof target.scrollIntoView === "function") {
       target.scrollIntoView({ behavior: "smooth", block: "center" });

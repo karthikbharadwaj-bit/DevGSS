@@ -132,6 +132,8 @@ import researchKindBusinessEvent from "@salesforce/label/c.AccountSummaryResearc
 import researchKindFinancialSignal from "@salesforce/label/c.AccountSummaryResearchKindFinancialSignal";
 import researchKindLeadership from "@salesforce/label/c.AccountSummaryResearchKindLeadership";
 import evidenceButton from "@salesforce/label/c.AccountSummaryEvidenceButton";
+import researchCitedHeading from "@salesforce/label/c.AccountSummaryResearchCitedHeading";
+import researchAdditionalHeading from "@salesforce/label/c.AccountSummaryResearchAdditionalHeading";
 import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
 
@@ -167,6 +169,8 @@ export function getCachePolicy() {
 
 export function getUiLabels() {
   return {
+    researchCitedHeading,
+    researchAdditionalHeading,
     genericError,
     missingRecord,
     emptyMessage,

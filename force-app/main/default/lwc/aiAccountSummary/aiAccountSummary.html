@@ -738,52 +738,115 @@
                       <p class="research-disclaimer">
                         {labels.researchDisclaimer}
                       </p>
-                      <ul class="research-list">
-                        <template
-                          for:each={view.research.findings}
-                          for:item="finding"
-                        >
-                          <li
-                            key={finding.key}
-                            class="finding"
-                            tabindex="-1"
-                            data-research-finding={finding.id}
-                          >
-                            <div class="finding-head">
-                              <span class="evidence-id">{finding.id}</span>
-                              <template lwc:if={finding.kind}>
-                                <span class="chip chip_grey"
-                                  >{finding.kind}</span
-                                >
-                              </template>
-                              <template lwc:if={finding.meta}>
-                                <span class="sub">{finding.meta}</span>
-                              </template>
-                            </div>
-                            <p class="finding-fact">{finding.fact}</p>
-                            <template lwc:if={finding.sources.length}>
-                              <span class="finding-sources">
-                                <span class="sub"
-                                  >{labels.researchSources}</span
-                                >
-                                <template
-                                  for:each={finding.sources}
-                                  for:item="source"
-                                >
-                                  <a
-                                    key={source.key}
-                                    class="lnk"
-                                    href={source.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    >{source.label}</a
-                                  >
+                      <template lwc:if={view.research.hasCited}>
+                        <p class="subhead subhead_first">
+                          {labels.researchCitedHeading}
+                        </p>
+                        <div data-research-group="cited">
+                          <ul class="research-list">
+                            <template
+                              for:each={view.research.findings}
+                              for:item="finding"
+                            >
+                              <li
+                                key={finding.key}
+                                class="finding"
+                                tabindex="-1"
+                                data-research-finding={finding.id}
+                              >
+                                <div class="finding-head">
+                                  <span class="evidence-id">{finding.id}</span>
+                                  <template lwc:if={finding.kind}>
+                                    <span class="chip chip_grey"
+                                      >{finding.kind}</span
+                                    >
+                                  </template>
+                                  <template lwc:if={finding.meta}>
+                                    <span class="sub">{finding.meta}</span>
+                                  </template>
+                                </div>
+                                <p class="finding-fact">{finding.fact}</p>
+                                <template lwc:if={finding.sources.length}>
+                                  <span class="finding-sources">
+                                    <span class="sub"
+                                      >{labels.researchSources}</span
+                                    >
+                                    <template
+                                      for:each={finding.sources}
+                                      for:item="source"
+                                    >
+                                      <a
+                                        key={source.key}
+                                        class="lnk"
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >{source.label}</a
+                                      >
+                                    </template>
+                                  </span>
                                 </template>
-                              </span>
+                              </li>
                             </template>
-                          </li>
-                        </template>
-                      </ul>
+                          </ul>
+                        </div>
+                      </template>
+                      <template lwc:if={view.research.hasAdditional}>
+                        <details
+                          class="research-additional"
+                          data-research-group="additional"
+                        >
+                          <summary class="research-additional__summary">
+                            {view.research.additionalHeading}
+                          </summary>
+                          <ul class="research-list">
+                            <template
+                              for:each={view.research.additional}
+                              for:item="finding"
+                            >
+                              <li
+                                key={finding.key}
+                                class="finding"
+                                tabindex="-1"
+                                data-research-finding={finding.id}
+                              >
+                                <div class="finding-head">
+                                  <span class="evidence-id">{finding.id}</span>
+                                  <template lwc:if={finding.kind}>
+                                    <span class="chip chip_grey"
+                                      >{finding.kind}</span
+                                    >
+                                  </template>
+                                  <template lwc:if={finding.meta}>
+                                    <span class="sub">{finding.meta}</span>
+                                  </template>
+                                </div>
+                                <p class="finding-fact">{finding.fact}</p>
+                                <template lwc:if={finding.sources.length}>
+                                  <span class="finding-sources">
+                                    <span class="sub"
+                                      >{labels.researchSources}</span
+                                    >
+                                    <template
+                                      for:each={finding.sources}
+                                      for:item="source"
+                                    >
+                                      <a
+                                        key={source.key}
+                                        class="lnk"
+                                        href={source.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        >{source.label}</a
+                                      >
+                                    </template>
+                                  </span>
+                                </template>
+                              </li>
+                            </template>
+                          </ul>
+                        </details>
+                      </template>
                     </div>
                   </details>
                 </template>

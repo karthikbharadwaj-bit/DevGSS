@@ -279,6 +279,27 @@ describe("c-ai-account-summary", () => {
     const finding = query(element, '[data-research-finding="E1"]');
     expect(drawer.open).toBe(true);
     expect(finding.classList.contains("is-highlighted")).toBe(true);
+    expect(query(element, '[data-research-group="additional"]').open).toBe(
+      false
+    );
+  });
+
+  it("keeps additional findings collapsed inside the drawer", async () => {
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+
+    const additional = query(element, '[data-research-group="additional"]');
+    expect(additional.open).toBe(false);
+    expect(
+      additional.querySelector('[data-research-finding="E3"]')
+    ).not.toBeNull();
+    expect(
+      query(element, '[data-research-group="cited"]').querySelectorAll(
+        "[data-research-finding]"
+      )
+    ).toHaveLength(2);
   });
 
   it("closes the modal on Escape", async () => {

@@ -220,15 +220,57 @@ describe("Account Summary view model", () => {
     ]);
   });
 
-  it("attaches safe source links to each research finding", () => {
+  it("links cited findings to the publisher article when it was resolved", () => {
     const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
     const [depot, cfo] = view.research.findings;
-    expect(view.research.summary).toBe("Public web research · 2 findings");
+    expect(view.research.summary).toBe(
+      "Public web research · 2 cited · 1 additional"
+    );
     expect(depot.kind).toBe("Business event");
-    expect(depot.sources.map((source) => source.url)).toEqual([
-      "https://news.example/story"
+    expect(depot.sources).toEqual([
+      {
+        key: "finding-E1-source-1",
+        url: "https://www.news.example/2026/05/depot",
+        label: "www.news.example"
+      }
     ]);
     expect(cfo.meta).toBe("Dana Reyes · CFO · Apr 1, 2026");
+  });
+
+  it("lists uncited findings as additional, without repeating cited ones", () => {
+    const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
+    expect(view.research.hasAdditional).toBe(true);
+    expect(view.research.additional.map((finding) => finding.id)).toEqual([
+      "E3"
+    ]);
+    expect(view.research.additionalHeading).toBe("Additional findings · 1");
+  });
+
+  it("reads per-finding sources and falls back to the redirect link", () => {
+    const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
+    expect(view.research.additional[0].sources).toEqual([
+      {
+        key: "finding-E3-source-0",
+        url: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc",
+        label: "Markets"
+      }
+    ]);
+  });
+
+  it("shows the drawer when only additional findings exist", () => {
+    const view = buildAccountViewModel(
+      {
+        account_summary: {},
+        account_enrichment: {
+          findings: [],
+          supplemental_findings: [{ id: "E4", fact: "Opened an office." }]
+        }
+      },
+      labels,
+      LOCALE
+    );
+    expect(view.research.hasResearch).toBe(true);
+    expect(view.research.hasCited).toBe(false);
   });
 
   it("writes the next step with its label and hides a missing one", () => {
