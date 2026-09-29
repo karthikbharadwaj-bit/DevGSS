@@ -162,6 +162,7 @@ export function extractEvidence(value, findingById) {
 }
 
 function withEvidence(item, findingById, keyPrefix, labels) {
+  /* source names the field or metric behind the item; only its evidence ids are shown. */
   const detail = extractEvidence(item.detail, findingById);
   const source = extractEvidence(item.source, findingById);
   const ids = [
@@ -170,7 +171,6 @@ function withEvidence(item, findingById, keyPrefix, labels) {
   ];
   return {
     detail: detail.text,
-    source: source.text,
     evidence: ids.map((id) => ({
       key: `${keyPrefix}-${id}`,
       id,

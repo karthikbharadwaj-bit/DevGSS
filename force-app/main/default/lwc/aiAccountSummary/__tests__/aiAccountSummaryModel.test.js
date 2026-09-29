@@ -167,7 +167,7 @@ describe("Account Summary view model", () => {
       (item) => item.title === "New depot opening"
     );
     expect(depot.evidence.map((evidence) => evidence.id)).toEqual(["E1"]);
-    expect(depot.source).toBe("Public web");
+    expect(depot.source).toBeUndefined();
     expect(depot.detail).toBe("Public reporting notes a new depot.");
     expect(depot.evidence[0].ariaLabel).toBe(
       "View public research evidence E1"

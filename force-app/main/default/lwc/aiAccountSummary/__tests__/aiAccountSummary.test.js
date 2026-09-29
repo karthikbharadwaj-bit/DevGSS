@@ -116,6 +116,13 @@ describe("c-ai-account-summary", () => {
     expect(narrative).toHaveLength(2);
     expect(narrative[0].value).toContain("<strong>25.2%</strong>");
     expect(query(element, "[data-summary-score]").textContent).toBe("72");
+    const shownText = element.shadowRoot.textContent;
+    ["Opportunity.CloseDate", "next_step_missing_count"].forEach((sourceText) =>
+      expect(shownText).not.toContain(sourceText)
+    );
+    expect(
+      element.shadowRoot.querySelectorAll("[data-summary-signal] .src-line")
+    ).toHaveLength(1);
     expect(query(element, "[data-summary-override]")).not.toBeNull();
     expect(logAIHEvent).toHaveBeenCalledTimes(1);
     expect(logAIHEvent).toHaveBeenCalledWith({
