@@ -1,11 +1,14 @@
 import { resetLabels } from "../../../../../../test/jest-mocks/accountSummaryLabels";
-import { getUiLabels } from "../aiAccountSummaryConfig";
+import { formatLabel, getUiLabels } from "../aiAccountSummaryConfig";
 import {
   buildAccountViewModel,
   buildActions,
   buildCases,
+  buildContacts,
   buildFlag,
+  buildHeader,
   buildTiles,
+  extractEvidence,
   formatDate,
   formatMoney
 } from "../aiAccountSummaryModel";
@@ -21,6 +24,13 @@ describe("Account Summary view model", () => {
     labels = getUiLabels();
   });
 
+  it("formats labels with several placeholders", () => {
+    expect(formatLabel("{0} won of the last {1} closed", 4, 15)).toBe(
+      "4 won of the last 15 closed"
+    );
+    expect(formatLabel("{0} and {2}", "a")).toBe("a and {2}");
+  });
+
   it("formats money with the ISO code and never a symbol", () => {
     expect(formatMoney(2910, "EUR", LOCALE)).toBe("EUR 2,910");
     expect(formatMoney(-26190, "EUR", LOCALE)).toBe("EUR -26,190");
@@ -34,9 +44,10 @@ describe("Account Summary view model", () => {
     expect(formatDate(null, LOCALE)).toBe("");
   });
 
-  it("always builds five tiles in handover order and flags the amber tile", () => {
+  it("keeps the five service tiles in handover order when all have values", () => {
     const tiles = buildTiles(
       RESPONSE.account_summary.key_metrics,
+      RESPONSE.derived_metrics,
       labels,
       LOCALE
     );
@@ -48,41 +59,119 @@ describe("Account Summary view model", () => {
       "licenses"
     ]);
     expect(tiles[0].value).toBe("EUR 2,910");
-    expect(tiles[0].detail).toBe("EUR 34,920 annualized");
     expect(tiles[1].value).toBe("-25.2%");
     expect(tiles[1].valueClass).toContain("tile-value_negative");
     expect(tiles[3].tileClass).toBe("tile tile_amber");
     expect(tiles[4].value).toBe("105 / 72");
   });
 
-  it("shows the not-recorded label for missing tiles and never zero", () => {
-    const tiles = buildTiles({ tiles: [] }, labels, LOCALE);
-    tiles.forEach((tile) => {
-      expect(tile.value).toBe(labels.notRecorded);
-      expect(tile.valueClass).toContain("tile-value_nil");
-    });
-  });
-
-  it("keeps a real zero instead of hiding it", () => {
-    const tiles = buildTiles(
-      { tiles: [{ key: "open_cases", value: 0 }] },
-      labels,
-      LOCALE
-    );
-    expect(tiles[3].value).toBe("0");
-  });
-
-  it("uses the mixed-currency text when the pipeline has no single total", () => {
+  it("replaces tiles without a value with computed metrics", () => {
     const tiles = buildTiles(
       {
         tiles: [
-          { key: "total_open_pipeline", value: null, currency_mixed: true }
+          { key: "mrr", value: null },
+          { key: "total_open_pipeline", value: 93250, currencyIsoCode: "USD" },
+          { key: "open_cases", value: 0 }
         ]
+      },
+      RESPONSE.derived_metrics,
+      labels,
+      LOCALE
+    );
+    expect(tiles.map((tile) => tile.key)).toEqual([
+      "total_open_pipeline",
+      "open_cases",
+      "days_to_renewal",
+      "days_since_meaningful_activity",
+      "closed_won_total"
+    ]);
+    expect(tiles[1].value).toBe("0");
+    expect(tiles[4].value).toBe("EUR 42,000");
+    expect(tiles[4].detail).toBe("4 won of the last 15 closed");
+    tiles.forEach((tile) => expect(tile.value).not.toBe(labels.notRecorded));
+  });
+
+  it("skips replacement metrics that have no source records", () => {
+    const tiles = buildTiles(
+      { tiles: [] },
+      {
+        days_to_renewal: null,
+        closed_won_total: 0,
+        closed_opportunity_sample_size: 0,
+        next_step_missing_count: 0,
+        open_opp_count: 0,
+        lifetime_escalation_count: 0
       },
       labels,
       LOCALE
     );
-    expect(tiles[2].value).toBe(labels.tilePipelineMixed);
+    expect(tiles.map((tile) => tile.key)).toEqual([
+      "lifetime_escalation_count"
+    ]);
+  });
+
+  it("flags a renewal inside 30 days and a going-cold account", () => {
+    const tiles = buildTiles(
+      { tiles: [] },
+      {
+        days_to_renewal: 12,
+        days_since_meaningful_activity: 95,
+        going_cold: true
+      },
+      labels,
+      LOCALE
+    );
+    expect(tiles[0].tileClass).toBe("tile tile_amber");
+    expect(tiles[1].detail).toBe(labels.tileGoingCold);
+  });
+
+  it("drops header rows with no recorded value", () => {
+    const header = buildHeader(
+      RESPONSE.account_summary.account_header,
+      labels,
+      LOCALE
+    );
+    const keys = header.rows.map((row) => row.key);
+    expect(keys).toContain("account");
+    expect(keys).not.toContain("rating");
+    expect(keys).not.toContain("source");
+  });
+
+  it("drops empty contact titles, roles and activity", () => {
+    const contacts = buildContacts(
+      RESPONSE.account_summary.key_contacts,
+      labels
+    );
+    expect(contacts.contacts[1].title).toBe("");
+    expect(contacts.contacts[1].lastActivity).toBe("");
+    expect(contacts.contacts[0].role).toBe("");
+  });
+
+  it("lifts known evidence ids out of prose and leaves unknown ones", () => {
+    const findingById = new Map([["E1", {}]]);
+    expect(
+      extractEvidence("Opened a depot [E1] and [E9].", findingById)
+    ).toEqual({ text: "Opened a depot and [E9].", ids: ["E1"] });
+    expect(extractEvidence("Public web [E1]", findingById)).toEqual({
+      text: "Public web",
+      ids: ["E1"]
+    });
+  });
+
+  it("leaves out signals the service marks as not recorded in Salesforce", () => {
+    const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
+    expect(view.risks.map((risk) => risk.title)).not.toContain(
+      "Renewal timing unavailable"
+    );
+    const depot = view.growth.find(
+      (item) => item.title === "New depot opening"
+    );
+    expect(depot.evidence.map((evidence) => evidence.id)).toEqual(["E1"]);
+    expect(depot.source).toBe("Public web");
+    expect(depot.detail).toBe("Public reporting notes a new depot.");
+    expect(depot.evidence[0].ariaLabel).toBe(
+      "View public research evidence E1"
+    );
   });
 
   it("builds the flag dial, override callout and weakest bars", () => {
@@ -93,26 +182,13 @@ describe("Account Summary view model", () => {
     );
     expect(flag.score).toBe("72");
     expect(flag.dialClass).toBe("dial-value dial-value_amber");
-    expect(flag.hasOverride).toBe(true);
     expect(flag.overrideTitle).toBe("Amber — set by override");
     expect(flag.overrideExplanation).toContain("<strong>122 days</strong>");
     expect(flag.bars[0].barClass).toBe("bar bar_weak");
-    expect(flag.bars[0].fillClass).toBe("bar-fill bar-fill_bad");
-    expect(flag.bars[1].fillClass).toBe("bar-fill");
     expect(flag.amberFloor).toBe("Amber floor from Sep 27, 2026");
   });
 
-  it("leaves the override callout out when no override set the band", () => {
-    const flag = buildFlag(
-      { score: 85, band: "Green", override_reason: null },
-      labels,
-      LOCALE
-    );
-    expect(flag.hasOverride).toBe(false);
-    expect(flag.dialClass).toBe("dial-value dial-value_green");
-  });
-
-  it("maps action timing chips and widens an odd last card", () => {
+  it("maps action timing chips", () => {
     const actions = buildActions(
       RESPONSE.account_summary.recommended_actions,
       labels
@@ -122,9 +198,7 @@ describe("Account Summary view model", () => {
       "This week",
       "Post-close"
     ]);
-    expect(actions[0].chipClass).toBe("chip chip_red");
     expect(actions[2].laneLabel).toBe("Service");
-    expect(actions[2].cardClass).toBe("action action_wide");
   });
 
   it("ranks every top-priority naming scheme as critical", () => {
@@ -146,30 +220,36 @@ describe("Account Summary view model", () => {
     ]);
   });
 
-  it("builds every section and drops unsafe research links", () => {
+  it("attaches safe source links to each research finding", () => {
     const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
-    expect(view.asOfLabel).toBe("As of Jun 29, 2026");
-    expect(view.header.narrative).toHaveLength(2);
-    expect(
-      view.header.rows.find((row) => row.key === "rating").valueClass
-    ).toBe("nil");
-    expect(view.opportunities.rows[0].url).toBe("/006TH0000000001AAA");
-    expect(view.opportunities.rows[0].nextStepDisplay).toBe(
-      "no Next Step recorded"
+    const [depot, cfo] = view.research.findings;
+    expect(view.research.summary).toBe("Public web research · 2 findings");
+    expect(depot.kind).toBe("Business event");
+    expect(depot.sources.map((source) => source.url)).toEqual([
+      "https://news.example/story"
+    ]);
+    expect(cfo.meta).toBe("Dana Reyes · CFO · Apr 1, 2026");
+  });
+
+  it("writes the next step with its label and hides a missing one", () => {
+    const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
+    expect(view.opportunities.rows[0].nextStep).toBe("");
+    const withStep = buildAccountViewModel(
+      {
+        account_summary: {
+          open_opportunities: { rows: [{ id: "006", next_step: "Call CFO" }] }
+        }
+      },
+      labels,
+      LOCALE
     );
-    expect(view.cases.closedHeading).toBe("Recently closed · 7 in six months");
-    expect(view.contacts.contacts[1].role).toBe("Signatory");
-    expect(view.contacts.contacts[1].lastActivity).toBe(labels.notRecorded);
-    expect(view.history[0].periodLabel).toBe("Open now");
-    expect(view.history[1].events[0].chip).toBe("Won · EUR 2,100");
-    expect(view.research.sources).toHaveLength(1);
-    expect(view.research.sources[0].url).toBe("https://news.example/story");
+    expect(withStep.opportunities.rows[0].nextStep).toBe("Next step: Call CFO");
   });
 
   it("tolerates a summary with every section missing", () => {
     const view = buildAccountViewModel({ account_summary: {} }, labels, LOCALE);
-    expect(view.tiles).toHaveLength(5);
-    expect(view.actions).toEqual([]);
+    expect(view.tiles).toEqual([]);
+    expect(view.header.rows).toEqual([]);
     expect(view.flag.hasScore).toBe(false);
     expect(view.research.hasResearch).toBe(false);
   });

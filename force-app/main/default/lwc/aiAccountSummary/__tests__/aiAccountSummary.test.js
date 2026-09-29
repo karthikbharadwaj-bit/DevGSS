@@ -169,6 +169,26 @@ describe("c-ai-account-summary", () => {
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps research collapsed and opens it on an evidence click", async () => {
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+
+    const drawer = query(element, "[data-public-research]");
+    expect(drawer.open).toBe(false);
+    expect(element.shadowRoot.textContent).not.toContain("§");
+
+    const evidence = query(element, '[data-evidence-id="E1"]');
+    expect(evidence.textContent.trim()).toBe("E1");
+    evidence.click();
+    await flushPromises();
+
+    const finding = query(element, '[data-research-finding="E1"]');
+    expect(drawer.open).toBe(true);
+    expect(finding.classList.contains("is-highlighted")).toBe(true);
+  });
+
   it("closes the modal on Escape", async () => {
     const element = await mount();
     await generate(element);

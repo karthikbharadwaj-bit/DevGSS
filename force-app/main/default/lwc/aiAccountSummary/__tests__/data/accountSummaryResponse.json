@@ -76,6 +76,11 @@
           "title": "Renewal 2026 is 122 days overdue",
           "detail": "Close date <strong>27 Feb 2026</strong>, still open.",
           "source": "Opportunity.CloseDate"
+        },
+        {
+          "title": "Renewal timing unavailable",
+          "detail": "Days to renewal are <strong>not recorded in Salesforce</strong>.",
+          "source": "days_to_renewal"
         }
       ],
       "growth": [
@@ -83,6 +88,11 @@
           "title": "SMS Booster won Feb 2026",
           "detail": "Won at <strong>EUR 2,100</strong>.",
           "source": "Opportunity.Amount"
+        },
+        {
+          "title": "New depot opening",
+          "detail": "Public reporting notes a new depot [E1].",
+          "source": "Public web [E1]"
         }
       ]
     },
@@ -154,7 +164,10 @@
         }
       ],
       "account_team": [
-        { "user_name": "Lealyn Lacia", "team_member_role": "Renewals Manager" }
+        {
+          "user_name": "Lealyn Lacia",
+          "team_member_role": "Renewals Manager"
+        }
       ],
       "role_note": "Contact role is an operational field in this org."
     },
@@ -190,7 +203,10 @@
       "open_case_amber_floor_date": "2026-09-27",
       "override_explanation": "An open opportunity is <strong>122 days</strong> past its close date.",
       "routing": [
-        { "kind": "NOTIFY", "text": "Renewals manager on the account team." },
+        {
+          "kind": "NOTIFY",
+          "text": "Renewals manager on the account team."
+        },
         {
           "kind": "WATCH",
           "text": "The Critical case crosses 90 days on <strong>27 Sep 2026</strong>."
@@ -247,7 +263,27 @@
       }
     ]
   },
-  "derived_metrics": { "mrr_trajectory_pct": -25.2 },
+  "derived_metrics": {
+    "mrr_trajectory_pct": -25.2,
+    "days_to_renewal": 45,
+    "days_since_meaningful_activity": 6,
+    "going_cold": false,
+    "closed_won_total": 42000,
+    "closed_won_count": 4,
+    "closed_opportunity_sample_size": 15,
+    "closed_won_currency_iso_code": "EUR",
+    "active_revenue_at_risk": 0,
+    "active_revenue_at_risk_currency_iso_code": "EUR",
+    "open_escalation_count": 0,
+    "lifetime_escalation_count": 0,
+    "cumulative_red_days": 0,
+    "open_opp_count": 1,
+    "next_step_missing_count": 1,
+    "overdue_open_opp_count": 1,
+    "max_opp_days_overdue": 122,
+    "recently_closed_case_count": 7,
+    "open_dunning_retention_task_count": 0
+  },
   "account_enrichment": {
     "status": "ok",
     "findings": [
@@ -255,7 +291,17 @@
         "id": "E1",
         "kind": "business_event",
         "date": "2026-05-01",
-        "fact": "Opened a new depot."
+        "fact": "Opened a new depot.",
+        "source_indices": [1, 2]
+      },
+      {
+        "id": "E2",
+        "kind": "leadership_change",
+        "date": "2026-04-01",
+        "fact": "Appointed a new CFO.",
+        "person_name": "Dana Reyes",
+        "role": "CFO",
+        "source_indices": []
       }
     ],
     "sources": [
@@ -265,7 +311,11 @@
         "display_label": "news.example",
         "url": "https://news.example/story"
       },
-      { "index": 2, "title": "Unsafe", "url": "javascript:alert(1)" }
+      {
+        "index": 2,
+        "title": "Unsafe",
+        "url": "javascript:alert(1)"
+      }
     ]
   }
 }

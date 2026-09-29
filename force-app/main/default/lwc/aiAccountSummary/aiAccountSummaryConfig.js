@@ -112,6 +112,26 @@ import openNow from "@salesforce/label/c.AccountSummaryOpenNow";
 import noHistory from "@salesforce/label/c.AccountSummaryNoHistory";
 import researchDisclaimer from "@salesforce/label/c.AccountSummaryResearchDisclaimer";
 import researchSources from "@salesforce/label/c.AccountSummaryResearchSources";
+import tileRenewal from "@salesforce/label/c.AccountSummaryTileRenewal";
+import tileRenewalPast from "@salesforce/label/c.AccountSummaryTileRenewalPast";
+import tileActivity from "@salesforce/label/c.AccountSummaryTileActivity";
+import tileGoingCold from "@salesforce/label/c.AccountSummaryTileGoingCold";
+import tileClosedWon from "@salesforce/label/c.AccountSummaryTileClosedWon";
+import tileClosedWonDetail from "@salesforce/label/c.AccountSummaryTileClosedWonDetail";
+import tileRevenueAtRisk from "@salesforce/label/c.AccountSummaryTileRevenueAtRisk";
+import tileOpenEscalations from "@salesforce/label/c.AccountSummaryTileOpenEscalations";
+import tileEscalations from "@salesforce/label/c.AccountSummaryTileEscalations";
+import tileRedDays from "@salesforce/label/c.AccountSummaryTileRedDays";
+import tileNextStep from "@salesforce/label/c.AccountSummaryTileNextStep";
+import tileOverdue from "@salesforce/label/c.AccountSummaryTileOverdue";
+import tileOverdueDetail from "@salesforce/label/c.AccountSummaryTileOverdueDetail";
+import tileClosedCases from "@salesforce/label/c.AccountSummaryTileClosedCases";
+import tileDunning from "@salesforce/label/c.AccountSummaryTileDunning";
+import researchSummary from "@salesforce/label/c.AccountSummaryResearchSummary";
+import researchKindBusinessEvent from "@salesforce/label/c.AccountSummaryResearchKindBusinessEvent";
+import researchKindFinancialSignal from "@salesforce/label/c.AccountSummaryResearchKindFinancialSignal";
+import researchKindLeadership from "@salesforce/label/c.AccountSummaryResearchKindLeadership";
+import evidenceButton from "@salesforce/label/c.AccountSummaryEvidenceButton";
 import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
 
@@ -260,7 +280,27 @@ export function getUiLabels() {
     openNow,
     noHistory,
     researchDisclaimer,
-    researchSources
+    researchSources,
+    tileRenewal,
+    tileRenewalPast,
+    tileActivity,
+    tileGoingCold,
+    tileClosedWon,
+    tileClosedWonDetail,
+    tileRevenueAtRisk,
+    tileOpenEscalations,
+    tileEscalations,
+    tileRedDays,
+    tileNextStep,
+    tileOverdue,
+    tileOverdueDetail,
+    tileClosedCases,
+    tileDunning,
+    researchSummary,
+    researchKindBusinessEvent,
+    researchKindFinancialSignal,
+    researchKindLeadership,
+    evidenceButton
   };
 }
 
@@ -268,6 +308,9 @@ export function getLoadingMessages() {
   return [loading1, loading2, loading3, loading4, loading5, loading6];
 }
 
-export function formatLabel(template, value) {
-  return String(template).replace(/\{0\}/g, String(value));
+/* Replaces {0}, {1}… with the matching values, leaving unknown placeholders untouched. */
+export function formatLabel(template, ...values) {
+  return String(template).replace(/\{(\d+)\}/g, (match, index) => {
+    return index < values.length ? String(values[index]) : match;
+  });
 }

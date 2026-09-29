@@ -19,6 +19,9 @@ const CLOCK_INTERVAL_MS = 60000;
 const CACHE_KEY_PREFIX = "aiAccountSummary:v1";
 const CACHE_STORAGE_PREFIX = `${CACHE_KEY_PREFIX}:`;
 const CACHE_USER_KEY_PREFIX = `${CACHE_KEY_PREFIX}:${USER_ID}:`;
+const HIGHLIGHT_DURATION_MS = 1600;
+const EVIDENCE_ID_PATTERN = /^E\d+$/;
+const HIGHLIGHT_CLASS = "is-highlighted";
 const CACHED_KEYS = [
   "as_of_date",
   "account_summary",
@@ -62,6 +65,8 @@ export default class AiAccountSummary extends LightningElement {
   _loadingMessageId = null;
   _escapeHandler = null;
   _requestToken = 0;
+  _highlightTimeoutId = null;
+  _highlightedTarget = null;
 
   @api
   get recordId() {
@@ -109,6 +114,7 @@ export default class AiAccountSummary extends LightningElement {
     this._stopElapsedClock();
     this._stopLoadingMessages();
     this._unbindEscape();
+    this._clearEvidenceHighlight();
   }
 
   get cacheKey() {
@@ -172,6 +178,14 @@ export default class AiAccountSummary extends LightningElement {
     return Boolean(this.view && this.view.flag.routing.length);
   }
 
+  get hasHeaderRows() {
+    return Boolean(this.view && this.view.header.rows.length);
+  }
+
+  get hasTiles() {
+    return Boolean(this.view && this.view.tiles.length);
+  }
+
   get hasBars() {
     return Boolean(this.view && this.view.flag.bars.length);
   }
@@ -204,6 +218,52 @@ export default class AiAccountSummary extends LightningElement {
   closeModal() {
     this.isModalOpen = false;
     this._unbindEscape();
+    this._clearEvidenceHighlight();
+  }
+
+  /*
+   * Evidence chips point at a finding inside the research drawer, which is collapsed by
+   * default, so the drawer is opened before the finding is scrolled to and highlighted.
+   */
+  handleEvidenceClick(event) {
+    const evidenceId = event.currentTarget.dataset.evidenceId;
+    if (!EVIDENCE_ID_PATTERN.test(String(evidenceId || ""))) {
+      return;
+    }
+    const drawer = this.template.querySelector("[data-public-research]");
+    if (drawer) {
+      drawer.open = true;
+    }
+    const target = this.template.querySelector(
+      `[data-research-finding="${evidenceId}"]`
+    );
+    if (!target) {
+      return;
+    }
+    if (typeof target.scrollIntoView === "function") {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    target.focus();
+    this._clearEvidenceHighlight();
+    target.classList.add(HIGHLIGHT_CLASS);
+    this._highlightedTarget = target;
+    // A brief highlight confirms where pointer or keyboard navigation landed.
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    this._highlightTimeoutId = setTimeout(
+      () => this._clearEvidenceHighlight(),
+      HIGHLIGHT_DURATION_MS
+    );
+  }
+
+  _clearEvidenceHighlight() {
+    if (this._highlightTimeoutId) {
+      clearTimeout(this._highlightTimeoutId);
+      this._highlightTimeoutId = null;
+    }
+    if (this._highlightedTarget) {
+      this._highlightedTarget.classList.remove(HIGHLIGHT_CLASS);
+      this._highlightedTarget = null;
+    }
   }
 
   startGeneration() {

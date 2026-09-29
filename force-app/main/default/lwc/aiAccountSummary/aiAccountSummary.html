@@ -182,19 +182,19 @@
 
             <template lwc:else>
               <div class="as-stack">
-                <div class="as-grid as-grid_5-7">
+                <div class="as-row">
                   <article class="panel" data-summary-section="header">
-                    <h3 class="panel-title">
-                      <span class="sec">§1</span>{labels.sectionHeader}
-                    </h3>
-                    <dl class="kv">
-                      <template for:each={view.header.rows} for:item="row">
-                        <div key={row.key} class="kv-row">
-                          <dt>{row.label}</dt>
-                          <dd class={row.valueClass}>{row.value}</dd>
-                        </div>
-                      </template>
-                    </dl>
+                    <h3 class="panel-title">{labels.sectionHeader}</h3>
+                    <template lwc:if={hasHeaderRows}>
+                      <dl class="kv">
+                        <template for:each={view.header.rows} for:item="row">
+                          <div key={row.key} class="kv-row">
+                            <dt>{row.label}</dt>
+                            <dd class={row.valueClass}>{row.value}</dd>
+                          </div>
+                        </template>
+                      </dl>
+                    </template>
                     <template lwc:if={view.header.narrative.length}>
                       <div class="narrative" data-summary-narrative>
                         <template
@@ -213,7 +213,7 @@
 
                   <article class="panel" data-summary-section="flag">
                     <h3 class="panel-title">
-                      <span class="sec">§7</span>{labels.sectionFlag}
+                      {labels.sectionFlag}
                       <template lwc:if={view.flag.band}>
                         <span class={view.flag.bandChipClass}
                           >{view.flag.band}</span
@@ -300,39 +300,63 @@
                   </article>
                 </div>
 
-                <article class="panel" data-summary-section="metrics">
-                  <h3 class="panel-title">
-                    <span class="sec">§2</span>{labels.sectionMetrics}
-                  </h3>
-                  <div class="tiles">
-                    <template for:each={view.tiles} for:item="tile">
-                      <div key={tile.key} class={tile.tileClass}>
-                        <span class="tile-label">{tile.label}</span>
-                        <span class={tile.valueClass}>{tile.value}</span>
-                        <span class="tile-detail">{tile.detail}</span>
-                      </div>
-                    </template>
-                  </div>
-                </article>
+                <template lwc:if={hasTiles}>
+                  <article class="panel" data-summary-section="metrics">
+                    <h3 class="panel-title">{labels.sectionMetrics}</h3>
+                    <div class="tiles">
+                      <template for:each={view.tiles} for:item="tile">
+                        <div
+                          key={tile.key}
+                          class={tile.tileClass}
+                          data-summary-tile={tile.key}
+                        >
+                          <span class="tile-label">{tile.label}</span>
+                          <span class={tile.valueClass}>{tile.value}</span>
+                          <template lwc:if={tile.detail}>
+                            <span class="tile-detail">{tile.detail}</span>
+                          </template>
+                        </div>
+                      </template>
+                    </div>
+                  </article>
+                </template>
 
-                <div class="as-grid as-grid_7-5">
+                <div class="as-row">
                   <article class="panel" data-summary-section="signals">
-                    <h3 class="panel-title">
-                      <span class="sec">§3</span>{labels.sectionSignals}
-                    </h3>
-                    <div class="as-grid as-grid_2">
+                    <h3 class="panel-title">{labels.sectionSignals}</h3>
+                    <div class="split">
                       <div>
                         <p class="subhead subhead_first">{labels.risks}</p>
                         <template lwc:if={hasRisks}>
                           <ul class="signal-list signal-list_risk">
                             <template for:each={view.risks} for:item="item">
-                              <li key={item.key}>
+                              <li key={item.key} data-summary-signal>
                                 <b>{item.title}</b>
                                 <lightning-formatted-rich-text
                                   class="signal-detail"
                                   value={item.detail}
                                 ></lightning-formatted-rich-text>
-                                <span class="src">{item.source}</span>
+                                <span class="src-line">
+                                  <template lwc:if={item.source}>
+                                    <span class="src">{item.source}</span>
+                                  </template>
+                                  <template
+                                    for:each={item.evidence}
+                                    for:item="evidence"
+                                  >
+                                    <button
+                                      key={evidence.key}
+                                      type="button"
+                                      class="evidence-badge"
+                                      data-evidence-id={evidence.id}
+                                      title={evidence.ariaLabel}
+                                      aria-label={evidence.ariaLabel}
+                                      onclick={handleEvidenceClick}
+                                    >
+                                      {evidence.label}
+                                    </button>
+                                  </template>
+                                </span>
                               </li>
                             </template>
                           </ul>
@@ -346,13 +370,33 @@
                         <template lwc:if={hasGrowth}>
                           <ul class="signal-list signal-list_growth">
                             <template for:each={view.growth} for:item="item">
-                              <li key={item.key}>
+                              <li key={item.key} data-summary-signal>
                                 <b>{item.title}</b>
                                 <lightning-formatted-rich-text
                                   class="signal-detail"
                                   value={item.detail}
                                 ></lightning-formatted-rich-text>
-                                <span class="src">{item.source}</span>
+                                <span class="src-line">
+                                  <template lwc:if={item.source}>
+                                    <span class="src">{item.source}</span>
+                                  </template>
+                                  <template
+                                    for:each={item.evidence}
+                                    for:item="evidence"
+                                  >
+                                    <button
+                                      key={evidence.key}
+                                      type="button"
+                                      class="evidence-badge"
+                                      data-evidence-id={evidence.id}
+                                      title={evidence.ariaLabel}
+                                      aria-label={evidence.ariaLabel}
+                                      onclick={handleEvidenceClick}
+                                    >
+                                      {evidence.label}
+                                    </button>
+                                  </template>
+                                </span>
                               </li>
                             </template>
                           </ul>
@@ -366,12 +410,12 @@
 
                   <article class="panel" data-summary-section="actions">
                     <h3 class="panel-title">
-                      <span class="sec">§8</span>{labels.sectionActions}
+                      {labels.sectionActions}
                       <span class="count">{actionCount}</span>
                     </h3>
-                    <div class="actions">
+                    <ul class="actions">
                       <template for:each={view.actions} for:item="action">
-                        <div key={action.key} class={action.cardClass}>
+                        <li key={action.key} class="action">
                           <div class="action-chips">
                             <span class={action.chipClass}
                               ><span class="dot"></span>{action.whenLabel}</span
@@ -387,17 +431,37 @@
                             class="action-detail"
                             value={action.detail}
                           ></lightning-formatted-rich-text>
-                          <span class="src">{action.source}</span>
-                        </div>
+                          <span class="src-line">
+                            <template lwc:if={action.source}>
+                              <span class="src">{action.source}</span>
+                            </template>
+                            <template
+                              for:each={action.evidence}
+                              for:item="evidence"
+                            >
+                              <button
+                                key={evidence.key}
+                                type="button"
+                                class="evidence-badge"
+                                data-evidence-id={evidence.id}
+                                title={evidence.ariaLabel}
+                                aria-label={evidence.ariaLabel}
+                                onclick={handleEvidenceClick}
+                              >
+                                {evidence.label}
+                              </button>
+                            </template>
+                          </span>
+                        </li>
                       </template>
-                    </div>
+                    </ul>
                   </article>
                 </div>
 
-                <div class="as-grid as-grid_2">
+                <div class="as-row">
                   <article class="panel" data-summary-section="opportunities">
                     <h3 class="panel-title">
-                      <span class="sec">§4</span>{labels.sectionOpportunities}
+                      {labels.sectionOpportunities}
                       <span class="count">{opportunityCount}</span>
                     </h3>
                     <template lwc:if={hasOpportunities}>
@@ -425,17 +489,22 @@
                                     rel="noopener"
                                     >{row.name}</a
                                   >
-                                  <span class="sub block">{row.owner}</span>
-                                  <span class="sub block"
-                                    >{labels.nextStep}:
-                                    <span class={row.nextStepClass}
-                                      >{row.nextStepDisplay}</span
-                                    ></span
-                                  >
+                                  <template lwc:if={row.owner}>
+                                    <span class="sub block">{row.owner}</span>
+                                  </template>
+                                  <template lwc:if={row.nextStep}>
+                                    <span class="sub block"
+                                      >{row.nextStep}</span
+                                    >
+                                  </template>
                                 </td>
                                 <td>
                                   {row.stage}
-                                  <span class="sub block">{row.forecast}</span>
+                                  <template lwc:if={row.forecast}>
+                                    <span class="sub block"
+                                      >{row.forecast}</span
+                                    >
+                                  </template>
                                 </td>
                                 <td class={row.amountClass}>{row.amount}</td>
                                 <td>
@@ -462,9 +531,7 @@
                   </article>
 
                   <article class="panel" data-summary-section="cases">
-                    <h3 class="panel-title">
-                      <span class="sec">§5</span>{labels.sectionCases}
-                    </h3>
+                    <h3 class="panel-title">{labels.sectionCases}</h3>
                     <p class="subhead subhead_first">
                       {view.cases.openHeading}
                     </p>
@@ -490,12 +557,16 @@
                                     rel="noopener"
                                     >{row.subject}</a
                                   >
-                                  <span class="sub block">{row.detail}</span>
+                                  <template lwc:if={row.detail}>
+                                    <span class="sub block">{row.detail}</span>
+                                  </template>
                                 </td>
                                 <td>
-                                  <span class={row.priorityClass}
-                                    >{row.priority}</span
-                                  >
+                                  <template lwc:if={row.priority}>
+                                    <span class={row.priorityClass}
+                                      >{row.priority}</span
+                                    >
+                                  </template>
                                   <template lwc:if={row.isEscalated}>
                                     <span class="chip chip_red block-chip"
                                       >{labels.escalatedChip}</span
@@ -512,9 +583,6 @@
                     </template>
                     <template lwc:else>
                       <p class="sub">{labels.noOpenCases}</p>
-                    </template>
-                    <template lwc:if={view.cases.detailNote}>
-                      <p class="sub note">{view.cases.detailNote}</p>
                     </template>
                     <p class="subhead">{view.cases.closedHeading}</p>
                     <template lwc:if={hasClosedCases}>
@@ -536,9 +604,11 @@
                                   >
                                 </td>
                                 <td>
-                                  <span class="chip chip_grey"
-                                    >{row.priority}</span
-                                  >
+                                  <template lwc:if={row.priority}>
+                                    <span class="chip chip_grey"
+                                      >{row.priority}</span
+                                    >
+                                  </template>
                                 </td>
                                 <td class="num sub">{row.closedMonth}</td>
                               </tr>
@@ -553,7 +623,7 @@
                   </article>
                 </div>
 
-                <div class="as-grid as-grid_7-5">
+                <div class="as-row">
                   <article class="panel" data-summary-section="history">
                     <h3 class="panel-title">{labels.sectionHistory}</h3>
                     <template lwc:if={hasHistory}>
@@ -585,7 +655,7 @@
 
                   <article class="panel" data-summary-section="contacts">
                     <h3 class="panel-title">
-                      <span class="sec">§6</span>{labels.sectionContacts}
+                      {labels.sectionContacts}
                       <span class="count">{contactCount}</span>
                     </h3>
                     <template lwc:if={hasContacts}>
@@ -612,16 +682,20 @@
                                     rel="noopener"
                                     >{row.name}</a
                                   >
-                                  <span class={row.titleClass}
-                                    >{row.title}</span
-                                  >
+                                  <template lwc:if={row.title}>
+                                    <span class="contact-title"
+                                      >{row.title}</span
+                                    >
+                                  </template>
                                 </td>
                                 <td>
-                                  <span class={row.roleClass}>{row.role}</span>
+                                  <template lwc:if={row.role}>
+                                    <span class="chip chip_blue"
+                                      >{row.role}</span
+                                    >
+                                  </template>
                                 </td>
-                                <td class={row.lastActivityClass}>
-                                  {row.lastActivity}
-                                </td>
+                                <td>{row.lastActivity}</td>
                               </tr>
                             </template>
                           </tbody>
@@ -652,43 +726,66 @@
                 </div>
 
                 <template lwc:if={view.research.hasResearch}>
-                  <article class="panel" data-summary-section="research">
-                    <h3 class="panel-title">{labels.sectionResearch}</h3>
-                    <p class="research-disclaimer">
-                      {labels.researchDisclaimer}
-                    </p>
-                    <ul class="research-list">
-                      <template
-                        for:each={view.research.findings}
-                        for:item="finding"
-                      >
-                        <li key={finding.key}>
-                          <span class="evidence-id">{finding.id}</span>
-                          <span>{finding.fact}</span>
-                          <span class="sub block">{finding.meta}</span>
-                        </li>
-                      </template>
-                    </ul>
-                    <template lwc:if={view.research.sources.length}>
-                      <p class="subhead">{labels.researchSources}</p>
-                      <ul class="source-list">
+                  <details
+                    class="panel research-drawer"
+                    data-summary-section="research"
+                    data-public-research
+                  >
+                    <summary class="research-summary">
+                      {view.research.summary}
+                    </summary>
+                    <div class="research-body">
+                      <p class="research-disclaimer">
+                        {labels.researchDisclaimer}
+                      </p>
+                      <ul class="research-list">
                         <template
-                          for:each={view.research.sources}
-                          for:item="source"
+                          for:each={view.research.findings}
+                          for:item="finding"
                         >
-                          <li key={source.key}>
-                            <a
-                              class="lnk"
-                              href={source.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              >{source.label}</a
-                            >
+                          <li
+                            key={finding.key}
+                            class="finding"
+                            tabindex="-1"
+                            data-research-finding={finding.id}
+                          >
+                            <div class="finding-head">
+                              <span class="evidence-id">{finding.id}</span>
+                              <template lwc:if={finding.kind}>
+                                <span class="chip chip_grey"
+                                  >{finding.kind}</span
+                                >
+                              </template>
+                              <template lwc:if={finding.meta}>
+                                <span class="sub">{finding.meta}</span>
+                              </template>
+                            </div>
+                            <p class="finding-fact">{finding.fact}</p>
+                            <template lwc:if={finding.sources.length}>
+                              <span class="finding-sources">
+                                <span class="sub"
+                                  >{labels.researchSources}</span
+                                >
+                                <template
+                                  for:each={finding.sources}
+                                  for:item="source"
+                                >
+                                  <a
+                                    key={source.key}
+                                    class="lnk"
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    >{source.label}</a
+                                  >
+                                </template>
+                              </span>
+                            </template>
                           </li>
                         </template>
                       </ul>
-                    </template>
-                  </article>
+                    </div>
+                  </details>
                 </template>
               </div>
             </template>
