@@ -27,6 +27,8 @@ jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
 const RESPONSE = require("./data/accountSummaryResponse.json");
 const RECORD_ID = "001TH00000iUv7bYAC";
 const CACHE_KEY = `aiAccountSummary:v1:005000000000001AAA:${RECORD_ID}`;
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const MAX_CACHE_BYTES = 512 * 1024;
 
 async function flushPromises() {
   for (let index = 0; index < 5; index += 1) {
@@ -156,6 +158,96 @@ describe("c-ai-account-summary", () => {
     const second = await mount();
     expect(query(second, "[data-summary-ready]")).not.toBeNull();
     expect(makeGCPCallout).not.toHaveBeenCalled();
+  });
+
+  it("keeps derived metrics and research in the cached entry", async () => {
+    const element = await mount();
+    await generate(element);
+
+    const cached = JSON.parse(window.localStorage.getItem(CACHE_KEY));
+    expect(Object.keys(cached.summary).sort()).toEqual([
+      "account_enrichment",
+      "account_summary",
+      "as_of_date",
+      "derived_metrics"
+    ]);
+    expect(cached.summary.success).toBeUndefined();
+  });
+
+  it("discards an expired entry and waits for an on-demand request", async () => {
+    window.localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({
+        cachedAt: Date.now() - ONE_HOUR_MS - 1,
+        summary: RESPONSE
+      })
+    );
+    const element = await mount();
+
+    expect(query(element, "[data-summary-ready]")).toBeNull();
+    expect(query(element, "[data-generate-summary]")).not.toBeNull();
+    expect(window.localStorage.getItem(CACHE_KEY)).toBeNull();
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+  });
+
+  it("ignores a malformed entry without blocking generation", async () => {
+    window.localStorage.setItem(CACHE_KEY, "{not json");
+    const element = await mount();
+    expect(window.localStorage.getItem(CACHE_KEY)).toBeNull();
+
+    await generate(element);
+    expect(query(element, "[data-summary-ready]")).not.toBeNull();
+  });
+
+  it("does not cache an entry that is bigger than the storage budget", async () => {
+    const oversized = {
+      ...RESPONSE,
+      account_summary: {
+        ...RESPONSE.account_summary,
+        padding: "x".repeat(MAX_CACHE_BYTES)
+      }
+    };
+    makeGCPCallout.mockResolvedValue(JSON.stringify(oversized));
+    const element = await mount();
+    await generate(element);
+
+    expect(query(element, "[data-summary-ready]")).not.toBeNull();
+    expect(window.localStorage.getItem(CACHE_KEY)).toBeNull();
+  });
+
+  it("evicts the oldest other summary to stay within the budget", async () => {
+    const oldKey = "aiAccountSummary:v1:005000000000001AAA:001OLD";
+    const newerKey = "aiAccountSummary:v1:005000000000001AAA:001NEW";
+    const filler = "y".repeat(Math.floor(MAX_CACHE_BYTES / 4) - 200);
+    window.localStorage.setItem(
+      oldKey,
+      JSON.stringify({ cachedAt: Date.now() - 2000, summary: { filler } })
+    );
+    window.localStorage.setItem(
+      newerKey,
+      JSON.stringify({ cachedAt: Date.now() - 1000, summary: { filler } })
+    );
+    const element = await mount();
+    await generate(element);
+
+    expect(window.localStorage.getItem(CACHE_KEY)).not.toBeNull();
+    expect(window.localStorage.getItem(oldKey)).toBeNull();
+    expect(window.localStorage.getItem(newerKey)).not.toBeNull();
+  });
+
+  it("still renders a fresh summary when browser storage is unavailable", async () => {
+    const setItem = jest
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new Error("QuotaExceededError");
+      });
+    try {
+      const element = await mount();
+      await generate(element);
+      expect(query(element, "[data-summary-ready]")).not.toBeNull();
+    } finally {
+      setItem.mockRestore();
+    }
   });
 
   it("drops the cache and calls the service again on refresh", async () => {
