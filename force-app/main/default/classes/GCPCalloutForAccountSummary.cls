@@ -5,8 +5,8 @@
  * and never derives metrics of its own.
  */
 public with sharing class GCPCalloutForAccountSummary {
-  /* GCPAuthUtil has no dedicated mode for this service, so it resolves the shared Cloud Run host. */
-  private static final String AUTH_CONFIG_NAME = 'accountSummary';
+  /* Resolves GCP_Endpoint_Settings__c.AccountSummaryEndpoint__c through GCPAuthUtil. */
+  private static final String AUTH_CONFIG_NAME = GCPAuthUtil.ACCOUNT_SUMMARY;
   private static final String ENDPOINT_PATH = '/api/v1/account_summary';
   private static final String API_PATH_MARKER = '/api/v1/';
   private static final String PATH_SEPARATOR = '/';
