@@ -7,6 +7,10 @@ public class GCPAuthUtil {
     public static final String FEED_SUMMARY = 'feedSummary';
     public static final String RED_ACCOUNT_SUMMARY = 'redAccountSummary';
     public static final String NEXT_STEPS = 'nextSteps';
+    // Red Account AI Field Auto-Fill (PBC-31920)
+    public static final String RED_ACCOUNT_AI_FIELDS = 'redAccountAIFields';
+    public static final String RED_ACCOUNT_PICKLIST_BQ = 'redAccountPicklistBQ';
+    public static final String OPPORTUNITY_SUMMARY = 'opportunitySummary';
     
     public class GCPConfig {
         public String serviceAccountEmail;
@@ -66,6 +70,17 @@ public class GCPAuthUtil {
             } else if (m.equalsIgnoreCase(NEXT_STEPS)) {
                 result.audience         = config.Next_Steps_Endpoint__c;
                 result.cloudRunEndpoint = config.Next_Steps_Endpoint__c;
+            } else if (m.equalsIgnoreCase(RED_ACCOUNT_AI_FIELDS)) {
+                // Red Account AI Field Auto-Fill — GCP field-inference endpoint (PBC-31920)
+                result.audience         = config.Red_Account_AI_Endpoint__c;
+                result.cloudRunEndpoint = config.Red_Account_AI_Endpoint__c;
+           	} else if (m.equalsIgnoreCase(OPPORTUNITY_SUMMARY)) {
+                result.audience         = config.Opportunity_Summary_Endpoint__c;
+                result.cloudRunEndpoint = config.Opportunity_Summary_Endpoint__c;
+            } else if (m.equalsIgnoreCase(RED_ACCOUNT_PICKLIST_BQ)) {
+                // Red Account AI Field Auto-Fill — BigQuery picklist/dependency mapping endpoint (PBC-31920)
+                result.audience         = config.Red_Account_Picklist_BQ_Endpoint__c;
+                result.cloudRunEndpoint = config.Red_Account_Picklist_BQ_Endpoint__c;
             }
             else{
             // default = Similar Cases
@@ -138,7 +153,7 @@ public class GCPAuthUtil {
         String encoded = EncodingUtil.base64Encode(input);
         return encoded.replace('+', '-').replace('/', '_').replaceAll('=+$', '');
     }
-    
+/*    
     public static Boolean getRedactionFlag() {
         AI_Feature_Pilot_Control__c customSettingRow = AI_Feature_Pilot_Control__c.getInstance();
         Boolean result = false;
@@ -147,6 +162,6 @@ public class GCPAuthUtil {
         }
         return result;
     }
-
+*/
     public class GCPCalloutException extends Exception {}
 }
