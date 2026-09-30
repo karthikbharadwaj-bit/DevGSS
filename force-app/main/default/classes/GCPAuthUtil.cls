@@ -89,8 +89,8 @@ public class GCPAuthUtil {
       result.audience = config.Opportunity_Summary_Endpoint__c;
       result.cloudRunEndpoint = config.Opportunity_Summary_Endpoint__c;
     } else if (m.equalsIgnoreCase(ACCOUNT_SUMMARY)) {
-      result.audience = config.AccountSummaryEndpoint__c;
-      result.cloudRunEndpoint = config.AccountSummaryEndpoint__c;
+      result.audience = config.Account_Summary_Endpoint__c;
+      result.cloudRunEndpoint = config.Account_Summary_Endpoint__c;
     } else if (m.equalsIgnoreCase(RED_ACCOUNT_PICKLIST_BQ)) {
       // Red Account AI Field Auto-Fill — BigQuery picklist/dependency mapping endpoint (PBC-31920)
       result.audience = config.Red_Account_Picklist_BQ_Endpoint__c;

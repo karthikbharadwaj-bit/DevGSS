@@ -40,7 +40,7 @@ private class Test_GCPAuthUtil {
         OPPORTUNITY_SUMMARY_ENDPOINT
       )
       .setField(
-        GCP_Endpoint_Settings__c.AccountSummaryEndpoint__c,
+        GCP_Endpoint_Settings__c.Account_Summary_Endpoint__c,
         ACCOUNT_SUMMARY_ENDPOINT
       )
       .create();
@@ -54,7 +54,7 @@ private class Test_GCPAuthUtil {
     );
     Test.stopTest();
 
-    String endpointMessage = 'Account Summary must read AccountSummaryEndpoint__c.';
+    String endpointMessage = 'Account Summary must read Account_Summary_Endpoint__c.';
     String audienceMessage = 'The token audience must be the Account Summary endpoint.';
     Assert.areEqual(
       ACCOUNT_SUMMARY_ENDPOINT,
@@ -111,7 +111,7 @@ private class Test_GCPAuthUtil {
   @IsTest
   static void shouldThrowWhenAccountSummaryEndpointIsBlank() {
     GCP_Endpoint_Settings__c settings = GCP_Endpoint_Settings__c.getOrgDefaults();
-    settings.AccountSummaryEndpoint__c = null;
+    settings.Account_Summary_Endpoint__c = null;
     update settings;
     Boolean isThrown = false;
 
