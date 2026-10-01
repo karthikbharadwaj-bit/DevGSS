@@ -49,21 +49,39 @@ describe("Account Summary cache configuration", () => {
     expect(positiveNumber(" 0.5 ", 1, 1 / 60, 24)).toBe(0.5);
   });
 
-  it("shows five list rows by default", () => {
-    expect(configuredModule().getListRowLimit()).toBe(5);
+  it("shows three rows first and up to ten after View more by default", () => {
+    expect(configuredModule().getListRowLimits()).toEqual({
+      initialRows: 3,
+      maxRows: 10
+    });
   });
 
-  it("uses the configured list row count up to the hard cap of ten", () => {
-    setLabel("ListRowLimit", " 8 ");
-    expect(configuredModule().getListRowLimit()).toBe(8);
+  it("uses configured row counts but never more than ten", () => {
+    setLabel("ListRowsInitial", " 4 ");
     setLabel("ListRowLimit", "25");
-    expect(configuredModule().getListRowLimit()).toBe(10);
+    expect(configuredModule().getListRowLimits()).toEqual({
+      initialRows: 4,
+      maxRows: 10
+    });
   });
 
-  it("falls back to five list rows for a zero, fraction or non-number", () => {
+  it("never shows more rows first than after View more", () => {
+    setLabel("ListRowsInitial", "8");
+    setLabel("ListRowLimit", "6");
+    expect(configuredModule().getListRowLimits()).toEqual({
+      initialRows: 6,
+      maxRows: 6
+    });
+  });
+
+  it("falls back to the defaults for a zero, fraction or non-number", () => {
     ["0", "2.5", "five", ""].forEach((value) => {
+      setLabel("ListRowsInitial", value);
       setLabel("ListRowLimit", value);
-      expect(configuredModule().getListRowLimit()).toBe(5);
+      expect(configuredModule().getListRowLimits()).toEqual({
+        initialRows: 3,
+        maxRows: 10
+      });
     });
   });
 });

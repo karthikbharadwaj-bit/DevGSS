@@ -145,32 +145,90 @@ describe("c-ai-account-summary", () => {
     expect(header.querySelectorAll("[data-summary-tile]")).toHaveLength(5);
   });
 
-  it("lists five opportunities and counts all of them in the heading", async () => {
-    const rows = Array.from({ length: 8 }, (unused, index) => ({
-      id: `006TH00000000${index}AAA`,
+  function responseWithOpportunities(count) {
+    const rows = Array.from({ length: count }, (unused, index) => ({
+      id: `006TH0000000${String(index).padStart(2, "0")}AAA`,
       name: `Deal ${index}`,
-      close_date: `2026-1${index % 3}-0${index + 1}`
+      close_date: `2026-10-${String(index + 1).padStart(2, "0")}`
     }));
-    makeGCPCallout.mockResolvedValue(
-      JSON.stringify({
-        ...RESPONSE,
-        account_summary: {
-          ...RESPONSE.account_summary,
-          open_opportunities: { rows }
-        }
-      })
-    );
+    return JSON.stringify({
+      ...RESPONSE,
+      account_summary: {
+        ...RESPONSE.account_summary,
+        open_opportunities: { rows }
+      }
+    });
+  }
+
+  async function openOpportunities(count) {
+    makeGCPCallout.mockResolvedValue(responseWithOpportunities(count));
     const element = await mount();
     await generate(element);
     query(element, "[data-view-summary]").click();
     await flushPromises();
+    return element;
+  }
 
-    const section = query(element, '[data-summary-section="opportunities"]');
-    expect(section.querySelectorAll("tbody tr")).toHaveLength(5);
-    expect(section.querySelector(".count").textContent).toBe("8");
+  function opportunityRows(element) {
+    return query(
+      element,
+      '[data-summary-section="opportunities"]'
+    ).querySelectorAll("tbody tr");
+  }
+
+  it("shows three opportunities first and the rest on View more", async () => {
+    const element = await openOpportunities(8);
+    const toggle = query(element, '[data-list-toggle="opportunities"]');
+
+    expect(opportunityRows(element)).toHaveLength(3);
+    expect(toggle.textContent.trim()).toBe("View 5 more");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(
-      query(element, '[data-shown-note="opportunities"]').textContent.trim()
-    ).toBe("Showing 5 of 8");
+      query(element, '[data-summary-section="opportunities"] .count')
+        .textContent
+    ).toBe("8");
+    expect(query(element, '[data-list-all="opportunities"]')).toBeNull();
+
+    toggle.click();
+    await flushPromises();
+    expect(opportunityRows(element)).toHaveLength(8);
+    expect(toggle.textContent.trim()).toBe("Show less");
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+
+    toggle.click();
+    await flushPromises();
+    expect(opportunityRows(element)).toHaveLength(3);
+  });
+
+  it("links to the related list when there are more than ten", async () => {
+    const element = await openOpportunities(14);
+    query(element, '[data-list-toggle="opportunities"]').click();
+    await flushPromises();
+
+    expect(opportunityRows(element)).toHaveLength(10);
+    const allLink = query(element, '[data-list-all="opportunities"]');
+    expect(allLink.textContent).toBe("View all 14 in Salesforce");
+    expect(allLink.getAttribute("href")).toBe(
+      `/lightning/r/Account/${RECORD_ID}/related/Opportunities/view`
+    );
+  });
+
+  it("shows no toggle when every row already fits", async () => {
+    const element = await openOpportunities(2);
+    expect(opportunityRows(element)).toHaveLength(2);
+    expect(query(element, '[data-list-toggle="opportunities"]')).toBeNull();
+  });
+
+  it("collapses expanded lists when the modal opens again", async () => {
+    const element = await openOpportunities(8);
+    query(element, '[data-list-toggle="opportunities"]').click();
+    await flushPromises();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await flushPromises();
+
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+    expect(opportunityRows(element)).toHaveLength(3);
   });
 
   it("shows the Apex message when generation fails", async () => {

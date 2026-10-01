@@ -70,7 +70,9 @@ import tileCasesEscalated from "@salesforce/label/c.AccountSummaryTileCasesEscal
 import tileCasesOldest from "@salesforce/label/c.AccountSummaryTileCasesOldest";
 import tileCasesNotEscalated from "@salesforce/label/c.AccountSummaryTileCasesNotEscalated";
 import tileNoValue from "@salesforce/label/c.AccountSummaryTileNoValue";
-import showingCount from "@salesforce/label/c.AccountSummaryShowingCount";
+import viewMore from "@salesforce/label/c.AccountSummaryViewMore";
+import showLess from "@salesforce/label/c.AccountSummaryShowLess";
+import viewAll from "@salesforce/label/c.AccountSummaryViewAll";
 import tileLicenses from "@salesforce/label/c.AccountSummaryTileLicenses";
 import tileLicensesDetail from "@salesforce/label/c.AccountSummaryTileLicensesDetail";
 import tileLicensesUnassigned from "@salesforce/label/c.AccountSummaryTileLicensesUnassigned";
@@ -125,6 +127,7 @@ import researchAdditionalHeading from "@salesforce/label/c.AccountSummaryResearc
 import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
 import listRowLimit from "@salesforce/label/c.AccountSummaryListRowLimit";
+import listRowsInitial from "@salesforce/label/c.AccountSummaryListRowsInitial";
 
 // Labels are text. Reject units, locale separators, booleans and non-finite numbers.
 export function positiveNumber(
@@ -156,21 +159,27 @@ export function getCachePolicy() {
   };
 }
 
-/* An admin can lower or raise the label, but never past this many rows per list. */
+/* Admins can change both labels, but a list never shows more than this many rows. */
 const MAX_LIST_ROWS = 10;
-const DEFAULT_LIST_ROWS = 5;
+const DEFAULT_INITIAL_ROWS = 3;
 
-export function getListRowLimit() {
+function cappedRowCount(raw, fallback) {
   return Math.min(
-    positiveNumber(
-      listRowLimit,
-      DEFAULT_LIST_ROWS,
-      1,
-      Number.MAX_SAFE_INTEGER,
-      true
-    ),
+    positiveNumber(raw, fallback, 1, Number.MAX_SAFE_INTEGER, true),
     MAX_LIST_ROWS
   );
+}
+
+/* Rows shown first, and after View more; the first count never exceeds the second. */
+export function getListRowLimits() {
+  const maxRows = cappedRowCount(listRowLimit, MAX_LIST_ROWS);
+  return {
+    initialRows: Math.min(
+      cappedRowCount(listRowsInitial, DEFAULT_INITIAL_ROWS),
+      maxRows
+    ),
+    maxRows
+  };
 }
 
 export function getUiLabels() {
@@ -249,7 +258,9 @@ export function getUiLabels() {
     tileCasesOldest,
     tileCasesNotEscalated,
     tileNoValue,
-    showingCount,
+    viewMore,
+    showLess,
+    viewAll,
     tileLicenses,
     tileLicensesDetail,
     tileLicensesUnassigned,

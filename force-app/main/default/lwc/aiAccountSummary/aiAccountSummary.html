@@ -476,7 +476,7 @@
                           </thead>
                           <tbody>
                             <template
-                              for:each={view.opportunities.rows}
+                              for:each={opportunityList.rows}
                               for:item="row"
                             >
                               <tr key={row.key}>
@@ -523,10 +523,26 @@
                     <template lwc:else>
                       <p class="sub">{labels.noOpenOpportunities}</p>
                     </template>
-                    <template lwc:if={view.opportunities.shownNote}>
-                      <p class="sub shown-note" data-shown-note="opportunities">
-                        {view.opportunities.shownNote}
-                      </p>
+                    <template lwc:if={opportunityList.hasToggle}>
+                      <button
+                        type="button"
+                        class="list-toggle"
+                        data-list-toggle={opportunityList.key}
+                        aria-expanded={opportunityList.isExpanded}
+                        onclick={handleListToggle}
+                      >
+                        {opportunityList.toggleLabel}
+                      </button>
+                    </template>
+                    <template lwc:if={opportunityList.hasAllLink}>
+                      <a
+                        class="lnk list-all"
+                        href={opportunityList.allUrl}
+                        target="_blank"
+                        rel="noopener"
+                        data-list-all={opportunityList.key}
+                        >{opportunityList.allLabel}</a
+                      >
                     </template>
                     <template lwc:if={view.opportunities.agreementText}>
                       <p class="subhead">{labels.agreementHeading}</p>
@@ -551,7 +567,10 @@
                             </tr>
                           </thead>
                           <tbody>
-                            <template for:each={view.cases.open} for:item="row">
+                            <template
+                              for:each={openCaseList.rows}
+                              for:item="row"
+                            >
                               <tr key={row.key}>
                                 <td>
                                   <a
@@ -588,10 +607,26 @@
                     <template lwc:else>
                       <p class="sub">{labels.noOpenCases}</p>
                     </template>
-                    <template lwc:if={view.cases.openShownNote}>
-                      <p class="sub shown-note" data-shown-note="open-cases">
-                        {view.cases.openShownNote}
-                      </p>
+                    <template lwc:if={openCaseList.hasToggle}>
+                      <button
+                        type="button"
+                        class="list-toggle"
+                        data-list-toggle={openCaseList.key}
+                        aria-expanded={openCaseList.isExpanded}
+                        onclick={handleListToggle}
+                      >
+                        {openCaseList.toggleLabel}
+                      </button>
+                    </template>
+                    <template lwc:if={openCaseList.hasAllLink}>
+                      <a
+                        class="lnk list-all"
+                        href={openCaseList.allUrl}
+                        target="_blank"
+                        rel="noopener"
+                        data-list-all={openCaseList.key}
+                        >{openCaseList.allLabel}</a
+                      >
                     </template>
                     <p class="subhead">{view.cases.closedHeading}</p>
                     <template lwc:if={hasClosedCases}>
@@ -599,7 +634,7 @@
                         <table>
                           <tbody>
                             <template
-                              for:each={view.cases.closed}
+                              for:each={closedCaseList.rows}
                               for:item="row"
                             >
                               <tr key={row.key}>
@@ -629,10 +664,26 @@
                     <template lwc:else>
                       <p class="sub">{labels.noClosedCases}</p>
                     </template>
-                    <template lwc:if={view.cases.closedShownNote}>
-                      <p class="sub shown-note" data-shown-note="closed-cases">
-                        {view.cases.closedShownNote}
-                      </p>
+                    <template lwc:if={closedCaseList.hasToggle}>
+                      <button
+                        type="button"
+                        class="list-toggle"
+                        data-list-toggle={closedCaseList.key}
+                        aria-expanded={closedCaseList.isExpanded}
+                        onclick={handleListToggle}
+                      >
+                        {closedCaseList.toggleLabel}
+                      </button>
+                    </template>
+                    <template lwc:if={closedCaseList.hasAllLink}>
+                      <a
+                        class="lnk list-all"
+                        href={closedCaseList.allUrl}
+                        target="_blank"
+                        rel="noopener"
+                        data-list-all={closedCaseList.key}
+                        >{closedCaseList.allLabel}</a
+                      >
                     </template>
                   </article>
                 </div>

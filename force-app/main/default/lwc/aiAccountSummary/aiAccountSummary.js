@@ -8,6 +8,7 @@ import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIH
 import {
   formatLabel,
   getCachePolicy,
+  getListRowLimits,
   getLoadingMessages,
   getUiLabels
 } from "./aiAccountSummaryConfig";
@@ -23,6 +24,11 @@ const HIGHLIGHT_DURATION_MS = 1600;
 const EVIDENCE_ID_PATTERN = /^E\d+$/;
 const HIGHLIGHT_CLASS = "is-highlighted";
 const CACHED_KEYS = ["as_of_date", "account_summary", "account_enrichment"];
+const LIST_OPPORTUNITIES = "opportunities";
+const LIST_OPEN_CASES = "open-cases";
+const LIST_CLOSED_CASES = "closed-cases";
+const RELATED_LIST_OPPORTUNITIES = "Opportunities";
+const RELATED_LIST_CASES = "Cases";
 
 function storageEntryBytes(key, value) {
   return (String(key).length + String(value).length) * 2;
@@ -48,6 +54,9 @@ export default class AiAccountSummary extends LightningElement {
   hasFetched = false;
   aihViewLogged = false;
   view = null;
+  /* Lists the user expanded with View more; cleared whenever the modal opens. */
+  expandedLists = [];
+  listRowLimits = getListRowLimits();
 
   generatedAt = null;
   generatedLabel = "";
@@ -201,10 +210,70 @@ export default class AiAccountSummary extends LightningElement {
     return this.view ? this.view.actions.length : 0;
   }
 
+  get opportunityList() {
+    return this._listState(
+      LIST_OPPORTUNITIES,
+      this.view.opportunities.rows,
+      this.view.opportunities.totalCount,
+      RELATED_LIST_OPPORTUNITIES
+    );
+  }
+
+  get openCaseList() {
+    return this._listState(
+      LIST_OPEN_CASES,
+      this.view.cases.open,
+      this.view.cases.openTotal,
+      RELATED_LIST_CASES
+    );
+  }
+
+  get closedCaseList() {
+    return this._listState(
+      LIST_CLOSED_CASES,
+      this.view.cases.closed,
+      this.view.cases.closedTotal,
+      RELATED_LIST_CASES
+    );
+  }
+
+  /*
+   * Shows the first rows, all rows up to the expanded limit after View more, and a link to the
+   * Account related list once the total is more than the expanded limit can hold.
+   */
+  _listState(listKey, rows, totalCount, relatedListName) {
+    const { initialRows } = this.listRowLimits;
+    const isExpanded = this.expandedLists.includes(listKey);
+    const hiddenCount = Math.max(rows.length - initialRows, 0);
+    const hasAllLink = totalCount > rows.length && (isExpanded || !hiddenCount);
+    return {
+      key: listKey,
+      rows: isExpanded ? rows : rows.slice(0, initialRows),
+      hasToggle: hiddenCount > 0,
+      isExpanded: String(isExpanded),
+      toggleLabel: isExpanded
+        ? this.labels.showLess
+        : formatLabel(this.labels.viewMore, hiddenCount),
+      hasAllLink,
+      allLabel: formatLabel(this.labels.viewAll, totalCount),
+      allUrl: hasAllLink
+        ? `/lightning/r/Account/${this.recordId}/related/${relatedListName}/view`
+        : ""
+    };
+  }
+
+  handleListToggle(event) {
+    const listKey = event.currentTarget.dataset.listToggle;
+    this.expandedLists = this.expandedLists.includes(listKey)
+      ? this.expandedLists.filter((key) => key !== listKey)
+      : [...this.expandedLists, listKey];
+  }
+
   openModal() {
     if (!this.hasFetched || this.isLoading || this.isError) {
       return;
     }
+    this.expandedLists = [];
     this.isModalOpen = true;
     this._logView();
     this._bindEscape();

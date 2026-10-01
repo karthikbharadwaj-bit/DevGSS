@@ -1,4 +1,4 @@
-import { formatLabel, getListRowLimit } from "./aiAccountSummaryConfig";
+import { formatLabel, getListRowLimits } from "./aiAccountSummaryConfig";
 
 const DIAL_RADIUS = 35;
 const DIAL_CIRCUMFERENCE = 2 * Math.PI * DIAL_RADIUS;
@@ -139,12 +139,6 @@ function byDate(field, isNewestFirst) {
     }
     return isNewestFirst ? rightTime - leftTime : leftTime - rightTime;
   };
-}
-
-function shownNote(shownCount, totalCount, labels) {
-  return totalCount > shownCount
-    ? formatLabel(labels.showingCount, shownCount, totalCount)
-    : "";
 }
 
 function joinPresent(parts, separator = " · ") {
@@ -450,12 +444,12 @@ export function buildActions(actions, labels, findingById = new Map()) {
     });
 }
 
-/* Soonest close date first, so overdue deals lead and far-off ones drop out of view. */
+/* Soonest close date first, so overdue deals lead; rows past the expanded limit are dropped. */
 export function buildOpportunities(
   section,
   labels,
   locale,
-  rowLimit = getListRowLimit()
+  rowLimit = getListRowLimits().maxRows
 ) {
   const source = asObject(section);
   const allRows = asArray(source.rows).filter(isObject);
@@ -485,7 +479,6 @@ export function buildOpportunities(
   return {
     rows,
     totalCount: allRows.length,
-    shownNote: shownNote(rows.length, allRows.length, labels),
     agreementText: text(source.agreement_status_text)
   };
 }
@@ -495,7 +488,7 @@ export function buildCases(
   section,
   labels,
   locale,
-  rowLimit = getListRowLimit()
+  rowLimit = getListRowLimits().maxRows
 ) {
   const source = asObject(section);
   const allOpen = asArray(source.open).filter(isObject);
@@ -538,8 +531,8 @@ export function buildCases(
   return {
     open,
     closed,
-    openShownNote: shownNote(open.length, allOpen.length, labels),
-    closedShownNote: shownNote(closed.length, closedCount, labels),
+    openTotal: allOpen.length,
+    closedTotal: closedCount,
     openHeading: formatLabel(labels.openCasesHeading, allOpen.length),
     closedHeading: formatLabel(labels.closedCasesHeading, closedCount)
   };
@@ -777,7 +770,7 @@ export function buildAccountViewModel(
   response,
   labels,
   locale,
-  rowLimit = getListRowLimit()
+  rowLimit = getListRowLimits().maxRows
 ) {
   const payload = asObject(response);
   const summary = asObject(payload.account_summary);

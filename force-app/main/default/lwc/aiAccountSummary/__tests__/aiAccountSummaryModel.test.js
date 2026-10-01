@@ -294,7 +294,7 @@ describe("Account Summary view model", () => {
     expect(view.research.hasResearch).toBe(false);
   });
 
-  it("shows the opportunities closing soonest, up to the row limit", () => {
+  it("keeps the opportunities closing soonest, up to the row limit", () => {
     const rows = [
       "2026-12-01",
       "2026-03-01",
@@ -317,20 +317,9 @@ describe("Account Summary view model", () => {
       "Deal 0"
     ]);
     expect(opportunities.totalCount).toBe(7);
-    expect(opportunities.shownNote).toBe("Showing 5 of 7");
   });
 
-  it("adds no note when every opportunity fits", () => {
-    const opportunities = buildOpportunities(
-      { rows: [{ id: "006", name: "Only deal" }] },
-      labels,
-      LOCALE,
-      5
-    );
-    expect(opportunities.shownNote).toBe("");
-  });
-
-  it("shows the newest open and closed cases, up to the row limit", () => {
+  it("keeps the newest open and closed cases, up to the row limit", () => {
     const open = [1, 2, 3, 4].map((day) => ({
       id: `500-open-${day}`,
       subject: `Open ${day}`,
@@ -353,7 +342,7 @@ describe("Account Summary view model", () => {
       "Closed 7"
     ]);
     expect(cases.openHeading).toBe(formatLabel(labels.openCasesHeading, 4));
-    expect(cases.openShownNote).toBe("Showing 2 of 4");
-    expect(cases.closedShownNote).toBe("Showing 2 of 12");
+    expect(cases.openTotal).toBe(4);
+    expect(cases.closedTotal).toBe(12);
   });
 });
