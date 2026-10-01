@@ -132,6 +132,19 @@ describe("c-ai-account-summary", () => {
     });
   });
 
+  it("shows the five key metric tiles inside the header card", async () => {
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+
+    const header = query(element, '[data-summary-section="header"]');
+    expect(
+      header.querySelector('[data-summary-section="metrics"]')
+    ).not.toBeNull();
+    expect(header.querySelectorAll("[data-summary-tile]")).toHaveLength(5);
+  });
+
   it("shows the Apex message when generation fails", async () => {
     makeGCPCallout.mockResolvedValue(
       JSON.stringify({ success: false, message: "Service is busy." })

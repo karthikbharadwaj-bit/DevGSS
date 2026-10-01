@@ -209,6 +209,29 @@
                         </template>
                       </div>
                     </template>
+                    <template lwc:if={hasTiles}>
+                      <section
+                        class="header-metrics"
+                        data-summary-section="metrics"
+                      >
+                        <p class="subhead">{labels.sectionMetrics}</p>
+                        <div class="tiles">
+                          <template for:each={view.tiles} for:item="tile">
+                            <div
+                              key={tile.key}
+                              class={tile.tileClass}
+                              data-summary-tile={tile.key}
+                            >
+                              <span class="tile-label">{tile.label}</span>
+                              <span class={tile.valueClass}>{tile.value}</span>
+                              <template lwc:if={tile.detail}>
+                                <span class="tile-detail">{tile.detail}</span>
+                              </template>
+                            </div>
+                          </template>
+                        </div>
+                      </section>
+                    </template>
                   </article>
 
                   <article class="panel" data-summary-section="flag">
@@ -299,27 +322,6 @@
                     </template>
                   </article>
                 </div>
-
-                <template lwc:if={hasTiles}>
-                  <article class="panel" data-summary-section="metrics">
-                    <h3 class="panel-title">{labels.sectionMetrics}</h3>
-                    <div class="tiles">
-                      <template for:each={view.tiles} for:item="tile">
-                        <div
-                          key={tile.key}
-                          class={tile.tileClass}
-                          data-summary-tile={tile.key}
-                        >
-                          <span class="tile-label">{tile.label}</span>
-                          <span class={tile.valueClass}>{tile.value}</span>
-                          <template lwc:if={tile.detail}>
-                            <span class="tile-detail">{tile.detail}</span>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-                  </article>
-                </template>
 
                 <div class="as-row">
                   <article class="panel" data-summary-section="signals">
