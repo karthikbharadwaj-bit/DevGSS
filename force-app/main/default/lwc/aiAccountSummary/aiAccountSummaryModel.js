@@ -12,6 +12,8 @@ const EVIDENCE_REFERENCE_PATTERN = /\s*\[(E\d+)\]/g;
 const NOT_RECORDED_PATTERN = /not recorded in salesforce/i;
 /* The org mixes Critical/High, P0-P4 and "1 – Critical" schemes; all of these are top tier. */
 const TOP_PRIORITY_PATTERN = /^(critical|p0|p1|1\s*[–-])/i;
+/* Shown in a tile whose Salesforce source is empty, so the five tiles always line up. */
+const EMPTY_TILE_VALUE = "—";
 const PRIMARY_TILE_ORDER = [
   "mrr",
   "mrr_trajectory",
@@ -301,14 +303,27 @@ function primaryTileNumber(tile) {
   return tile.key === "mrr_trajectory" ? tile.value_pct : tile.value;
 }
 
-function makeTile(key, label, value, detail, { isAmber, isNegative } = {}) {
+function tileValueClass(isNegative, isEmpty) {
+  if (isEmpty) {
+    return "tile-value tile-value_empty";
+  }
+  return isNegative ? "tile-value tile-value_negative" : "tile-value";
+}
+
+function makeTile(
+  key,
+  label,
+  value,
+  detail,
+  { isAmber, isNegative, isEmpty } = {}
+) {
   return {
     key,
     label,
     value,
     detail,
     tileClass: isAmber ? "tile tile_amber" : "tile",
-    valueClass: isNegative ? "tile-value tile-value_negative" : "tile-value"
+    valueClass: tileValueClass(isNegative, isEmpty)
   };
 }
 
@@ -318,11 +333,17 @@ export function buildTiles(keyMetrics, labels, locale) {
       .filter(isObject)
       .map((tile) => [tile.key, tile])
   );
-  const tiles = PRIMARY_TILE_ORDER.map((key) => {
+  return PRIMARY_TILE_ORDER.map((key) => {
     const tile = { key, ...asObject(keyToTile.get(key)) };
     const value = primaryTileValue(tile, labels, locale);
     if (!hasValue(value)) {
-      return null;
+      return makeTile(
+        key,
+        labels[PRIMARY_TILE_LABEL_KEYS[key]],
+        EMPTY_TILE_VALUE,
+        labels.tileNoValue,
+        { isEmpty: true }
+      );
     }
     const number = primaryTileNumber(tile);
     return makeTile(
@@ -340,9 +361,7 @@ export function buildTiles(keyMetrics, labels, locale) {
           number < 0
       }
     );
-  }).filter(Boolean);
-
-  return tiles;
+  });
 }
 
 function buildSignalItems(items, keyPrefix, findingById, labels) {

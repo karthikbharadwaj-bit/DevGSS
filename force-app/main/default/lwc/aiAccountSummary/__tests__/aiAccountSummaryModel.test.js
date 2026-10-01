@@ -67,15 +67,15 @@ describe("Account Summary view model", () => {
   });
 
   it("counts escalated open cases on the open cases tile", () => {
-    const [tile] = buildTiles(
+    const tile = buildTiles(
       { tiles: [{ key: "open_cases", value: 3, escalated_count: 2 }] },
       labels,
       LOCALE
-    );
+    ).find((item) => item.key === "open_cases");
     expect(tile.detail).toBe("2 escalated");
   });
 
-  it("hides a tile without a value and never fills the slot", () => {
+  it("always shows all five tiles and marks the ones without a value", () => {
     const tiles = buildTiles(
       {
         tiles: [
@@ -88,11 +88,24 @@ describe("Account Summary view model", () => {
       LOCALE
     );
     expect(tiles.map((tile) => tile.key)).toEqual([
+      "mrr",
+      "mrr_trajectory",
       "total_open_pipeline",
-      "open_cases"
+      "open_cases",
+      "licenses"
     ]);
-    expect(tiles[1].value).toBe("0");
-    tiles.forEach((tile) => expect(tile.value).not.toBe(labels.notRecorded));
+    [tiles[0], tiles[1], tiles[4]].forEach((tile) => {
+      expect(tile.value).toBe("—");
+      expect(tile.detail).toBe("No value in Salesforce");
+      expect(tile.valueClass).toBe("tile-value tile-value_empty");
+    });
+    expect(tiles[3].value).toBe("0");
+  });
+
+  it("shows five empty tiles when the service sends no key metrics", () => {
+    const tiles = buildTiles(undefined, labels, LOCALE);
+    expect(tiles).toHaveLength(5);
+    tiles.forEach((tile) => expect(tile.value).toBe("—"));
   });
 
   it("drops header rows with no recorded value", () => {
@@ -260,7 +273,7 @@ describe("Account Summary view model", () => {
 
   it("tolerates a summary with every section missing", () => {
     const view = buildAccountViewModel({ account_summary: {} }, labels, LOCALE);
-    expect(view.tiles).toEqual([]);
+    expect(view.tiles).toHaveLength(5);
     expect(view.header.rows).toEqual([]);
     expect(view.flag.hasScore).toBe(false);
     expect(view.research.hasResearch).toBe(false);

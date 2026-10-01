@@ -69,6 +69,7 @@ import tileCases from "@salesforce/label/c.AccountSummaryTileCases";
 import tileCasesEscalated from "@salesforce/label/c.AccountSummaryTileCasesEscalated";
 import tileCasesOldest from "@salesforce/label/c.AccountSummaryTileCasesOldest";
 import tileCasesNotEscalated from "@salesforce/label/c.AccountSummaryTileCasesNotEscalated";
+import tileNoValue from "@salesforce/label/c.AccountSummaryTileNoValue";
 import tileLicenses from "@salesforce/label/c.AccountSummaryTileLicenses";
 import tileLicensesDetail from "@salesforce/label/c.AccountSummaryTileLicensesDetail";
 import tileLicensesUnassigned from "@salesforce/label/c.AccountSummaryTileLicensesUnassigned";
@@ -228,6 +229,7 @@ export function getUiLabels() {
     tileCasesEscalated,
     tileCasesOldest,
     tileCasesNotEscalated,
+    tileNoValue,
     tileLicenses,
     tileLicensesDetail,
     tileLicensesUnassigned,
