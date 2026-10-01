@@ -3,6 +3,19 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final String ENDPOINT_PATH = '/api/v1/opportunity_summary';
   private static final String ENRICHMENT_SWITCH_FIELD = 'Enable_Opportunity_Summary_Enrichment__c';
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
+  private static final Map<String, Schema.SObjectType> REFERENCE_OBJECT_TYPES = new Map<String, Schema.SObjectType>{
+    'Case' => Case.SObjectType,
+    'Task' => Task.SObjectType,
+    'Event' => Event.SObjectType,
+    'Account' => Account.SObjectType,
+    'Contact' => Contact.SObjectType,
+    'Opportunity' => Opportunity.SObjectType,
+    'User' => User.SObjectType,
+    'Product2' => Product2.SObjectType
+  };
+  private static final Integer MIN_NAMED_LABEL_LENGTH = 3;
+  // Subjects such as "Call" or "Meeting" are too generic to link reliably.
+  private static final Integer MIN_SUBJECT_LABEL_LENGTH = 10;
   private static final Set<String> UNRESOLVED_ACCOUNT_NAMES = new Set<String>{
     'NEW COMPANY',
     'FIRST NAME LAST NAME',
@@ -75,6 +88,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     }
   }
   private static final Integer MAX_DESCRIPTION_LENGTH = 1000;
+  private static final Integer MAX_LOSS_FIELD_LENGTH = 300;
   private static final Integer DEFAULT_RECENT_EVIDENCE_DAYS = 90;
   private static final Integer MAX_RECENT_EVIDENCE_DAYS = 365;
   private static Integer maxConversationItems {
@@ -199,7 +213,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
       return errorJson(userFacingError);
     }
 
-    String result = buildResult(JSON.deserializeUntyped(responseBody));
+    String result = buildResult(
+      JSON.deserializeUntyped(responseBody),
+      referenceableRecordIds(payload),
+      namedRecordReferences(payload)
+    );
     System.debug(
       'Heap after summary generated:: ' +
         Limits.getHeapSize() +
@@ -250,12 +268,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
       'relatedOpportunities' => getRelatedOpportunities(accountId, recordId)
     };
     addEnrichmentRequestControl(payload, enrichmentEnabled);
+    addViewerContext(payload);
+    // Conversation notes are CRM evidence, not public research, so they are sent
+    // whether or not the enrichment toggle is on.
+    payload.put(
+      'conversationEvidence',
+      new Map<String, Object>{ 'items' => activityData.conversations }
+    );
 
     if (enrichmentEnabled) {
-      payload.put(
-        'conversationEvidence',
-        new Map<String, Object>{ 'items' => activityData.conversations }
-      );
       payload.put(
         'dataCoverage',
         buildDataCoverage(activityData, stakeholderData, lineItemData)
@@ -273,6 +294,14 @@ public with sharing class GCPCalloutForOpportunitySummary {
     payload.put(ENRICHMENT_REQUEST_FIELD, enrichmentEnabled == true);
   }
 
+  // The callout runs as the viewing user, so UserInfo describes the viewer rather than the
+  // opportunity owner or the integration user. GCP formats summary dates with these values.
+  @TestVisible
+  private static void addViewerContext(Map<String, Object> payload) {
+    payload.put('viewerTimeZone', UserInfo.getTimeZone().getID());
+    payload.put('viewerLocale', UserInfo.getLocale());
+  }
+
   private static Opportunity getOpportunity(Id recordId) {
     List<Opportunity> opps = (List<Opportunity>) new OpportunitySelector()
       .selectOpportunities()
@@ -286,6 +315,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
           'Type',
           'LeadSource',
           'StageName',
+          'IsClosed',
+          'IsWon',
           'Probability',
           'ForecastCategory',
           'CloseDate',
@@ -294,12 +325,17 @@ public with sharing class GCPCalloutForOpportunitySummary {
           'NextStep',
           'Description',
           'Intended_Product__c',
+          'Order_Type__c',
+          'Downgrade_Reason_Opp__c',
+          'Primary_Loss_Reason__c',
+          'Primary_Competitor__c',
           'Website__c',
           'OwnerId',
           'Owner.Name',
           'AccountId',
           'Account.Name',
           'Account.Industry',
+          'Account.Sector__c',
           'Account.Website',
           'Account.BillingCity',
           'Account.BillingState',
@@ -348,6 +384,38 @@ public with sharing class GCPCalloutForOpportunitySummary {
       'accountCountry' => readableField(account, 'BillingCountry')
     };
     putIfPresent(opportunityMap, 'accountName', resolvedAccountName(opp));
+    // GCP rejects non-boolean values, so omit the flags when they are unreadable.
+    putIfPresent(opportunityMap, 'isClosed', readableField(opp, 'IsClosed'));
+    putIfPresent(opportunityMap, 'isWon', readableField(opp, 'IsWon'));
+    // Order_Type__c is the acquisition/upsell/downsell picklist; sent unchanged.
+    // Type (New/Existing/Renewal) is not a deal motion and is already sent as `type`.
+    putIfPresent(
+      opportunityMap,
+      'dealMotion',
+      normalizedText(readableField(opp, 'Order_Type__c'))
+    );
+    // Loss context for closed deals; GCP accepts at most 300 characters per key.
+    putIfPresent(
+      opportunityMap,
+      'lossReason',
+      lossFieldText(readableField(opp, 'Downgrade_Reason_Opp__c'))
+    );
+    putIfPresent(
+      opportunityMap,
+      'lossReasonDetail',
+      lossFieldText(readableField(opp, 'Primary_Loss_Reason__c'))
+    );
+    putIfPresent(
+      opportunityMap,
+      'lostToCompetitor',
+      lossFieldText(readableField(opp, 'Primary_Competitor__c'))
+    );
+    // Sector exists only on Account (text, not a picklist).
+    putIfPresent(
+      opportunityMap,
+      'sector',
+      normalizedText(readableField(account, 'Sector__c'))
+    );
     putIfPresent(
       opportunityMap,
       'intendedProduct',
@@ -474,6 +542,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
       Pattern.matches('^\\d{1,3}(\\.\\d{1,3}){3}$', host);
   }
 
+  private static String lossFieldText(Object rawValue) {
+    String text = normalizedText(rawValue);
+    return text == null ? null : text.left(MAX_LOSS_FIELD_LENGTH);
+  }
+
   private static String normalizedText(Object rawValue) {
     if (!(rawValue instanceof String)) {
       return null;
@@ -545,9 +618,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       buildTaskQuery(recordId, activitySince).executeQuery()
     );
     Boolean tasksTruncated = trimOverflow(tasks, maxActivities);
-    Map<Id, Datetime> taskCompletionTimesById = enrichmentEnabled
-      ? loadTaskCompletionTimes(tasks)
-      : new Map<Id, Datetime>();
+    Map<Id, Datetime> taskCompletionTimesById = loadTaskCompletionTimes(tasks);
     Boolean taskCompletionTimesLoaded = taskCompletionTimesById != null;
     if (!taskCompletionTimesLoaded) {
       taskCompletionTimesById = new Map<Id, Datetime>();
@@ -616,7 +687,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       tasksTruncated,
       eventsTruncated
     );
-    if (enrichmentEnabled && !taskCompletionTimesLoaded) {
+    if (!taskCompletionTimesLoaded) {
       data.conversationReasonCode = 'task_completion_time_retrieval_error';
       if (data.conversations.isEmpty()) {
         data.conversationStatus = 'error';
@@ -637,7 +708,9 @@ public with sharing class GCPCalloutForOpportunitySummary {
     // raises InvalidFieldException even though the current Task API supports it.
     return new TaskSelector()
       .selectTasksByWhatIdForOpportunitySummary(recordId)
-      .selectFields(new List<String>{ 'Id', 'WhoId', 'IsClosed' })
+      .selectFields(
+        new List<String>{ 'Id', 'WhoId', 'IsClosed', 'TaskSubtype' }
+      )
       .setCondition('WhatId = :bind0 AND CreatedDate >= :bind1')
       .setQueryBindings(new List<Object>{ recordId, activitySince })
       .setLimit(maxActivities + 1);
@@ -727,14 +800,14 @@ public with sharing class GCPCalloutForOpportunitySummary {
     data.tasksTruncated = tasksTruncated;
     data.eventsTruncated = eventsTruncated;
 
+    // Participants decide which activities qualify as conversation evidence, so
+    // they load on every request; they are added to activity rows only with enrichment.
     ActivityParticipantResult participantResult = new ActivityParticipantResult();
-    if (enrichmentEnabled) {
-      try {
-        participantResult = activityParticipantProvider.load(tasks, events);
-      } catch (Exception ignored) {
-        participantResult.status = 'error';
-        participantResult.reasonCode = 'participant_retrieval_error';
-      }
+    try {
+      participantResult = activityParticipantProvider.load(tasks, events);
+    } catch (Exception ignored) {
+      participantResult.status = 'error';
+      participantResult.reasonCode = 'participant_retrieval_error';
     }
     data.participantStatus = participantResult.status;
     data.participantReasonCode = participantResult.reasonCode;
@@ -744,6 +817,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       Task taskRecord = (Task) sobj;
       SObject owner = readableRelated(taskRecord, 'Owner');
       Map<String, Object> row = new Map<String, Object>{
+        'id' => readableField(taskRecord, 'Id'),
         'subject' => readableField(taskRecord, 'Subject'),
         'status' => readableField(taskRecord, 'Status'),
         'type' => readableField(taskRecord, 'Type'),
@@ -754,6 +828,12 @@ public with sharing class GCPCalloutForOpportunitySummary {
           (String) readableField(taskRecord, 'Description')
         )
       };
+      // TaskSubtype = 'Call' is how calls are logged; Type is usually blank.
+      putIfPresent(
+        row,
+        'taskSubtype',
+        normalizedText(readableField(taskRecord, 'TaskSubtype'))
+      );
       if (enrichmentEnabled) {
         Id taskId = (Id) readableField(taskRecord, 'Id');
         row.put('sourceRecordId', taskId);
@@ -766,6 +846,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       Event eventRecord = (Event) sobj;
       Id ownerId = (Id) readableField(eventRecord, 'OwnerId');
       Map<String, Object> row = new Map<String, Object>{
+        'id' => readableField(eventRecord, 'Id'),
         'subject' => readableField(eventRecord, 'Subject'),
         'startDateTime' => readableField(eventRecord, 'StartDateTime'),
         'endDateTime' => readableField(eventRecord, 'EndDateTime'),
@@ -783,7 +864,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       data.events.add(row);
     }
 
-    if (enrichmentEnabled && participantResult.status != 'error') {
+    if (participantResult.status != 'error') {
       ConversationResult conversationResult = buildConversationEvidence(
         tasks,
         events,
@@ -798,7 +879,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       data.conversationReasonCode = participantResult.isTruncated
         ? 'participant_relation_limit'
         : conversationResult.reasonCode;
-    } else if (enrichmentEnabled) {
+    } else {
       data.conversationStatus = 'error';
       data.conversationReasonCode = 'participant_retrieval_error';
     }
@@ -892,6 +973,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       Case c = (Case) sobj;
       SObject owner = readableRelated(c, 'Owner');
       Map<String, Object> row = new Map<String, Object>{
+        'id' => readableField(c, 'Id'),
         'caseNumber' => readableField(c, 'CaseNumber'),
         'subject' => readableField(c, 'Subject'),
         'status' => readableField(c, 'Status'),
@@ -1781,30 +1863,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       return rows;
     }
     List<SObject> related = stripReadable(
-      new OpportunitySelector()
-        .selectOpportunities()
-        .withoutSelectorFieldsIncluded()
-        .selectFields(
-          new List<String>{
-            'Id',
-            'Name',
-            'Amount',
-            'CurrencyIsoCode',
-            'Type',
-            'StageName',
-            'ForecastCategory',
-            'Probability',
-            'IsWon',
-            'IsClosed',
-            'CloseDate',
-            'CreatedDate'
-          }
-        )
-        .setCondition('AccountId = :bind0 AND Id != :bind1')
-        .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING)
-        .setQueryBindings(new List<Object>{ accountId, currentOppId })
-        .setLimit(maxRelatedOpps)
-        .executeQuery()
+      buildRelatedOpportunitiesQuery(accountId, currentOppId).executeQuery()
     );
     for (SObject sobj : related) {
       Opportunity opp = (Opportunity) sobj;
@@ -1826,6 +1885,39 @@ public with sharing class GCPCalloutForOpportunitySummary {
       );
     }
     return rows;
+  }
+
+  @TestVisible
+  private static QueryFactory buildRelatedOpportunitiesQuery(
+    Id accountId,
+    Id currentOppId
+  ) {
+    return new OpportunitySelector()
+      .selectOpportunities()
+      .withoutSelectorFieldsIncluded()
+      .selectFields(
+        new List<String>{
+          'Id',
+          'Name',
+          'Amount',
+          'CurrencyIsoCode',
+          'Type',
+          'StageName',
+          'ForecastCategory',
+          'Probability',
+          'IsWon',
+          'IsClosed',
+          'CloseDate',
+          'CreatedDate'
+        }
+      )
+      // The selector's default Name ordering would come first and make the limit
+      // keep the first opportunities alphabetically instead of the most recent.
+      .withoutSelectorOrderByIncluded()
+      .setCondition('AccountId = :bind0 AND Id != :bind1')
+      .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING)
+      .setQueryBindings(new List<Object>{ accountId, currentOppId })
+      .setLimit(maxRelatedOpps);
   }
 
   // QueryFactory / selectors run in system mode; `with sharing` only enforces row-level
@@ -1878,6 +1970,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
   // list, or surfaces a plain-string body as an error message.
   @TestVisible
   private static String buildResult(Object raw) {
+    return buildResult(raw, new Set<Id>(), new List<Map<String, Object>>());
+  }
+
+  @TestVisible
+  private static String buildResult(
+    Object raw,
+    Set<Id> referenceableIds,
+    List<Map<String, Object>> namedRecords
+  ) {
     List<Object> cards = extractCards(raw);
     if (cards != null) {
       Map<String, Object> result = new Map<String, Object>{
@@ -1886,14 +1987,31 @@ public with sharing class GCPCalloutForOpportunitySummary {
       };
 
       // Keep the established cards contract intact while passing the optional
-      // enrichment object through unchanged. The LWC owns validation and
-      // presentation so malformed enrichment can never invalidate a summary.
+      // objects through. The LWC owns validation and presentation so a malformed
+      // optional object can never invalidate a summary.
       Object body = getBody(raw);
       if (body instanceof Map<String, Object>) {
-        Object enrichment = ((Map<String, Object>) body)
-          .get('opportunity_enrichment');
-        if (enrichment instanceof Map<String, Object>) {
-          result.put('opportunity_enrichment', enrichment);
+        Map<String, Object> bodyMap = (Map<String, Object>) body;
+        for (
+          String key : new List<String>{
+            'opportunity_enrichment',
+            'deal_state',
+            'salesforce_fields'
+          }
+        ) {
+          if (bodyMap.get(key) instanceof Map<String, Object>) {
+            result.put(key, bodyMap.get(key));
+          }
+        }
+        List<Object> references = sanitizedRecordReferences(
+          bodyMap.get('record_references'),
+          referenceableIds
+        );
+        references.addAll(
+          namedReferencesForCards(namedRecords, references, cards)
+        );
+        if (!references.isEmpty()) {
+          result.put('record_references', references);
         }
       }
 
@@ -2030,6 +2148,313 @@ public with sharing class GCPCalloutForOpportunitySummary {
     }
 
     return card;
+  }
+
+  // Links may only open records this request sent to GCP, so a model-invented or
+  // altered Id can never become a link.
+  @TestVisible
+  private static Set<Id> referenceableRecordIds(Map<String, Object> payload) {
+    Set<Id> ids = new Set<Id>();
+    for (Map<String, Object> namedRecord : namedRecordReferences(payload)) {
+      ids.add((Id) namedRecord.get('id'));
+    }
+    Map<String, Object> cases = mapValue(payload.get('cases'));
+    Map<String, Object> activities = mapValue(payload.get('activities'));
+    for (
+      Object rows : new List<Object>{
+        cases.get('open'),
+        cases.get('recentlyClosed'),
+        activities.get('tasks'),
+        activities.get('events')
+      }
+    ) {
+      for (Map<String, Object> row : mapListValue(rows)) {
+        Id rowId = toId(row.get('id'));
+        if (rowId != null) {
+          ids.add(rowId);
+        }
+      }
+    }
+    return ids;
+  }
+
+  // Every record this request sent that has an Id and a name the summary can quote:
+  // owner, account, related opportunities, contacts, products, cases and activities.
+  // Each label is the record's own name (or case number / subject). A label shared by
+  // two different records is dropped rather than risk linking the wrong one.
+  @TestVisible
+  private static List<Map<String, Object>> namedRecordReferences(
+    Map<String, Object> payload
+  ) {
+    Map<String, Object> opportunity = mapValue(payload.get('opportunity'));
+    List<Map<String, Object>> candidates = new List<Map<String, Object>>();
+    addNamedRecord(
+      candidates,
+      'User',
+      opportunity.get('ownerId'),
+      opportunity.get('ownerName'),
+      MIN_NAMED_LABEL_LENGTH
+    );
+    addNamedRecord(
+      candidates,
+      'Account',
+      opportunity.get('accountId'),
+      opportunity.get('accountName'),
+      MIN_NAMED_LABEL_LENGTH
+    );
+    // The current opportunity is not linked: it would only reopen this page.
+    for (
+      Map<String, Object> related : mapListValue(
+        payload.get('relatedOpportunities')
+      )
+    ) {
+      addNamedRecord(
+        candidates,
+        'Opportunity',
+        related.get('id'),
+        related.get('name'),
+        MIN_NAMED_LABEL_LENGTH
+      );
+    }
+    for (
+      Map<String, Object> stakeholder : mapListValue(
+        payload.get('stakeholders')
+      )
+    ) {
+      addNamedRecord(
+        candidates,
+        'Contact',
+        stakeholder.get('contactId'),
+        stakeholder.get('name'),
+        MIN_NAMED_LABEL_LENGTH
+      );
+    }
+    for (
+      Map<String, Object> lineItem : mapListValue(payload.get('lineItems'))
+    ) {
+      addNamedRecord(
+        candidates,
+        'Product2',
+        lineItem.get('productId'),
+        lineItem.get('productName'),
+        MIN_NAMED_LABEL_LENGTH
+      );
+    }
+    Map<String, Object> cases = mapValue(payload.get('cases'));
+    List<Map<String, Object>> caseRows = new List<Map<String, Object>>();
+    caseRows.addAll(mapListValue(cases.get('open')));
+    caseRows.addAll(mapListValue(cases.get('recentlyClosed')));
+    for (Map<String, Object> caseRow : caseRows) {
+      addNamedRecord(
+        candidates,
+        'Case',
+        caseRow.get('id'),
+        caseRow.get('caseNumber'),
+        MIN_NAMED_LABEL_LENGTH
+      );
+      addNamedRecord(
+        candidates,
+        'Case',
+        caseRow.get('id'),
+        caseRow.get('subject'),
+        MIN_SUBJECT_LABEL_LENGTH
+      );
+    }
+    Map<String, Object> activities = mapValue(payload.get('activities'));
+    for (String objectType : new List<String>{ 'Task', 'Event' }) {
+      for (
+        Map<String, Object> row : mapListValue(
+          activities.get(objectType == 'Task' ? 'tasks' : 'events')
+        )
+      ) {
+        addNamedRecord(
+          candidates,
+          objectType,
+          row.get('id'),
+          row.get('subject'),
+          MIN_SUBJECT_LABEL_LENGTH
+        );
+      }
+    }
+    List<Map<String, Object>> participantRows = new List<Map<String, Object>>();
+    participantRows.addAll(
+      mapListValue(mapValue(payload.get('conversationEvidence')).get('items'))
+    );
+    participantRows.addAll(mapListValue(activities.get('tasks')));
+    participantRows.addAll(mapListValue(activities.get('events')));
+    for (Map<String, Object> row : participantRows) {
+      for (
+        Map<String, Object> participant : mapListValue(row.get('participants'))
+      ) {
+        addNamedRecord(
+          candidates,
+          'Contact',
+          participant.get('contactId'),
+          participant.get('name'),
+          MIN_NAMED_LABEL_LENGTH
+        );
+      }
+    }
+
+    Map<String, Set<Id>> idsByLabel = new Map<String, Set<Id>>();
+    for (Map<String, Object> candidate : candidates) {
+      String labelKey = ((String) candidate.get('label')).toLowerCase();
+      if (!idsByLabel.containsKey(labelKey)) {
+        idsByLabel.put(labelKey, new Set<Id>());
+      }
+      idsByLabel.get(labelKey).add((Id) candidate.get('id'));
+    }
+    List<Map<String, Object>> named = new List<Map<String, Object>>();
+    Set<String> seen = new Set<String>();
+    for (Map<String, Object> candidate : candidates) {
+      String labelKey = ((String) candidate.get('label')).toLowerCase();
+      if (
+        idsByLabel.get(labelKey).size() == 1 &&
+        seen.add(candidate.get('id') + '|' + labelKey)
+      ) {
+        named.add(candidate);
+      }
+    }
+    return named;
+  }
+
+  private static void addNamedRecord(
+    List<Map<String, Object>> candidates,
+    String objectType,
+    Object rawId,
+    Object rawLabel,
+    Integer minimumLength
+  ) {
+    Id recordId = toId(rawId);
+    String label = normalizedText(rawLabel);
+    if (
+      recordId == null ||
+      recordId.getSObjectType() != REFERENCE_OBJECT_TYPES.get(objectType) ||
+      label == null ||
+      label.length() < minimumLength
+    ) {
+      return;
+    }
+    candidates.add(
+      new Map<String, Object>{
+        'object_type' => objectType,
+        'id' => String.valueOf(recordId),
+        'label' => label
+      }
+    );
+  }
+
+  // Record names may appear in any section, so they are offered to every card.
+  // A record GCP already referenced (e.g. a case by its number) keeps GCP's link
+  // only, so Salesforce never adds a second, overlapping link to it.
+  private static List<Object> namedReferencesForCards(
+    List<Map<String, Object>> namedRecords,
+    List<Object> gcpReferences,
+    List<Object> cards
+  ) {
+    List<Object> references = new List<Object>();
+    if (namedRecords == null || namedRecords.isEmpty()) {
+      return references;
+    }
+    Set<String> referencedIds = new Set<String>();
+    for (Object reference : gcpReferences) {
+      referencedIds.add(
+        String.valueOf(((Map<String, Object>) reference).get('id'))
+      );
+    }
+    List<String> sections = new List<String>();
+    for (Object card : cards) {
+      if (card instanceof Map<String, Object>) {
+        putIfText(sections, ((Map<String, Object>) card).get('title'));
+      }
+    }
+    if (sections.isEmpty()) {
+      return references;
+    }
+    for (Map<String, Object> namedRecord : namedRecords) {
+      if (referencedIds.contains((String) namedRecord.get('id'))) {
+        continue;
+      }
+      Map<String, Object> reference = new Map<String, Object>(namedRecord);
+      reference.put('mentioned_in', sections);
+      reference.put('source', 'salesforce');
+      references.add(reference);
+    }
+    return references;
+  }
+
+  @TestVisible
+  private static List<Object> sanitizedRecordReferences(
+    Object rawReferences,
+    Set<Id> referenceableIds
+  ) {
+    List<Object> references = new List<Object>();
+    if (!(rawReferences instanceof List<Object>)) {
+      return references;
+    }
+    for (Object candidate : (List<Object>) rawReferences) {
+      if (!(candidate instanceof Map<String, Object>)) {
+        continue;
+      }
+      Map<String, Object> reference = (Map<String, Object>) candidate;
+      Object objectType = reference.get('object_type');
+      Id recordId = toId(reference.get('id'));
+      String label = normalizedText(reference.get('label'));
+      List<String> sections = new List<String>();
+      if (reference.get('mentioned_in') instanceof List<Object>) {
+        for (Object section : (List<Object>) reference.get('mentioned_in')) {
+          putIfText(sections, section);
+        }
+      }
+      if (
+        !(objectType instanceof String) ||
+        !REFERENCE_OBJECT_TYPES.containsKey((String) objectType) ||
+        recordId == null ||
+        recordId.getSObjectType() !=
+        REFERENCE_OBJECT_TYPES.get((String) objectType) ||
+        !referenceableIds.contains(recordId) ||
+        label == null ||
+        sections.isEmpty()
+      ) {
+        continue;
+      }
+      Map<String, Object> sanitized = new Map<String, Object>{
+        'object_type' => objectType,
+        'id' => String.valueOf(recordId),
+        'label' => label,
+        'mentioned_in' => sections
+      };
+      putIfPresent(
+        sanitized,
+        'case_number',
+        normalizedText(reference.get('case_number'))
+      );
+      putIfPresent(
+        sanitized,
+        'activity_kind',
+        normalizedText(reference.get('activity_kind'))
+      );
+      references.add(sanitized);
+    }
+    return references;
+  }
+
+  private static void putIfText(List<String> target, Object value) {
+    String text = normalizedText(value);
+    if (text != null) {
+      target.add(text);
+    }
+  }
+
+  private static Id toId(Object value) {
+    if (!(value instanceof String) && !(value instanceof Id)) {
+      return null;
+    }
+    try {
+      return Id.valueOf(String.valueOf(value));
+    } catch (Exception ignored) {
+      return null;
+    }
   }
 
   private static Object getBody(Object raw) {

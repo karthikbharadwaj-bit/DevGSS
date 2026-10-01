@@ -5,7 +5,11 @@ import {
 import { createElement } from "lwc";
 import * as summaryConfig from "../opportunitySummaryConfig";
 import OpportunitySummary, {
+  citedEvidenceIds,
   buildDateLabel,
+  buildDateParts,
+  buildSalesforceChips,
+  linkRecordReferences,
   buildResearchViewModel,
   indexFindings,
   indexSources,
@@ -33,6 +37,19 @@ jest.mock(
 );
 jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
   virtual: true
+});
+const mockNavigate = jest.fn();
+jest.mock("lightning/navigation", () => {
+  const Navigate = Symbol("Navigate");
+  const NavigationMixin = (Base) =>
+    class extends Base {
+      [Navigate](pageReference) {
+        mockNavigate(pageReference);
+      }
+    };
+  NavigationMixin.Navigate = Navigate;
+  NavigationMixin.GenerateUrl = Symbol("GenerateUrl");
+  return { NavigationMixin };
 });
 
 const RECORD_ID = "006000000000001AAA";
@@ -229,6 +246,19 @@ async function createComponent(result = response()) {
   element.shadowRoot.querySelector("[data-view-summary]").click();
   await flushPromises();
   return element;
+}
+
+// ISO research dates render through lightning-formatted-date-time, so assert the
+// prefix text and the value handed to the formatter rather than raw ISO text.
+function researchDates(root) {
+  return [...root.querySelectorAll(".research-date")].map((node) => {
+    const formatted = node.querySelector("lightning-formatted-date-time");
+    return {
+      text: node.textContent.trim(),
+      value: formatted ? formatted.value : null,
+      timeZone: formatted ? formatted.timeZone : null
+    };
+  });
 }
 
 function formattedValues(root) {
@@ -727,7 +757,9 @@ describe("opportunitySummary public research", () => {
       "These public company updates were not linked to the current opportunity by the AI analysis."
     );
     expect(supplemental.textContent).toContain("Leadership");
-    expect(supplemental.textContent).toContain("Current as of 2026-09-22");
+    expect(researchDates(supplemental)).toEqual([
+      { text: "Current as of", value: "2026-09-22", timeZone: "UTC" }
+    ]);
     expect(supplemental.textContent).toContain(
       "Example Person · Chief Operating Officer"
     );
@@ -900,7 +932,9 @@ describe("opportunitySummary public research", () => {
     );
     expect(cards[1].querySelector(".research-person")).toBeNull();
     expect(cards[1].textContent).toContain("Market Expansion");
-    expect(cards[1].textContent).toContain("Event date: 2026-09-01");
+    expect(researchDates(cards[1])).toEqual([
+      { text: "Event date:", value: "2026-09-01", timeZone: "UTC" }
+    ]);
   });
 
   it("renders leadership and priority findings with inline evidence badges", async () => {
@@ -917,8 +951,10 @@ describe("opportunitySummary public research", () => {
     expect(research.textContent).toContain(
       "Avery Example · Chief Operating Officer"
     );
-    expect(research.textContent).toContain("Current as of 2026-09-18");
-    expect(research.textContent).toContain("Event date: 2026-01-14");
+    expect(researchDates(research)).toEqual([
+      { text: "Current as of", value: "2026-09-18", timeZone: "UTC" },
+      { text: "Event date:", value: "2026-01-14", timeZone: "UTC" }
+    ]);
     expect(research.textContent).toContain("Supported public fact");
     expect(research.textContent).toContain("Inference: Confirm Avery's role");
     expect(research.textContent).toContain(
@@ -1138,5 +1174,882 @@ describe("opportunitySummary public research", () => {
       publicResearch()
     );
     expect(cachedEntry.summary.opportunity_enrichment.sources).toHaveLength(5);
+  });
+});
+
+const CASE_ID = "500000000000001AAA";
+const TASK_ID = "00T000000000001AAA";
+
+function closedDealResponse({ state = "closed_won", references } = {}) {
+  return JSON.stringify({
+    success: true,
+    cards: [
+      { title: "Overall Deal Score", badge: "100/100 (Won)", items: [] },
+      {
+        title: "Executive Summary",
+        items: [
+          "Salesforce Classification: Upsell · Public Sector · RingCX",
+          "Status: Open case <strong>00012345</strong> still needs an owner."
+        ]
+      },
+      { title: "Win Factors", items: ["Should stay hidden"] },
+      { title: "Risk Flags", items: ["Should stay hidden"] },
+      { title: "Next Best Actions", items: ["Confirm onboarding owner"] },
+      {
+        title: "Post-Close Actions",
+        items: ["Kickoff: Schedule onboarding by 06.10.2026 for 00012345"]
+      },
+      {
+        title: "Opportunity History & Stage Journey",
+        items: ["Closed on 30.09.2026 after call Discovery call"]
+      }
+    ],
+    deal_state: {
+      state,
+      is_closed: true,
+      score: state === "closed_won" ? 100 : 0
+    },
+    salesforce_fields: {
+      deal_motion: "Upsell",
+      sector: "Public Sector",
+      npi_product_categories: ["RingCX", "ringcx ", "AIR"]
+    },
+    record_references: references ?? [
+      {
+        object_type: "Case",
+        id: CASE_ID,
+        label: "00012345",
+        case_number: "00012345",
+        mentioned_in: ["Executive Summary", "Post-Close Actions"]
+      },
+      {
+        object_type: "Task",
+        id: TASK_ID,
+        label: "Discovery call",
+        activity_kind: "Call",
+        mentioned_in: ["Opportunity History & Stage Journey"]
+      }
+    ]
+  });
+}
+
+describe("opportunitySummary record links and dates", () => {
+  const references = [
+    { objectApiName: "Case", recordId: CASE_ID, label: "00012345" }
+  ];
+
+  it("links a label inside strong markup and keeps both sides balanced", () => {
+    const segments = linkRecordReferences(
+      "Open case <strong>00012345 &amp; more</strong> today",
+      references,
+      "line"
+    );
+    expect(segments.map((segment) => segment.content || segment.label)).toEqual(
+      ["Open case ", "00012345", "<strong> &amp; more</strong> today"]
+    );
+    expect(segments[1]).toMatchObject({
+      isRecordLink: true,
+      recordId: CASE_ID,
+      objectApiName: "Case"
+    });
+  });
+
+  it("matches across tags and entities on plain text only", () => {
+    const segments = linkRecordReferences(
+      "Ticket <strong>R&amp;D</strong> 42 is open",
+      [{ objectApiName: "Case", recordId: CASE_ID, label: "R&D 42" }],
+      "line"
+    );
+    const link = segments.find((segment) => segment.isRecordLink);
+    expect(link.label).toBe("R&D 42");
+    expect(segments[0].content).toBe("Ticket ");
+    expect(segments[segments.length - 1].content).toBe(" is open");
+  });
+
+  it("does not link a label that is part of a longer word or number", () => {
+    const segments = linkRecordReferences(
+      "Case 000123456 and X00012345",
+      references,
+      "line"
+    );
+    expect(segments).toHaveLength(1);
+    expect(segments[0].isRecordLink).toBeUndefined();
+  });
+
+  it("formats date-only ISO values in UTC and keeps partial precision", () => {
+    expect(buildDateParts("2026-09-18", "as_of")).toMatchObject({
+      prefix: "Current as of",
+      isIso: true,
+      value: "2026-09-18",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC"
+    });
+    expect(buildDateParts("2026-05", "event")).toMatchObject({
+      value: "2026-05-01",
+      month: "short",
+      day: undefined
+    });
+    expect(buildDateParts("2026-09-18T14:00:00Z", "publication")).toMatchObject(
+      { value: "2026-09-18T14:00:00Z", timeZone: undefined }
+    );
+    expect(buildDateParts("Q3 2026", "event")).toMatchObject({
+      isIso: false,
+      text: "Q3 2026"
+    });
+    expect(buildDateParts("2026-09-18", "unknown").hasDate).toBe(false);
+  });
+
+  it("de-duplicates NPI chips that differ only in case or spacing", () => {
+    expect(
+      buildSalesforceChips({
+        deal_motion: "Upsell",
+        npi_product_categories: ["RingCX", "ringcx ", "AIR", 7]
+      }).map((chip) => `${chip.label}:${chip.value}`)
+    ).toEqual([
+      "Order Type:Upsell",
+      "NPI Product Category:RingCX",
+      "NPI Product Category:AIR"
+    ]);
+  });
+
+  it("labels chips with Salesforce field labels and humanizes unknown keys", () => {
+    expect(
+      buildSalesforceChips(
+        {
+          deal_motion: "Upsell",
+          sector: "Public Sector",
+          renewal_term: "12"
+        },
+        {
+          Opportunity: { fields: { Order_Type__c: { label: "Deal Motion" } } },
+          Account: { fields: { Sector__c: { label: "Branche" } } }
+        }
+      ).map((chip) => `${chip.label}:${chip.value}`)
+    ).toEqual([
+      "Deal Motion:Upsell",
+      "Branche:Public Sector",
+      "Renewal Term:12"
+    ]);
+  });
+});
+
+describe("opportunitySummary closed deals", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  function section(element, name) {
+    return element.shadowRoot.querySelector(`[data-summary-section="${name}"]`);
+  }
+
+  it("hides Risk Flags and Win Factors and shows Post-Close Actions", async () => {
+    const element = await createComponent(closedDealResponse());
+
+    expect(section(element, "risk")).toBeNull();
+    expect(section(element, "win")).toBeNull();
+    expect(section(element, "plan")).toBeNull();
+    const postClose = section(element, "postclose");
+    expect(postClose.querySelector(".panel-title").textContent).toBe(
+      "Post-Close Actions"
+    );
+    expect(postClose.querySelector(".timeline-label").textContent).toBe(
+      "Kickoff"
+    );
+    expect(section(element, "actions")).not.toBeNull();
+  });
+
+  it("hides the tiles for Closed Lost too", async () => {
+    const element = await createComponent(
+      closedDealResponse({ state: "closed_lost" })
+    );
+    expect(section(element, "risk")).toBeNull();
+    expect(section(element, "win")).toBeNull();
+    expect(section(element, "postclose")).not.toBeNull();
+  });
+
+  it("keeps Risk Flags, Win Factors and Close Plan on open deals", async () => {
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          { title: "Win Factors", items: ["Champion engaged"] },
+          { title: "Risk Flags", items: ["No budget"] },
+          { title: "Close Plan", items: ["Legal: Send MSA"] }
+        ],
+        deal_state: { state: "open", is_closed: false }
+      })
+    );
+    expect(section(element, "risk")).not.toBeNull();
+    expect(section(element, "win")).not.toBeNull();
+    expect(section(element, "plan")).not.toBeNull();
+  });
+
+  it("ignores a deal_state whose is_closed is not a boolean", async () => {
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [{ title: "Risk Flags", items: ["No budget"] }],
+        deal_state: { state: "closed_won", is_closed: "true" }
+      })
+    );
+    expect(section(element, "risk")).not.toBeNull();
+  });
+
+  it("shows the classification line as-is and Salesforce field chips", async () => {
+    const element = await createComponent(closedDealResponse());
+    const executive = section(element, "executive");
+
+    expect(executive.textContent).toContain("Salesforce Classification");
+    expect(formattedValues(executive)).toContain(
+      "Upsell · Public Sector · RingCX"
+    );
+    const chips = [...executive.querySelectorAll(".salesforce-chip")].map(
+      (chip) => chip.textContent.replace(/\s+/g, " ").trim()
+    );
+    expect(chips).toEqual([
+      "Order Type: Upsell",
+      "Sector: Public Sector",
+      "NPI Product Category: RingCX",
+      "NPI Product Category: AIR"
+    ]);
+  });
+
+  it("links references only in their mentioned_in sections and navigates", async () => {
+    const element = await createComponent(closedDealResponse());
+
+    const executiveLinks = section(element, "executive").querySelectorAll(
+      "a.record-link"
+    );
+    expect(executiveLinks).toHaveLength(1);
+    expect(executiveLinks[0].textContent).toBe("00012345");
+    expect(executiveLinks[0].dataset.recordId).toBe(CASE_ID);
+    expect(
+      section(element, "postclose").querySelector("a.record-link").textContent
+    ).toBe("00012345");
+    expect(
+      section(element, "history").querySelector("a.record-link").dataset
+        .objectApiName
+    ).toBe("Task");
+    expect(
+      section(element, "actions").querySelector("a.record-link")
+    ).toBeNull();
+
+    executiveLinks[0].click();
+    expect(mockNavigate).toHaveBeenCalledWith({
+      type: "standard__recordPage",
+      attributes: {
+        recordId: CASE_ID,
+        objectApiName: "Case",
+        actionName: "view"
+      }
+    });
+  });
+
+  it("drops references with unsupported objects or mismatched Ids", async () => {
+    const element = await createComponent(
+      closedDealResponse({
+        references: [
+          {
+            object_type: "Quote",
+            id: "0Q0000000000001AAA",
+            label: "00012345",
+            mentioned_in: ["Executive Summary"]
+          },
+          {
+            object_type: "Case",
+            id: TASK_ID,
+            label: "00012345",
+            mentioned_in: ["Executive Summary"]
+          }
+        ]
+      })
+    );
+    expect(element.shadowRoot.querySelector("a.record-link")).toBeNull();
+  });
+
+  it("caches deal state and references so a restored summary keeps the closed layout", async () => {
+    await createComponent(closedDealResponse());
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    expect(cached.summary.deal_state.is_closed).toBe(true);
+    expect(cached.summary.record_references).toHaveLength(2);
+
+    document.body.removeChild(document.body.firstChild);
+    makeGCPCallout.mockClear();
+    const element = await mountComponent();
+    element.shadowRoot.querySelector("[data-view-summary]").click();
+    await flushPromises();
+
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+    expect(section(element, "risk")).toBeNull();
+    expect(element.shadowRoot.querySelector("a.record-link")).not.toBeNull();
+  });
+});
+
+describe("opportunitySummary evidence citations and plan labels", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  const findings = new Map([
+    ["E3", {}],
+    ["E4", {}]
+  ]);
+
+  it("turns bolded citations into badges without leaving tags behind", () => {
+    const segments = parseInlineEvidence(
+      "Not confirmed in CRM notes [E3] [<strong>E4</strong>] and <strong>[E3]</strong>.",
+      findings,
+      "line"
+    );
+    expect(
+      segments.filter((segment) => segment.isEvidence).map((s) => s.evidenceId)
+    ).toEqual(["E3", "E4", "E3"]);
+    const text = segments
+      .filter((segment) => !segment.isEvidence)
+      .map((segment) => segment.content)
+      .join("");
+    expect(text).not.toMatch(/<\/?strong>/);
+    expect(citedEvidenceIds(["[ <b>E1</b> ] and [E2]"])).toEqual(
+      new Set(["E1", "E2"])
+    );
+  });
+
+  it("shows cited findings the service filed as supplemental as used research", async () => {
+    const research = publicResearch();
+    const element = await createComponent(
+      response({
+        cards: [
+          {
+            title: "Executive Summary",
+            items: [
+              "Inference: Signals are material [E1] [<strong>E3</strong>]"
+            ]
+          },
+          { title: "Next Best Actions", items: ["Ask about the rollout [E3]"] }
+        ],
+        enrichment: {
+          ...research,
+          findings: [],
+          supplemental_company_updates: {
+            relationship_to_opportunity: "not_established",
+            items: [...research.findings, ...supplementalCompanyUpdates().items]
+          }
+        }
+      })
+    );
+
+    const badges = [
+      ...element.shadowRoot.querySelectorAll(".evidence-badge")
+    ].map((badge) => badge.dataset.evidenceId);
+    expect(badges).toEqual(["E1", "E3", "E3"]);
+    const research_ = element.shadowRoot.querySelector(
+      "[data-public-research]"
+    );
+    expect(
+      [...research_.querySelectorAll("[data-research-finding]")].map(
+        (card) => card.dataset.researchFinding
+      )
+    ).toEqual(["E1", "E3"]);
+    const supplemental = element.shadowRoot.querySelector(
+      "[data-supplemental-updates]"
+    );
+    expect(supplemental.querySelectorAll(".supplemental-card")).toHaveLength(1);
+    expect(supplemental.textContent).not.toContain("Avery Example");
+  });
+
+  it("strips markup from plan labels and keeps the emphasis in the text", () => {
+    expect(
+      splitLabel("By <strong>Oct 15, 2026</strong>: Update Salesforce")
+    ).toEqual({
+      label: "By Oct 15, 2026",
+      text: "Update Salesforce",
+      hasLabel: true
+    });
+    expect(
+      splitLabel("<strong>By 15.10.2026: Update</strong> the buying team")
+    ).toEqual({
+      label: "By 15.10.2026",
+      text: "<strong>Update</strong> the buying team",
+      hasLabel: true
+    });
+    expect(
+      splitLabel("<strong>After <em>validation</em>:</strong> Advance the deal")
+    ).toEqual({
+      label: "After validation",
+      text: "Advance the deal",
+      hasLabel: true
+    });
+    expect(splitLabel("The customer said no. Then: nothing").hasLabel).toBe(
+      false
+    );
+  });
+
+  it("renders a Close Plan deadline label as plain text", async () => {
+    const element = await createComponent(
+      response({
+        cards: [
+          {
+            title: "Close Plan",
+            items: ["By <strong>Oct 15, 2026</strong>: Update Salesforce"]
+          }
+        ],
+        enrichment: undefined
+      })
+    );
+    const label = element.shadowRoot.querySelector(
+      '[data-summary-section="plan"] .timeline-label'
+    );
+    expect(label.textContent).toBe("By Oct 15, 2026");
+  });
+});
+
+describe("opportunitySummary GCP revision 00400 label rules", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  const NOOKS_TASK_ID = "00T000000000002AAA";
+
+  it("links a Task label that starts with [ and ends with a name", async () => {
+    const label = "[Nooks Call] - Convo - Follow-Up - Nituna Diaz";
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          {
+            title: "Opportunity History & Stage Journey",
+            items: [`Logged <strong>${label}</strong>, then a quote.`]
+          }
+        ],
+        record_references: [
+          {
+            object_type: "Task",
+            id: NOOKS_TASK_ID,
+            label,
+            activity_kind: "Call",
+            mentioned_in: ["Opportunity History & Stage Journey"]
+          }
+        ]
+      })
+    );
+    const link = element.shadowRoot.querySelector(
+      '[data-summary-section="history"] a.record-link'
+    );
+    expect(link.textContent).toBe(label);
+    expect(link.dataset.recordId).toBe(NOOKS_TASK_ID);
+  });
+
+  it("links labels with punctuation at either edge, wherever they sit", () => {
+    const references = [
+      {
+        objectApiName: "Task",
+        recordId: NOOKS_TASK_ID,
+        label: "(Discovery call)"
+      }
+    ];
+    const segments = linkRecordReferences(
+      "See notes(Discovery call)for detail",
+      references,
+      "line"
+    );
+    expect(segments.find((segment) => segment.isRecordLink).label).toBe(
+      "(Discovery call)"
+    );
+  });
+
+  it("links a shortened, re-cased call label that is not the Task subject", () => {
+    // Subject: "[Nooks Call] - Convo - Follow-Up - Nituna Diaz - by Rep One"
+    const segments = linkRecordReferences(
+      "Follow up on the nooks call with Nituna Diaz.",
+      [
+        {
+          objectApiName: "Task",
+          recordId: NOOKS_TASK_ID,
+          label: "nooks call with Nituna Diaz"
+        }
+      ],
+      "line"
+    );
+    expect(segments.find((segment) => segment.isRecordLink).recordId).toBe(
+      NOOKS_TASK_ID
+    );
+  });
+
+  it("matches labels whose spaces are U+202F or U+00A0", () => {
+    const references = [
+      {
+        objectApiName: "Event",
+        recordId: "00U000000000001AAA",
+        label: "Demo at 9:19 AM PDT"
+      }
+    ];
+    for (const line of [
+      "Booked Demo at 9:19\u202fAM PDT with IT.",
+      "Booked Demo at 9:19&nbsp;AM PDT with IT.",
+      "Booked Demo at 9:19\u00a0AM PDT with IT."
+    ]) {
+      const link = linkRecordReferences(line, references, "line").find(
+        (segment) => segment.isRecordLink
+      );
+      expect(link).toBeDefined();
+      expect(link.label.replace(/\s/g, " ")).toBe("Demo at 9:19 AM PDT");
+    }
+    const narrowLabel = linkRecordReferences(
+      "Booked Demo at 9:19 AM PDT with IT.",
+      [{ ...references[0], label: "Demo at 9:19\u202fAM PDT" }],
+      "line"
+    );
+    expect(narrowLabel.some((segment) => segment.isRecordLink)).toBe(true);
+  });
+
+  it("does not split a label on the colon inside a localized time", () => {
+    expect(splitLabel("At 9:19\u202fAM PDT: Call the buyer")).toEqual({
+      label: "At 9:19 AM PDT",
+      text: "Call the buyer",
+      hasLabel: true
+    });
+    expect(splitLabel("Call at 9:19\u202fAM PDT with the buyer").hasLabel).toBe(
+      false
+    );
+  });
+});
+
+describe("opportunitySummary account and contact links", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it("links the account and contact names in every section they appear", async () => {
+    const sections = [
+      "Overall Deal Score",
+      "Executive Summary",
+      "Next Best Actions",
+      "Close Plan",
+      "Opportunity History & Stage Journey"
+    ];
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          {
+            title: "Overall Deal Score",
+            badge: "62/100 (Moderate)",
+            items: ["Note"]
+          },
+          {
+            title: "Executive Summary",
+            items: [
+              "Account: <strong>Bank of America Corporation</strong>",
+              "Contact: <strong>Morgan Banking DevGSS Test</strong> is the evaluator"
+            ]
+          },
+          {
+            title: "Next Best Actions",
+            items: ["Ask <strong>Morgan Banking DevGSS Test</strong>’s team"]
+          },
+          {
+            title: "Close Plan",
+            items: ["Now: Book Morgan Banking DevGSS Test"]
+          },
+          {
+            title: "Opportunity History & Stage Journey",
+            items: ["Bank of America Corporation moved to Stage 3"]
+          }
+        ],
+        record_references: [
+          {
+            object_type: "Account",
+            id: "001000000000001AAA",
+            label: "Bank of America Corporation",
+            mentioned_in: sections,
+            source: "salesforce"
+          },
+          {
+            object_type: "Contact",
+            id: "003000000000001AAA",
+            label: "Morgan Banking DevGSS Test",
+            mentioned_in: sections,
+            source: "salesforce"
+          }
+        ]
+      })
+    );
+    const links = [...element.shadowRoot.querySelectorAll("a.record-link")].map(
+      (link) => `${link.dataset.objectApiName}:${link.textContent}`
+    );
+    expect(links.sort()).toEqual([
+      "Account:Bank of America Corporation",
+      "Account:Bank of America Corporation",
+      "Contact:Morgan Banking DevGSS Test",
+      "Contact:Morgan Banking DevGSS Test",
+      "Contact:Morgan Banking DevGSS Test"
+    ]);
+    element.shadowRoot.querySelector("a.record-link").click();
+    expect(mockNavigate).toHaveBeenCalledWith({
+      type: "standard__recordPage",
+      attributes: {
+        recordId: "001000000000001AAA",
+        objectApiName: "Account",
+        actionName: "view"
+      }
+    });
+  });
+});
+
+describe("opportunitySummary links for every referenced object", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it("links owner, related opportunity, product, case, task and event names", async () => {
+    const sections = [
+      "Executive Summary",
+      "Opportunity History & Stage Journey"
+    ];
+    const reference = (object_type, id, label) => ({
+      object_type,
+      id,
+      label,
+      mentioned_in: sections,
+      source: "salesforce"
+    });
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          {
+            title: "Executive Summary",
+            items: [
+              "Owner Avery Rep is pricing <strong>Contact Center: Data Connector  (per connector)</strong>",
+              "Case 00012345 (Porting delay on main line) is open"
+            ]
+          },
+          {
+            title: "Opportunity History & Stage Journey",
+            items: [
+              "Follows Example Co - Renewal 2025; Discovery call with IT and Quarterly business review held"
+            ]
+          }
+        ],
+        record_references: [
+          reference("User", "005000000000001AAA", "Avery Rep"),
+          reference(
+            "Opportunity",
+            "006000000000002AAA",
+            "Example Co - Renewal 2025"
+          ),
+          reference(
+            "Product2",
+            "01t000000000001AAA",
+            "Contact Center: Data Connector  (per connector)"
+          ),
+          reference("Case", "500000000000001AAA", "00012345"),
+          reference("Case", "500000000000001AAA", "Porting delay on main line"),
+          reference("Task", "00T000000000001AAA", "Discovery call with IT"),
+          reference("Event", "00U000000000001AAA", "Quarterly business review")
+        ]
+      })
+    );
+    const links = [...element.shadowRoot.querySelectorAll("a.record-link")]
+      .map((link) => `${link.dataset.objectApiName}:${link.textContent}`)
+      .sort();
+    expect(links).toEqual([
+      "Case:00012345",
+      "Case:Porting delay on main line",
+      "Event:Quarterly business review",
+      "Opportunity:Example Co - Renewal 2025",
+      "Product2:Contact Center: Data Connector  (per connector)",
+      "Task:Discovery call with IT",
+      "User:Avery Rep"
+    ]);
+  });
+});
+
+describe("opportunitySummary GCP case links stay as they were", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
+  it("keeps a GCP case link in its own sections next to Salesforce name links", async () => {
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          {
+            title: "Executive Summary",
+            items: ["Open case <strong>00012345</strong> for Example Co"]
+          },
+          {
+            title: "Next Best Actions",
+            items: ["Close case 00012345 with Example Co"]
+          },
+          {
+            title: "Close Plan",
+            items: ["Riley Buyer: confirm budget with Example Co"]
+          }
+        ],
+        record_references: [
+          {
+            object_type: "Case",
+            id: CASE_ID,
+            label: "00012345",
+            case_number: "00012345",
+            mentioned_in: ["Executive Summary"]
+          },
+          {
+            object_type: "Account",
+            id: "001000000000001AAA",
+            label: "Example Co",
+            mentioned_in: [
+              "Executive Summary",
+              "Next Best Actions",
+              "Close Plan"
+            ],
+            source: "salesforce"
+          },
+          {
+            object_type: "Contact",
+            id: "003000000000001AAA",
+            label: "Riley Buyer",
+            mentioned_in: [
+              "Executive Summary",
+              "Next Best Actions",
+              "Close Plan"
+            ],
+            source: "salesforce"
+          }
+        ]
+      })
+    );
+    const linksIn = (name) =>
+      [
+        ...element.shadowRoot.querySelectorAll(
+          `[data-summary-section="${name}"] a.record-link`
+        )
+      ].map((link) => `${link.dataset.objectApiName}:${link.textContent}`);
+
+    expect(linksIn("executive")).toEqual([
+      "Case:00012345",
+      "Account:Example Co"
+    ]);
+    expect(linksIn("actions")).toEqual(["Account:Example Co"]);
+    expect(linksIn("plan")).toEqual([
+      "Contact:Riley Buyer",
+      "Account:Example Co"
+    ]);
+    expect(
+      element.shadowRoot.querySelector(
+        '[data-summary-section="plan"] .timeline-label'
+      ).textContent
+    ).toBe("Riley Buyer");
+  });
+
+  it("does not split a line at the colon inside a product name", async () => {
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          {
+            title: "Executive Summary",
+            items: [
+              "Proposal covers <strong>Contact Center: Data Connector</strong>",
+              "Products: Contact Center: Data Connector"
+            ]
+          }
+        ],
+        record_references: [
+          {
+            object_type: "Product2",
+            id: "01t000000000001AAA",
+            label: "Contact Center: Data Connector",
+            mentioned_in: ["Executive Summary"],
+            source: "salesforce"
+          }
+        ]
+      })
+    );
+    const executive = element.shadowRoot.querySelector(
+      '[data-summary-section="executive"]'
+    );
+    expect(
+      [...executive.querySelectorAll("a.record-link")].map(
+        (link) => link.textContent
+      )
+    ).toEqual([
+      "Contact Center: Data Connector",
+      "Contact Center: Data Connector"
+    ]);
+    expect(
+      [...executive.querySelectorAll(".fact-label")].map(
+        (label) => label.textContent
+      )
+    ).toEqual(["Products"]);
   });
 });

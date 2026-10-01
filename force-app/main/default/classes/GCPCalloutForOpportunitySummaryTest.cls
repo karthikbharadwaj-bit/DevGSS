@@ -23,6 +23,29 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  static void shouldOrderRelatedOpportunitiesByCloseDateWhenLimiting() {
+    Test.startTest();
+    String soql = GCPCalloutForOpportunitySummary.buildRelatedOpportunitiesQuery(
+        ACCOUNT_ID,
+        OPPORTUNITY_ID
+      )
+      .setQuery()
+      .getQuery();
+    Test.stopTest();
+
+    System.assert(
+      soql.contains('ORDER BY CloseDate DESC NULLS FIRST'),
+      'The most recent close dates must survive the limit: ' + soql
+    );
+    System.assert(soql.contains('LIMIT 25'), soql);
+    System.assertEquals(
+      false,
+      soql.contains('Name ASC'),
+      'The selector default Name ordering must not lead the ORDER BY.'
+    );
+  }
+
+  @IsTest
   static void loadsExactTaskCompletionTimeOutsideLegacyQueryFactory() {
     Task completedTask = new Task(
       Subject = 'Completed customer follow-up',
@@ -1297,6 +1320,654 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals(false, result.containsKey('opportunity_enrichment'));
   }
 
+  @IsTest
+  static void shouldSendViewerContextWhenBuildingPayload() {
+    Map<String, Object> payload = new Map<String, Object>();
+
+    Test.startTest();
+    GCPCalloutForOpportunitySummary.addViewerContext(payload);
+    Test.stopTest();
+
+    System.assertEquals(
+      UserInfo.getTimeZone().getID(),
+      payload.get('viewerTimeZone'),
+      'Time zone must describe the viewing user.'
+    );
+    System.assertEquals(
+      UserInfo.getLocale(),
+      payload.get('viewerLocale'),
+      'Locale must describe the viewing user.'
+    );
+  }
+
+  @IsTest
+  static void shouldSendClosedFlagsAsBooleansWhenReadable() {
+    Map<String, Object> opportunityFields = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(opportunityWithAccount(false))
+    );
+    opportunityFields.put('IsClosed', true);
+    opportunityFields.put('IsWon', false);
+    Opportunity closedOpportunity = (Opportunity) JSON.deserialize(
+      JSON.serialize(opportunityFields),
+      Opportunity.class
+    );
+
+    Test.startTest();
+    Map<String, Object> closedPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      closedOpportunity,
+      false
+    );
+    Map<String, Object> unreadablePayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      opportunityWithAccount(false),
+      false
+    );
+    Test.stopTest();
+
+    System.assert(closedPayload.get('isClosed') instanceof Boolean);
+    System.assertEquals(true, closedPayload.get('isClosed'));
+    System.assertEquals(false, closedPayload.get('isWon'));
+    System.assertEquals(
+      false,
+      unreadablePayload.containsKey('isClosed'),
+      'Unreadable flags must be omitted, never sent as null or text.'
+    );
+    System.assertEquals(false, unreadablePayload.containsKey('isWon'));
+  }
+
+  @IsTest
+  static void shouldSendDealMotionAndSectorUnchangedWhenPopulated() {
+    Map<String, Object> opportunityFields = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(opportunityWithAccount(false))
+    );
+    opportunityFields.put('Order_Type__c', 'Upsell + Downsell');
+    ((Map<String, Object>) opportunityFields.get('Account'))
+      .put('Sector__c', 'Transportation, Travel & Leisure');
+    Opportunity classifiedOpportunity = (Opportunity) JSON.deserialize(
+      JSON.serialize(opportunityFields),
+      Opportunity.class
+    );
+
+    Test.startTest();
+    Map<String, Object> classifiedPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      classifiedOpportunity,
+      false
+    );
+    Map<String, Object> blankPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      opportunityWithAccount(false),
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      'Upsell + Downsell',
+      classifiedPayload.get('dealMotion')
+    );
+    System.assertEquals(
+      'Transportation, Travel & Leisure',
+      classifiedPayload.get('sector')
+    );
+    System.assertEquals(false, blankPayload.containsKey('dealMotion'));
+    System.assertEquals(false, blankPayload.containsKey('sector'));
+    System.assertEquals(
+      false,
+      blankPayload.containsKey('npiProductCategories'),
+      'No NPI field exists in the org, so none is sent.'
+    );
+  }
+
+  @IsTest
+  static void shouldBuildConversationEvidenceWhenEnrichmentDisabled() {
+    Datetime windowEnd = Datetime.now();
+    GCPCalloutForOpportunitySummary.activityParticipantProvider = new StubParticipantProvider(
+      participantMap(TASK_ID, CONTACT_ID, 'unknown')
+    );
+    try {
+      Test.startTest();
+      GCPCalloutForOpportunitySummary.ActivityData activityData = GCPCalloutForOpportunitySummary.assembleActivityData(
+        new List<SObject>{
+          taskRecord(
+            TASK_ID,
+            CONTACT_ID,
+            USER_ID,
+            true,
+            windowEnd.addDays(-1),
+            'Buyer agreed to the pricing.'
+          )
+        },
+        new List<SObject>(),
+        new Map<Id, String>(),
+        false,
+        windowEnd.addDays(-180),
+        windowEnd,
+        90,
+        false,
+        false
+      );
+      Test.stopTest();
+
+      System.assertEquals(
+        1,
+        activityData.conversations.size(),
+        'Conversation notes must not depend on the enrichment toggle.'
+      );
+      System.assertEquals(
+        'Buyer agreed to the pricing.',
+        activityData.conversations[0].get('text')
+      );
+      System.assertEquals(
+        false,
+        activityData.tasks[0].containsKey('participants'),
+        'Activity rows keep their non-enrichment shape.'
+      );
+      System.assertEquals(
+        false,
+        activityData.tasks[0].containsKey('sourceRecordId')
+      );
+    } finally {
+      resetTestHooks();
+    }
+  }
+
+  @IsTest
+  static void shouldSendLossFieldsWithinLimitWhenPopulated() {
+    Map<String, Object> opportunityFields = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(opportunityWithAccount(false))
+    );
+    opportunityFields.put('Downgrade_Reason_Opp__c', 'Lost');
+    opportunityFields.put('Primary_Loss_Reason__c', '  Price  ');
+    opportunityFields.put('Primary_Competitor__c', 'A'.repeat(320));
+    Opportunity lostOpportunity = (Opportunity) JSON.deserialize(
+      JSON.serialize(opportunityFields),
+      Opportunity.class
+    );
+
+    Test.startTest();
+    Map<String, Object> lostPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      lostOpportunity,
+      false
+    );
+    Map<String, Object> blankPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+      opportunityWithAccount(false),
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals('Lost', lostPayload.get('lossReason'));
+    System.assertEquals('Price', lostPayload.get('lossReasonDetail'));
+    System.assertEquals(
+      300,
+      ((String) lostPayload.get('lostToCompetitor')).length(),
+      'Loss fields are capped at the 300 characters GCP accepts.'
+    );
+    for (
+      String key : new List<String>{
+        'lossReason',
+        'lossReasonDetail',
+        'lostToCompetitor'
+      }
+    ) {
+      System.assertEquals(
+        false,
+        blankPayload.containsKey(key),
+        'Blank loss fields are left out, never sent as null.'
+      );
+    }
+  }
+
+  @IsTest
+  static void shouldSendTaskSubtypeWhenAssemblingActivities() {
+    Map<String, Object> taskFields = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(
+        taskRecord(TASK_ID, CONTACT_ID, USER_ID, true, Datetime.now(), 'Notes')
+      )
+    );
+    taskFields.put('TaskSubtype', 'Call');
+    Task callTask = (Task) JSON.deserialize(
+      JSON.serialize(taskFields),
+      Task.class
+    );
+
+    Test.startTest();
+    GCPCalloutForOpportunitySummary.ActivityData activityData = GCPCalloutForOpportunitySummary.assembleActivityData(
+      new List<SObject>{
+        callTask,
+        taskRecord(
+          syntheticId('00T', 2),
+          CONTACT_ID,
+          USER_ID,
+          true,
+          Datetime.now(),
+          'Notes'
+        )
+      },
+      new List<SObject>(),
+      new Map<Id, String>(),
+      false,
+      Datetime.now().addDays(-180),
+      Datetime.now(),
+      90,
+      false,
+      false
+    );
+    Test.stopTest();
+
+    System.assertEquals('Call', activityData.tasks[0].get('taskSubtype'));
+    System.assertEquals(
+      false,
+      activityData.tasks[1].containsKey('taskSubtype'),
+      'A blank subtype is left out.'
+    );
+  }
+
+  @IsTest
+  static void shouldNameAccountAndContactsSentWhenBuildingReferences() {
+    Id sharedNameContactId = syntheticId('003', 3);
+    Map<String, Object> payload = new Map<String, Object>{
+      'opportunity' => new Map<String, Object>{
+        'id' => OPPORTUNITY_ID,
+        'name' => 'Example Opportunity',
+        'ownerId' => USER_ID,
+        'ownerName' => 'Riley Rep',
+        'accountId' => ACCOUNT_ID,
+        'accountName' => 'Example Co'
+      },
+      'relatedOpportunities' => new List<Map<String, Object>>{
+        new Map<String, Object>{
+          'id' => syntheticId('006', 2),
+          'name' => 'Example Co - Renewal 2025'
+        }
+      },
+      'lineItems' => new List<Map<String, Object>>{
+        new Map<String, Object>{
+          'productId' => PRODUCT_ID,
+          'productName' => 'Example Product'
+        }
+      },
+      'cases' => new Map<String, Object>{
+        'open' => new List<Map<String, Object>>{
+          new Map<String, Object>{
+            'id' => syntheticId('500', 1),
+            'caseNumber' => '00012345',
+            'subject' => 'Porting delay on main line'
+          }
+        },
+        'recentlyClosed' => new List<Map<String, Object>>()
+      },
+      'activities' => new Map<String, Object>{
+        'tasks' => new List<Map<String, Object>>{
+          new Map<String, Object>{ 'id' => TASK_ID, 'subject' => 'Call' },
+          new Map<String, Object>{
+            'id' => syntheticId('00T', 2),
+            'subject' => 'Discovery call with IT'
+          }
+        },
+        'events' => new List<Map<String, Object>>{
+          new Map<String, Object>{
+            'id' => EVENT_ID,
+            'subject' => 'Quarterly business review'
+          }
+        }
+      },
+      'stakeholders' => new List<Map<String, Object>>{
+        new Map<String, Object>{
+          'contactId' => CONTACT_ID,
+          'name' => 'Avery Buyer'
+        },
+        new Map<String, Object>{
+          'contactId' => SECOND_CONTACT_ID,
+          'name' => 'Jo'
+        },
+        new Map<String, Object>{
+          'contactId' => syntheticId('003', 4),
+          'name' => 'Sam Same'
+        }
+      },
+      'conversationEvidence' => new Map<String, Object>{
+        'items' => new List<Map<String, Object>>{
+          new Map<String, Object>{
+            'participants' => new List<Map<String, Object>>{
+              new Map<String, Object>{
+                'contactId' => CONTACT_ID,
+                'name' => 'Avery Buyer'
+              },
+              new Map<String, Object>{
+                'contactId' => sharedNameContactId,
+                'name' => 'sam same'
+              }
+            }
+          }
+        }
+      }
+    };
+
+    Test.startTest();
+    List<Map<String, Object>> named = GCPCalloutForOpportunitySummary.namedRecordReferences(
+      payload
+    );
+    Set<Id> referenceableIds = GCPCalloutForOpportunitySummary.referenceableRecordIds(
+      payload
+    );
+    Test.stopTest();
+
+    List<String> labels = new List<String>();
+    for (Map<String, Object> namedRecord : named) {
+      labels.add(
+        namedRecord.get('object_type') + ':' + namedRecord.get('label')
+      );
+    }
+    System.assertEquals(
+      new List<String>{
+        'User:Riley Rep',
+        'Account:Example Co',
+        'Opportunity:Example Co - Renewal 2025',
+        'Contact:Avery Buyer',
+        'Product2:Example Product',
+        'Case:00012345',
+        'Case:Porting delay on main line',
+        'Task:Discovery call with IT',
+        'Event:Quarterly business review'
+      },
+      labels,
+      'Every sent record with a quotable name is offered. The current opportunity, ' +
+      'short names, generic subjects and names shared by two records are not.'
+    );
+    for (
+      Id expectedId : new List<Id>{
+        ACCOUNT_ID,
+        CONTACT_ID,
+        USER_ID,
+        PRODUCT_ID,
+        TASK_ID,
+        EVENT_ID
+      }
+    ) {
+      System.assert(referenceableIds.contains(expectedId), expectedId);
+    }
+    System.assertEquals(false, referenceableIds.contains(OPPORTUNITY_ID));
+  }
+
+  @IsTest
+  static void shouldOfferNamedReferencesToEverySectionWhenBuildingResult() {
+    String body =
+      '{"body":{"opportunity_summary":{' +
+      '"Executive Summary":["Account: Example Co"],' +
+      '"Next Best Actions":["Call Avery Buyer"]},' +
+      '"record_references":[{"object_type":"Contact","id":"' +
+      CONTACT_ID +
+      '","label":"Avery","mentioned_in":["Next Best Actions"]}]}}';
+    List<Map<String, Object>> named = new List<Map<String, Object>>{
+      new Map<String, Object>{
+        'object_type' => 'Account',
+        'id' => String.valueOf(ACCOUNT_ID),
+        'label' => 'Example Co'
+      },
+      new Map<String, Object>{
+        'object_type' => 'Contact',
+        'id' => String.valueOf(CONTACT_ID),
+        'label' => 'Avery Buyer'
+      }
+    };
+
+    Test.startTest();
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.buildResult(
+        JSON.deserializeUntyped(body),
+        new Set<Id>{ ACCOUNT_ID, CONTACT_ID },
+        named
+      )
+    );
+    Test.stopTest();
+
+    List<Object> references = (List<Object>) result.get('record_references');
+    System.assertEquals(
+      2,
+      references.size(),
+      'A record GCP referenced keeps only GCP\'s link; Salesforce adds the Account.'
+    );
+    Map<String, Object> accountReference = (Map<String, Object>) references[1];
+    System.assertEquals('Account', accountReference.get('object_type'));
+    System.assertEquals('salesforce', accountReference.get('source'));
+    System.assertEquals(
+      new List<Object>{ 'Executive Summary', 'Next Best Actions' },
+      accountReference.get('mentioned_in')
+    );
+  }
+
+  @IsTest
+  static void shouldCollectReferenceableIdsWhenPayloadHasCasesAndActivities() {
+    Id caseId = syntheticId('500', 1);
+    Map<String, Object> payload = new Map<String, Object>{
+      'cases' => new Map<String, Object>{
+        'open' => new List<Map<String, Object>>{
+          new Map<String, Object>{ 'id' => caseId }
+        },
+        'recentlyClosed' => new List<Map<String, Object>>()
+      },
+      'activities' => new Map<String, Object>{
+        'tasks' => new List<Map<String, Object>>{
+          new Map<String, Object>{ 'id' => TASK_ID }
+        },
+        'events' => new List<Map<String, Object>>{
+          new Map<String, Object>{ 'id' => EVENT_ID },
+          new Map<String, Object>{ 'subject' => 'No id' }
+        }
+      }
+    };
+
+    Test.startTest();
+    Set<Id> ids = GCPCalloutForOpportunitySummary.referenceableRecordIds(
+      payload
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      new Set<Id>{ caseId, TASK_ID, EVENT_ID },
+      ids,
+      'Only Case, Task and Event Ids sent to GCP may become links.'
+    );
+  }
+
+  @IsTest
+  static void shouldPassClosedDealFieldsAndOnlySentReferencesWhenBuildingResult() {
+    Id caseId = syntheticId('500', 1);
+    Id unsentCaseId = syntheticId('500', 2);
+    String body =
+      '{"body":{' +
+      '"opportunity_summary":{"Executive Summary":["Case 00012345 is open"],"Post-Close Actions":["Kickoff: Schedule onboarding"]},' +
+      '"deal_state":{"state":"closed_won","is_closed":true,"score":100},' +
+      '"salesforce_fields":{"deal_motion":"Upsell","npi_product_categories":["RingCX"]},' +
+      '"record_references":[' +
+      '{"object_type":"Case","id":"' +
+      caseId +
+      '","label":"00012345","case_number":"00012345","mentioned_in":["Executive Summary"]},' +
+      '{"object_type":"Case","id":"' +
+      unsentCaseId +
+      '","label":"00099999","mentioned_in":["Executive Summary"]},' +
+      '{"object_type":"Task","id":"' +
+      caseId +
+      '","label":"Mismatched type","mentioned_in":["Executive Summary"]},' +
+      '{"object_type":"Account","id":"' +
+      ACCOUNT_ID +
+      '","label":"Example Co","mentioned_in":["Executive Summary"]},' +
+      '{"object_type":"Task","id":"' +
+      TASK_ID +
+      '","label":"Discovery call","activity_kind":"Call","mentioned_in":[]},' +
+      '"not an object"]' +
+      '}}';
+    Set<Id> sentIds = new Set<Id>{ caseId, TASK_ID };
+
+    Test.startTest();
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.buildResult(
+        JSON.deserializeUntyped(body),
+        sentIds,
+        new List<Map<String, Object>>()
+      )
+    );
+    Test.stopTest();
+
+    System.assertEquals(true, result.get('success'));
+    System.assertEquals(2, ((List<Object>) result.get('cards')).size());
+    Map<String, Object> dealState = (Map<String, Object>) result.get(
+      'deal_state'
+    );
+    System.assertEquals(true, dealState.get('is_closed'));
+    System.assertEquals(
+      'Upsell',
+      ((Map<String, Object>) result.get('salesforce_fields')).get('deal_motion')
+    );
+    List<Object> references = (List<Object>) result.get('record_references');
+    System.assertEquals(
+      1,
+      references.size(),
+      'Unsent, mistyped, unsupported and unplaced references must be dropped.'
+    );
+    Map<String, Object> reference = (Map<String, Object>) references[0];
+    System.assertEquals(String.valueOf(caseId), reference.get('id'));
+    System.assertEquals('00012345', reference.get('case_number'));
+  }
+
+  @IsTest
+  static void shouldSendIdsAndViewerContextWhenCallingCloudRun() {
+    new SObjectBuilder(ByPassTrigger__c.SObjectType)
+      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
+      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
+      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
+      .create();
+    new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
+      .setField(
+        GCP_Feature_Toggle__c.SetupOwnerId,
+        UserInfo.getOrganizationId()
+      )
+      .setField(
+        GCP_Feature_Toggle__c.Enable_Opportunity_Summary_Enrichment__c,
+        false
+      )
+      .create();
+    Account account = (Account) new SObjectBuilder(Account.SObjectType)
+      .setField(
+        Account.Name,
+        ValueProviderBuilder.provideUniqueString('Reference company')
+      )
+      .create()
+      .getRecord();
+    Opportunity opportunity = (Opportunity) new SObjectBuilder(
+        Opportunity.SObjectType
+      )
+      .setField(Opportunity.AccountId, account.Id)
+      .setField(Opportunity.CloseDate, Date.today().addDays(30))
+      .create()
+      .getRecord();
+    Task callTask = (Task) new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, opportunity.Id)
+      .setField(
+        Task.Subject,
+        ValueProviderBuilder.provideUniqueString('Discovery call')
+      )
+      .setField(Task.Status, 'Not Started')
+      .setField(Task.ActivityDate, Date.today())
+      .create()
+      .getRecord();
+    Test.setMock(
+      HttpCalloutMock.class,
+      new ReferenceSummaryCalloutMock(callTask.Id)
+    );
+
+    Test.startTest();
+    String rawResult = GCPCalloutForOpportunitySummary.callCloudRun(
+      'summary-test@example.com',
+      opportunity.Id,
+      'test-token',
+      'https://service.example.invalid'
+    );
+    Test.stopTest();
+
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      rawResult
+    );
+    System.assertEquals(true, result.get('success'));
+    List<Object> references = (List<Object>) result.get('record_references');
+    Map<String, Object> taskReference = (Map<String, Object>) references[0];
+    System.assertEquals(
+      String.valueOf(callTask.Id),
+      taskReference.get('id'),
+      'A reference to a sent Task must survive the Id filter.'
+    );
+    Set<String> referencedTypes = new Set<String>();
+    Set<String> referencedIds = new Set<String>();
+    for (Object reference : references) {
+      referencedTypes.add(
+        (String) ((Map<String, Object>) reference).get('object_type')
+      );
+      referencedIds.add((String) ((Map<String, Object>) reference).get('id'));
+    }
+    System.assert(
+      referencedIds.contains(String.valueOf(account.Id)),
+      'The sent Account is offered as a link under its own name.'
+    );
+    System.assert(referencedTypes.contains('User'), referencedTypes);
+    System.assertEquals(
+      false,
+      referencedIds.contains(String.valueOf(opportunity.Id)),
+      'The current opportunity never links to itself.'
+    );
+  }
+
+  private class ReferenceSummaryCalloutMock implements HttpCalloutMock {
+    private Id expectedTaskId;
+
+    private ReferenceSummaryCalloutMock(Id taskId) {
+      expectedTaskId = taskId;
+    }
+
+    public HttpResponse respond(HttpRequest request) {
+      Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
+        request.getBody()
+      );
+      System.assertEquals(
+        UserInfo.getTimeZone().getID(),
+        payload.get('viewerTimeZone')
+      );
+      System.assertEquals(UserInfo.getLocale(), payload.get('viewerLocale'));
+      Map<String, Object> opportunityPayload = (Map<String, Object>) payload.get(
+        'opportunity'
+      );
+      System.assertEquals(false, opportunityPayload.get('isClosed'));
+      System.assertEquals(false, opportunityPayload.get('isWon'));
+      Map<String, Object> taskRow = (Map<String, Object>) ((List<Object>) ((Map<String, Object>) payload.get(
+          'activities'
+        ))
+        .get('tasks'))[0];
+      System.assertEquals(String.valueOf(expectedTaskId), taskRow.get('id'));
+      Map<String, Object> cases = (Map<String, Object>) payload.get('cases');
+      System.assert(cases.containsKey('open'));
+      System.assertEquals(
+        false,
+        payload.get('enableOpportunitySummaryEnrichment')
+      );
+      System.assert(
+        payload.get('conversationEvidence') instanceof Map<String, Object>,
+        'conversationEvidence must be sent with enrichment off.'
+      );
+      System.assertEquals(
+        false,
+        payload.containsKey('dataCoverage'),
+        'dataCoverage stays tied to the enrichment toggle.'
+      );
+
+      HttpResponse response = new HttpResponse();
+      response.setStatusCode(200);
+      response.setBody(
+        '{"body":{"opportunity_summary":{"Opportunity History & Stage Journey":["Discovery call logged"]},' +
+          '"deal_state":{"state":"open","is_closed":false},' +
+          '"record_references":[{"object_type":"Task","id":"' +
+          expectedTaskId +
+          '","label":"Discovery call","activity_kind":"Call","mentioned_in":["Opportunity History & Stage Journey"]}]}}'
+      );
+      return response;
+    }
+  }
+
   private static Opportunity opportunityWithAccount(Boolean includeOptional) {
     Map<String, Object> accountFields = new Map<String, Object>{
       'attributes' => new Map<String, Object>{ 'type' => 'Account' },
@@ -1608,6 +2279,25 @@ private class GCPCalloutForOpportunitySummaryTest {
     GCPCalloutForOpportunitySummary.configurationOverrides.clear();
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new GCPCalloutForOpportunitySummary.ActivityParticipantProvider();
     GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 2 * 1024 * 1024;
+  }
+
+  private class StubParticipantProvider extends GCPCalloutForOpportunitySummary.ActivityParticipantProvider {
+    private Map<Id, List<Map<String, Object>>> participantsByActivityId;
+
+    private StubParticipantProvider(
+      Map<Id, List<Map<String, Object>>> participantsByActivityId
+    ) {
+      this.participantsByActivityId = participantsByActivityId;
+    }
+
+    public override GCPCalloutForOpportunitySummary.ActivityParticipantResult load(
+      List<SObject> tasks,
+      List<SObject> events
+    ) {
+      GCPCalloutForOpportunitySummary.ActivityParticipantResult result = new GCPCalloutForOpportunitySummary.ActivityParticipantResult();
+      result.participantsByActivityId = participantsByActivityId;
+      return result;
+    }
   }
 
   private class FailingParticipantProvider extends GCPCalloutForOpportunitySummary.ActivityParticipantProvider {

@@ -246,9 +246,34 @@
                             </template>
                           </div>
                           <template for:each={scoreCard.notes} for:item="note">
-                            <p key={note.key} class="score-note">
-                              <lightning-formatted-rich-text value={note.text}>
-                              </lightning-formatted-rich-text>
+                            <p key={note.key} class="score-note inline-parts">
+                              <template
+                                for:each={note.segments}
+                                for:item="segment"
+                              >
+                                <span
+                                  key={segment.key}
+                                  class={segment.cssClass}
+                                >
+                                  <template lwc:if={segment.isRecordLink}>
+                                    <a
+                                      class="record-link"
+                                      href={segment.href}
+                                      data-record-id={segment.recordId}
+                                      data-object-api-name={segment.objectApiName}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{segment.label}</a
+                                    >
+                                  </template>
+                                  <template lwc:else>
+                                    <lightning-formatted-rich-text
+                                      value={segment.content}
+                                    >
+                                    </lightning-formatted-rich-text>
+                                  </template>
+                                </span>
+                              </template>
                             </p>
                           </template>
                         </div>
@@ -259,11 +284,47 @@
                   <template lwc:if={executiveFacts.length}>
                     <article class="panel" data-summary-section="executive">
                       <h2 class="panel-title">Executive Summary</h2>
+                      <template lwc:if={hasSalesforceChips}>
+                        <ul
+                          class="salesforce-chips"
+                          aria-label="Salesforce classification"
+                          data-salesforce-fields
+                        >
+                          <template for:each={salesforceChips} for:item="chip">
+                            <li key={chip.key} class="salesforce-chip">
+                              <span class="salesforce-chip__label"
+                                >{chip.prefix}</span
+                              ><span>{chip.value}</span>
+                            </li>
+                          </template>
+                        </ul>
+                      </template>
                       <ul class="fact-list">
                         <template for:each={executiveFacts} for:item="fact">
                           <li key={fact.key} class="fact-row">
                             <template lwc:if={fact.hasLabel}>
-                              <span class="fact-label">{fact.label}</span>
+                              <span class="fact-label">
+                                <template
+                                  for:each={fact.labelSegments}
+                                  for:item="part"
+                                >
+                                  <template lwc:if={part.isRecordLink}>
+                                    <a
+                                      key={part.key}
+                                      class="record-link"
+                                      href={part.href}
+                                      data-record-id={part.recordId}
+                                      data-object-api-name={part.objectApiName}
+                                      aria-label={part.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{part.label}</a
+                                    >
+                                  </template>
+                                  <template lwc:else>
+                                    <span key={part.key}>{part.content}</span>
+                                  </template>
+                                </template>
+                              </span>
                               <span class="fact-value inline-parts">
                                 <template
                                   for:each={fact.segments}
@@ -283,6 +344,17 @@
                                       >
                                         {segment.label}
                                       </button>
+                                    </template>
+                                    <template lwc:elseif={segment.isRecordLink}>
+                                      <a
+                                        class="record-link"
+                                        href={segment.href}
+                                        data-record-id={segment.recordId}
+                                        data-object-api-name={segment.objectApiName}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleRecordLinkClick}
+                                        >{segment.label}</a
+                                      >
                                     </template>
                                     <template lwc:else>
                                       <lightning-formatted-rich-text
@@ -316,6 +388,17 @@
                                       >
                                         {segment.label}
                                       </button>
+                                    </template>
+                                    <template lwc:elseif={segment.isRecordLink}>
+                                      <a
+                                        class="record-link"
+                                        href={segment.href}
+                                        data-record-id={segment.recordId}
+                                        data-object-api-name={segment.objectApiName}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleRecordLinkClick}
+                                        >{segment.label}</a
+                                      >
                                     </template>
                                     <template lwc:else>
                                       <lightning-formatted-rich-text
@@ -362,6 +445,17 @@
                                         {segment.label}
                                       </button>
                                     </template>
+                                    <template lwc:elseif={segment.isRecordLink}>
+                                      <a
+                                        class="record-link"
+                                        href={segment.href}
+                                        data-record-id={segment.recordId}
+                                        data-object-api-name={segment.objectApiName}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleRecordLinkClick}
+                                        >{segment.label}</a
+                                      >
+                                    </template>
                                     <template lwc:else>
                                       <lightning-formatted-rich-text
                                         value={segment.content}
@@ -402,6 +496,17 @@
                                       >
                                         {segment.label}
                                       </button>
+                                    </template>
+                                    <template lwc:elseif={segment.isRecordLink}>
+                                      <a
+                                        class="record-link"
+                                        href={segment.href}
+                                        data-record-id={segment.recordId}
+                                        data-object-api-name={segment.objectApiName}
+                                        aria-label={segment.ariaLabel}
+                                        onclick={handleRecordLinkClick}
+                                        >{segment.label}</a
+                                      >
                                     </template>
                                     <template lwc:else>
                                       <lightning-formatted-rich-text
@@ -444,9 +549,31 @@
 
                       <ul class="timeline timeline_muted">
                         <template for:each={history} for:item="entry">
-                          <li key={entry.key}>
-                            <lightning-formatted-rich-text value={entry.text}>
-                            </lightning-formatted-rich-text>
+                          <li key={entry.key} class="inline-parts">
+                            <template
+                              for:each={entry.segments}
+                              for:item="segment"
+                            >
+                              <span key={segment.key} class={segment.cssClass}>
+                                <template lwc:if={segment.isRecordLink}>
+                                  <a
+                                    class="record-link"
+                                    href={segment.href}
+                                    data-record-id={segment.recordId}
+                                    data-object-api-name={segment.objectApiName}
+                                    aria-label={segment.ariaLabel}
+                                    onclick={handleRecordLinkClick}
+                                    >{segment.label}</a
+                                  >
+                                </template>
+                                <template lwc:else>
+                                  <lightning-formatted-rich-text
+                                    value={segment.content}
+                                  >
+                                  </lightning-formatted-rich-text>
+                                </template>
+                              </span>
+                            </template>
                           </li>
                         </template>
                       </ul>
@@ -480,6 +607,17 @@
                                       {segment.label}
                                     </button>
                                   </template>
+                                  <template lwc:elseif={segment.isRecordLink}>
+                                    <a
+                                      class="record-link"
+                                      href={segment.href}
+                                      data-record-id={segment.recordId}
+                                      data-object-api-name={segment.objectApiName}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{segment.label}</a
+                                    >
+                                  </template>
                                   <template lwc:else>
                                     <lightning-formatted-rich-text
                                       value={segment.content}
@@ -495,14 +633,35 @@
                     </article>
                   </template>
 
-                  <template lwc:if={closePlan.length}>
+                  <template lwc:if={showClosePlan}>
                     <article class="panel" data-summary-section="plan">
                       <h2 class="panel-title">Close Plan</h2>
                       <ul class="timeline">
                         <template for:each={closePlan} for:item="step">
                           <li key={step.key}>
                             <template lwc:if={step.hasLabel}>
-                              <span class="timeline-label">{step.label}</span>
+                              <span class="timeline-label">
+                                <template
+                                  for:each={step.labelSegments}
+                                  for:item="part"
+                                >
+                                  <template lwc:if={part.isRecordLink}>
+                                    <a
+                                      key={part.key}
+                                      class="record-link"
+                                      href={part.href}
+                                      data-record-id={part.recordId}
+                                      data-object-api-name={part.objectApiName}
+                                      aria-label={part.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{part.label}</a
+                                    >
+                                  </template>
+                                  <template lwc:else>
+                                    <span key={part.key}>{part.content}</span>
+                                  </template>
+                                </template>
+                              </span>
                             </template>
                             <span class="timeline-text inline-parts">
                               <template
@@ -523,6 +682,93 @@
                                     >
                                       {segment.label}
                                     </button>
+                                  </template>
+                                  <template lwc:elseif={segment.isRecordLink}>
+                                    <a
+                                      class="record-link"
+                                      href={segment.href}
+                                      data-record-id={segment.recordId}
+                                      data-object-api-name={segment.objectApiName}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{segment.label}</a
+                                    >
+                                  </template>
+                                  <template lwc:else>
+                                    <lightning-formatted-rich-text
+                                      value={segment.content}
+                                    >
+                                    </lightning-formatted-rich-text>
+                                  </template>
+                                </span>
+                              </template>
+                            </span>
+                          </li>
+                        </template>
+                      </ul>
+                    </article>
+                  </template>
+
+                  <template lwc:if={postCloseActions.length}>
+                    <article class="panel" data-summary-section="postclose">
+                      <h2 class="panel-title">Post-Close Actions</h2>
+                      <ul class="timeline">
+                        <template for:each={postCloseActions} for:item="step">
+                          <li key={step.key}>
+                            <template lwc:if={step.hasLabel}>
+                              <span class="timeline-label">
+                                <template
+                                  for:each={step.labelSegments}
+                                  for:item="part"
+                                >
+                                  <template lwc:if={part.isRecordLink}>
+                                    <a
+                                      key={part.key}
+                                      class="record-link"
+                                      href={part.href}
+                                      data-record-id={part.recordId}
+                                      data-object-api-name={part.objectApiName}
+                                      aria-label={part.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{part.label}</a
+                                    >
+                                  </template>
+                                  <template lwc:else>
+                                    <span key={part.key}>{part.content}</span>
+                                  </template>
+                                </template>
+                              </span>
+                            </template>
+                            <span class="timeline-text inline-parts">
+                              <template
+                                for:each={step.segments}
+                                for:item="segment"
+                              >
+                                <span
+                                  key={segment.key}
+                                  class={segment.cssClass}
+                                >
+                                  <template lwc:if={segment.isEvidence}>
+                                    <button
+                                      type="button"
+                                      class="evidence-badge"
+                                      data-evidence-id={segment.evidenceId}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleEvidenceClick}
+                                    >
+                                      {segment.label}
+                                    </button>
+                                  </template>
+                                  <template lwc:elseif={segment.isRecordLink}>
+                                    <a
+                                      class="record-link"
+                                      href={segment.href}
+                                      data-record-id={segment.recordId}
+                                      data-object-api-name={segment.objectApiName}
+                                      aria-label={segment.ariaLabel}
+                                      onclick={handleRecordLinkClick}
+                                      >{segment.label}</a
+                                    >
                                   </template>
                                   <template lwc:else>
                                     <lightning-formatted-rich-text
@@ -564,6 +810,17 @@
                                   >
                                     {segment.label}
                                   </button>
+                                </template>
+                                <template lwc:elseif={segment.isRecordLink}>
+                                  <a
+                                    class="record-link"
+                                    href={segment.href}
+                                    data-record-id={segment.recordId}
+                                    data-object-api-name={segment.objectApiName}
+                                    aria-label={segment.ariaLabel}
+                                    onclick={handleRecordLinkClick}
+                                    >{segment.label}</a
+                                  >
                                 </template>
                                 <template lwc:else>
                                   <lightning-formatted-rich-text
@@ -635,10 +892,22 @@
                             >
                               <div class="research-card__header">
                                 <span class="research-id">{finding.id}</span>
-                                <template lwc:if={finding.dateLabel}>
+                                <template lwc:if={finding.hasDate}>
                                   <span class="research-date"
-                                    >{finding.dateLabel}</span
-                                  >
+                                    >{finding.datePrefix}
+                                    <template lwc:if={finding.dateIsIso}>
+                                      <lightning-formatted-date-time
+                                        value={finding.dateValue}
+                                        year="numeric"
+                                        month={finding.dateMonth}
+                                        day={finding.dateDay}
+                                        time-zone={finding.dateTimeZone}
+                                      ></lightning-formatted-date-time>
+                                    </template>
+                                    <template lwc:else
+                                      >{finding.dateText}</template
+                                    >
+                                  </span>
                                 </template>
                               </div>
 
@@ -851,10 +1120,20 @@
                             <span class="supplemental-kind"
                               >{update.kindLabel}</span
                             >
-                            <template lwc:if={update.dateLabel}>
+                            <template lwc:if={update.hasDate}>
                               <span class="research-date"
-                                >{update.dateLabel}</span
-                              >
+                                >{update.datePrefix}
+                                <template lwc:if={update.dateIsIso}>
+                                  <lightning-formatted-date-time
+                                    value={update.dateValue}
+                                    year="numeric"
+                                    month={update.dateMonth}
+                                    day={update.dateDay}
+                                    time-zone={update.dateTimeZone}
+                                  ></lightning-formatted-date-time>
+                                </template>
+                                <template lwc:else>{update.dateText}</template>
+                              </span>
                             </template>
                           </div>
 
