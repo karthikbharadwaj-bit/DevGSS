@@ -4,8 +4,6 @@ const DIAL_RADIUS = 35;
 const DIAL_CIRCUMFERENCE = 2 * Math.PI * DIAL_RADIUS;
 const STRONG_BAR_RATIO = 0.8;
 const WEAK_BAR_RATIO = 0.5;
-const TILE_COUNT = 5;
-const RENEWAL_WARNING_DAYS = 30;
 const OPEN_NOW_PERIOD = "open_now";
 const SAFE_URL_PATTERN = /^https?:\/\//i;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})(?:-(\d{2}))?/;
@@ -271,9 +269,7 @@ function primaryTileDetail(tile, labels, locale) {
         isNumber(tile.oldest_age_days)
           ? formatLabel(labels.tileCasesOldest, tile.oldest_age_days)
           : "",
-        isNumber(tile.escalated_count) && tile.escalated_count > 0
-          ? formatLabel(labels.tileCasesEscalated, tile.escalated_count)
-          : ""
+        tileEscalationText(tile.escalated_count, labels)
       ]);
     case "licenses":
       return joinPresent([
@@ -292,6 +288,15 @@ function primaryTileDetail(tile, labels, locale) {
   }
 }
 
+function tileEscalationText(escalatedCount, labels) {
+  if (!isNumber(escalatedCount)) {
+    return "";
+  }
+  return escalatedCount > 0
+    ? formatLabel(labels.tileCasesEscalated, escalatedCount)
+    : labels.tileCasesNotEscalated;
+}
+
 function primaryTileNumber(tile) {
   return tile.key === "mrr_trajectory" ? tile.value_pct : tile.value;
 }
@@ -307,126 +312,7 @@ function makeTile(key, label, value, detail, { isAmber, isNegative } = {}) {
   };
 }
 
-/*
- * Replacement tiles, in priority order, for any service tile that has no value. Each one is
- * only offered when the service computed it from records that exist on this account, so a
- * zero shown here is a real zero rather than an empty source.
- */
-function replacementTiles(metrics, labels, locale) {
-  const count = (value) => formatNumber(value, locale);
-  const candidates = [
-    () =>
-      isNumber(metrics.days_to_renewal) &&
-      makeTile(
-        "days_to_renewal",
-        labels.tileRenewal,
-        count(metrics.days_to_renewal),
-        metrics.days_to_renewal < 0 ? labels.tileRenewalPast : "",
-        {
-          isAmber: metrics.days_to_renewal <= RENEWAL_WARNING_DAYS,
-          isNegative: metrics.days_to_renewal < 0
-        }
-      ),
-    () =>
-      isNumber(metrics.days_since_meaningful_activity) &&
-      makeTile(
-        "days_since_meaningful_activity",
-        labels.tileActivity,
-        count(metrics.days_since_meaningful_activity),
-        metrics.going_cold === true ? labels.tileGoingCold : "",
-        { isAmber: metrics.going_cold === true }
-      ),
-    () =>
-      isNumber(metrics.closed_won_total) &&
-      metrics.closed_opportunity_sample_size > 0 &&
-      makeTile(
-        "closed_won_total",
-        labels.tileClosedWon,
-        formatMoney(
-          metrics.closed_won_total,
-          metrics.closed_won_currency_iso_code,
-          locale
-        ),
-        formatLabel(
-          labels.tileClosedWonDetail,
-          count(metrics.closed_won_count),
-          count(metrics.closed_opportunity_sample_size)
-        )
-      ),
-    () =>
-      isNumber(metrics.active_revenue_at_risk) &&
-      makeTile(
-        "active_revenue_at_risk",
-        labels.tileRevenueAtRisk,
-        formatMoney(
-          metrics.active_revenue_at_risk,
-          metrics.active_revenue_at_risk_currency_iso_code,
-          locale
-        ),
-        isNumber(metrics.open_escalation_count)
-          ? formatLabel(
-              labels.tileOpenEscalations,
-              count(metrics.open_escalation_count)
-            )
-          : "",
-        { isAmber: metrics.active_revenue_at_risk > 0 }
-      ),
-    () =>
-      isNumber(metrics.lifetime_escalation_count) &&
-      makeTile(
-        "lifetime_escalation_count",
-        labels.tileEscalations,
-        count(metrics.lifetime_escalation_count),
-        isNumber(metrics.cumulative_red_days) && metrics.cumulative_red_days > 0
-          ? formatLabel(labels.tileRedDays, count(metrics.cumulative_red_days))
-          : ""
-      ),
-    () =>
-      isNumber(metrics.next_step_missing_count) &&
-      metrics.open_opp_count > 0 &&
-      makeTile(
-        "next_step_coverage",
-        labels.tileNextStep,
-        `${count(metrics.open_opp_count - metrics.next_step_missing_count)} / ${count(metrics.open_opp_count)}`,
-        ""
-      ),
-    () =>
-      isNumber(metrics.overdue_open_opp_count) &&
-      metrics.open_opp_count > 0 &&
-      makeTile(
-        "overdue_open_opp_count",
-        labels.tileOverdue,
-        count(metrics.overdue_open_opp_count),
-        metrics.max_opp_days_overdue > 0
-          ? formatLabel(
-              labels.tileOverdueDetail,
-              count(metrics.max_opp_days_overdue)
-            )
-          : "",
-        { isAmber: metrics.overdue_open_opp_count > 0 }
-      ),
-    () =>
-      isNumber(metrics.recently_closed_case_count) &&
-      makeTile(
-        "recently_closed_case_count",
-        labels.tileClosedCases,
-        count(metrics.recently_closed_case_count),
-        ""
-      ),
-    () =>
-      isNumber(metrics.open_dunning_retention_task_count) &&
-      makeTile(
-        "open_dunning_retention_task_count",
-        labels.tileDunning,
-        count(metrics.open_dunning_retention_task_count),
-        "",
-        { isAmber: metrics.open_dunning_retention_task_count > 0 }
-      )
-  ];
-  return candidates.map((candidate) => candidate()).filter(Boolean);
-}
-
-export function buildTiles(keyMetrics, derivedMetrics, labels, locale) {
+export function buildTiles(keyMetrics, labels, locale) {
   const keyToTile = new Map(
     asArray(asObject(keyMetrics).tiles)
       .filter(isObject)
@@ -456,14 +342,6 @@ export function buildTiles(keyMetrics, derivedMetrics, labels, locale) {
     );
   }).filter(Boolean);
 
-  const replacements = replacementTiles(
-    asObject(derivedMetrics),
-    labels,
-    locale
-  );
-  while (tiles.length < TILE_COUNT && replacements.length) {
-    tiles.push(replacements.shift());
-  }
   return tiles;
 }
 
@@ -834,12 +712,7 @@ export function buildAccountViewModel(response, labels, locale) {
       : "",
     header: buildHeader(summary.account_header, labels, locale),
     flag: buildFlag(summary.account_flag, labels, locale),
-    tiles: buildTiles(
-      summary.key_metrics,
-      payload.derived_metrics,
-      labels,
-      locale
-    ),
+    tiles: buildTiles(summary.key_metrics, labels, locale),
     risks: signals.risks,
     growth: signals.growth,
     actions: buildActions(summary.recommended_actions, labels, findingById),

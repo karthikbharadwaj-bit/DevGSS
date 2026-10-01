@@ -44,10 +44,9 @@ describe("Account Summary view model", () => {
     expect(formatDate(null, LOCALE)).toBe("");
   });
 
-  it("keeps the five service tiles in handover order when all have values", () => {
+  it("shows the five account executive tiles in handover order", () => {
     const tiles = buildTiles(
       RESPONSE.account_summary.key_metrics,
-      RESPONSE.derived_metrics,
       labels,
       LOCALE
     );
@@ -59,13 +58,24 @@ describe("Account Summary view model", () => {
       "licenses"
     ]);
     expect(tiles[0].value).toBe("EUR 2,910");
+    expect(tiles[0].detail).toBe("EUR 34,920 annualized");
     expect(tiles[1].value).toBe("-25.2%");
     expect(tiles[1].valueClass).toContain("tile-value_negative");
     expect(tiles[3].tileClass).toBe("tile tile_amber");
+    expect(tiles[3].detail).toBe("Critical · oldest 20 days · not escalated");
     expect(tiles[4].value).toBe("105 / 72");
   });
 
-  it("replaces tiles without a value with computed metrics", () => {
+  it("counts escalated open cases on the open cases tile", () => {
+    const [tile] = buildTiles(
+      { tiles: [{ key: "open_cases", value: 3, escalated_count: 2 }] },
+      labels,
+      LOCALE
+    );
+    expect(tile.detail).toBe("2 escalated");
+  });
+
+  it("hides a tile without a value and never fills the slot", () => {
     const tiles = buildTiles(
       {
         tiles: [
@@ -74,55 +84,15 @@ describe("Account Summary view model", () => {
           { key: "open_cases", value: 0 }
         ]
       },
-      RESPONSE.derived_metrics,
       labels,
       LOCALE
     );
     expect(tiles.map((tile) => tile.key)).toEqual([
       "total_open_pipeline",
-      "open_cases",
-      "days_to_renewal",
-      "days_since_meaningful_activity",
-      "closed_won_total"
+      "open_cases"
     ]);
     expect(tiles[1].value).toBe("0");
-    expect(tiles[4].value).toBe("EUR 42,000");
-    expect(tiles[4].detail).toBe("4 won of the last 15 closed");
     tiles.forEach((tile) => expect(tile.value).not.toBe(labels.notRecorded));
-  });
-
-  it("skips replacement metrics that have no source records", () => {
-    const tiles = buildTiles(
-      { tiles: [] },
-      {
-        days_to_renewal: null,
-        closed_won_total: 0,
-        closed_opportunity_sample_size: 0,
-        next_step_missing_count: 0,
-        open_opp_count: 0,
-        lifetime_escalation_count: 0
-      },
-      labels,
-      LOCALE
-    );
-    expect(tiles.map((tile) => tile.key)).toEqual([
-      "lifetime_escalation_count"
-    ]);
-  });
-
-  it("flags a renewal inside 30 days and a going-cold account", () => {
-    const tiles = buildTiles(
-      { tiles: [] },
-      {
-        days_to_renewal: 12,
-        days_since_meaningful_activity: 95,
-        going_cold: true
-      },
-      labels,
-      LOCALE
-    );
-    expect(tiles[0].tileClass).toBe("tile tile_amber");
-    expect(tiles[1].detail).toBe(labels.tileGoingCold);
   });
 
   it("drops header rows with no recorded value", () => {

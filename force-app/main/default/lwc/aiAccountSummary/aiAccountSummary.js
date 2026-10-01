@@ -22,12 +22,7 @@ const CACHE_USER_KEY_PREFIX = `${CACHE_KEY_PREFIX}:${USER_ID}:`;
 const HIGHLIGHT_DURATION_MS = 1600;
 const EVIDENCE_ID_PATTERN = /^E\d+$/;
 const HIGHLIGHT_CLASS = "is-highlighted";
-const CACHED_KEYS = [
-  "as_of_date",
-  "account_summary",
-  "derived_metrics",
-  "account_enrichment"
-];
+const CACHED_KEYS = ["as_of_date", "account_summary", "account_enrichment"];
 
 function storageEntryBytes(key, value) {
   return (String(key).length + String(value).length) * 2;

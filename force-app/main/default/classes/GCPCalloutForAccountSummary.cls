@@ -49,6 +49,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final Integer ACTIVITY_LIMIT = 5;
   private static final Integer RETENTION_TASK_LIMIT = 5;
   private static final Integer ORDER_LIMIT = 5;
+  private static final Integer CONTRACT_LIMIT = 5;
+  private static final Integer ACCOUNT_HISTORY_LIMIT = 20;
 
   private static final String KEY_USERNAME = 'username';
   private static final String KEY_RECORD_ID = 'recordId';
@@ -70,6 +72,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String LIST_EVENTS = 'events';
   private static final String LIST_RETENTION_TASKS = 'retentionTasks';
   private static final String LIST_ORDERS = 'orders';
+  private static final String LIST_CONTRACTS = 'contracts';
+  private static final String LIST_ACCOUNT_HISTORY = 'accountHistory';
 
   private static final String RESPONSE_STATUS_CODE = 'statusCode';
   private static final String RESPONSE_BODY = 'body';
@@ -92,6 +96,11 @@ public with sharing class GCPCalloutForAccountSummary {
   /* A future ActivityDate is a due date, not activity, and would push real activity out of the cap. */
   private static final String CONDITION_TASKS = 'WhatId = :bind0 AND TaskSubtype != \'ListEmail\' AND ActivityDate <= TODAY';
   private static final String CONDITION_EVENTS = 'WhatId = :bind0 AND ActivityDate <= TODAY';
+  /*
+   * Status and Owner are the only tracked Account fields that change in production. An Owner
+   * change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
+   */
+  private static final String CONDITION_ACCOUNT_HISTORY = 'AccountId = :bind0 AND Field IN (\'RC_Account_Status__c\', \'Owner\') AND DataType = \'Text\' AND CreatedDate = LAST_N_DAYS:90';
 
   /* Keys the service reads as dates even though the org stores a datetime. */
   private static final Set<String> DATE_ONLY_KEYS = new Set<String>{
@@ -260,6 +269,18 @@ public with sharing class GCPCalloutForAccountSummary {
     Order.EffectiveDate => 'effectiveDate'
   };
 
+  private static final Map<Schema.SObjectField, String> CONTRACT_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
+    Contract.Status => 'status',
+    Contract.EndDate => 'endDate'
+  };
+
+  private static final Map<Schema.SObjectField, String> ACCOUNT_HISTORY_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
+    AccountHistory.Field => 'field',
+    AccountHistory.OldValue => 'oldValue',
+    AccountHistory.NewValue => 'newValue',
+    AccountHistory.CreatedDate => 'createdDate'
+  };
+
   @TestVisible
   private static Map<String, String> labelSuffixToValue = new Map<String, String>();
 
@@ -392,6 +413,7 @@ public with sharing class GCPCalloutForAccountSummary {
     return payload;
   }
 
+  @TestVisible
   private static List<ListSpec> listSpecs() {
     return new List<ListSpec>{
       new ListSpec(
@@ -517,7 +539,27 @@ public with sharing class GCPCalloutForAccountSummary {
           ORDER_LIMIT
         )
         .withFields(ORDER_FIELD_TO_KEY, null)
-        .orderBy(Order.EffectiveDate, QueryFactory.SortOrder.DESCENDING, true)
+        .orderBy(Order.EffectiveDate, QueryFactory.SortOrder.DESCENDING, true),
+      new ListSpec(
+          LIST_CONTRACTS,
+          new ContractSelector(),
+          CONDITION_ACCOUNT_CHILD,
+          CONTRACT_LIMIT
+        )
+        .withFields(CONTRACT_FIELD_TO_KEY, null)
+        .orderBy(Contract.EndDate, QueryFactory.SortOrder.DESCENDING, true),
+      new ListSpec(
+          LIST_ACCOUNT_HISTORY,
+          new AccountHistorySelector(),
+          CONDITION_ACCOUNT_HISTORY,
+          ACCOUNT_HISTORY_LIMIT
+        )
+        .withFields(ACCOUNT_HISTORY_FIELD_TO_KEY, null)
+        .orderBy(
+          AccountHistory.CreatedDate,
+          QueryFactory.SortOrder.DESCENDING,
+          true
+        )
     };
   }
 

@@ -148,7 +148,9 @@ private class Test_GCPCalloutForAccountSummary {
         'tasks',
         'events',
         'retentionTasks',
-        'orders'
+        'orders',
+        'contracts',
+        'accountHistory'
       }
     ) {
       String listMessage = emptyListMessage + ' ' + listKey;
@@ -156,6 +158,37 @@ private class Test_GCPCalloutForAccountSummary {
       Assert.isTrue(payload.get(listKey) instanceof List<Object>, listMessage);
       Assert.isNotNull(coverageFor(payload, listKey), coverageMessage);
     }
+  }
+
+  @IsTest
+  static void shouldKeepOnlyNamedStatusAndOwnerChangesWhenQueryingAccountHistory() {
+    Account summaryAccount = testAccount();
+    GCPCalloutForAccountSummary.ListSpec historySpec;
+    for (
+      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs()
+    ) {
+      if (spec.key == 'accountHistory') {
+        historySpec = spec;
+      }
+    }
+
+    Test.startTest();
+    String condition = GCPCalloutForAccountSummary.buildListQuery(
+        historySpec,
+        summaryAccount.Id
+      )
+      .getCondition();
+    Test.stopTest();
+
+    String fieldMessage = 'History must be limited to Account Status and Owner.';
+    String dataTypeMessage = 'Owner rows holding user Ids must be left out.';
+    String windowMessage = 'History must cover the last 90 days.';
+    Assert.isTrue(
+      condition.contains('Field IN (\'RC_Account_Status__c\', \'Owner\')'),
+      fieldMessage
+    );
+    Assert.isTrue(condition.contains('DataType = \'Text\''), dataTypeMessage);
+    Assert.isTrue(condition.contains('LAST_N_DAYS:90'), windowMessage);
   }
 
   @IsTest

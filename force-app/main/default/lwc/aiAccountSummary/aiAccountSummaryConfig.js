@@ -68,6 +68,7 @@ import tilePipelineMixed from "@salesforce/label/c.AccountSummaryTilePipelineMix
 import tileCases from "@salesforce/label/c.AccountSummaryTileCases";
 import tileCasesEscalated from "@salesforce/label/c.AccountSummaryTileCasesEscalated";
 import tileCasesOldest from "@salesforce/label/c.AccountSummaryTileCasesOldest";
+import tileCasesNotEscalated from "@salesforce/label/c.AccountSummaryTileCasesNotEscalated";
 import tileLicenses from "@salesforce/label/c.AccountSummaryTileLicenses";
 import tileLicensesDetail from "@salesforce/label/c.AccountSummaryTileLicensesDetail";
 import tileLicensesUnassigned from "@salesforce/label/c.AccountSummaryTileLicensesUnassigned";
@@ -112,21 +113,6 @@ import openNow from "@salesforce/label/c.AccountSummaryOpenNow";
 import noHistory from "@salesforce/label/c.AccountSummaryNoHistory";
 import researchDisclaimer from "@salesforce/label/c.AccountSummaryResearchDisclaimer";
 import researchSources from "@salesforce/label/c.AccountSummaryResearchSources";
-import tileRenewal from "@salesforce/label/c.AccountSummaryTileRenewal";
-import tileRenewalPast from "@salesforce/label/c.AccountSummaryTileRenewalPast";
-import tileActivity from "@salesforce/label/c.AccountSummaryTileActivity";
-import tileGoingCold from "@salesforce/label/c.AccountSummaryTileGoingCold";
-import tileClosedWon from "@salesforce/label/c.AccountSummaryTileClosedWon";
-import tileClosedWonDetail from "@salesforce/label/c.AccountSummaryTileClosedWonDetail";
-import tileRevenueAtRisk from "@salesforce/label/c.AccountSummaryTileRevenueAtRisk";
-import tileOpenEscalations from "@salesforce/label/c.AccountSummaryTileOpenEscalations";
-import tileEscalations from "@salesforce/label/c.AccountSummaryTileEscalations";
-import tileRedDays from "@salesforce/label/c.AccountSummaryTileRedDays";
-import tileNextStep from "@salesforce/label/c.AccountSummaryTileNextStep";
-import tileOverdue from "@salesforce/label/c.AccountSummaryTileOverdue";
-import tileOverdueDetail from "@salesforce/label/c.AccountSummaryTileOverdueDetail";
-import tileClosedCases from "@salesforce/label/c.AccountSummaryTileClosedCases";
-import tileDunning from "@salesforce/label/c.AccountSummaryTileDunning";
 import researchSummary from "@salesforce/label/c.AccountSummaryResearchSummary";
 import researchKindBusinessEvent from "@salesforce/label/c.AccountSummaryResearchKindBusinessEvent";
 import researchKindFinancialSignal from "@salesforce/label/c.AccountSummaryResearchKindFinancialSignal";
@@ -241,6 +227,7 @@ export function getUiLabels() {
     tileCases,
     tileCasesEscalated,
     tileCasesOldest,
+    tileCasesNotEscalated,
     tileLicenses,
     tileLicensesDetail,
     tileLicensesUnassigned,
@@ -285,21 +272,6 @@ export function getUiLabels() {
     noHistory,
     researchDisclaimer,
     researchSources,
-    tileRenewal,
-    tileRenewalPast,
-    tileActivity,
-    tileGoingCold,
-    tileClosedWon,
-    tileClosedWonDetail,
-    tileRevenueAtRisk,
-    tileOpenEscalations,
-    tileEscalations,
-    tileRedDays,
-    tileNextStep,
-    tileOverdue,
-    tileOverdueDetail,
-    tileClosedCases,
-    tileDunning,
     researchSummary,
     researchKindBusinessEvent,
     researchKindFinancialSignal,

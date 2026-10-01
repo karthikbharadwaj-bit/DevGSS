@@ -167,7 +167,7 @@ describe("c-ai-account-summary", () => {
     expect(makeGCPCallout).not.toHaveBeenCalled();
   });
 
-  it("keeps derived metrics and research in the cached entry", async () => {
+  it("keeps the summary and research in the cached entry", async () => {
     const element = await mount();
     await generate(element);
 
@@ -175,8 +175,7 @@ describe("c-ai-account-summary", () => {
     expect(Object.keys(cached.summary).sort()).toEqual([
       "account_enrichment",
       "account_summary",
-      "as_of_date",
-      "derived_metrics"
+      "as_of_date"
     ]);
     expect(cached.summary.success).toBeUndefined();
   });
