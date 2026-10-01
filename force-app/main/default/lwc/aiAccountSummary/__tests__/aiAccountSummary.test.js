@@ -145,6 +145,34 @@ describe("c-ai-account-summary", () => {
     expect(header.querySelectorAll("[data-summary-tile]")).toHaveLength(5);
   });
 
+  it("lists five opportunities and counts all of them in the heading", async () => {
+    const rows = Array.from({ length: 8 }, (unused, index) => ({
+      id: `006TH00000000${index}AAA`,
+      name: `Deal ${index}`,
+      close_date: `2026-1${index % 3}-0${index + 1}`
+    }));
+    makeGCPCallout.mockResolvedValue(
+      JSON.stringify({
+        ...RESPONSE,
+        account_summary: {
+          ...RESPONSE.account_summary,
+          open_opportunities: { rows }
+        }
+      })
+    );
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+
+    const section = query(element, '[data-summary-section="opportunities"]');
+    expect(section.querySelectorAll("tbody tr")).toHaveLength(5);
+    expect(section.querySelector(".count").textContent).toBe("8");
+    expect(
+      query(element, '[data-shown-note="opportunities"]').textContent.trim()
+    ).toBe("Showing 5 of 8");
+  });
+
   it("shows the Apex message when generation fails", async () => {
     makeGCPCallout.mockResolvedValue(
       JSON.stringify({ success: false, message: "Service is busy." })

@@ -48,4 +48,22 @@ describe("Account Summary cache configuration", () => {
     expect(positiveNumber("12.5", 512, 1, 512, true)).toBe(512);
     expect(positiveNumber(" 0.5 ", 1, 1 / 60, 24)).toBe(0.5);
   });
+
+  it("shows five list rows by default", () => {
+    expect(configuredModule().getListRowLimit()).toBe(5);
+  });
+
+  it("uses the configured list row count up to the hard cap of ten", () => {
+    setLabel("ListRowLimit", " 8 ");
+    expect(configuredModule().getListRowLimit()).toBe(8);
+    setLabel("ListRowLimit", "25");
+    expect(configuredModule().getListRowLimit()).toBe(10);
+  });
+
+  it("falls back to five list rows for a zero, fraction or non-number", () => {
+    ["0", "2.5", "five", ""].forEach((value) => {
+      setLabel("ListRowLimit", value);
+      expect(configuredModule().getListRowLimit()).toBe(5);
+    });
+  });
 });

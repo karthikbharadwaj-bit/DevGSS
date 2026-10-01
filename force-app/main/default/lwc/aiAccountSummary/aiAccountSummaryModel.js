@@ -1,4 +1,4 @@
-import { formatLabel } from "./aiAccountSummaryConfig";
+import { formatLabel, getListRowLimit } from "./aiAccountSummaryConfig";
 
 const DIAL_RADIUS = 35;
 const DIAL_CIRCUMFERENCE = 2 * Math.PI * DIAL_RADIUS;
@@ -116,6 +116,35 @@ export function formatDate(value, locale) {
 
 function recordUrl(id) {
   return hasValue(id) ? `/${encodeURIComponent(String(id))}` : null;
+}
+
+function timeOf(value) {
+  const time = hasValue(value) ? Date.parse(value) : NaN;
+  return Number.isNaN(time) ? null : time;
+}
+
+/* Sorts on a date field; rows without a usable date go last whatever the direction. */
+function byDate(field, isNewestFirst) {
+  return (left, right) => {
+    const leftTime = timeOf(left[field]);
+    const rightTime = timeOf(right[field]);
+    if (leftTime === rightTime) {
+      return 0;
+    }
+    if (leftTime === null) {
+      return 1;
+    }
+    if (rightTime === null) {
+      return -1;
+    }
+    return isNewestFirst ? rightTime - leftTime : leftTime - rightTime;
+  };
+}
+
+function shownNote(shownCount, totalCount, labels) {
+  return totalCount > shownCount
+    ? formatLabel(labels.showingCount, shownCount, totalCount)
+    : "";
 }
 
 function joinPresent(parts, separator = " · ") {
@@ -421,10 +450,18 @@ export function buildActions(actions, labels, findingById = new Map()) {
     });
 }
 
-export function buildOpportunities(section, labels, locale) {
+/* Soonest close date first, so overdue deals lead and far-off ones drop out of view. */
+export function buildOpportunities(
+  section,
+  labels,
+  locale,
+  rowLimit = getListRowLimit()
+) {
   const source = asObject(section);
-  const rows = asArray(source.rows)
-    .filter(isObject)
+  const allRows = asArray(source.rows).filter(isObject);
+  const rows = [...allRows]
+    .sort(byDate("close_date", false))
+    .slice(0, rowLimit)
     .map((row, index) => ({
       key: row.id || `opportunity-${index}`,
       url: recordUrl(row.id),
@@ -445,13 +482,27 @@ export function buildOpportunities(section, labels, locale) {
         ? `${labels.nextStep}: ${row.next_step}`
         : ""
     }));
-  return { rows, agreementText: text(source.agreement_status_text) };
+  return {
+    rows,
+    totalCount: allRows.length,
+    shownNote: shownNote(rows.length, allRows.length, labels),
+    agreementText: text(source.agreement_status_text)
+  };
 }
 
-export function buildCases(section, labels, locale) {
+/* Newest first: most recently opened open cases and most recently closed ones. */
+export function buildCases(
+  section,
+  labels,
+  locale,
+  rowLimit = getListRowLimit()
+) {
   const source = asObject(section);
-  const open = asArray(source.open)
-    .filter(isObject)
+  const allOpen = asArray(source.open).filter(isObject);
+  const allClosed = asArray(source.recently_closed).filter(isObject);
+  const open = [...allOpen]
+    .sort(byDate("created_date", true))
+    .slice(0, rowLimit)
     .map((row, index) => ({
       key: row.id || `open-case-${index}`,
       url: recordUrl(row.id),
@@ -471,8 +522,9 @@ export function buildCases(section, labels, locale) {
         : "",
       isEscalated: row.is_escalated === true
     }));
-  const closed = asArray(source.recently_closed)
-    .filter(isObject)
+  const closed = [...allClosed]
+    .sort(byDate("closed_date", true))
+    .slice(0, rowLimit)
     .map((row, index) => ({
       key: row.id || `closed-case-${index}`,
       url: recordUrl(row.id),
@@ -481,12 +533,14 @@ export function buildCases(section, labels, locale) {
       closedMonth: formatDate(row.closed_month || row.closed_date, locale)
     }));
   const closedCount = isNumber(source.recently_closed_count)
-    ? source.recently_closed_count
-    : closed.length;
+    ? Math.max(source.recently_closed_count, allClosed.length)
+    : allClosed.length;
   return {
     open,
     closed,
-    openHeading: formatLabel(labels.openCasesHeading, open.length),
+    openShownNote: shownNote(open.length, allOpen.length, labels),
+    closedShownNote: shownNote(closed.length, closedCount, labels),
+    openHeading: formatLabel(labels.openCasesHeading, allOpen.length),
     closedHeading: formatLabel(labels.closedCasesHeading, closedCount)
   };
 }
@@ -719,7 +773,12 @@ export function buildResearch(enrichment, labels, locale) {
   };
 }
 
-export function buildAccountViewModel(response, labels, locale) {
+export function buildAccountViewModel(
+  response,
+  labels,
+  locale,
+  rowLimit = getListRowLimit()
+) {
   const payload = asObject(response);
   const summary = asObject(payload.account_summary);
   const research = buildResearch(payload.account_enrichment, labels, locale);
@@ -747,9 +806,10 @@ export function buildAccountViewModel(response, labels, locale) {
     opportunities: buildOpportunities(
       summary.open_opportunities,
       labels,
-      locale
+      locale,
+      rowLimit
     ),
-    cases: buildCases(summary.cases, labels, locale),
+    cases: buildCases(summary.cases, labels, locale, rowLimit),
     contacts: buildContacts(summary.key_contacts, labels),
     history: buildHistory(summary.account_history, labels, locale),
     research

@@ -70,6 +70,7 @@ import tileCasesEscalated from "@salesforce/label/c.AccountSummaryTileCasesEscal
 import tileCasesOldest from "@salesforce/label/c.AccountSummaryTileCasesOldest";
 import tileCasesNotEscalated from "@salesforce/label/c.AccountSummaryTileCasesNotEscalated";
 import tileNoValue from "@salesforce/label/c.AccountSummaryTileNoValue";
+import showingCount from "@salesforce/label/c.AccountSummaryShowingCount";
 import tileLicenses from "@salesforce/label/c.AccountSummaryTileLicenses";
 import tileLicensesDetail from "@salesforce/label/c.AccountSummaryTileLicensesDetail";
 import tileLicensesUnassigned from "@salesforce/label/c.AccountSummaryTileLicensesUnassigned";
@@ -123,6 +124,7 @@ import researchCitedHeading from "@salesforce/label/c.AccountSummaryResearchCite
 import researchAdditionalHeading from "@salesforce/label/c.AccountSummaryResearchAdditionalHeading";
 import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
+import listRowLimit from "@salesforce/label/c.AccountSummaryListRowLimit";
 
 // Labels are text. Reject units, locale separators, booleans and non-finite numbers.
 export function positiveNumber(
@@ -152,6 +154,23 @@ export function getCachePolicy() {
     ttlMs: positiveNumber(cacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
     maxBytes: positiveNumber(cacheMaxKB, 512, 1, 512, true) * 1024
   };
+}
+
+/* An admin can lower or raise the label, but never past this many rows per list. */
+const MAX_LIST_ROWS = 10;
+const DEFAULT_LIST_ROWS = 5;
+
+export function getListRowLimit() {
+  return Math.min(
+    positiveNumber(
+      listRowLimit,
+      DEFAULT_LIST_ROWS,
+      1,
+      Number.MAX_SAFE_INTEGER,
+      true
+    ),
+    MAX_LIST_ROWS
+  );
 }
 
 export function getUiLabels() {
@@ -230,6 +249,7 @@ export function getUiLabels() {
     tileCasesOldest,
     tileCasesNotEscalated,
     tileNoValue,
+    showingCount,
     tileLicenses,
     tileLicensesDetail,
     tileLicensesUnassigned,

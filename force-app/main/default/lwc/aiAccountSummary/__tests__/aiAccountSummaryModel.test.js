@@ -7,6 +7,7 @@ import {
   buildContacts,
   buildFlag,
   buildHeader,
+  buildOpportunities,
   buildTiles,
   extractEvidence,
   formatDate,
@@ -291,5 +292,68 @@ describe("Account Summary view model", () => {
     expect(view.header.rows).toEqual([]);
     expect(view.flag.hasScore).toBe(false);
     expect(view.research.hasResearch).toBe(false);
+  });
+
+  it("shows the opportunities closing soonest, up to the row limit", () => {
+    const rows = [
+      "2026-12-01",
+      "2026-03-01",
+      null,
+      "2026-11-01",
+      "2026-01-15",
+      "2027-02-01",
+      "2026-06-30"
+    ].map((closeDate, index) => ({
+      id: `006-${index}`,
+      name: `Deal ${index}`,
+      close_date: closeDate
+    }));
+    const opportunities = buildOpportunities({ rows }, labels, LOCALE, 5);
+    expect(opportunities.rows.map((row) => row.name)).toEqual([
+      "Deal 4",
+      "Deal 1",
+      "Deal 6",
+      "Deal 3",
+      "Deal 0"
+    ]);
+    expect(opportunities.totalCount).toBe(7);
+    expect(opportunities.shownNote).toBe("Showing 5 of 7");
+  });
+
+  it("adds no note when every opportunity fits", () => {
+    const opportunities = buildOpportunities(
+      { rows: [{ id: "006", name: "Only deal" }] },
+      labels,
+      LOCALE,
+      5
+    );
+    expect(opportunities.shownNote).toBe("");
+  });
+
+  it("shows the newest open and closed cases, up to the row limit", () => {
+    const open = [1, 2, 3, 4].map((day) => ({
+      id: `500-open-${day}`,
+      subject: `Open ${day}`,
+      created_date: `2026-09-0${day}T09:00:00.000Z`
+    }));
+    const recentlyClosed = [5, 9, 7].map((day) => ({
+      id: `500-closed-${day}`,
+      subject: `Closed ${day}`,
+      closed_date: `2026-08-0${day}T09:00:00.000Z`
+    }));
+    const cases = buildCases(
+      { open, recently_closed: recentlyClosed, recently_closed_count: 12 },
+      labels,
+      LOCALE,
+      2
+    );
+    expect(cases.open.map((row) => row.subject)).toEqual(["Open 4", "Open 3"]);
+    expect(cases.closed.map((row) => row.subject)).toEqual([
+      "Closed 9",
+      "Closed 7"
+    ]);
+    expect(cases.openHeading).toBe(formatLabel(labels.openCasesHeading, 4));
+    expect(cases.openShownNote).toBe("Showing 2 of 4");
+    expect(cases.closedShownNote).toBe("Showing 2 of 12");
   });
 });

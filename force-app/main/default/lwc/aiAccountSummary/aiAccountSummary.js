@@ -190,7 +190,7 @@ export default class AiAccountSummary extends LightningElement {
   }
 
   get opportunityCount() {
-    return this.view ? this.view.opportunities.rows.length : 0;
+    return this.view ? this.view.opportunities.totalCount : 0;
   }
 
   get contactCount() {
