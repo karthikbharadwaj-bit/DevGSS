@@ -108,16 +108,30 @@ describe("Account Summary view model", () => {
     tiles.forEach((tile) => expect(tile.value).toBe("—"));
   });
 
-  it("drops header rows with no recorded value", () => {
+  it("shows every header row and marks the empty ones", () => {
     const header = buildHeader(
       RESPONSE.account_summary.account_header,
       labels,
       LOCALE
     );
-    const keys = header.rows.map((row) => row.key);
-    expect(keys).toContain("account");
-    expect(keys).not.toContain("rating");
-    expect(keys).not.toContain("source");
+    expect(header.rows.map((row) => row.key)).toEqual([
+      "account",
+      "industry",
+      "location",
+      "type",
+      "tier",
+      "owner",
+      "csm",
+      "since",
+      "rating",
+      "source"
+    ]);
+    const keyToRow = new Map(header.rows.map((row) => [row.key, row]));
+    ["rating", "source"].forEach((key) => {
+      expect(keyToRow.get(key).value).toBe("—");
+      expect(keyToRow.get(key).valueClass).toBe("value_empty");
+    });
+    expect(keyToRow.get("account").valueClass).toBe("");
   });
 
   it("drops empty contact titles, roles and activity", () => {

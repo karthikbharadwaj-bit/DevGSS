@@ -12,8 +12,8 @@ const EVIDENCE_REFERENCE_PATTERN = /\s*\[(E\d+)\]/g;
 const NOT_RECORDED_PATTERN = /not recorded in salesforce/i;
 /* The org mixes Critical/High, P0-P4 and "1 – Critical" schemes; all of these are top tier. */
 const TOP_PRIORITY_PATTERN = /^(critical|p0|p1|1\s*[–-])/i;
-/* Shown in a tile whose Salesforce source is empty, so the five tiles always line up. */
-const EMPTY_TILE_VALUE = "—";
+/* Shown wherever a Salesforce source is empty, so header rows and tiles keep their places. */
+const EMPTY_VALUE = "—";
 const PRIMARY_TILE_ORDER = [
   "mrr",
   "mrr_trajectory",
@@ -183,6 +183,13 @@ function withEvidence(item, findingById, keyPrefix, labels) {
 // ---------------- Section builders ----------------
 
 /* Rows without a recorded value are left out rather than shown as placeholders. */
+function headerValueClass(isMono, isEmpty) {
+  if (isEmpty) {
+    return "value_empty";
+  }
+  return isMono ? "mono" : "";
+}
+
 export function buildHeader(header, labels, locale) {
   const fields = asObject(asObject(header).fields);
   const since = joinPresent([
@@ -207,16 +214,18 @@ export function buildHeader(header, labels, locale) {
     ["since", labels.fieldCustomerSince, since],
     ["rating", labels.fieldRating, fields.rating],
     ["source", labels.fieldSource, fields.account_source]
-  ]
-    .filter(([, , value]) => hasValue(value) && !isNotRecorded(value))
-    .map(([key, label, value, isMono]) => ({
+  ].map(([key, label, value, isMono]) => {
+    const isEmpty = !hasValue(value) || isNotRecorded(value);
+    return {
       key,
       label,
-      value: String(value),
-      valueClass: isMono ? "mono" : ""
-    }));
+      value: isEmpty ? EMPTY_VALUE : String(value),
+      valueClass: headerValueClass(isMono, isEmpty)
+    };
+  });
   return {
-    rows,
+    /* With no header at all there is nothing to line up, so no rows are shown. */
+    rows: Object.keys(fields).length ? rows : [],
     narrative: toHtmlLines(asObject(header).narrative, "narrative")
   };
 }
@@ -340,7 +349,7 @@ export function buildTiles(keyMetrics, labels, locale) {
       return makeTile(
         key,
         labels[PRIMARY_TILE_LABEL_KEYS[key]],
-        EMPTY_TILE_VALUE,
+        EMPTY_VALUE,
         labels.tileNoValue,
         { isEmpty: true }
       );

@@ -427,9 +427,7 @@
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .ai-modal__tools {
@@ -654,6 +652,10 @@
 .kv-row dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.value_empty {
+  color: #b0b0b0;
 }
 
 .narrative {
@@ -919,7 +921,10 @@
   gap: 0.55rem;
 }
 
+/* Fixed rows keep label, value and detail at the same height in every tile. */
 .tile {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--as-line);
   border-radius: 0.25rem;
@@ -931,9 +936,10 @@
   background: var(--as-amber-fill);
 }
 
+/* Two lines are reserved so one-line labels keep their values level with two-line ones. */
 .tile-label {
   display: block;
-  min-height: 1.75rem;
+  min-height: calc(2 * 1.35em);
   color: #8c8c8c;
   font-size: 0.66rem;
   line-height: 1.35;
@@ -949,6 +955,7 @@
   margin: 0.2rem 0 0.1rem;
   font-size: 1.15rem;
   font-weight: 600;
+  line-height: 1.6rem;
   letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
@@ -964,6 +971,7 @@
 
 .tile-detail {
   display: block;
+  align-self: start;
   color: var(--ai-muted);
   font-size: 0.68rem;
 }
