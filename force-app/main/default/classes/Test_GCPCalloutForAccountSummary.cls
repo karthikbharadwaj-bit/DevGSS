@@ -43,9 +43,9 @@ private class Test_GCPCalloutForAccountSummary {
         GCP_Feature_Toggle__c.SetupOwnerId,
         UserInfo.getOrganizationId()
       )
-      .setField(GCP_Feature_Toggle__c.IsAccountSummaryEnabled__c, true)
+      .setField(GCP_Feature_Toggle__c.Enable_Account_Summary__c, true)
       .setField(
-        GCP_Feature_Toggle__c.IsAccountSummaryEnrichmentEnabled__c,
+        GCP_Feature_Toggle__c.Enable_Account_Summary_Enrichment__c,
         true
       )
       .create();

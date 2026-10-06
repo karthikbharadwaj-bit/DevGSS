@@ -313,14 +313,14 @@ public with sharing class GCPCalloutForAccountSummary {
   @AuraEnabled(cacheable=true)
   public static Boolean isAccountSummaryEnabled() {
     GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
-    return setting != null && setting.IsAccountSummaryEnabled__c == true;
+    return setting != null && setting.Enable_Account_Summary__c == true;
   }
 
   @TestVisible
   private static Boolean isAccountSummaryEnrichmentEnabled() {
     GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
     return setting != null &&
-      setting.IsAccountSummaryEnrichmentEnabled__c == true;
+      setting.Enable_Account_Summary_Enrichment__c == true;
   }
 
   @TestVisible
