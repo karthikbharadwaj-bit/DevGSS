@@ -524,4 +524,106 @@ private class Test_GCPCalloutForAccountSummary {
       return response;
     }
   }
+
+  // ---------------- Call transcripts switch ----------------
+
+  private static void setCallTranscriptsSetting(Boolean settingValue) {
+    GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getOrgDefaults();
+    setting.Account_Summary_Call_Transcripts__c = settingValue;
+    upsert setting;
+  }
+
+  private static Map<String, Object> serializedPayload() {
+    Account summaryAccount = testAccount();
+
+    Test.startTest();
+    Map<String, Object> payload = GCPCalloutForAccountSummary.buildPayload(
+      TEST_USERNAME,
+      summaryAccount.Id,
+      true
+    );
+    Test.stopTest();
+    return (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(payload)
+    );
+  }
+
+  @IsTest
+  static void shouldSendCallTranscriptsTrueAsJsonBooleanWhenSettingOn() {
+    setCallTranscriptsSetting(true);
+
+    Map<String, Object> payload = serializedPayload();
+
+    String messageText = 'The switch must serialize as a JSON boolean that matches the setting.';
+    Assert.isTrue(
+      payload.get('enableAccountSummaryCallTranscripts') instanceof Boolean,
+      messageText
+    );
+    Assert.areEqual(
+      true,
+      payload.get('enableAccountSummaryCallTranscripts'),
+      messageText
+    );
+  }
+
+  @IsTest
+  static void shouldSendCallTranscriptsFalseAsJsonBooleanWhenSettingOff() {
+    setCallTranscriptsSetting(false);
+
+    Map<String, Object> payload = serializedPayload();
+
+    String messageText = 'The switch must serialize as a JSON boolean that matches the setting.';
+    Assert.isTrue(
+      payload.get('enableAccountSummaryCallTranscripts') instanceof Boolean,
+      messageText
+    );
+    Assert.areEqual(
+      false,
+      payload.get('enableAccountSummaryCallTranscripts'),
+      messageText
+    );
+  }
+
+  @IsTest
+  static void shouldSendCallTranscriptsFalseWhenNoSettingRecordExists() {
+    delete [SELECT Id FROM GCP_Feature_Toggle__c];
+
+    Map<String, Object> payload = serializedPayload();
+
+    String messageText = 'With no setting record the field must still be sent, as false.';
+    Assert.isTrue(
+      payload.containsKey('enableAccountSummaryCallTranscripts'),
+      messageText
+    );
+    Assert.areEqual(
+      false,
+      payload.get('enableAccountSummaryCallTranscripts'),
+      messageText
+    );
+  }
+
+  @IsTest
+  static void shouldRenderTheSameWhenResponseHasCallTranscriptsBlock() {
+    String summary = '"account_summary":{"headline":"CRM summary"}';
+    String withoutBlock = '{"statusCode":200,"body":{' + summary + '}}';
+    String withBlock =
+      '{"statusCode":200,"body":{' +
+      summary +
+      ',"call_transcripts":{"status":"no_calls",' +
+      '"counts":{"calls":0,"ace":0,"salesforce":0,"none":0},"calls":[]}}}';
+
+    String resultWithout = GCPCalloutForAccountSummary.buildResult(
+      withoutBlock
+    );
+    String resultWith = GCPCalloutForAccountSummary.buildResult(withBlock);
+
+    String messageText = 'The optional call_transcripts block must not change what the UI receives.';
+    Assert.areEqual(
+      true,
+      ((Map<String, Object>) JSON.deserializeUntyped(resultWith))
+        .get('success'),
+      messageText
+    );
+    Assert.areEqual(resultWithout, resultWith, messageText);
+  }
 }

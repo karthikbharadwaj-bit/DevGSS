@@ -55,6 +55,7 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String KEY_USERNAME = 'username';
   private static final String KEY_RECORD_ID = 'recordId';
   private static final String KEY_ENRICHMENT = 'enableAccountSummaryEnrichment';
+  private static final String KEY_CALL_TRANSCRIPTS = 'enableAccountSummaryCallTranscripts';
   private static final String KEY_ACCOUNT = 'account';
   private static final String KEY_DATA_COVERAGE = 'dataCoverage';
   private static final String KEY_RETURNED_COUNT = 'returnedCount';
@@ -324,6 +325,13 @@ public with sharing class GCPCalloutForAccountSummary {
   }
 
   @TestVisible
+  private static Boolean isAccountSummaryCallTranscriptsEnabled() {
+    GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
+    return setting != null &&
+      setting.Account_Summary_Call_Transcripts__c == true;
+  }
+
+  @TestVisible
   private static Id toAccountId(String recordId) {
     Id accountId = String.isBlank(recordId)
       ? null
@@ -384,6 +392,8 @@ public with sharing class GCPCalloutForAccountSummary {
       KEY_USERNAME => username,
       KEY_RECORD_ID => String.valueOf(summaryAccount.Id),
       KEY_ENRICHMENT => isEnrichmentEnabled == true,
+      // Always a JSON boolean, never null: GCP treats any non-boolean as OFF.
+      KEY_CALL_TRANSCRIPTS => isAccountSummaryCallTranscriptsEnabled(),
       KEY_ACCOUNT => mapRow(
         summaryAccount,
         ACCOUNT_FIELD_TO_KEY,

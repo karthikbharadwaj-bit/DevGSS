@@ -2311,4 +2311,142 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   private class OptionalSourceException extends Exception {
   }
+
+  // ---------------- Call transcripts switch ----------------
+
+  private static Map<String, Object> serializedPayloadWithTranscriptSetting(
+    Boolean settingValue
+  ) {
+    new SObjectBuilder(ByPassTrigger__c.SObjectType)
+      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
+      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
+      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
+      .create();
+    if (settingValue != null) {
+      new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
+        .setField(
+          GCP_Feature_Toggle__c.SetupOwnerId,
+          UserInfo.getOrganizationId()
+        )
+        .setField(
+          GCP_Feature_Toggle__c.Opportunity_Summary_Call_Transcripts__c,
+          settingValue
+        )
+        .create();
+    }
+    Account account = (Account) new SObjectBuilder(Account.SObjectType)
+      .setField(
+        Account.Name,
+        ValueProviderBuilder.provideUniqueString('Transcript company')
+      )
+      .create()
+      .getRecord();
+    Opportunity opportunity = (Opportunity) new SObjectBuilder(
+        Opportunity.SObjectType
+      )
+      .setField(Opportunity.AccountId, account.Id)
+      .setField(Opportunity.CloseDate, Date.today().addDays(30))
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    Map<String, Object> payload = GCPCalloutForOpportunitySummary.buildPayload(
+      'summary-test@example.com',
+      opportunity.Id
+    );
+    Test.stopTest();
+    return (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(payload)
+    );
+  }
+
+  @IsTest
+  static void sendsCallTranscriptsTrueAsJsonBooleanWhenSettingOn() {
+    Map<String, Object> payload = serializedPayloadWithTranscriptSetting(true);
+
+    System.assert(
+      payload.get('enableOpportunitySummaryCallTranscripts') instanceof Boolean,
+      'The switch must serialize as a JSON boolean, not a string.'
+    );
+    System.assertEquals(
+      true,
+      payload.get('enableOpportunitySummaryCallTranscripts')
+    );
+  }
+
+  @IsTest
+  static void sendsCallTranscriptsFalseAsJsonBooleanWhenSettingOff() {
+    Map<String, Object> payload = serializedPayloadWithTranscriptSetting(false);
+
+    System.assert(
+      payload.get('enableOpportunitySummaryCallTranscripts') instanceof Boolean,
+      'The switch must serialize as a JSON boolean, not a string.'
+    );
+    System.assertEquals(
+      false,
+      payload.get('enableOpportunitySummaryCallTranscripts')
+    );
+  }
+
+  @IsTest
+  static void sendsCallTranscriptsFalseWhenNoSettingRecordExists() {
+    System.assertEquals(0, [SELECT COUNT() FROM GCP_Feature_Toggle__c]);
+
+    Map<String, Object> payload = serializedPayloadWithTranscriptSetting(null);
+
+    System.assertEquals(
+      true,
+      payload.containsKey('enableOpportunitySummaryCallTranscripts'),
+      'The field is always sent, never omitted.'
+    );
+    System.assertEquals(
+      false,
+      payload.get('enableOpportunitySummaryCallTranscripts')
+    );
+  }
+
+  @IsTest
+  static void requestControlIsNeverNull() {
+    Map<String, Object> payload = new Map<String, Object>();
+
+    GCPCalloutForOpportunitySummary.addCallTranscriptsRequestControl(
+      payload,
+      null
+    );
+
+    System.assertEquals(
+      false,
+      payload.get('enableOpportunitySummaryCallTranscripts')
+    );
+  }
+
+  @IsTest
+  static void responseWithAndWithoutCallTranscriptsBlockRendersTheSame() {
+    String summary = '"opportunity_summary":{"Executive Summary":["CRM summary"]}';
+    Object withoutBlock = JSON.deserializeUntyped(
+      '{"statusCode":200,"body":{' + summary + '}}'
+    );
+    Object withBlock = JSON.deserializeUntyped(
+      '{"statusCode":200,"body":{' +
+        summary +
+        ',"call_transcripts":{"status":"ok",' +
+        '"counts":{"calls":1,"ace":1,"salesforce":0,"none":0},' +
+        '"calls":[{"task_id":"00T000000000001AAA","source":"ace","in_request":true}]}}}'
+    );
+
+    String resultWithout = GCPCalloutForOpportunitySummary.buildResult(
+      withoutBlock
+    );
+    String resultWith = GCPCalloutForOpportunitySummary.buildResult(withBlock);
+
+    System.assertEquals(
+      true,
+      ((Map<String, Object>) JSON.deserializeUntyped(resultWith)).get('success')
+    );
+    System.assertEquals(
+      resultWithout,
+      resultWith,
+      'The optional call_transcripts block must not change what the UI receives.'
+    );
+  }
 }

@@ -3,6 +3,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final String ENDPOINT_PATH = '/api/v1/opportunity_summary';
   private static final String ENRICHMENT_SWITCH_FIELD = 'Enable_Opportunity_Summary_Enrichment__c';
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
+  private static final String CALL_TRANSCRIPTS_REQUEST_FIELD = 'enableOpportunitySummaryCallTranscripts';
   private static final Map<String, Schema.SObjectType> REFERENCE_OBJECT_TYPES = new Map<String, Schema.SObjectType>{
     'Case' => Case.SObjectType,
     'Task' => Task.SObjectType,
@@ -268,6 +269,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
       'relatedOpportunities' => getRelatedOpportunities(accountId, recordId)
     };
     addEnrichmentRequestControl(payload, enrichmentEnabled);
+    addCallTranscriptsRequestControl(
+      payload,
+      isOpportunitySummaryCallTranscriptsEnabled()
+    );
     addViewerContext(payload);
     // Conversation notes are CRM evidence, not public research, so they are sent
     // whether or not the enrichment toggle is on.
@@ -292,6 +297,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Boolean enrichmentEnabled
   ) {
     payload.put(ENRICHMENT_REQUEST_FIELD, enrichmentEnabled == true);
+  }
+
+  // Always a JSON boolean, never null: GCP treats any non-boolean as OFF.
+  @TestVisible
+  private static void addCallTranscriptsRequestControl(
+    Map<String, Object> payload,
+    Boolean callTranscriptsEnabled
+  ) {
+    payload.put(CALL_TRANSCRIPTS_REQUEST_FIELD, callTranscriptsEnabled == true);
   }
 
   // The callout runs as the viewing user, so UserInfo describes the viewer rather than the
@@ -2492,6 +2506,13 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Object configuredValue = settingField(setting, ENRICHMENT_SWITCH_FIELD);
     return configuredValue != null &&
       Boolean.valueOf(String.valueOf(configuredValue));
+  }
+
+  @TestVisible
+  private static Boolean isOpportunitySummaryCallTranscriptsEnabled() {
+    GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
+    return setting != null &&
+      setting.Opportunity_Summary_Call_Transcripts__c == true;
   }
 
   @TestVisible
