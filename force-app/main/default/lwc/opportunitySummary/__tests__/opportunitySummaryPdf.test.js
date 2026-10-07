@@ -89,7 +89,7 @@ function textOf(value) {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) return value.map(textOf).join(" ");
   if (!value || typeof value !== "object") return "";
-  return ["text", "content", "stack", "table", "body", "ul", "ol"]
+  return ["text", "content", "stack", "columns", "table", "body", "ul", "ol"]
     .map((key) => textOf(value[key]))
     .join(" ");
 }
@@ -176,9 +176,9 @@ describe("Opportunity Summary PDF document", () => {
     expect(textOf(doc)).toContain("2026-09-28 11:50:00 UTC");
     expect(textOf(doc)).toContain("2026-09-28 12:00:00 UTC");
     expect(textOf(doc)).toContain("München — Αθήνα — Москва");
-    expect(doc.footer(2, 5).columns[1].text).toBe("2 / 5");
+    expect(doc.footer(2, 5).columns[1].text).toBe("Page 2 of 5");
     expect(doc.header(1)).toBeNull();
-    expect(doc.header(2).text).toBe(labels.pdfTitle);
+    expect(textOf(doc.header(2))).toContain(labels.pdfTitle);
     expect(
       doc.pageBreakBefore(
         { headlineLevel: 1 },

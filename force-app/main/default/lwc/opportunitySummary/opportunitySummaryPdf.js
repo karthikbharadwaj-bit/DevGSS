@@ -1,15 +1,23 @@
-// Design tokens: one accent, neutrals, and two semantic tints for win/risk.
-const INK = "#16325c";
-const TEXT = "#2b3a4f";
-const BLUE = "#0176d3";
-const MUTED = "#5c6f88";
-const RULE = "#d8dee6";
-const PANEL = "#f4f7fb";
-const WIN = "#2e844a";
-const RISK = "#a35200";
-const PAGE_X = 48;
-const CONTENT_WIDTH = 499; // A4 width (595) minus margins (48 * 2)
+// Modern SaaS Design Tokens
+const COLORS = {
+  primary: "#0176d3",
+  primarySoft: "#eef4fb",
+  textDark: "#0f172a",
+  textMuted: "#64748b",
+  surface: "#f8fafc",
+  border: "#e2e8f0",
+  win: "#059669",
+  winSoft: "#ecfdf5",
+  risk: "#ea580c",
+  riskSoft: "#fff7ed",
+  white: "#ffffff"
+};
+
+const PAGE_X = 40;
 const EVIDENCE_ID = /^E\d+$/;
+// Characters Windows/macOS reject in filenames, including control characters.
+// eslint-disable-next-line no-control-regex
+const UNSAFE_FILENAME_CHARS = /[<>:"/\\|?*\u0000-\u001f\u007f]/g;
 
 const ENTITIES = {
   amp: "&",
@@ -47,9 +55,10 @@ export function pdfText(value, evidenceIds = new Set()) {
   const source = String(value ?? "")
     .replace(/<(script|style|iframe|object|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
     .replace(/<!--[\s\S]*?-->/g, "");
+
   const runs = [];
-  let bold = 0;
-  let italics = 0;
+  let bold = 0,
+    italics = 0;
 
   const append = (text) => {
     decodeEntities(text)
@@ -62,7 +71,11 @@ export function pdfText(value, evidenceIds = new Set()) {
           bold: bold > 0,
           italics: italics > 0,
           ...(/^\[E\d+\]$/.test(part) && evidenceIds.has(id)
-            ? { linkToDestination: `research-${id}`, color: BLUE, bold: true }
+            ? {
+                linkToDestination: `research-${id}`,
+                color: COLORS.primary,
+                bold: true
+              }
             : {})
         });
       });
@@ -78,6 +91,7 @@ export function pdfText(value, evidenceIds = new Set()) {
       append(part);
       return;
     }
+
     const closing = Boolean(tag[1]);
     switch (tag[2].toLowerCase()) {
       case "b":
@@ -125,9 +139,7 @@ function safeLink(value) {
 
 function timestamp(value) {
   const date = new Date(value);
-  return value !== null &&
-    value !== undefined &&
-    Number.isFinite(date.getTime())
+  return value != null && Number.isFinite(date.getTime())
     ? date
         .toISOString()
         .replace("T", " ")
@@ -139,8 +151,7 @@ export function pdfFilename(recordName, recordId, exportedAt) {
   const name =
     plain(recordName || recordId || "Opportunity")
       .normalize("NFKC")
-      // eslint-disable-next-line no-control-regex
-      .replace(/[<>:"/\\|?*\u0000-\u001f\u007f]/g, "-")
+      .replace(UNSAFE_FILENAME_CHARS, "-")
       .replace(/[\u202a-\u202e\u2066-\u2069]/g, "")
       .replace(/\s+/g, " ")
       .replace(/[. ]+$/g, "")
@@ -148,34 +159,52 @@ export function pdfFilename(recordName, recordId, exportedAt) {
   return `Opportunity Summary - ${name} - ${timestamp(exportedAt).slice(0, 10)}.pdf`;
 }
 
-// Cleaner callout box with softer padding and slightly thicker accent line
-function accentBox(stack, { color = BLUE, fill, margin = [0, 0, 0, 14] } = {}) {
-  return {
-    table: {
-      widths: ["*"],
-      body: [[{ stack, ...(fill ? { fillColor: fill } : {}) }]]
-    },
-    layout: {
-      hLineWidth: () => 0,
-      vLineWidth: (index) => (index === 0 ? 3 : 0),
-      vLineColor: () => color,
-      paddingLeft: () => 14,
-      paddingRight: () => 14,
-      paddingTop: () => 12,
-      paddingBottom: () => 12
-    },
-    margin
-  };
-}
+// --- Modern UI Components for PDF ---
 
-function eyebrow(text, color = MUTED, margin = [0, 0, 0, 4]) {
+function eyebrow(text, margin = [0, 0, 0, 4]) {
   return {
     text: plain(text).toUpperCase(),
     fontSize: 7.5,
     bold: true,
-    color,
-    characterSpacing: 1.2,
+    color: COLORS.textMuted,
+    characterSpacing: 1,
     margin
+  };
+}
+
+function sectionHeader(title) {
+  return {
+    stack: [
+      { text: plain(title), fontSize: 16, bold: true, color: COLORS.textDark }
+    ],
+    margin: [0, 24, 0, 12],
+    headlineLevel: 1
+  };
+}
+
+function modernCard(
+  stackContent,
+  bgColor = COLORS.white,
+  borderColor = COLORS.border
+) {
+  return {
+    table: {
+      widths: ["*"],
+      body: [[{ stack: stackContent }]]
+    },
+    layout: {
+      defaultBorder: false,
+      hLineWidth: () => 1,
+      vLineWidth: () => 1,
+      hLineColor: () => borderColor,
+      vLineColor: () => borderColor,
+      fillColor: () => bgColor,
+      paddingLeft: () => 16,
+      paddingRight: () => 16,
+      paddingTop: () => 14,
+      paddingBottom: () => 14
+    },
+    margin: [0, 0, 0, 12]
   };
 }
 
@@ -183,65 +212,210 @@ export function buildPdfDocument(snapshot, labels) {
   const groups = snapshot.researchGroups || [];
   const evidenceIds = new Set(
     groups
-      .flatMap((group) => group.findings)
-      .map((finding) => finding.id)
+      .flatMap((g) => g.findings)
+      .map((f) => f.id)
       .filter((id) => EVIDENCE_ID.test(id))
   );
-  const recordTitle = plain(snapshot.recordName || snapshot.recordId);
+
   const content = [];
+  const recordTitle = plain(snapshot.recordName || snapshot.recordId);
 
-  // Modernized heading: bold text with a clean bottom rule instead of a side box
-  const heading = (title, color = INK) =>
-    content.push({
-      stack: [
-        { text: plain(title), fontSize: 13.5, bold: true, color },
-        {
-          canvas: [
-            {
-              type: "line",
-              x1: 0,
-              y1: 0,
-              x2: CONTENT_WIDTH,
-              y2: 0,
-              lineWidth: 1,
-              lineColor: RULE
-            }
-          ],
-          margin: [0, 6, 0, 0]
-        }
-      ],
-      margin: [0, 24, 0, 12],
-      headlineLevel: 1
-    });
-
-  const helper = (text) =>
-    content.push({
-      text: pdfText(text),
-      style: "meta",
-      margin: [0, -4, 0, 12]
-    });
-
-  const summaryLine = (item) => ({
-    text: [
-      ...(item.label
-        ? [{ text: `${plain(item.label)}: `, bold: true, color: INK }]
-        : []),
-      ...pdfText(item.text, evidenceIds)
-    ],
-    margin: [0, 0, 0, 8] // Increased to separate dense bullet points
+  // 1. Header Area
+  content.push(eyebrow(labels.pdfTitle, [0, 0, 0, 4]));
+  content.push({
+    text: recordTitle,
+    fontSize: 26,
+    bold: true,
+    color: COLORS.textDark,
+    lineHeight: 1.2,
+    margin: [0, 0, 0, 6]
   });
 
-  const section = (title, items, { numbered = false, color = BLUE } = {}) => {
-    if (!items?.length) return;
-    heading(title, color === BLUE ? INK : color);
+  const recordLink = safeLink(snapshot.recordUrl);
+  if (recordLink) {
     content.push({
-      [numbered ? "ol" : "ul"]: items.map(summaryLine),
-      ...(numbered ? {} : { type: "square" }),
-      markerColor: color,
-      margin: [6, 0, 0, 6]
+      text: labels.pdfRecord,
+      link: recordLink,
+      color: COLORS.primary,
+      fontSize: 10,
+      margin: [0, 0, 0, 24]
     });
-  };
+  }
 
+  // 2. High-Level Metadata Grid (Score & Details side-by-side)
+  const metaColumns = [];
+
+  // Left side: Deal Score Block
+  if (snapshot.scoreCard) {
+    metaColumns.push({
+      width: "45%",
+      stack: [
+        modernCard(
+          [
+            eyebrow(labels.pdfScore),
+            {
+              text: plain(snapshot.scoreCard.headline),
+              fontSize: 20,
+              bold: true,
+              color: COLORS.textDark,
+              margin: [0, 4, 0, 0]
+            },
+            ...(snapshot.scoreCard.notes || []).map((note) => ({
+              text: pdfText(note.text, evidenceIds),
+              fontSize: 9.5,
+              color: COLORS.textMuted,
+              margin: [0, 6, 0, 0]
+            }))
+          ],
+          COLORS.primarySoft,
+          COLORS.primarySoft
+        )
+      ]
+    });
+  }
+
+  // Right side: Quick Facts
+  metaColumns.push({
+    width: "*",
+    stack: [
+      {
+        table: {
+          widths: ["auto", "*"],
+          body: [
+            [
+              { text: labels.pdfStage, bold: true, color: COLORS.textMuted },
+              {
+                text: plain(snapshot.currentStage || "—"),
+                color: COLORS.textDark
+              }
+            ],
+            [
+              { text: labels.pdfSnapshot, bold: true, color: COLORS.textMuted },
+              { text: timestamp(snapshot.generatedAt), color: COLORS.textDark }
+            ],
+            [
+              { text: labels.pdfExported, bold: true, color: COLORS.textMuted },
+              { text: timestamp(snapshot.exportedAt), color: COLORS.textDark }
+            ]
+          ]
+        },
+        layout: "noBorders",
+        margin: [16, 8, 0, 0],
+        fontSize: 10,
+        lineHeight: 1.5
+      }
+    ]
+  });
+
+  content.push({ columns: metaColumns, columnGap: 20, margin: [0, 0, 0, 24] });
+
+  // Helper for bulleted lists
+  const bulletList = (items, markerColor = COLORS.primary) => ({
+    ul: items.map((item) => ({
+      text: [
+        ...(item.label
+          ? [
+              {
+                text: `${plain(item.label)}: `,
+                bold: true,
+                color: COLORS.textDark
+              }
+            ]
+          : []),
+        ...pdfText(item.text, evidenceIds)
+      ],
+      margin: [0, 0, 0, 8]
+    })),
+    markerColor,
+    margin: [12, 0, 0, 0]
+  });
+
+  // 3. Executive Summary
+  if (snapshot.executiveFacts?.length) {
+    content.push(sectionHeader(labels.pdfExecutive));
+    content.push(bulletList(snapshot.executiveFacts));
+  }
+
+  // 4. Two-Column Dashboard for Win Factors and Risk Flags
+  const splitColumns = [];
+  if (snapshot.winFactors?.length) {
+    splitColumns.push({
+      width: "50%",
+      stack: [
+        {
+          text: labels.pdfWin,
+          fontSize: 13,
+          bold: true,
+          color: COLORS.win,
+          margin: [0, 0, 0, 10]
+        },
+        modernCard(
+          [bulletList(snapshot.winFactors, COLORS.win)],
+          COLORS.winSoft,
+          COLORS.winSoft
+        )
+      ]
+    });
+  }
+  if (snapshot.riskFlags?.length) {
+    splitColumns.push({
+      width: "50%",
+      stack: [
+        {
+          text: labels.pdfRisk,
+          fontSize: 13,
+          bold: true,
+          color: COLORS.risk,
+          margin: [0, 0, 0, 10]
+        },
+        modernCard(
+          [bulletList(snapshot.riskFlags, COLORS.risk)],
+          COLORS.riskSoft,
+          COLORS.riskSoft
+        )
+      ]
+    });
+  }
+
+  if (splitColumns.length) {
+    content.push({
+      margin: [0, 24, 0, 0],
+      columns: splitColumns,
+      columnGap: 16
+    });
+  }
+
+  // 5. Timeline & Next Actions
+  if (snapshot.nextActions?.length) {
+    content.push(sectionHeader(labels.pdfActions));
+    content.push({
+      ol: snapshot.nextActions.map((a) => ({
+        text: pdfText(a.text, evidenceIds),
+        margin: [0, 0, 0, 8]
+      })),
+      markerColor: COLORS.primary,
+      margin: [12, 0, 0, 0]
+    });
+  }
+
+  if (snapshot.history?.length) {
+    content.push(sectionHeader(labels.pdfHistory));
+    content.push(bulletList(snapshot.history, COLORS.textMuted));
+  }
+
+  if (snapshot.closePlan?.length) {
+    content.push(sectionHeader(labels.pdfPlan));
+    content.push(bulletList(snapshot.closePlan));
+  }
+
+  (snapshot.extraSections || []).forEach((extra) => {
+    if (!extra.items?.length) return;
+    content.push(sectionHeader(extra.title));
+    content.push(bulletList(extra.items));
+  });
+
+  // Deduplicated, safe source links. Labels that look like URLs (for example
+  // grounding redirects with tokens) are never shown as link text.
   const sourceRuns = (sources) => {
     const seen = new Set();
     return (sources || []).flatMap((source) => {
@@ -251,204 +425,170 @@ export function buildPdfDocument(snapshot, labels) {
       const label = plain(source.label);
       const text =
         label && !/https?:\/\//i.test(label) ? label : labels.pdfSources;
-      return [{ text, link, color: BLUE }];
+      return [{ text, link, color: COLORS.primary }];
     });
   };
 
-  const labelled = (label, text) => ({
-    text: [
-      { text: `${label}: `, bold: true, color: INK, fontSize: 9.5 },
-      ...pdfText(text)
-    ],
-    margin: [0, 6, 0, 0]
-  });
-
-  const finding = (item, index, isSupplemental = false) => {
+  const findingCard = (item, index, isSupplemental = false) => {
     const meta = [item.kindLabel, item.dateLabel, item.personLine]
       .filter(Boolean)
       .map(plain)
       .join("  ·  ");
     const links = sourceRuns(item.sources);
-
-    const stack = [
+    const cardStack = [
       {
         text: [
           {
             text: `${isSupplemental ? index + 1 : item.id}  `,
             bold: true,
-            color: BLUE
+            color: COLORS.primary
           },
           ...pdfText(item.fact)
         ],
-        color: INK,
-        fontSize: 10.5,
+        color: COLORS.textDark,
+        fontSize: 11,
         ...(isSupplemental || !EVIDENCE_ID.test(item.id)
           ? {}
           : { id: `research-${item.id}` })
       }
     ];
-
-    if (meta) stack.push({ text: meta, style: "meta", margin: [0, 4, 0, 2] });
-    if (item.relevance)
-      stack.push(labelled(labels.pdfRelevance, item.relevance));
-    if (item.suggestedAction)
-      stack.push(labelled(labels.pdfAction, item.suggestedAction));
-    if (links.length) {
-      stack.push({
-        text: links.flatMap((run, i) => (i ? ["   ·   ", run] : [run])),
+    if (meta)
+      cardStack.push({
+        text: meta,
         fontSize: 8.5,
-        color: MUTED,
-        margin: [0, 8, 0, 0]
+        color: COLORS.textMuted,
+        margin: [0, 6, 0, 2]
+      });
+    if (item.relevance)
+      cardStack.push({
+        text: [
+          { text: `${labels.pdfRelevance}: `, bold: true },
+          ...pdfText(item.relevance)
+        ],
+        margin: [0, 6, 0, 0]
+      });
+    if (item.suggestedAction)
+      cardStack.push({
+        text: [
+          { text: `${labels.pdfAction}: `, bold: true },
+          ...pdfText(item.suggestedAction)
+        ],
+        margin: [0, 6, 0, 0]
+      });
+    if (links.length) {
+      cardStack.push({
+        text: links.flatMap((run, i) => (i ? ["   ·   ", run] : [run])),
+        fontSize: 9,
+        margin: [0, 10, 0, 0]
       });
     }
-    content.push(accentBox(stack, { color: RULE, margin: [0, 0, 0, 12] }));
+    content.push(modernCard(cardStack, COLORS.white, COLORS.border));
   };
-
-  // Title block
-  content.push(eyebrow(labels.pdfTitle, BLUE, [0, 0, 0, 8]));
-  content.push({
-    text: recordTitle,
-    fontSize: 24,
-    bold: true,
-    color: INK,
-    lineHeight: 1.15,
-    margin: [0, 0, 0, 6]
+  const helperText = (text) => ({
+    text: pdfText(text),
+    fontSize: 9,
+    color: COLORS.textMuted,
+    margin: [0, -4, 0, 12]
   });
 
-  const recordLink = safeLink(snapshot.recordUrl);
-  if (recordLink) {
-    content.push({
-      text: labels.pdfRecord,
-      link: recordLink,
-      color: BLUE,
-      fontSize: 9.5,
-      margin: [0, 0, 0, 18]
-    });
-  }
-
-  const facts = [
-    ...(snapshot.currentStage
-      ? [[labels.pdfStage, plain(snapshot.currentStage)]]
-      : []),
-    [labels.pdfSnapshot, timestamp(snapshot.generatedAt)],
-    [labels.pdfExported, timestamp(snapshot.exportedAt)]
-  ];
-
-  // Modern, borderless snapshot facts grid
-  content.push({
-    table: {
-      widths: facts.map(() => "*"),
-      body: [
-        facts.map(([label, value]) => ({
-          stack: [
-            eyebrow(label),
-            { text: value, color: INK, fontSize: 10.5, bold: true }
-          ]
-        }))
-      ]
-    },
-    layout: {
-      defaultBorder: false,
-      fillColor: () => PANEL,
-      paddingLeft: () => 14,
-      paddingRight: () => 14,
-      paddingTop: () => 12,
-      paddingBottom: () => 12
-    },
-    margin: [0, 0, 0, 8]
-  });
-
-  if (snapshot.scoreCard) {
-    const score = snapshot.scoreCard;
-    content.push(
-      accentBox(
-        [
-          eyebrow(labels.pdfScore, BLUE),
-          {
-            text: plain(score.headline),
-            fontSize: 24,
-            bold: true,
-            color: INK,
-            margin: [0, 0, 0, 6]
-          },
-          ...(score.notes || []).map((note) => ({
-            text: pdfText(note.text, evidenceIds),
-            margin: [0, 4, 0, 0]
-          }))
-        ],
-        { fill: PANEL, margin: [0, 16, 0, 0] }
-      )
-    );
-  }
-
-  section(labels.pdfExecutive, snapshot.executiveFacts);
-  section(labels.pdfHistory, snapshot.history);
-  section(labels.pdfWin, snapshot.winFactors, { color: WIN });
-  section(labels.pdfRisk, snapshot.riskFlags, { color: RISK });
-  section(labels.pdfActions, snapshot.nextActions, { numbered: true });
-  section(labels.pdfPlan, snapshot.closePlan);
-  (snapshot.extraSections || []).forEach((extra) =>
-    section(extra.title, extra.items)
-  );
-
-  if (snapshot.hasEnrichment) {
-    content.push(
-      accentBox(
-        [
-          {
-            text: pdfText(labels.researchDisclaimer),
-            fontSize: 9.5,
-            color: INK
-          }
-        ],
-        { fill: PANEL, margin: [0, 24, 0, 0] }
-      )
-    );
-  }
-
-  if (groups.length) {
-    heading(labels.pdfResearch);
-    helper(labels.researchHelper);
-    groups.forEach((group) => {
-      content.push({
-        ...eyebrow(group.label, MUTED, [0, 12, 0, 8]),
-        headlineLevel: 1
-      });
-      group.findings.forEach((item, index) => finding(item, index));
-    });
-  }
-
-  if (snapshot.supplementalUpdates?.length) {
-    heading(labels.pdfSupplemental);
-    helper(labels.supplementalHelper);
-    snapshot.supplementalUpdates.forEach((item, index) =>
-      finding(item, index, true)
-    );
-  }
-
+  // 6. AI Research & Compliance Section
+  const supplemental = snapshot.supplementalUpdates || [];
   const otherSources = sourceRuns(snapshot.otherResearchSources);
-  if (otherSources.length) {
-    heading(labels.pdfSources);
-    content.push({
-      ul: otherSources.map((run) => ({ text: [run], margin: [0, 0, 0, 6] })),
-      type: "square",
-      markerColor: RULE,
-      fontSize: 9.5
-    });
-  }
+  const searches = snapshot.searchQueries || [];
+  if (
+    groups.length ||
+    snapshot.hasEnrichment ||
+    supplemental.length ||
+    otherSources.length ||
+    searches.length
+  ) {
+    content.push({ text: "", pageBreak: "before" }); // Push research to clean new page
 
-  if (snapshot.searchQueries?.length) {
-    heading(labels.pdfSearches);
-    content.push({
-      ul: snapshot.searchQueries.map((query) => ({
-        text: pdfText(query.text),
-        margin: [0, 0, 0, 5]
-      })),
-      type: "square",
-      markerColor: RULE,
-      fontSize: 9.5,
-      color: MUTED
-    });
+    // Core AI Disclaimer
+    if (snapshot.hasEnrichment) {
+      content.push(
+        modernCard(
+          [
+            {
+              text: "AI-Generated Content Disclaimer",
+              bold: true,
+              color: COLORS.textDark,
+              fontSize: 10,
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: pdfText(labels.researchDisclaimer),
+              fontSize: 9.5,
+              color: COLORS.textMuted
+            }
+          ],
+          COLORS.surface
+        )
+      );
+    }
+
+    // Google Search Suggestions Compliance Block[cite: 8]
+    // Required to remain as-is if Grounding API is utilized.
+    if (snapshot.hasSearchSuggestionsMarkup) {
+      content.push(
+        modernCard(
+          [
+            {
+              text: "Google Search Suggestions",
+              bold: true,
+              color: COLORS.textDark,
+              fontSize: 10,
+              margin: [0, 0, 0, 4]
+            },
+            {
+              text: plain(
+                snapshot.searchSuggestionsLimitation ||
+                  "Search suggestions are limited due to regional policy."
+              ),
+              fontSize: 9.5,
+              color: COLORS.textMuted
+            }
+          ],
+          COLORS.surface
+        )
+      );
+    }
+
+    if (groups.length) {
+      content.push(sectionHeader(labels.pdfResearch));
+      content.push(helperText(labels.researchHelper));
+      groups.forEach((group) => {
+        content.push({
+          text: plain(group.label).toUpperCase(),
+          fontSize: 10,
+          bold: true,
+          color: COLORS.primary,
+          margin: [0, 16, 0, 10],
+          headlineLevel: 1
+        });
+        group.findings.forEach((item, index) => findingCard(item, index));
+      });
+    }
+
+    if (supplemental.length) {
+      content.push(sectionHeader(labels.pdfSupplemental));
+      content.push(helperText(labels.supplementalHelper));
+      supplemental.forEach((item, index) => findingCard(item, index, true));
+    }
+
+    if (otherSources.length) {
+      content.push(sectionHeader(labels.pdfSources));
+      content.push({
+        ul: otherSources.map((run) => ({ text: [run], margin: [0, 0, 0, 6] })),
+        markerColor: COLORS.primary,
+        margin: [12, 0, 0, 0]
+      });
+    }
+
+    if (searches.length) {
+      content.push(sectionHeader(labels.pdfSearches));
+      content.push(bulletList(searches, COLORS.textMuted));
+    }
   }
 
   return {
@@ -458,50 +598,38 @@ export function buildPdfDocument(snapshot, labels) {
       creationDate: new Date(snapshot.exportedAt)
     },
     pageSize: "A4",
-    pageMargins: [PAGE_X, 56, PAGE_X, 56],
-    background: (page, size) => ({
-      canvas: [
-        { type: "rect", x: 0, y: 0, w: size.width, h: 6, color: BLUE },
-        {
-          type: "line",
-          x1: PAGE_X,
-          y1: size.height - 44,
-          x2: size.width - PAGE_X,
-          y2: size.height - 44,
-          lineWidth: 0.5,
-          lineColor: RULE
-        }
-      ]
-    }),
+    pageMargins: [PAGE_X, 60, PAGE_X, 60],
     defaultStyle: {
       font: "Roboto",
       fontSize: 10.5,
       lineHeight: 1.45,
-      color: TEXT
-    },
-    styles: {
-      meta: { fontSize: 8.5, color: MUTED }
+      color: COLORS.textDark
     },
     header: (page) => {
       if (page <= 1) return null;
       return {
-        text: labels.pdfTitle,
+        columns: [
+          { text: labels.pdfTitle, bold: true },
+          { text: recordTitle, alignment: "right" }
+        ],
         margin: [PAGE_X, 24, PAGE_X, 0],
-        color: MUTED,
-        fontSize: 7.5,
-        bold: true,
-        characterSpacing: 1.2
+        color: COLORS.textMuted,
+        fontSize: 8
       };
     },
     footer: (page, total) => ({
       columns: [
-        { text: labels.pdfFooter, width: "*" },
-        { text: `${page} / ${total}`, width: 45, alignment: "right" }
+        {
+          text: labels.pdfFooter || "Generated securely via Salesforce",
+          width: "*"
+        },
+        { text: `Page ${page} of ${total}`, width: 60, alignment: "right" }
       ],
       fontSize: 8,
-      color: MUTED,
-      margin: [PAGE_X, 22, PAGE_X, 0]
+      color: COLORS.textMuted,
+      margin: [PAGE_X, 24, PAGE_X, 0]
     }),
+    // Keep a heading on the same page as the content that follows it.
     pageBreakBefore: (node, followingNodesOrContainer) => {
       const followingNodes = Array.isArray(followingNodesOrContainer)
         ? followingNodesOrContainer
