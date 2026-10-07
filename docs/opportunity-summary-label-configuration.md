@@ -1,6 +1,6 @@
 # Opportunity Summary Custom Label configuration
 
-All 57 labels live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`. Find them in Setup → Custom Labels by the `OpportunitySummary` prefix or the `OpportunitySummary.Configuration` / `OpportunitySummary.UI` categories.
+All 80 labels live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`. Find them in Setup → Custom Labels by the `OpportunitySummary` prefix or the `OpportunitySummary.Configuration` / `OpportunitySummary.UI` categories. The 23 PDF-specific UI labels are listed in [PDF export](opportunity-summary-pdf-export.md).
 
 Every name below has the prefix `OpportunitySummary`. For example, `CacheHours` means `OpportunitySummaryCacheHours`. Defaults preserve the current behavior. Endpoint routing, enrichment enablement, on-demand generation and modal opening, loading cadence, panel defaults, and Beta presentation are unchanged.
 

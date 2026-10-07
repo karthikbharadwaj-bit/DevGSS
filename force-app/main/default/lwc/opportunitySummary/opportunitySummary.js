@@ -1,10 +1,12 @@
 import { LightningElement, api, wire } from "lwc";
-import { NavigationMixin } from "lightning/navigation";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { getObjectInfo, getPicklistValues } from "lightning/uiObjectInfoApi";
 import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
 import ACCOUNT_OBJECT from "@salesforce/schema/Account";
 import STAGE_NAME_FIELD from "@salesforce/schema/Opportunity.StageName";
+import NAME_FIELD from "@salesforce/schema/Opportunity.Name";
+import { buildPdfDocument, pdfFilename } from "./opportunitySummaryPdf";
+import { renderPdf, downloadPdf } from "./opportunitySummaryPdfDownload";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
@@ -1088,9 +1090,7 @@ function healthVariant(label) {
   return match ? match.variant : "info";
 }
 
-export default class OpportunitySummary extends NavigationMixin(
-  LightningElement
-) {
+export default class OpportunitySummary extends LightningElement {
   _recordId;
   _isConnected = false;
 
@@ -1105,6 +1105,11 @@ export default class OpportunitySummary extends NavigationMixin(
   isError = false;
   errorMessage = "";
   hasFetched = false;
+  isExportingPdf = false;
+  pdfError = "";
+  pdfStatus = "";
+  opportunityName = "";
+  _pdfToken = 0;
   aihViewLogged = false;
 
   scoreCard = null;
@@ -1161,6 +1166,9 @@ export default class OpportunitySummary extends NavigationMixin(
       return;
     }
     this._recordId = value;
+    this.opportunityName = "";
+    this.currentStage = null;
+    this._cancelPdfExport();
     this._requestToken += 1;
     this.hasFetched = false;
     this.isLoading = false;
@@ -1191,10 +1199,15 @@ export default class OpportunitySummary extends NavigationMixin(
       });
   }
 
-  @wire(getRecord, { recordId: "$recordId", fields: [STAGE_NAME_FIELD] })
+  @wire(getRecord, {
+    recordId: "$recordId",
+    fields: [STAGE_NAME_FIELD],
+    optionalFields: [NAME_FIELD]
+  })
   wiredOpportunity({ data }) {
     if (data) {
       this.currentStage = getFieldValue(data, STAGE_NAME_FIELD);
+      this.opportunityName = getFieldValue(data, NAME_FIELD) || "";
     }
   }
 
@@ -1321,6 +1334,7 @@ export default class OpportunitySummary extends NavigationMixin(
 
   disconnectedCallback() {
     this._isConnected = false;
+    this._cancelPdfExport();
     this._stopClock();
     this._stopElapsedClock();
     this._stopLoadingMessages();
@@ -1338,6 +1352,7 @@ export default class OpportunitySummary extends NavigationMixin(
   }
 
   closeModal() {
+    this._cancelPdfExport();
     this.isModalOpen = false;
     this._unbindEscape();
   }
@@ -1346,6 +1361,7 @@ export default class OpportunitySummary extends NavigationMixin(
     if (this.isLoading) {
       return;
     }
+    this._cancelPdfExport();
     this.isModalOpen = false;
     this._unbindEscape();
     this.fetchSummary();
@@ -1357,6 +1373,79 @@ export default class OpportunitySummary extends NavigationMixin(
     }
     this.invalidateCachedSummary();
     this.startGeneration();
+  }
+
+  get canExportPdf() {
+    return (
+      this.hasFetched && this.hasContent && !this.isLoading && !this.isError
+    );
+  }
+
+  get pdfButtonLabel() {
+    return this.isExportingPdf
+      ? this.labels.pdfPreparing
+      : this.labels.pdfDownload;
+  }
+
+  _cancelPdfExport() {
+    this._pdfToken += 1;
+    this.isExportingPdf = false;
+    this.pdfError = "";
+    this.pdfStatus = "";
+  }
+
+  async handleDownloadPdf() {
+    if (!this.canExportPdf || this.isExportingPdf || !this.isModalOpen) return;
+    const token = ++this._pdfToken;
+    this.isExportingPdf = true;
+    this.pdfError = "";
+    this.pdfStatus = this.labels.pdfPreparing;
+    try {
+      // Snapshot before loading the renderer. Cache availability and collapsed
+      // panels must not change exported content or trigger another GCP call.
+      const snapshot = JSON.parse(
+        JSON.stringify({
+          recordId: this.recordId,
+          recordName: this.opportunityName,
+          recordUrl: `${window.location.origin}/lightning/r/Opportunity/${encodeURIComponent(this.recordId)}/view`,
+          generatedAt: this.generatedAt,
+          exportedAt: Date.now(),
+          currentStage: this.currentStage,
+          scoreCard: this.scoreCard,
+          executiveFacts: this.executiveFacts,
+          history: this.history,
+          winFactors: this.winFactors,
+          riskFlags: this.riskFlags,
+          nextActions: this.nextActions,
+          closePlan: this.closePlan,
+          extraSections: this.extraSections,
+          hasEnrichment: this.hasEnrichment,
+          researchGroups: this.researchGroups,
+          supplementalUpdates: this.supplementalUpdates,
+          otherResearchSources: this.otherResearchSources,
+          searchQueries: this.searchQueries
+        })
+      );
+      const blob = await renderPdf(
+        this,
+        buildPdfDocument(snapshot, this.labels)
+      );
+      if (token !== this._pdfToken || !this._isConnected || !this.isModalOpen)
+        return;
+      downloadPdf(
+        this.template.querySelector("[data-pdf-anchor]"),
+        blob,
+        pdfFilename(snapshot.recordName, snapshot.recordId, snapshot.exportedAt)
+      );
+      this.pdfStatus = this.labels.pdfStarted;
+    } catch {
+      if (token === this._pdfToken && this._isConnected) {
+        this.pdfError = this.labels.pdfError;
+        this.pdfStatus = "";
+      }
+    } finally {
+      if (token === this._pdfToken) this.isExportingPdf = false;
+    }
   }
 
   async fetchSummary() {
@@ -1732,19 +1821,6 @@ export default class OpportunitySummary extends NavigationMixin(
         references
       )
     };
-  }
-
-  handleRecordLinkClick(event) {
-    event.preventDefault();
-    const { recordId, objectApiName } = event.currentTarget.dataset;
-    if (!recordId || !objectApiName) {
-      return;
-    }
-    this.closeModal();
-    this[NavigationMixin.Navigate]({
-      type: "standard__recordPage",
-      attributes: { recordId, objectApiName, actionName: "view" }
-    });
   }
 
   handleEvidenceClick(event) {

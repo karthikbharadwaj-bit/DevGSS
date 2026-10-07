@@ -4,6 +4,7 @@ import {
 } from "../../../../../../test/jest-mocks/opportunitySummaryLabels";
 import { createElement } from "lwc";
 import * as summaryConfig from "../opportunitySummaryConfig";
+import * as pdfDownload from "../opportunitySummaryPdfDownload";
 import OpportunitySummary, {
   citedEvidenceIds,
   buildDateLabel,
@@ -38,20 +39,6 @@ jest.mock(
 jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
   virtual: true
 });
-const mockNavigate = jest.fn();
-jest.mock("lightning/navigation", () => {
-  const Navigate = Symbol("Navigate");
-  const NavigationMixin = (Base) =>
-    class extends Base {
-      [Navigate](pageReference) {
-        mockNavigate(pageReference);
-      }
-    };
-  NavigationMixin.Navigate = Navigate;
-  NavigationMixin.GenerateUrl = Symbol("GenerateUrl");
-  return { NavigationMixin };
-});
-
 const RECORD_ID = "006000000000001AAA";
 const CACHE_KEY = `opportunitySummary:v1:005000000000001AAA:${RECORD_ID}`;
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -390,6 +377,145 @@ describe("opportunitySummary public research", () => {
     }
     jest.clearAllMocks();
     jest.restoreAllMocks();
+  });
+
+  it("does not load the PDF renderer until Download PDF is clicked", async () => {
+    const load = jest
+      .spyOn(pdfDownload, "loadPdfRenderer")
+      .mockResolvedValue({});
+    const render = jest
+      .spyOn(pdfDownload, "renderPdf")
+      .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+
+    const element = await mountComponent();
+
+    expect(load).not.toHaveBeenCalled();
+    expect(render).not.toHaveBeenCalled();
+    expect(
+      element.shadowRoot.querySelector("[data-generate-summary]")
+    ).not.toBeNull();
+  });
+
+  it("downloads the displayed snapshot without another callout and includes collapsed supplemental content", async () => {
+    const render = jest
+      .spyOn(pdfDownload, "renderPdf")
+      .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+    const download = jest
+      .spyOn(pdfDownload, "downloadPdf")
+      .mockImplementation(() => {});
+    const enrichment = publicResearch({
+      supplemental_company_updates: supplementalCompanyUpdates()
+    });
+    const element = await createComponent(response({ enrichment }));
+    localStorage.clear();
+    expect(
+      element.shadowRoot.querySelector("[data-download-pdf]").textContent
+    ).toContain("Download PDF");
+    element.shadowRoot.querySelector("[data-download-pdf]").click();
+    await flushPromises();
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+    const documentDefinition = render.mock.calls[0][1];
+    expect(JSON.stringify(documentDefinition)).toContain(
+      "Example Person is the current Chief Operating Officer."
+    );
+    expect(JSON.stringify(documentDefinition)).toContain(
+      AI_RESEARCH_DISCLAIMER
+    );
+    expect(download.mock.calls[0][2]).toContain(RECORD_ID);
+    expect(
+      element.shadowRoot.querySelector('.ai-modal__body [role="status"]')
+        .textContent
+    ).toBe("PDF download started.");
+  });
+
+  it("exports a cached result with its original timestamp without calling GCP", async () => {
+    const cachedAt = Date.now() - 10 * 60 * 1000;
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(cachedSummaryEntry({ cachedAt }))
+    );
+    const render = jest
+      .spyOn(pdfDownload, "renderPdf")
+      .mockResolvedValue(new Blob(["pdf"]));
+    jest.spyOn(pdfDownload, "downloadPdf").mockImplementation(() => {});
+    const element = await mountComponent();
+    element.shadowRoot.querySelector("[data-view-summary]").click();
+    await flushPromises();
+    element.shadowRoot.querySelector("[data-download-pdf]").click();
+    await flushPromises();
+    const expectedTime = new Date(cachedAt)
+      .toISOString()
+      .replace("T", " ")
+      .replace(/\.\d{3}Z$/, " UTC");
+    expect(JSON.stringify(render.mock.calls[0][1])).toContain(expectedTime);
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+  });
+
+  it("prevents duplicate exports and recovers from a renderer failure without losing the summary", async () => {
+    const pending = deferred();
+    const render = jest
+      .spyOn(pdfDownload, "renderPdf")
+      .mockReturnValue(pending.promise);
+    const element = await createComponent();
+    const button = element.shadowRoot.querySelector("[data-download-pdf]");
+    button.click();
+    button.click();
+    await flushPromises();
+    expect(render).toHaveBeenCalledTimes(1);
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toContain("Preparing PDF");
+    pending.reject(new Error("Private renderer details"));
+    await flushPromises();
+    expect(button.disabled).toBe(false);
+    expect(
+      element.shadowRoot.querySelector("[data-pdf-error]").textContent
+    ).toContain("Your summary is still available");
+    expect(element.shadowRoot.textContent).not.toContain(
+      "Private renderer details"
+    );
+    expect(
+      element.shadowRoot.querySelector('[data-summary-section="score"]')
+    ).not.toBeNull();
+    render.mockResolvedValue(new Blob(["pdf"]));
+    const download = jest
+      .spyOn(pdfDownload, "downloadPdf")
+      .mockImplementation(() => {});
+    button.click();
+    await flushPromises();
+    expect(download).toHaveBeenCalledTimes(1);
+    expect(element.shadowRoot.querySelector("[data-pdf-error]")).toBeNull();
+  });
+
+  it.each(["close", "record", "disconnect", "refresh"])(
+    "cancels stale downloads after %s",
+    async (action) => {
+      const pending = deferred();
+      jest.spyOn(pdfDownload, "renderPdf").mockReturnValue(pending.promise);
+      const download = jest
+        .spyOn(pdfDownload, "downloadPdf")
+        .mockImplementation(() => {});
+      const element = await createComponent();
+      element.shadowRoot.querySelector("[data-download-pdf]").click();
+      await flushPromises();
+      if (action === "close")
+        element.shadowRoot.querySelector(".close-button").click();
+      if (action === "record") element.recordId = "006000000000002AAA";
+      if (action === "disconnect") element.remove();
+      if (action === "refresh")
+        element.shadowRoot.querySelector("lightning-button-icon").click();
+      pending.resolve(new Blob(["pdf"]));
+      await flushPromises();
+      expect(download).not.toHaveBeenCalled();
+    }
+  );
+
+  it("does not offer an export for an empty result", async () => {
+    const element = await createComponent(
+      JSON.stringify({ success: true, cards: [] })
+    );
+    expect(element.shadowRoot.querySelector("[data-download-pdf]")).toBeNull();
   });
 
   it("runs on demand without opening the modal and presents completed results on demand", async () => {
@@ -1426,7 +1552,7 @@ describe("opportunitySummary closed deals", () => {
     ]);
   });
 
-  it("links references only in their mentioned_in sections and navigates", async () => {
+  it("links references only in their mentioned_in sections and opens them safely in a new tab", async () => {
     const element = await createComponent(closedDealResponse());
 
     const executiveLinks = section(element, "executive").querySelectorAll(
@@ -1446,15 +1572,11 @@ describe("opportunitySummary closed deals", () => {
       section(element, "actions").querySelector("a.record-link")
     ).toBeNull();
 
-    executiveLinks[0].click();
-    expect(mockNavigate).toHaveBeenCalledWith({
-      type: "standard__recordPage",
-      attributes: {
-        recordId: CASE_ID,
-        objectApiName: "Case",
-        actionName: "view"
-      }
-    });
+    expect(executiveLinks[0].getAttribute("href")).toBe(
+      `/lightning/r/Case/${CASE_ID}/view`
+    );
+    expect(executiveLinks[0].getAttribute("target")).toBe("_blank");
+    expect(executiveLinks[0].getAttribute("rel")).toBe("noopener noreferrer");
   });
 
   it("drops references with unsupported objects or mismatched Ids", async () => {
@@ -1829,15 +1951,12 @@ describe("opportunitySummary account and contact links", () => {
       "Contact:Morgan Banking DevGSS Test",
       "Contact:Morgan Banking DevGSS Test"
     ]);
-    element.shadowRoot.querySelector("a.record-link").click();
-    expect(mockNavigate).toHaveBeenCalledWith({
-      type: "standard__recordPage",
-      attributes: {
-        recordId: "001000000000001AAA",
-        objectApiName: "Account",
-        actionName: "view"
-      }
-    });
+    const accountLink = element.shadowRoot.querySelector("a.record-link");
+    expect(accountLink.getAttribute("href")).toBe(
+      "/lightning/r/Account/001000000000001AAA/view"
+    );
+    expect(accountLink.getAttribute("target")).toBe("_blank");
+    expect(accountLink.getAttribute("rel")).toBe("noopener noreferrer");
   });
 });
 

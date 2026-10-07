@@ -40,6 +40,29 @@ import readyIcon from "@salesforce/label/c.OpportunitySummaryReadyIcon";
 import cacheHours from "@salesforce/label/c.OpportunitySummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.OpportunitySummaryCacheMaxKB";
 import researchGroups from "@salesforce/label/c.OpportunitySummaryResearchGroups";
+import pdfDownload from "@salesforce/label/c.OpportunitySummaryPdfDownload";
+import pdfPreparing from "@salesforce/label/c.OpportunitySummaryPdfPreparing";
+import pdfError from "@salesforce/label/c.OpportunitySummaryPdfError";
+import pdfStarted from "@salesforce/label/c.OpportunitySummaryPdfStarted";
+import pdfTitle from "@salesforce/label/c.OpportunitySummaryPdfTitle";
+import pdfSnapshot from "@salesforce/label/c.OpportunitySummaryPdfSnapshot";
+import pdfExported from "@salesforce/label/c.OpportunitySummaryPdfExported";
+import pdfRecord from "@salesforce/label/c.OpportunitySummaryPdfRecord";
+import pdfFooter from "@salesforce/label/c.OpportunitySummaryPdfFooter";
+import pdfStage from "@salesforce/label/c.OpportunitySummaryPdfStage";
+import pdfScore from "@salesforce/label/c.OpportunitySummaryPdfScore";
+import pdfExecutive from "@salesforce/label/c.OpportunitySummaryPdfExecutive";
+import pdfHistory from "@salesforce/label/c.OpportunitySummaryPdfHistory";
+import pdfWin from "@salesforce/label/c.OpportunitySummaryPdfWin";
+import pdfRisk from "@salesforce/label/c.OpportunitySummaryPdfRisk";
+import pdfActions from "@salesforce/label/c.OpportunitySummaryPdfActions";
+import pdfPlan from "@salesforce/label/c.OpportunitySummaryPdfPlan";
+import pdfResearch from "@salesforce/label/c.OpportunitySummaryPdfResearch";
+import pdfSupplemental from "@salesforce/label/c.OpportunitySummaryPdfSupplemental";
+import pdfSources from "@salesforce/label/c.OpportunitySummaryPdfSources";
+import pdfSearches from "@salesforce/label/c.OpportunitySummaryPdfSearches";
+import pdfRelevance from "@salesforce/label/c.OpportunitySummaryPdfRelevance";
+import pdfAction from "@salesforce/label/c.OpportunitySummaryPdfAction";
 
 const DEFAULT_RESEARCH_GROUPS = [
   { kind: "leadership", label: "Current Leadership" },
@@ -126,6 +149,29 @@ export function getResearchGroups() {
 
 export function getUiLabels() {
   return {
+    pdfDownload,
+    pdfPreparing,
+    pdfError,
+    pdfStarted,
+    pdfTitle,
+    pdfSnapshot,
+    pdfExported,
+    pdfRecord,
+    pdfFooter,
+    pdfStage,
+    pdfScore,
+    pdfExecutive,
+    pdfHistory,
+    pdfWin,
+    pdfRisk,
+    pdfActions,
+    pdfPlan,
+    pdfResearch,
+    pdfSupplemental,
+    pdfSources,
+    pdfSearches,
+    pdfRelevance,
+    pdfAction,
     loading1,
     loading2,
     loading3,
