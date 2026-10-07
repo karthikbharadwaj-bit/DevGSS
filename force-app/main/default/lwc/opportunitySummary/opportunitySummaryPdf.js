@@ -1,6 +1,13 @@
+// Design tokens: one accent, neutrals, and two semantic tints for win/risk.
 const INK = "#16325c";
+const TEXT = "#2b3a4f";
 const BLUE = "#0176d3";
-const MUTED = "#526581";
+const MUTED = "#5c6f88";
+const RULE = "#d8dee6";
+const PANEL = "#f4f7fb";
+const WIN = "#2e844a";
+const RISK = "#a35200";
+const PAGE_X = 48;
 const EVIDENCE_ID = /^E\d+$/;
 
 const ENTITIES = {
@@ -140,6 +147,37 @@ export function pdfFilename(recordName, recordId, exportedAt) {
   return `Opportunity Summary - ${name} - ${timestamp(exportedAt).slice(0, 10)}.pdf`;
 }
 
+// Single-cell table with an accent rule on the left: callouts, score, cards.
+function accentBox(stack, { color = BLUE, fill, margin = [0, 0, 0, 12] } = {}) {
+  return {
+    table: {
+      widths: ["*"],
+      body: [[{ stack, ...(fill ? { fillColor: fill } : {}) }]]
+    },
+    layout: {
+      hLineWidth: () => 0,
+      vLineWidth: (index) => (index === 0 ? 2.5 : 0),
+      vLineColor: () => color,
+      paddingLeft: () => 12,
+      paddingRight: () => 12,
+      paddingTop: () => 10,
+      paddingBottom: () => 10
+    },
+    margin
+  };
+}
+
+function eyebrow(text, color = MUTED, margin = [0, 0, 0, 4]) {
+  return {
+    text: plain(text),
+    fontSize: 7.5,
+    bold: true,
+    color,
+    characterSpacing: 1.2,
+    margin
+  };
+}
+
 export function buildPdfDocument(snapshot, labels) {
   const groups = snapshot.researchGroups || [];
   const evidenceIds = new Set(
@@ -148,30 +186,58 @@ export function buildPdfDocument(snapshot, labels) {
       .map((finding) => finding.id)
       .filter((id) => EVIDENCE_ID.test(id))
   );
+  const recordTitle = plain(snapshot.recordName || snapshot.recordId);
   const content = [];
-  const heading = (title) =>
-    content.push({ text: plain(title), style: "section", headlineLevel: 1 });
-  const paragraph = (text, extra = {}) => ({
-    text: pdfText(text, evidenceIds),
-    margin: [0, 0, 0, 7],
-    ...extra
-  });
+
+  // Section heading: short colored bar + title, kept with following content.
+  const heading = (title, color = BLUE) =>
+    content.push({
+      table: {
+        widths: [3, "*"],
+        body: [
+          [
+            { text: "", fillColor: color },
+            { text: plain(title), fontSize: 13, bold: true, color: INK }
+          ]
+        ]
+      },
+      layout: {
+        hLineWidth: () => 0,
+        vLineWidth: () => 0,
+        paddingLeft: (index) => (index === 0 ? 0 : 10),
+        paddingRight: () => 0,
+        paddingTop: () => 1,
+        paddingBottom: () => 1
+      },
+      margin: [0, 18, 0, 8],
+      headlineLevel: 1
+    });
+  const helper = (text) =>
+    content.push({
+      text: pdfText(text),
+      style: "meta",
+      margin: [0, -4, 0, 10]
+    });
   const summaryLine = (item) => ({
     text: [
-      ...(item.label ? [{ text: `${plain(item.label)}: `, bold: true }] : []),
+      ...(item.label
+        ? [{ text: `${plain(item.label)}: `, bold: true, color: INK }]
+        : []),
       ...pdfText(item.text, evidenceIds)
     ],
-    margin: [0, 0, 0, 7]
+    margin: [0, 0, 0, 6]
   });
-  const section = (title, items, numbered = false) => {
+  const section = (title, items, { numbered = false, color = BLUE } = {}) => {
     if (!items?.length) return;
-    heading(title);
+    heading(title, color);
     content.push({
       [numbered ? "ol" : "ul"]: items.map(summaryLine),
-      margin: [0, 0, 0, 5]
+      ...(numbered ? {} : { type: "square" }),
+      markerColor: color,
+      margin: [2, 0, 0, 4]
     });
   };
-  const sourceLinks = (sources) => {
+  const sourceRuns = (sources) => {
     const seen = new Set();
     return (sources || []).flatMap((source) => {
       const link = safeLink(source.url);
@@ -181,49 +247,60 @@ export function buildPdfDocument(snapshot, labels) {
       // Even malformed labels must not expose long grounding redirect tokens.
       const text =
         label && !/https?:\/\//i.test(label) ? label : labels.pdfSources;
-      return [
-        {
-          text,
-          link,
-          color: BLUE,
-          decoration: "underline",
-          fontSize: 9,
-          margin: [0, 0, 0, 4]
-        }
-      ];
+      return [{ text, link, color: BLUE }];
     });
   };
+  const labelled = (label, text) => ({
+    text: [{ text: `${label}  `, bold: true, color: INK }, ...pdfText(text)],
+    margin: [0, 4, 0, 0]
+  });
   const finding = (item, index, isSupplemental = false) => {
     const meta = [item.kindLabel, item.dateLabel, item.personLine]
       .filter(Boolean)
       .map(plain)
-      .join(" · ");
-    content.push({
-      text: [
-        {
-          text: `${isSupplemental ? index + 1 : item.id}. `,
-          bold: true,
-          color: BLUE
-        },
-        ...pdfText(item.fact)
-      ],
-      ...(isSupplemental || !EVIDENCE_ID.test(item.id)
-        ? {}
-        : { id: `research-${item.id}` }),
-      margin: [0, 8, 0, 5]
-    });
-    if (meta) content.push(paragraph(meta, { style: "meta" }));
+      .join("  ·  ");
+    const links = sourceRuns(item.sources);
+    const stack = [
+      {
+        text: [
+          {
+            text: `${isSupplemental ? index + 1 : item.id}  `,
+            bold: true,
+            color: BLUE
+          },
+          ...pdfText(item.fact)
+        ],
+        color: INK,
+        fontSize: 10.5,
+        ...(isSupplemental || !EVIDENCE_ID.test(item.id)
+          ? {}
+          : { id: `research-${item.id}` })
+      }
+    ];
+    if (meta) stack.push({ text: meta, style: "meta", margin: [0, 3, 0, 2] });
     if (item.relevance)
-      content.push(paragraph(`${labels.pdfRelevance}: ${item.relevance}`));
+      stack.push(labelled(labels.pdfRelevance, item.relevance));
     if (item.suggestedAction)
-      content.push(paragraph(`${labels.pdfAction}: ${item.suggestedAction}`));
-    content.push(...sourceLinks(item.sources));
+      stack.push(labelled(labels.pdfAction, item.suggestedAction));
+    if (links.length)
+      stack.push({
+        text: links.flatMap((run, i) => (i ? ["   ·   ", run] : [run])),
+        fontSize: 8.5,
+        color: MUTED,
+        margin: [0, 6, 0, 0]
+      });
+    content.push(accentBox(stack, { color: RULE, margin: [0, 0, 0, 10] }));
   };
 
-  content.push({ text: labels.pdfTitle, style: "title" });
+  // Title block: eyebrow, record name, link, then a metadata strip.
+  content.push(eyebrow(labels.pdfTitle, BLUE, [0, 0, 0, 6]));
   content.push({
-    text: plain(snapshot.recordName || snapshot.recordId),
-    style: "subtitle"
+    text: recordTitle,
+    fontSize: 22,
+    bold: true,
+    color: INK,
+    lineHeight: 1.15,
+    margin: [0, 0, 0, 4]
   });
   const recordLink = safeLink(snapshot.recordUrl);
   if (recordLink)
@@ -232,64 +309,89 @@ export function buildPdfDocument(snapshot, labels) {
       link: recordLink,
       color: BLUE,
       fontSize: 9,
-      margin: [0, 0, 0, 10]
+      margin: [0, 0, 0, 14]
     });
+  const facts = [
+    ...(snapshot.currentStage
+      ? [[labels.pdfStage, plain(snapshot.currentStage)]]
+      : []),
+    [labels.pdfSnapshot, timestamp(snapshot.generatedAt)],
+    [labels.pdfExported, timestamp(snapshot.exportedAt)]
+  ];
   content.push({
-    text: `${labels.pdfSnapshot}: ${timestamp(snapshot.generatedAt)}\n${labels.pdfExported}: ${timestamp(snapshot.exportedAt)}`,
-    style: "meta",
-    margin: [0, 0, 0, 14]
+    table: {
+      widths: facts.map(() => "*"),
+      body: [
+        facts.map(([label, value]) => ({
+          stack: [
+            eyebrow(label),
+            { text: value, color: INK, fontSize: 10, bold: true }
+          ]
+        }))
+      ]
+    },
+    layout: {
+      hLineWidth: () => 0.75,
+      hLineColor: () => RULE,
+      vLineWidth: (index, node) => {
+        const isInnerDivider = index > 0 && index < node.table.widths.length;
+        return isInnerDivider ? 0.75 : 0;
+      },
+      vLineColor: () => RULE,
+      paddingLeft: (index) => (index === 0 ? 0 : 12),
+      paddingRight: () => 8,
+      paddingTop: () => 9,
+      paddingBottom: () => 9
+    },
+    margin: [0, 0, 0, 6]
   });
-  if (snapshot.currentStage)
-    content.push(paragraph(`${labels.pdfStage}: ${snapshot.currentStage}`));
+
   if (snapshot.scoreCard) {
-    heading(labels.pdfScore);
     const score = snapshot.scoreCard;
-    content.push({
-      text: plain(score.headline),
-      fontSize: 22,
-      bold: true,
-      color: BLUE,
-      margin: [0, 0, 0, 8]
-    });
-    (score.notes || []).forEach((note) => content.push(paragraph(note.text)));
+    content.push(
+      accentBox(
+        [
+          eyebrow(labels.pdfScore, BLUE),
+          {
+            text: plain(score.headline),
+            fontSize: 26,
+            bold: true,
+            color: INK,
+            margin: [0, 0, 0, 4]
+          },
+          ...(score.notes || []).map((note) => ({
+            text: pdfText(note.text, evidenceIds),
+            margin: [0, 2, 0, 0]
+          }))
+        ],
+        { fill: PANEL, margin: [0, 16, 0, 0] }
+      )
+    );
   }
   section(labels.pdfExecutive, snapshot.executiveFacts);
   section(labels.pdfHistory, snapshot.history);
-  section(labels.pdfWin, snapshot.winFactors);
-  section(labels.pdfRisk, snapshot.riskFlags);
-  section(labels.pdfActions, snapshot.nextActions, true);
+  section(labels.pdfWin, snapshot.winFactors, { color: WIN });
+  section(labels.pdfRisk, snapshot.riskFlags, { color: RISK });
+  section(labels.pdfActions, snapshot.nextActions, { numbered: true });
   section(labels.pdfPlan, snapshot.closePlan);
   (snapshot.extraSections || []).forEach((extra) =>
     section(extra.title, extra.items)
   );
 
   if (snapshot.hasEnrichment) {
-    content.push({
-      table: {
-        widths: ["*"],
-        body: [
-          [
-            {
-              text: labels.researchDisclaimer,
-              fillColor: "#eef5ff",
-              color: INK,
-              margin: [10, 9, 10, 9],
-              fontSize: 10
-            }
-          ]
-        ]
-      },
-      layout: "noBorders",
-      margin: [0, 16, 0, 10]
-    });
+    content.push(
+      accentBox(
+        [{ text: pdfText(labels.researchDisclaimer), fontSize: 9, color: INK }],
+        { fill: PANEL, margin: [0, 22, 0, 0] }
+      )
+    );
   }
   if (groups.length) {
     heading(labels.pdfResearch);
-    content.push(paragraph(labels.researchHelper, { style: "meta" }));
+    helper(labels.researchHelper);
     groups.forEach((group) => {
       content.push({
-        text: plain(group.label),
-        style: "group",
+        ...eyebrow(group.label, MUTED, [0, 8, 0, 8]),
         headlineLevel: 1
       });
       group.findings.forEach((item, index) => finding(item, index));
@@ -297,48 +399,75 @@ export function buildPdfDocument(snapshot, labels) {
   }
   if (snapshot.supplementalUpdates?.length) {
     heading(labels.pdfSupplemental);
-    content.push(paragraph(labels.supplementalHelper, { style: "meta" }));
+    helper(labels.supplementalHelper);
     snapshot.supplementalUpdates.forEach((item, index) =>
       finding(item, index, true)
     );
   }
-  const otherSources = sourceLinks(snapshot.otherResearchSources);
+  const otherSources = sourceRuns(snapshot.otherResearchSources);
   if (otherSources.length) {
     heading(labels.pdfSources);
-    content.push(...otherSources);
+    content.push({
+      ul: otherSources.map((run) => ({ text: [run], margin: [0, 0, 0, 4] })),
+      type: "square",
+      markerColor: RULE,
+      fontSize: 9
+    });
   }
   if (snapshot.searchQueries?.length) {
-    section(labels.pdfSearches, snapshot.searchQueries);
+    heading(labels.pdfSearches);
+    content.push({
+      ul: snapshot.searchQueries.map((query) => ({
+        text: pdfText(query.text),
+        margin: [0, 0, 0, 3]
+      })),
+      type: "square",
+      markerColor: RULE,
+      fontSize: 9,
+      color: MUTED
+    });
   }
 
   return {
     info: {
-      title: `${labels.pdfTitle} - ${plain(snapshot.recordName || snapshot.recordId)}`,
+      title: `${labels.pdfTitle} - ${recordTitle}`,
       creator: "Salesforce Opportunity Summary",
       creationDate: new Date(snapshot.exportedAt)
     },
     pageSize: "A4",
-    pageMargins: [42, 46, 42, 52],
+    pageMargins: [PAGE_X, 56, PAGE_X, 56],
+    background: (page, size) => ({
+      canvas: [
+        { type: "rect", x: 0, y: 0, w: size.width, h: 4, color: BLUE },
+        {
+          type: "line",
+          x1: PAGE_X,
+          y1: size.height - 44,
+          x2: size.width - PAGE_X,
+          y2: size.height - 44,
+          lineWidth: 0.5,
+          lineColor: RULE
+        }
+      ]
+    }),
     defaultStyle: {
       font: "Roboto",
       fontSize: 10,
-      lineHeight: 1.25,
-      color: "#243247"
+      lineHeight: 1.35,
+      color: TEXT
     },
     styles: {
-      title: { fontSize: 24, bold: true, color: INK, margin: [0, 0, 0, 6] },
-      subtitle: { fontSize: 14, color: MUTED, margin: [0, 0, 0, 6] },
-      section: { fontSize: 14, bold: true, color: INK, margin: [0, 14, 0, 8] },
-      group: { fontSize: 11, bold: true, color: INK, margin: [0, 10, 0, 4] },
-      meta: { fontSize: 9, color: MUTED }
+      meta: { fontSize: 8.5, color: MUTED }
     },
     header: (page) => {
       if (page <= 1) return null;
       return {
         text: labels.pdfTitle,
-        margin: [42, 20, 42, 0],
+        margin: [PAGE_X, 24, PAGE_X, 0],
         color: MUTED,
-        fontSize: 8
+        fontSize: 7.5,
+        bold: true,
+        characterSpacing: 1.2
       };
     },
     footer: (page, total) => ({
@@ -346,9 +475,9 @@ export function buildPdfDocument(snapshot, labels) {
         { text: labels.pdfFooter, width: "*" },
         { text: `${page} / ${total}`, width: 45, alignment: "right" }
       ],
-      fontSize: 8,
+      fontSize: 7.5,
       color: MUTED,
-      margin: [42, 16, 42, 0]
+      margin: [PAGE_X, 22, PAGE_X, 0]
     }),
     pageBreakBefore: (node, followingNodesOrContainer) => {
       const followingNodes = Array.isArray(followingNodesOrContainer)
