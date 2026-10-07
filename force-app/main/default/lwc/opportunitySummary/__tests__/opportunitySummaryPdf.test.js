@@ -116,7 +116,10 @@ describe("Opportunity Summary PDF document", () => {
       "Expansion",
       "Current as of 2026-09-22",
       "Event date: 2026-09-20"
-    ].forEach((value) => expect(text).toContain(value));
+    ].forEach((value) =>
+      // Eyebrow labels may be styled in uppercase; presence is what matters.
+      expect(text.toLowerCase()).toContain(value.toLowerCase())
+    );
     expect(text).toContain(DISCLAIMER);
     expect(text.indexOf(DISCLAIMER)).toBeLessThan(
       text.indexOf(labels.pdfResearch)
