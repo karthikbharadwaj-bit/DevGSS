@@ -67,6 +67,20 @@ New tests in `Test_GCPCalloutForAccountSummary`:
 - `shouldSendRingSenseFieldsOnTaskAndEventRows`: a Task and an Event logged on the account's opportunity are both sent, with all four fields and a 1000-character description that keeps the link.
 - `shouldSerializeTasksAsEmptyListWhenAccountHasNoTasks`: with no Tasks, the request still sends `tasks: []`.
 
+## Update 2026-10-08: call-insight icon
+
+Deployed to DevGss in deploy `0AfTH00000IOGpF0AX`.
+
+- **Correction:** neither summary uses typed response DTOs. Account Summary already passed `account_summary` through untouched, so `from_call` needed no Apex change. Opportunity Summary keeps only response keys it knows, so it now passes `call_insights` through unchanged, but only when the value is a list.
+- **Opportunity:**
+  - A small grey `utility:call` icon shows at the right of each line named in `call_insights`.
+  - `section` must match an `opportunity_summary` key. `index` is the 0-based position in that key's list as GCP sent it. Blank lines and the score badge don't shift positions.
+  - Stage history lines never show the icon.
+  - Malformed entries are ignored.
+- **Account:** the same icon shows on risk, growth and recommended-action items with `from_call: true`. A missing key, or any value other than `true`, means no icon.
+- **Layout:** the icon's space is reserved only when the summary flags at least one line or item. Otherwise the layout is exactly as before.
+- **Tooltip and alternative text:** labels `OpportunitySummaryFromCall` and `AccountSummaryFromCall` ("From a recorded customer call (RingSense)").
+
 ## What Salesforce expects from GCP
 
 These match the behaviour in your brief. Salesforce relies on them:
