@@ -267,7 +267,7 @@ describe("c-ai-account-summary", () => {
     const scroller = query(element, "[data-history-scroll]");
 
     expect(scroller.className).toBe(
-      "history-scroll history-scroll_capped history-scroll_faded"
+      "history-scroll history-scroll_capped history-scroll_fade-bottom"
     );
     expect(scroller.getAttribute("tabindex")).toBe("0");
     expect(scroller.getAttribute("aria-label")).toBe("Account history");
@@ -287,17 +287,30 @@ describe("c-ai-account-summary", () => {
     scroller.dispatchEvent(new CustomEvent("scroll"));
   }
 
-  it("drops the history fade at the end and brings it back on scroll up", async () => {
+  it("fades whichever history edge still has entries beyond it", async () => {
     const element = await openWithHistoryEvents(25);
     const scroller = query(element, "[data-history-scroll]");
+    const fades = () =>
+      ["history-scroll_fade-top", "history-scroll_fade-bottom"].filter((name) =>
+        scroller.classList.contains(name)
+      );
 
-    scrollHistory(scroller, 280);
-    await flushPromises();
-    expect(scroller.classList.contains("history-scroll_faded")).toBe(false);
+    expect(fades()).toEqual(["history-scroll_fade-bottom"]);
 
     scrollHistory(scroller, 100);
     await flushPromises();
-    expect(scroller.classList.contains("history-scroll_faded")).toBe(true);
+    expect(fades()).toEqual([
+      "history-scroll_fade-top",
+      "history-scroll_fade-bottom"
+    ]);
+
+    scrollHistory(scroller, 280);
+    await flushPromises();
+    expect(fades()).toEqual(["history-scroll_fade-top"]);
+
+    scrollHistory(scroller, 0);
+    await flushPromises();
+    expect(fades()).toEqual(["history-scroll_fade-bottom"]);
   });
 
   it("stops the history card at the bottom of the tenth entry", async () => {

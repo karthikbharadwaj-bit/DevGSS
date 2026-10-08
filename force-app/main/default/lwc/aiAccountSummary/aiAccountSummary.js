@@ -60,6 +60,7 @@ export default class AiAccountSummary extends LightningElement {
   expandedLists = [];
   listRowLimits = getListRowLimits();
   isHistoryScrolledToEnd = false;
+  isHistoryScrolledFromTop = false;
 
   generatedAt = null;
   generatedLabel = "";
@@ -190,17 +191,28 @@ export default class AiAccountSummary extends LightningElement {
     if (!this.isHistoryCapped) {
       return "history-scroll";
     }
-    return this.isHistoryScrolledToEnd
-      ? "history-scroll history-scroll_capped"
-      : "history-scroll history-scroll_capped history-scroll_faded";
+    return [
+      "history-scroll history-scroll_capped",
+      this.isHistoryScrolledFromTop ? "history-scroll_fade-top" : "",
+      this.isHistoryScrolledToEnd ? "" : "history-scroll_fade-bottom"
+    ]
+      .filter(Boolean)
+      .join(" ");
   }
 
-  /* The fade stays only while entries remain below, so the last entry is never left faded. */
+  /*
+   * Each edge fades only while entries are hidden past it, so the first and last entries are
+   * never left faded.
+   */
   handleHistoryScroll(event) {
     const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
     const isAtEnd = scrollTop + clientHeight >= scrollHeight - 2;
+    const isFromTop = scrollTop > 2;
     if (isAtEnd !== this.isHistoryScrolledToEnd) {
       this.isHistoryScrolledToEnd = isAtEnd;
+    }
+    if (isFromTop !== this.isHistoryScrolledFromTop) {
+      this.isHistoryScrolledFromTop = isFromTop;
     }
   }
 
@@ -348,6 +360,7 @@ export default class AiAccountSummary extends LightningElement {
     }
     this.expandedLists = [];
     this.isHistoryScrolledToEnd = false;
+    this.isHistoryScrolledFromTop = false;
     this.isModalOpen = true;
     this._logView();
     this._bindEscape();
