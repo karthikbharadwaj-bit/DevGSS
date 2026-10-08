@@ -668,11 +668,19 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldSendRingSenseFieldsOnTaskAndEventRows() {
     Account summaryAccount = testAccount();
+    // Logged on the opportunity, not the account: AccountId still ties them to the account.
+    Id opportunityId = [
+      SELECT Id
+      FROM Opportunity
+      WHERE AccountId = :summaryAccount.Id
+      LIMIT 1
+    ]
+    .Id;
     String longDescription = RINGSENSE_LINK + '\n' + 'x'.repeat(1500);
     String taskSubject = 'RingSense call';
     String eventSubject = 'RingSense meeting';
     Task callTask = (Task) new SObjectBuilder(Task.SObjectType)
-      .setField(Task.WhatId, summaryAccount.Id)
+      .setField(Task.WhatId, opportunityId)
       .setField(Task.Subject, taskSubject)
       .setField(Task.Status, 'Completed')
       .setField(Task.ActivityDate, Date.today())
@@ -680,7 +688,7 @@ private class Test_GCPCalloutForAccountSummary {
       .create()
       .getRecord();
     Event meeting = (Event) new SObjectBuilder(Event.SObjectType)
-      .setField(Event.WhatId, summaryAccount.Id)
+      .setField(Event.WhatId, opportunityId)
       .setField(Event.Subject, eventSubject)
       .setField(Event.ActivityDateTime, Datetime.now().addHours(-2))
       .setField(Event.DurationInMinutes, 30)

@@ -97,8 +97,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String CONDITION_ACCOUNT_CHILD = 'AccountId = :bind0';
   private static final String CONDITION_RETENTION_TASKS = 'Account__c = :bind0';
   /* A future ActivityDate is a due date, not activity, and would push real activity out of the cap. */
-  private static final String CONDITION_TASKS = 'WhatId = :bind0 AND TaskSubtype != \'ListEmail\' AND ActivityDate <= TODAY';
-  private static final String CONDITION_EVENTS = 'WhatId = :bind0 AND ActivityDate <= TODAY';
+  private static final String CONDITION_TASKS = 'AccountId = :bind0 AND TaskSubtype != \'ListEmail\' AND ActivityDate <= TODAY';
+  private static final String CONDITION_EVENTS = 'AccountId = :bind0 AND ActivityDate <= TODAY';
   /*
    * Status and Owner are the only tracked Account fields that change in production. An Owner
    * change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
