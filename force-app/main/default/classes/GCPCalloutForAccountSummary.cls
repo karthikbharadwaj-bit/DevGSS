@@ -33,6 +33,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final Integer MAX_TIMEOUT_SECONDS = 120;
   private static final Integer MILLISECONDS_PER_SECOND = 1000;
   private static final Integer MAX_REQUEST_BYTES = 2 * 1024 * 1024;
+  @TestVisible
+  private static final Integer MAX_DESCRIPTION_LENGTH = 1000;
   private static final Integer MAX_LOGGED_MESSAGE_LENGTH = 255;
   private static final Integer HTTP_OK = 200;
   private static final Integer STATUS_UNPROCESSABLE = 422;
@@ -106,6 +108,11 @@ public with sharing class GCPCalloutForAccountSummary {
   /* Keys the service reads as dates even though the org stores a datetime. */
   private static final Set<String> DATE_ONLY_KEYS = new Set<String>{
     'rcActivationDate'
+  };
+
+  /* Long text sent only up to MAX_DESCRIPTION_LENGTH; the RingSense link sits near the top. */
+  private static final Set<String> TRUNCATED_TEXT_KEYS = new Set<String>{
+    'description'
   };
 
   private static final Map<Schema.SObjectField, String> ACCOUNT_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
@@ -251,12 +258,21 @@ public with sharing class GCPCalloutForAccountSummary {
     Contact.LastActivityDate => 'lastActivityDate'
   };
 
+  /* id, subject, createdDate and description let the service find RingSense call links. */
   private static final Map<Schema.SObjectField, String> TASK_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
+    Task.Id => 'id',
+    Task.Subject => 'subject',
+    Task.CreatedDate => 'createdDate',
+    Task.Description => 'description',
     Task.ActivityDate => 'activityDate',
     Task.TaskSubtype => 'taskSubtype'
   };
 
   private static final Map<Schema.SObjectField, String> EVENT_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
+    Event.Id => 'id',
+    Event.Subject => 'subject',
+    Event.CreatedDate => 'createdDate',
+    Event.Description => 'description',
     Event.ActivityDate => 'activityDate'
   };
 
@@ -643,6 +659,8 @@ public with sharing class GCPCalloutForAccountSummary {
       Object value = readableField(record, String.valueOf(field));
       if (value instanceof Datetime && DATE_ONLY_KEYS.contains(key)) {
         value = ((Datetime) value).date();
+      } else if (value instanceof String && TRUNCATED_TEXT_KEYS.contains(key)) {
+        value = ((String) value).left(MAX_DESCRIPTION_LENGTH);
       }
       row.put(key, value);
     }

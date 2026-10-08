@@ -626,4 +626,119 @@ private class Test_GCPCalloutForAccountSummary {
     );
     Assert.areEqual(resultWithout, resultWith, messageText);
   }
+
+  // ---------------- RingSense call links ----------------
+
+  private static final String RINGSENSE_LINK = 'RingSense call details link - https://ringsense.ops.ringcentral.com/calls/00000000-0000-0000-0000-000000000000';
+
+  private static Map<String, Object> rowWithId(List<Object> rows, Id recordId) {
+    for (Object row : rows) {
+      Map<String, Object> rowMap = (Map<String, Object>) row;
+      if (rowMap.get('id') == String.valueOf(recordId)) {
+        return rowMap;
+      }
+    }
+    return null;
+  }
+
+  private static void assertRingSenseRow(
+    Map<String, Object> row,
+    String expectedSubject
+  ) {
+    String rowMessage = 'The activity row must carry id, subject, createdDate and description.';
+    String descriptionMessage = 'The description must be cut to 1000 characters with the link intact.';
+    Assert.isNotNull(row, rowMessage);
+    Assert.isTrue(row.containsKey('subject'), rowMessage);
+    Assert.areEqual(expectedSubject, row.get('subject'), rowMessage);
+    Assert.isTrue(row.get('createdDate') instanceof String, rowMessage);
+    Assert.isNotNull(
+      JSON.deserialize('"' + row.get('createdDate') + '"', Datetime.class),
+      'createdDate must be an ISO-8601 datetime.'
+    );
+    String description = (String) row.get('description');
+    Assert.areEqual(
+      GCPCalloutForAccountSummary.MAX_DESCRIPTION_LENGTH,
+      description.length(),
+      descriptionMessage
+    );
+    Assert.isTrue(description.startsWith(RINGSENSE_LINK), descriptionMessage);
+    Assert.isTrue(row.containsKey('activityDate'), rowMessage);
+  }
+
+  @IsTest
+  static void shouldSendRingSenseFieldsOnTaskAndEventRows() {
+    Account summaryAccount = testAccount();
+    String longDescription = RINGSENSE_LINK + '\n' + 'x'.repeat(1500);
+    String taskSubject = 'RingSense call';
+    String eventSubject = 'RingSense meeting';
+    Task callTask = (Task) new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, summaryAccount.Id)
+      .setField(Task.Subject, taskSubject)
+      .setField(Task.Status, 'Completed')
+      .setField(Task.ActivityDate, Date.today())
+      .setField(Task.Description, longDescription)
+      .create()
+      .getRecord();
+    Event meeting = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, summaryAccount.Id)
+      .setField(Event.Subject, eventSubject)
+      .setField(Event.ActivityDateTime, Datetime.now().addHours(-2))
+      .setField(Event.DurationInMinutes, 30)
+      .setField(Event.Description, longDescription)
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(
+        GCPCalloutForAccountSummary.buildPayload(
+          TEST_USERNAME,
+          summaryAccount.Id,
+          true
+        )
+      )
+    );
+    Test.stopTest();
+
+    assertRingSenseRow(
+      rowWithId((List<Object>) payload.get('tasks'), callTask.Id),
+      taskSubject
+    );
+    // The org can rewrite Event.Subject on insert, so compare with the stored value.
+    assertRingSenseRow(
+      rowWithId((List<Object>) payload.get('events'), meeting.Id),
+      [SELECT Subject FROM Event WHERE Id = :meeting.Id].Subject
+    );
+  }
+
+  @IsTest
+  static void shouldSerializeTasksAsEmptyListWhenAccountHasNoTasks() {
+    Account summaryAccount = testAccount();
+    delete [SELECT Id FROM Task WHERE WhatId = :summaryAccount.Id];
+
+    Test.startTest();
+    Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(
+        GCPCalloutForAccountSummary.buildPayload(
+          TEST_USERNAME,
+          summaryAccount.Id,
+          true
+        )
+      )
+    );
+    Test.stopTest();
+
+    String messageText = 'With no Tasks the request must still send tasks as [].';
+    Assert.isTrue(payload.containsKey('tasks'), messageText);
+    Assert.areEqual(
+      0,
+      ((List<Object>) payload.get('tasks')).size(),
+      messageText
+    );
+    Assert.areEqual(
+      0,
+      coverageFor(payload, 'tasks').get('returnedCount'),
+      messageText
+    );
+  }
 }
