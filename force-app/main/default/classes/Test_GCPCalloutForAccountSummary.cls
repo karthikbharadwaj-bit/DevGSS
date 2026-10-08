@@ -10,7 +10,7 @@ private class Test_GCPCalloutForAccountSummary {
   private static final String TEST_USERNAME = 'account-summary-test@example.com';
   private static final String TEST_TOKEN = 'test-token';
   private static final String ACCOUNT_WEBSITE = 'https://example.com';
-  private static final Integer ACTIVITY_CAP = 5;
+  private static final Integer ACTIVITY_CAP = 20;
 
   private static final String SUCCESS_RESPONSE = JSON.serialize(
     new Map<String, Object>{
@@ -150,7 +150,9 @@ private class Test_GCPCalloutForAccountSummary {
         'retentionTasks',
         'orders',
         'contracts',
-        'accountHistory'
+        'accountHistory',
+        'caseTasks',
+        'upcomingEvents'
       }
     ) {
       String listMessage = emptyListMessage + ' ' + listKey;
@@ -712,6 +714,13 @@ private class Test_GCPCalloutForAccountSummary {
       rowWithId((List<Object>) payload.get('tasks'), callTask.Id),
       taskSubject
     );
+    String relatedMessage = 'Activity rows must say which record they were logged on.';
+    Assert.areEqual(
+      'Opportunity',
+      rowWithId((List<Object>) payload.get('tasks'), callTask.Id)
+        .get('relatedToType'),
+      relatedMessage
+    );
     // The org can rewrite Event.Subject on insert, so compare with the stored value.
     assertRingSenseRow(
       rowWithId((List<Object>) payload.get('events'), meeting.Id),
@@ -748,5 +757,143 @@ private class Test_GCPCalloutForAccountSummary {
       coverageFor(payload, 'tasks').get('returnedCount'),
       messageText
     );
+  }
+
+  private static Map<String, Object> payloadFor(Id accountId) {
+    return (Map<String, Object>) JSON.deserializeUntyped(
+      JSON.serialize(
+        GCPCalloutForAccountSummary.buildPayload(TEST_USERNAME, accountId, true)
+      )
+    );
+  }
+
+  @IsTest
+  static void shouldSendCaseTasksSeparatelyWhenCaseActivityDoesNotRollUp() {
+    Account summaryAccount = testAccount();
+    Case summaryCase = (Case) new SObjectBuilder(Case.SObjectType)
+      .setField(Case.AccountId, summaryAccount.Id)
+      .create()
+      .getRecord();
+    Task caseTask = (Task) new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, summaryCase.Id)
+      .setField(Task.Subject, 'Porting update sent')
+      .setField(Task.Status, 'Completed')
+      .setField(Task.ActivityDate, Date.today())
+      .create()
+      .getRecord();
+    Boolean isRolledUp =
+      [SELECT AccountId FROM Task WHERE Id = :caseTask.Id].AccountId ==
+      summaryAccount.Id;
+
+    Test.startTest();
+    Map<String, Object> payload = payloadFor(summaryAccount.Id);
+    Test.stopTest();
+
+    String caseTaskMessage = 'A Case task that does not roll up must be sent in caseTasks.';
+    String duplicateMessage = 'A Case task must appear in only one list.';
+    List<Object> tasks = (List<Object>) payload.get('tasks');
+    List<Object> caseTasks = (List<Object>) payload.get('caseTasks');
+    if (isRolledUp) {
+      Assert.isNotNull(rowWithId(tasks, caseTask.Id), caseTaskMessage);
+    } else {
+      Assert.isNotNull(rowWithId(caseTasks, caseTask.Id), caseTaskMessage);
+      Assert.areEqual(
+        'Case',
+        rowWithId(caseTasks, caseTask.Id).get('relatedToType'),
+        caseTaskMessage
+      );
+    }
+    Assert.isFalse(
+      rowWithId(tasks, caseTask.Id) != null &&
+        rowWithId(caseTasks, caseTask.Id) != null,
+      duplicateMessage
+    );
+  }
+
+  @IsTest
+  static void shouldLeaveOutOpenTasksWhenBuildingActivity() {
+    Account summaryAccount = testAccount();
+    Task openTask = (Task) new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, summaryAccount.Id)
+      .setField(Task.Subject, 'Follow up on expiring trial')
+      .setField(Task.Status, 'Not Started')
+      .setField(Task.ActivityDate, Date.today())
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    Map<String, Object> payload = payloadFor(summaryAccount.Id);
+    Test.stopTest();
+
+    String openMessage = 'An open task is a to-do, not activity, and must not be sent.';
+    Assert.isNull(
+      rowWithId((List<Object>) payload.get('tasks'), openTask.Id),
+      openMessage
+    );
+  }
+
+  @IsTest
+  static void shouldSendUpcomingMeetingsApartFromPastEvents() {
+    Account summaryAccount = testAccount();
+    Event upcoming = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, summaryAccount.Id)
+      .setField(Event.Subject, 'Quarterly review')
+      .setField(Event.ActivityDateTime, Datetime.now().addDays(3))
+      .setField(Event.DurationInMinutes, 30)
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    Map<String, Object> payload = payloadFor(summaryAccount.Id);
+    Test.stopTest();
+
+    String upcomingMessage = 'A meeting in the next 30 days must be sent in upcomingEvents only.';
+    Assert.isNotNull(
+      rowWithId((List<Object>) payload.get('upcomingEvents'), upcoming.Id),
+      upcomingMessage
+    );
+    Assert.isNull(
+      rowWithId((List<Object>) payload.get('events'), upcoming.Id),
+      upcomingMessage
+    );
+  }
+
+  @IsTest
+  static void shouldFilterAutomatedActivityWhenQueryingTasksAndEvents() {
+    Account summaryAccount = testAccount();
+    Map<String, String> keyToCondition = new Map<String, String>();
+
+    Test.startTest();
+    for (
+      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs()
+    ) {
+      keyToCondition.put(
+        spec.key,
+        GCPCalloutForAccountSummary.buildListQuery(spec, summaryAccount.Id)
+          .getCondition()
+      );
+    }
+    Test.stopTest();
+
+    String senderMessage = 'Tasks from automated senders must be left out.';
+    String eventMessage = 'System Use events are integration records, not meetings.';
+    for (String listKey : new List<String>{ 'tasks', 'caseTasks' }) {
+      String condition = keyToCondition.get(listKey);
+      Assert.isTrue(condition.contains('IsClosed = true'), senderMessage);
+      Assert.isTrue(
+        condition.contains('\'Automation Service\''),
+        senderMessage
+      );
+      Assert.isTrue(
+        condition.contains('Email: Thank you for contacting us%'),
+        senderMessage
+      );
+    }
+    for (String listKey : new List<String>{ 'events', 'upcomingEvents' }) {
+      Assert.isTrue(
+        keyToCondition.get(listKey).contains('Type != \'System Use\''),
+        eventMessage
+      );
+    }
   }
 }

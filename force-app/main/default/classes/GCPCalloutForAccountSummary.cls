@@ -48,7 +48,10 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final Integer ENTITLEMENT_LIMIT = 100;
   private static final Integer ACCOUNT_TEAM_LIMIT = 50;
   private static final Integer CONTACT_LIMIT = 20;
-  private static final Integer ACTIVITY_LIMIT = 5;
+  private static final Integer TASK_LIMIT = 20;
+  private static final Integer CASE_TASK_LIMIT = 10;
+  private static final Integer EVENT_LIMIT = 10;
+  private static final Integer UPCOMING_EVENT_LIMIT = 5;
   private static final Integer RETENTION_TASK_LIMIT = 5;
   private static final Integer ORDER_LIMIT = 5;
   private static final Integer CONTRACT_LIMIT = 5;
@@ -73,6 +76,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String LIST_CONTACTS = 'contacts';
   private static final String LIST_TASKS = 'tasks';
   private static final String LIST_EVENTS = 'events';
+  private static final String LIST_CASE_TASKS = 'caseTasks';
+  private static final String LIST_UPCOMING_EVENTS = 'upcomingEvents';
   private static final String LIST_RETENTION_TASKS = 'retentionTasks';
   private static final String LIST_ORDERS = 'orders';
   private static final String LIST_CONTRACTS = 'contracts';
@@ -96,9 +101,29 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String CONDITION_ENTITLEMENTS = 'Account__c = :bind0 AND Active__c = true';
   private static final String CONDITION_ACCOUNT_CHILD = 'AccountId = :bind0';
   private static final String CONDITION_RETENTION_TASKS = 'Account__c = :bind0';
-  /* A future ActivityDate is a due date, not activity, and would push real activity out of the cap. */
-  private static final String CONDITION_TASKS = 'AccountId = :bind0 AND TaskSubtype != \'ListEmail\' AND ActivityDate <= TODAY';
-  private static final String CONDITION_EVENTS = 'AccountId = :bind0 AND ActivityDate <= TODAY';
+  /*
+   * Activity worth summarising is a completed contact with the customer. Open tasks are to-dos,
+   * and these senders and subjects are automated notices (BISUAT analysis, 2026-10-08).
+   */
+  private static final String HUMAN_TASK_FILTER =
+    ' AND IsClosed = true AND TaskSubtype != \'ListEmail\'' +
+    ' AND (ActivityDate = null OR ActivityDate <= TODAY)' +
+    ' AND CreatedBy.Name NOT IN (\'Automation Service\', \'RC Support Agent\', \'User Marketo\',' +
+    ' \'Workato Integration User\', \'AIM GTM Intelligence\', \'Comm ODS Integration\')' +
+    ' AND (NOT Subject LIKE \'Email: Thank you for contacting us%\')';
+  /* AccountId covers activities on the Account, its Opportunities, Contracts and Contacts. */
+  private static final String CONDITION_TASKS =
+    'AccountId = :bind0' + HUMAN_TASK_FILTER;
+  /*
+   * Salesforce does not roll Case activities up to the Account, so they need their own query.
+   * Rows whose AccountId already matches (through the Contact) are in the tasks list.
+   */
+  private static final String CONDITION_CASE_TASKS =
+    'WhatId IN (SELECT Id FROM Case WHERE AccountId = :bind0) AND AccountId != :bind0' +
+    HUMAN_TASK_FILTER;
+  /* System Use events are integration records on Implementation__c, not meetings. */
+  private static final String CONDITION_EVENTS = 'AccountId = :bind0 AND ActivityDate <= TODAY AND Type != \'System Use\'';
+  private static final String CONDITION_UPCOMING_EVENTS = 'AccountId = :bind0 AND ActivityDate = NEXT_N_DAYS:30 AND Type != \'System Use\'';
   /*
    * Status and Owner are the only tracked Account fields that change in production. An Owner
    * change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
@@ -109,6 +134,13 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final Set<String> DATE_ONLY_KEYS = new Set<String>{
     'rcActivationDate'
   };
+
+  /*
+   * What is polymorphic, so QueryFactory cannot select What.Type. The record type is read from
+   * the WhatId prefix and sent next to the Id instead.
+   */
+  private static final String KEY_RELATED_TO_ID = 'relatedToId';
+  private static final String KEY_RELATED_TO_TYPE = 'relatedToType';
 
   /* Long text sent only up to MAX_DESCRIPTION_LENGTH; the RingSense link sits near the top. */
   private static final Set<String> TRUNCATED_TEXT_KEYS = new Set<String>{
@@ -265,7 +297,24 @@ public with sharing class GCPCalloutForAccountSummary {
     Task.CreatedDate => 'createdDate',
     Task.Description => 'description',
     Task.ActivityDate => 'activityDate',
-    Task.TaskSubtype => 'taskSubtype'
+    Task.TaskSubtype => 'taskSubtype',
+    Task.WhatId => KEY_RELATED_TO_ID,
+    Task.Type => 'type',
+    Task.CallDurationInSeconds => 'callDurationInSeconds'
+  };
+
+  /* Which record the task was logged on, who it was with and who owns it. */
+  private static final Map<String, String> TASK_RELATED_FIELD_TO_KEY = new Map<String, String>{
+    'What.Name' => 'relatedToName',
+    'Who.Name' => 'whoName',
+    'Owner.Name' => 'ownerName'
+  };
+
+  /* Event.Owner can be a Calendar, which QueryFactory cannot resolve, so events send the creator. */
+  private static final Map<String, String> EVENT_RELATED_FIELD_TO_KEY = new Map<String, String>{
+    'What.Name' => 'relatedToName',
+    'Who.Name' => 'whoName',
+    'CreatedBy.Name' => 'createdByName'
   };
 
   private static final Map<Schema.SObjectField, String> EVENT_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
@@ -273,7 +322,11 @@ public with sharing class GCPCalloutForAccountSummary {
     Event.Subject => 'subject',
     Event.CreatedDate => 'createdDate',
     Event.Description => 'description',
-    Event.ActivityDate => 'activityDate'
+    Event.ActivityDate => 'activityDate',
+    Event.StartDateTime => 'startDateTime',
+    Event.DurationInMinutes => 'durationInMinutes',
+    Event.Type => 'type',
+    Event.WhatId => KEY_RELATED_TO_ID
   };
 
   private static final Map<Schema.SObjectField, String> RETENTION_TASK_FIELD_TO_KEY = new Map<Schema.SObjectField, String>{
@@ -530,22 +583,33 @@ public with sharing class GCPCalloutForAccountSummary {
           QueryFactory.SortOrder.DESCENDING,
           true
         ),
+      new ListSpec(LIST_TASKS, new TaskSelector(), CONDITION_TASKS, TASK_LIMIT)
+        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY)
+        .orderBy(Task.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
       new ListSpec(
-          LIST_TASKS,
+          LIST_CASE_TASKS,
           new TaskSelector(),
-          CONDITION_TASKS,
-          ACTIVITY_LIMIT
+          CONDITION_CASE_TASKS,
+          CASE_TASK_LIMIT
         )
-        .withFields(TASK_FIELD_TO_KEY, null)
+        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY)
         .orderBy(Task.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
       new ListSpec(
           LIST_EVENTS,
           new EventSelector(),
           CONDITION_EVENTS,
-          ACTIVITY_LIMIT
+          EVENT_LIMIT
         )
-        .withFields(EVENT_FIELD_TO_KEY, null)
+        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY)
         .orderBy(Event.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
+      new ListSpec(
+          LIST_UPCOMING_EVENTS,
+          new EventSelector(),
+          CONDITION_UPCOMING_EVENTS,
+          UPCOMING_EVENT_LIMIT
+        )
+        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY)
+        .orderBy(Event.StartDateTime, QueryFactory.SortOrder.ASCENDING, true),
       new ListSpec(
           LIST_RETENTION_TASKS,
           new RetentionTaskSelector(),
@@ -663,6 +727,12 @@ public with sharing class GCPCalloutForAccountSummary {
         value = ((String) value).left(MAX_DESCRIPTION_LENGTH);
       }
       row.put(key, value);
+      if (key == KEY_RELATED_TO_ID && value instanceof Id) {
+        row.put(
+          KEY_RELATED_TO_TYPE,
+          String.valueOf(((Id) value).getSObjectType())
+        );
+      }
     }
     if (relatedFieldToKey != null) {
       for (String fieldPath : relatedFieldToKey.keySet()) {
