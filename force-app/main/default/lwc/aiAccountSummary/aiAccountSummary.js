@@ -29,6 +29,8 @@ const LIST_OPEN_CASES = "open-cases";
 const LIST_CLOSED_CASES = "closed-cases";
 const RELATED_LIST_OPPORTUNITIES = "Opportunities";
 const RELATED_LIST_CASES = "Cases";
+/* Account history grows with its entries up to this many, then scrolls inside the card. */
+const HISTORY_VISIBLE_EVENTS = 10;
 
 function storageEntryBytes(key, value) {
   return (String(key).length + String(value).length) * 2;
@@ -170,6 +172,30 @@ export default class AiAccountSummary extends LightningElement {
     return Boolean(this.view && this.view.history.length);
   }
 
+  get historyEventCount() {
+    return this.view
+      ? this.view.history.reduce(
+          (total, group) => total + group.events.length,
+          0
+        )
+      : 0;
+  }
+
+  get isHistoryCapped() {
+    return this.historyEventCount > HISTORY_VISIBLE_EVENTS;
+  }
+
+  get historyScrollClass() {
+    return this.isHistoryCapped
+      ? "history-scroll history-scroll_capped"
+      : "history-scroll";
+  }
+
+  /* A scrolling region must be reachable by keyboard so it can be scrolled without a mouse. */
+  get historyScrollTabIndex() {
+    return this.isHistoryCapped ? "0" : "-1";
+  }
+
   get hasRisks() {
     return Boolean(this.view && this.view.risks.length);
   }
@@ -267,6 +293,32 @@ export default class AiAccountSummary extends LightningElement {
     this.expandedLists = this.expandedLists.includes(listKey)
       ? this.expandedLists.filter((key) => key !== listKey)
       : [...this.expandedLists, listKey];
+  }
+
+  renderedCallback() {
+    this._fitHistoryHeight();
+  }
+
+  /*
+   * Stops the history card at the bottom of its tenth entry. Entries wrap to different
+   * heights, so the cut is measured; the CSS max-height covers a failed measurement.
+   */
+  _fitHistoryHeight() {
+    const scroller = this.template.querySelector("[data-history-scroll]");
+    if (!scroller) {
+      return;
+    }
+    const events = scroller.querySelectorAll("[data-history-event]");
+    if (events.length <= HISTORY_VISIBLE_EVENTS) {
+      scroller.style.maxHeight = "";
+      return;
+    }
+    const lastVisible = events[HISTORY_VISIBLE_EVENTS - 1];
+    const height =
+      lastVisible.getBoundingClientRect().bottom -
+      scroller.getBoundingClientRect().top +
+      scroller.scrollTop;
+    scroller.style.maxHeight = height > 0 ? `${Math.ceil(height)}px` : "";
   }
 
   openModal() {

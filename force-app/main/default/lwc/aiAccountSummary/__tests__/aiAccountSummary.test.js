@@ -231,6 +231,65 @@ describe("c-ai-account-summary", () => {
     expect(opportunityRows(element)).toHaveLength(3);
   });
 
+  async function openWithHistoryEvents(count) {
+    const events = Array.from({ length: count }, (unused, index) => ({
+      type: "case",
+      title: `Event ${index}`,
+      date: "2026-09-01"
+    }));
+    makeGCPCallout.mockResolvedValue(
+      JSON.stringify({
+        ...RESPONSE,
+        account_summary: {
+          ...RESPONSE.account_summary,
+          account_history: [{ period: "2026-09", events }]
+        }
+      })
+    );
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+    return element;
+  }
+
+  it("lets account history grow while it has ten entries or fewer", async () => {
+    const element = await openWithHistoryEvents(10);
+    const scroller = query(element, "[data-history-scroll]");
+
+    expect(scroller.className).toBe("history-scroll");
+    expect(scroller.getAttribute("tabindex")).toBe("-1");
+    expect(scroller.querySelectorAll("[data-history-event]")).toHaveLength(10);
+  });
+
+  it("scrolls account history past ten entries and keeps every entry", async () => {
+    const element = await openWithHistoryEvents(25);
+    const scroller = query(element, "[data-history-scroll]");
+
+    expect(scroller.className).toBe("history-scroll history-scroll_capped");
+    expect(scroller.getAttribute("tabindex")).toBe("0");
+    expect(scroller.getAttribute("aria-label")).toBe("Account history");
+    expect(scroller.querySelectorAll("[data-history-event]")).toHaveLength(25);
+  });
+
+  it("stops the history card at the bottom of the tenth entry", async () => {
+    const rect = jest
+      .spyOn(Element.prototype, "getBoundingClientRect")
+      .mockImplementation(function measure() {
+        return this.hasAttribute("data-history-event")
+          ? { top: 280, bottom: 312 }
+          : { top: 12, bottom: 400 };
+      });
+    try {
+      const element = await openWithHistoryEvents(25);
+      expect(query(element, "[data-history-scroll]").style.maxHeight).toBe(
+        "300px"
+      );
+    } finally {
+      rect.mockRestore();
+    }
+  });
+
   it("shows the Apex message when generation fails", async () => {
     makeGCPCallout.mockResolvedValue(
       JSON.stringify({ success: false, message: "Service is busy." })

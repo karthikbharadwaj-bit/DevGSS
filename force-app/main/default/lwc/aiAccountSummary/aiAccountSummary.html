@@ -692,25 +692,40 @@
                   <article class="panel" data-summary-section="history">
                     <h3 class="panel-title">{labels.sectionHistory}</h3>
                     <template lwc:if={hasHistory}>
-                      <div class="ledger">
-                        <template for:each={view.history} for:item="group">
-                          <div key={group.key} class="period">
-                            <span class="period-label"
-                              >{group.periodLabel}</span
-                            >
-                            <template for:each={group.events} for:item="event">
-                              <div key={event.key} class={event.eventClass}>
-                                <span class="event-title">{event.title}</span>
-                                <template lwc:if={event.chip}>
-                                  <span class={event.chipClass}
-                                    >{event.chip}</span
-                                  >
-                                </template>
-                                <span class="sub">{event.date}</span>
-                              </div>
-                            </template>
-                          </div>
-                        </template>
+                      <div
+                        class={historyScrollClass}
+                        data-history-scroll
+                        role="region"
+                        aria-label={labels.sectionHistory}
+                        tabindex={historyScrollTabIndex}
+                      >
+                        <div class="ledger">
+                          <template for:each={view.history} for:item="group">
+                            <div key={group.key} class="period">
+                              <span class="period-label"
+                                >{group.periodLabel}</span
+                              >
+                              <template
+                                for:each={group.events}
+                                for:item="event"
+                              >
+                                <div
+                                  key={event.key}
+                                  class={event.eventClass}
+                                  data-history-event
+                                >
+                                  <span class="event-title">{event.title}</span>
+                                  <template lwc:if={event.chip}>
+                                    <span class={event.chipClass}
+                                      >{event.chip}</span
+                                    >
+                                  </template>
+                                  <span class="sub">{event.date}</span>
+                                </div>
+                              </template>
+                            </div>
+                          </template>
+                        </div>
                       </div>
                     </template>
                     <template lwc:else>
