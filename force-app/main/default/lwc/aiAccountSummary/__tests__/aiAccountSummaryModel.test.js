@@ -3,6 +3,7 @@ import { formatLabel, getUiLabels } from "../aiAccountSummaryConfig";
 import {
   buildAccountViewModel,
   buildActions,
+  buildSignals,
   buildCases,
   buildContacts,
   buildFlag,
@@ -344,5 +345,60 @@ describe("Account Summary view model", () => {
     expect(cases.openHeading).toBe(formatLabel(labels.openCasesHeading, 4));
     expect(cases.openTotal).toBe(4);
     expect(cases.closedTotal).toBe(12);
+  });
+});
+
+describe("call insight flags", () => {
+  beforeEach(() => resetLabels());
+
+  it("treats only from_call === true as from a call", () => {
+    const labels = getUiLabels();
+    const signals = buildSignals(
+      {
+        risks: [
+          { title: "Risk A", detail: "Detail", from_call: true },
+          { title: "Risk B", detail: "Detail", from_call: "true" },
+          { title: "Risk C", detail: "Detail" }
+        ],
+        growth: [{ title: "Growth A", detail: "Detail", from_call: false }]
+      },
+      labels
+    );
+    const actions = buildActions(
+      [
+        { title: "Action A", detail: "Detail", from_call: true },
+        { title: "Action B", detail: "Detail" }
+      ],
+      labels
+    );
+
+    expect(signals.risks.map((item) => item.fromCall)).toEqual([
+      true,
+      false,
+      false
+    ]);
+    expect(signals.growth.map((item) => item.fromCall)).toEqual([false]);
+    expect(actions.map((item) => item.fromCall)).toEqual([true, false]);
+  });
+
+  it("sets hasCallInsights only when an item is flagged", () => {
+    const labels = getUiLabels();
+    const summary = {
+      risk_growth_signals: {
+        risks: [{ title: "Risk", detail: "Detail" }],
+        growth: []
+      },
+      recommended_actions: [{ title: "Action", detail: "Detail" }]
+    };
+
+    expect(
+      buildAccountViewModel({ account_summary: summary }, labels, "en-US")
+        .hasCallInsights
+    ).toBe(false);
+    summary.recommended_actions[0].from_call = true;
+    expect(
+      buildAccountViewModel({ account_summary: summary }, labels, "en-US")
+        .hasCallInsights
+    ).toBe(true);
   });
 });

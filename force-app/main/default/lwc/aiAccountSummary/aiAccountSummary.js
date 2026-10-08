@@ -196,6 +196,14 @@ export default class AiAccountSummary extends LightningElement {
     return this.isHistoryCapped ? "0" : "-1";
   }
 
+  // The icon slot is reserved only when an item is flagged, so summaries without
+  // call insights keep today's layout exactly.
+  get signalsRowClass() {
+    return this.view && this.view.hasCallInsights
+      ? "as-row has-call-insights"
+      : "as-row";
+  }
+
   get hasRisks() {
     return Boolean(this.view && this.view.risks.length);
   }

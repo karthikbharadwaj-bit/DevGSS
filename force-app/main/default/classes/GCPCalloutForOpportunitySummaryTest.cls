@@ -2449,4 +2449,54 @@ private class GCPCalloutForOpportunitySummaryTest {
       'The optional call_transcripts block must not change what the UI receives.'
     );
   }
+
+  @IsTest
+  static void passesCallInsightsThroughUnchanged() {
+    Object raw = JSON.deserializeUntyped(
+      '{"statusCode":200,"body":{' +
+        '"opportunity_summary":{"Executive Summary":["Healthy deal","Buyer needs 400 seats by March"]},' +
+        '"call_insights":[{"section":"Executive Summary","index":1}]}}'
+    );
+
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.buildResult(raw)
+    );
+
+    List<Object> insights = (List<Object>) result.get('call_insights');
+    System.assertEquals(1, insights.size());
+    Map<String, Object> insight = (Map<String, Object>) insights[0];
+    System.assertEquals('Executive Summary', insight.get('section'));
+    System.assertEquals(1, insight.get('index'));
+    System.assertEquals(
+      'Buyer needs 400 seats by March',
+      ((List<Object>) ((Map<String, Object>) ((List<Object>) result.get(
+          'cards'
+        ))[0])
+        .get('items'))[1],
+      'Line text must reach the UI unchanged.'
+    );
+  }
+
+  @IsTest
+  static void omitsCallInsightsWhenAbsentOrMalformed() {
+    String summary = '"opportunity_summary":{"Executive Summary":["CRM summary"]}';
+    Map<String, Object> absent = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.buildResult(
+        JSON.deserializeUntyped('{"statusCode":200,"body":{' + summary + '}}')
+      )
+    );
+    Map<String, Object> malformed = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.buildResult(
+        JSON.deserializeUntyped(
+          '{"statusCode":200,"body":{' +
+            summary +
+            ',"call_insights":"Executive Summary"}}'
+        )
+      )
+    );
+
+    System.assertEquals(false, absent.containsKey('call_insights'));
+    System.assertEquals(false, malformed.containsKey('call_insights'));
+    System.assertEquals(true, malformed.get('success'));
+  }
 }

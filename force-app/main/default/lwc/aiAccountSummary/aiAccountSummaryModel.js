@@ -409,6 +409,8 @@ function buildSignalItems(items, keyPrefix, findingById, labels) {
       return {
         key,
         title: text(item.title),
+        // A missing from_call means the item did not come from a call.
+        fromCall: item.from_call === true,
         ...withEvidence(item, findingById, key, labels)
       };
     });
@@ -439,6 +441,7 @@ export function buildActions(actions, labels, findingById = new Map()) {
           ? labels[LANE_LABELS[action.lane]]
           : "",
         title: text(action.title),
+        fromCall: action.from_call === true,
         ...withEvidence(action, findingById, key, labels)
       };
     });
@@ -786,6 +789,11 @@ export function buildAccountViewModel(
     labels,
     findingById
   );
+  const actions = buildActions(
+    summary.recommended_actions,
+    labels,
+    findingById
+  );
   return {
     asOfLabel: hasValue(payload.as_of_date)
       ? formatLabel(labels.asOf, formatDate(payload.as_of_date, locale))
@@ -795,7 +803,10 @@ export function buildAccountViewModel(
     tiles: buildTiles(summary.key_metrics, labels, locale),
     risks: signals.risks,
     growth: signals.growth,
-    actions: buildActions(summary.recommended_actions, labels, findingById),
+    actions,
+    hasCallInsights: [...signals.risks, ...signals.growth, ...actions].some(
+      (item) => item.fromCall
+    ),
     opportunities: buildOpportunities(
       summary.open_opportunities,
       labels,

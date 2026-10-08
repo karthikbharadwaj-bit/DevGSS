@@ -2017,6 +2017,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
             result.put(key, bodyMap.get(key));
           }
         }
+        // Optional [{section, index}] list marking summary lines drawn from a call.
+        if (bodyMap.get('call_insights') instanceof List<Object>) {
+          result.put('call_insights', bodyMap.get('call_insights'));
+        }
         List<Object> references = sanitizedRecordReferences(
           bodyMap.get('record_references'),
           referenceableIds

@@ -477,4 +477,65 @@ describe("c-ai-account-summary", () => {
 
     expect(query(element, "[role=dialog]")).toBeNull();
   });
+
+  describe("call insights", () => {
+    function withFromCall() {
+      const response = JSON.parse(JSON.stringify(RESPONSE));
+      const summary = response.account_summary;
+      summary.risk_growth_signals.risks[0].from_call = true;
+      summary.risk_growth_signals.growth[1].from_call = true;
+      summary.recommended_actions[2].from_call = true;
+      return response;
+    }
+
+    async function openSummary(response) {
+      makeGCPCallout.mockResolvedValue(JSON.stringify(response));
+      const element = await mount();
+      await generate(element);
+      query(element, "[data-view-summary]").click();
+      await flushPromises();
+      return element;
+    }
+
+    function flaggedIndexes(element, selector) {
+      const rows = [...element.shadowRoot.querySelectorAll(selector)];
+      return rows
+        .map((row, index) => ({
+          index,
+          isFlagged: Boolean(row.querySelector(".call-insight-icon"))
+        }))
+        .filter((row) => row.isFlagged)
+        .map((row) => row.index);
+    }
+
+    it("shows the call icon only on items marked from_call", async () => {
+      const element = await openSummary(withFromCall());
+
+      expect(flaggedIndexes(element, ".signal-list_risk li")).toEqual([0]);
+      expect(flaggedIndexes(element, ".signal-list_growth li")).toEqual([1]);
+      expect(flaggedIndexes(element, "li.action")).toEqual([2]);
+      const icon = query(element, ".call-insight-icon");
+      expect(icon.iconName).toBe("utility:call");
+      expect(icon.size).toBe("xx-small");
+      expect(icon.alternativeText).toBe(
+        "From a recorded customer call (RingSense)"
+      );
+      expect(
+        query(element, '[data-summary-section="signals"]').parentElement
+          .classList
+      ).toContain("has-call-insights");
+    });
+
+    it("keeps today's layout when no item has from_call", async () => {
+      const element = await openSummary(RESPONSE);
+
+      expect(
+        element.shadowRoot.querySelectorAll(".call-insight-icon")
+      ).toHaveLength(0);
+      expect(
+        query(element, '[data-summary-section="signals"]').parentElement
+          .classList
+      ).not.toContain("has-call-insights");
+    });
+  });
 });

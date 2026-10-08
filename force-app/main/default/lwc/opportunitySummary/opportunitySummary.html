@@ -235,7 +235,7 @@
             </template>
 
             <template lwc:else>
-              <div class="ai-grid">
+              <div class={aiGridClass}>
                 <div class="ai-column">
                   <template lwc:if={scoreCard}>
                     <article
@@ -289,7 +289,10 @@
                             </template>
                           </div>
                           <template for:each={scoreCard.notes} for:item="note">
-                            <p key={note.key} class="score-note inline-parts">
+                            <p
+                              key={note.key}
+                              class="score-note inline-parts call-row"
+                            >
                               <template
                                 for:each={note.segments}
                                 for:item="segment"
@@ -318,6 +321,15 @@
                                   </template>
                                 </span>
                               </template>
+                              <template lwc:if={note.fromCall}>
+                                <lightning-icon
+                                  class="call-insight-icon"
+                                  icon-name="utility:call"
+                                  size="xx-small"
+                                  alternative-text={labels.fromCall}
+                                  title={labels.fromCall}
+                                ></lightning-icon>
+                              </template>
                             </p>
                           </template>
                         </div>
@@ -345,7 +357,7 @@
                       </template>
                       <ul class="fact-list">
                         <template for:each={executiveFacts} for:item="fact">
-                          <li key={fact.key} class="fact-row">
+                          <li key={fact.key} class="fact-row call-row">
                             <template lwc:if={fact.hasLabel}>
                               <span class="fact-label">
                                 <template
@@ -457,6 +469,15 @@
                                 </template>
                               </span>
                             </template>
+                            <template lwc:if={fact.fromCall}>
+                              <lightning-icon
+                                class="call-insight-icon"
+                                icon-name="utility:call"
+                                size="xx-small"
+                                alternative-text={labels.fromCall}
+                                title={labels.fromCall}
+                              ></lightning-icon>
+                            </template>
                           </li>
                         </template>
                       </ul>
@@ -472,7 +493,10 @@
                           </h2>
                           <ul class="signal-list signal-list_win">
                             <template for:each={winFactors} for:item="factor">
-                              <li key={factor.key} class="inline-parts">
+                              <li
+                                key={factor.key}
+                                class="inline-parts call-row"
+                              >
                                 <template
                                   for:each={factor.segments}
                                   for:item="segment"
@@ -512,6 +536,15 @@
                                     </template>
                                   </span>
                                 </template>
+                                <template lwc:if={factor.fromCall}>
+                                  <lightning-icon
+                                    class="call-insight-icon"
+                                    icon-name="utility:call"
+                                    size="xx-small"
+                                    alternative-text={labels.fromCall}
+                                    title={labels.fromCall}
+                                  ></lightning-icon>
+                                </template>
                               </li>
                             </template>
                           </ul>
@@ -525,7 +558,7 @@
                           </h2>
                           <ul class="signal-list signal-list_risk">
                             <template for:each={riskFlags} for:item="flag">
-                              <li key={flag.key} class="inline-parts">
+                              <li key={flag.key} class="inline-parts call-row">
                                 <template
                                   for:each={flag.segments}
                                   for:item="segment"
@@ -564,6 +597,15 @@
                                       </lightning-formatted-rich-text>
                                     </template>
                                   </span>
+                                </template>
+                                <template lwc:if={flag.fromCall}>
+                                  <lightning-icon
+                                    class="call-insight-icon"
+                                    icon-name="utility:call"
+                                    size="xx-small"
+                                    alternative-text={labels.fromCall}
+                                    title={labels.fromCall}
+                                  ></lightning-icon>
                                 </template>
                               </li>
                             </template>
@@ -635,7 +677,7 @@
                       <h2 class="panel-title">Next Best Actions</h2>
                       <ol class="action-list">
                         <template for:each={nextActions} for:item="action">
-                          <li key={action.key} class="action-card">
+                          <li key={action.key} class="action-card call-row">
                             <span class="action-number">{action.number}</span>
                             <p class="action-text inline-parts">
                               <template
@@ -678,6 +720,15 @@
                                 </span>
                               </template>
                             </p>
+                            <template lwc:if={action.fromCall}>
+                              <lightning-icon
+                                class="call-insight-icon"
+                                icon-name="utility:call"
+                                size="xx-small"
+                                alternative-text={labels.fromCall}
+                                title={labels.fromCall}
+                              ></lightning-icon>
+                            </template>
                           </li>
                         </template>
                       </ol>
@@ -689,7 +740,7 @@
                       <h2 class="panel-title">Close Plan</h2>
                       <ul class="timeline">
                         <template for:each={closePlan} for:item="step">
-                          <li key={step.key}>
+                          <li key={step.key} class="call-row">
                             <template lwc:if={step.hasLabel}>
                               <span class="timeline-label">
                                 <template
@@ -756,6 +807,15 @@
                                 </span>
                               </template>
                             </span>
+                            <template lwc:if={step.fromCall}>
+                              <lightning-icon
+                                class="call-insight-icon"
+                                icon-name="utility:call"
+                                size="xx-small"
+                                alternative-text={labels.fromCall}
+                                title={labels.fromCall}
+                              ></lightning-icon>
+                            </template>
                           </li>
                         </template>
                       </ul>
@@ -767,7 +827,7 @@
                       <h2 class="panel-title">Post-Close Actions</h2>
                       <ul class="timeline">
                         <template for:each={postCloseActions} for:item="step">
-                          <li key={step.key}>
+                          <li key={step.key} class="call-row">
                             <template lwc:if={step.hasLabel}>
                               <span class="timeline-label">
                                 <template
@@ -834,6 +894,15 @@
                                 </span>
                               </template>
                             </span>
+                            <template lwc:if={step.fromCall}>
+                              <lightning-icon
+                                class="call-insight-icon"
+                                icon-name="utility:call"
+                                size="xx-small"
+                                alternative-text={labels.fromCall}
+                                title={labels.fromCall}
+                              ></lightning-icon>
+                            </template>
                           </li>
                         </template>
                       </ul>
@@ -849,7 +918,7 @@
                       <h2 class="panel-title">{section.title}</h2>
                       <ul class="signal-list">
                         <template for:each={section.items} for:item="item">
-                          <li key={item.key} class="inline-parts">
+                          <li key={item.key} class="inline-parts call-row">
                             <template
                               for:each={item.segments}
                               for:item="segment"
@@ -885,6 +954,15 @@
                                   </lightning-formatted-rich-text>
                                 </template>
                               </span>
+                            </template>
+                            <template lwc:if={item.fromCall}>
+                              <lightning-icon
+                                class="call-insight-icon"
+                                icon-name="utility:call"
+                                size="xx-small"
+                                alternative-text={labels.fromCall}
+                                title={labels.fromCall}
+                              ></lightning-icon>
                             </template>
                           </li>
                         </template>

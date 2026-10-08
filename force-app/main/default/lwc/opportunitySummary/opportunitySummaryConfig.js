@@ -63,6 +63,7 @@ import pdfSources from "@salesforce/label/c.OpportunitySummaryPdfSources";
 import pdfSearches from "@salesforce/label/c.OpportunitySummaryPdfSearches";
 import pdfRelevance from "@salesforce/label/c.OpportunitySummaryPdfRelevance";
 import pdfAction from "@salesforce/label/c.OpportunitySummaryPdfAction";
+import fromCall from "@salesforce/label/c.OpportunitySummaryFromCall";
 
 const DEFAULT_RESEARCH_GROUPS = [
   { kind: "leadership", label: "Current Leadership" },
@@ -184,6 +185,7 @@ export function getUiLabels() {
     searchLimitation,
     genericError,
     emptyMessage,
+    fromCall,
     missingRecord,
     supplementalHelper,
     researchHelper,

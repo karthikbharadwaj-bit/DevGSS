@@ -6,6 +6,7 @@ import { createElement } from "lwc";
 import * as summaryConfig from "../opportunitySummaryConfig";
 import * as pdfDownload from "../opportunitySummaryPdfDownload";
 import OpportunitySummary, {
+  callInsightKeys,
   citedEvidenceIds,
   buildDateLabel,
   buildDateParts,
@@ -2170,5 +2171,117 @@ describe("opportunitySummary GCP case links stay as they were", () => {
         (label) => label.textContent
       )
     ).toEqual(["Products"]);
+  });
+});
+
+describe("opportunitySummary call insights", () => {
+  function callInsightResponse(callInsights) {
+    const value = {
+      success: true,
+      cards: [
+        {
+          title: "Overall Deal Score",
+          cardVariant: "score",
+          badge: "74/100 (Healthy)",
+          items: ["Champion confirmed budget on the call"]
+        },
+        {
+          title: "Executive Summary",
+          items: ["Healthy deal", " ", "Buyer needs 400 seats by March"]
+        },
+        { title: "Risk Flags", items: ["No signatory", "Legal review pending"] }
+      ]
+    };
+    if (callInsights !== undefined) {
+      value.call_insights = callInsights;
+    }
+    return JSON.stringify(value);
+  }
+
+  function flaggedTexts(root, selector) {
+    return Array.from(root.querySelectorAll(selector))
+      .filter((row) => row.querySelector(".call-insight-icon"))
+      .map((row) =>
+        Array.from(row.querySelectorAll("lightning-formatted-rich-text"))
+          .map((part) => part.value)
+          .join("")
+          .trim()
+      );
+  }
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    localStorage.clear();
+    jest.clearAllMocks();
+  });
+
+  it("marks only the lines named by section and index", async () => {
+    const element = await createComponent(
+      callInsightResponse([
+        // Index 2 is the third item; the blank second item must not shift it.
+        { section: "Executive Summary", index: 2 },
+        { section: "Risk Flags", index: 0 },
+        // Score item 0 became the badge, so item 1 is the first note.
+        { section: "Overall Deal Score", index: 1 }
+      ])
+    );
+    const root = element.shadowRoot;
+
+    expect(flaggedTexts(root, ".fact-row")).toEqual([
+      "Buyer needs 400 seats by March"
+    ]);
+    expect(flaggedTexts(root, '[data-summary-section="risk"] li')).toEqual([
+      "No signatory"
+    ]);
+    expect(flaggedTexts(root, ".score-note")).toEqual([
+      "Champion confirmed budget on the call"
+    ]);
+    const icon = root.querySelector(".call-insight-icon");
+    expect(icon.iconName).toBe("utility:call");
+    expect(icon.size).toBe("xx-small");
+    expect(icon.alternativeText).toBe(
+      "From a recorded customer call (RingSense)"
+    );
+    expect(root.querySelector(".ai-grid").classList).toContain(
+      "has-call-insights"
+    );
+  });
+
+  it("keeps today's layout when call_insights is absent or empty", async () => {
+    for (const callInsights of [undefined, []]) {
+      // eslint-disable-next-line no-await-in-loop
+      const element = await createComponent(callInsightResponse(callInsights));
+      const root = element.shadowRoot;
+
+      expect(root.querySelectorAll(".call-insight-icon")).toHaveLength(0);
+      expect(root.querySelector(".ai-grid").classList).not.toContain(
+        "has-call-insights"
+      );
+      document.body.removeChild(element);
+    }
+  });
+
+  it("caches call_insights with the summary", async () => {
+    const callInsights = [{ section: "Risk Flags", index: 1 }];
+    await createComponent(callInsightResponse(callInsights));
+
+    const entry = JSON.parse(localStorage.getItem(CACHE_KEY));
+    expect(entry.summary.call_insights).toEqual(callInsights);
+  });
+
+  it("ignores malformed call_insights entries", () => {
+    expect([
+      ...callInsightKeys([
+        { section: "Risk Flags", index: 0 },
+        { section: "Risk Flags", index: "1" },
+        { section: "Risk Flags", index: -1 },
+        { section: 7, index: 0 },
+        null,
+        "Risk Flags|2"
+      ])
+    ]).toEqual(["risk flags|0"]);
+    expect(callInsightKeys("Executive Summary").size).toBe(0);
   });
 });

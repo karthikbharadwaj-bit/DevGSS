@@ -124,6 +124,7 @@ import researchKindLeadership from "@salesforce/label/c.AccountSummaryResearchKi
 import evidenceButton from "@salesforce/label/c.AccountSummaryEvidenceButton";
 import researchCitedHeading from "@salesforce/label/c.AccountSummaryResearchCitedHeading";
 import researchAdditionalHeading from "@salesforce/label/c.AccountSummaryResearchAdditionalHeading";
+import fromCall from "@salesforce/label/c.AccountSummaryFromCall";
 import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
 import listRowLimit from "@salesforce/label/c.AccountSummaryListRowLimit";
@@ -186,6 +187,7 @@ export function getUiLabels() {
   return {
     researchCitedHeading,
     researchAdditionalHeading,
+    fromCall,
     genericError,
     missingRecord,
     emptyMessage,

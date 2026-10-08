@@ -134,6 +134,35 @@ function toStrings(value) {
     .filter(Boolean);
 }
 
+// Keeps each line's position in the service's list, so call_insights indexes still
+// match after blank lines are dropped.
+function toIndexedStrings(value) {
+  const list = Array.isArray(value) ? value : value == null ? [] : [value];
+  return list
+    .map((item, index) => ({
+      text: (item == null ? "" : String(item)).trim(),
+      index
+    }))
+    .filter((entry) => entry.text);
+}
+
+// call_insights entries are { section, index }: the exact opportunity_summary key and
+// the 0-based position in that section's list. Anything malformed is ignored.
+export function callInsightKeys(callInsights) {
+  const keys = new Set();
+  (Array.isArray(callInsights) ? callInsights : []).forEach((insight) => {
+    if (
+      isObject(insight) &&
+      typeof insight.section === "string" &&
+      Number.isInteger(insight.index) &&
+      insight.index >= 0
+    ) {
+      keys.add(`${normalizeTitle(insight.section)}|${insight.index}`);
+    }
+  });
+  return keys;
+}
+
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -1121,6 +1150,7 @@ export default class OpportunitySummary extends LightningElement {
   postCloseActions = [];
   history = [];
   extraSections = [];
+  hasCallInsights = false;
   dealState = normalizeDealState(null);
   _salesforceFields = null;
   researchGroups = [];
@@ -1257,6 +1287,12 @@ export default class OpportunitySummary extends LightningElement {
 
   get isClosedDeal() {
     return this.dealState.isClosed === true;
+  }
+
+  // The icon slot is reserved only when a line is flagged, so summaries without
+  // call insights keep today's layout exactly.
+  get aiGridClass() {
+    return this.hasCallInsights ? "ai-grid has-call-insights" : "ai-grid";
   }
 
   // Closed deals have no open risks or win factors to manage.
@@ -1528,6 +1564,7 @@ export default class OpportunitySummary extends LightningElement {
     this.postCloseActions = [];
     this.history = [];
     this.extraSections = [];
+    this.hasCallInsights = false;
     this.dealState = normalizeDealState(null);
     this._salesforceFields = null;
     this._referencesBySection = new Map();
@@ -1611,7 +1648,8 @@ export default class OpportunitySummary extends LightningElement {
         "opportunity_enrichment",
         "deal_state",
         "salesforce_fields",
-        "record_references"
+        "record_references",
+        "call_insights"
       ].forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(parsedResponse, key)) {
           summary[key] = parsedResponse[key];
@@ -1729,6 +1767,7 @@ export default class OpportunitySummary extends LightningElement {
     this.supplementalRelationshipToOpportunity =
       research.supplementalRelationshipToOpportunity;
     this._findingById = research.findingById;
+    const callKeys = callInsightKeys(extras.call_insights);
 
     rawCards.forEach((raw, index) => {
       if (!raw || typeof raw !== "object") {
@@ -1736,44 +1775,91 @@ export default class OpportunitySummary extends LightningElement {
       }
 
       const title = raw.title || raw.heading || raw.name || "";
-      const items = toStrings(raw.items || raw.points || raw.bullets);
+      const indexed = toIndexedStrings(raw.items || raw.points || raw.bullets);
+      const items = indexed.map((entry) => entry.text);
+      // Apex moves the first score line into the badge, so the rest sit one place later.
+      const indexOffset = raw.cardVariant === "score" ? 1 : 0;
+      const fromCall = indexed.map((entry) =>
+        callKeys.has(`${normalizeTitle(title)}|${entry.index + indexOffset}`)
+      );
       const badge = (raw.badge || raw.label || "").toString().trim();
       const references =
         this._referencesBySection.get(normalizeTitle(title)) || [];
 
       switch (bucketFor(title)) {
         case "score":
-          this.scoreCard = this._buildScoreCard(badge, items, references);
+          this.scoreCard = this._buildScoreCard(
+            badge,
+            items,
+            references,
+            fromCall
+          );
           break;
         case "executive":
           this.executiveFacts = items.map((text, i) =>
-            this._buildSummaryLine(text, `fact-${i}`, true, references)
+            this._buildSummaryLine(
+              text,
+              `fact-${i}`,
+              true,
+              references,
+              fromCall[i]
+            )
           );
           break;
         case "win":
           this.winFactors = items.map((text, i) =>
-            this._buildSummaryLine(text, `win-${i}`, false, references)
+            this._buildSummaryLine(
+              text,
+              `win-${i}`,
+              false,
+              references,
+              fromCall[i]
+            )
           );
           break;
         case "risk":
           this.riskFlags = items.map((text, i) =>
-            this._buildSummaryLine(text, `risk-${i}`, false, references)
+            this._buildSummaryLine(
+              text,
+              `risk-${i}`,
+              false,
+              references,
+              fromCall[i]
+            )
           );
           break;
         case "actions":
           this.nextActions = items.map((text, i) => ({
             number: i + 1,
-            ...this._buildSummaryLine(text, `action-${i}`, false, references)
+            ...this._buildSummaryLine(
+              text,
+              `action-${i}`,
+              false,
+              references,
+              fromCall[i]
+            )
           }));
           break;
         case "plan":
           this.closePlan = items.map((text, i) =>
-            this._buildSummaryLine(text, `plan-${i}`, true, references)
+            this._buildSummaryLine(
+              text,
+              `plan-${i}`,
+              true,
+              references,
+              fromCall[i]
+            )
           );
           break;
         case "postclose":
           this.postCloseActions = items.map((text, i) =>
-            this._buildSummaryLine(text, `postclose-${i}`, true, references)
+            this._buildSummaryLine(
+              text,
+              `postclose-${i}`,
+              true,
+              references,
+              fromCall[i]
+            )
           );
           break;
         case "history":
@@ -1795,7 +1881,8 @@ export default class OpportunitySummary extends LightningElement {
                     text,
                     `extra-${index}-${i}`,
                     false,
-                    references
+                    references,
+                    fromCall[i]
                   )
                 )
               }
@@ -1803,15 +1890,34 @@ export default class OpportunitySummary extends LightningElement {
           }
       }
     });
+
+    const lines = [
+      ...(this.scoreCard ? this.scoreCard.notes : []),
+      ...this.executiveFacts,
+      ...this.winFactors,
+      ...this.riskFlags,
+      ...this.nextActions,
+      ...this.closePlan,
+      ...this.postCloseActions,
+      ...this.extraSections.flatMap((section) => section.items)
+    ];
+    this.hasCallInsights = lines.some((line) => line.fromCall);
   }
 
-  _buildSummaryLine(text, key, hasStructuredLabel, references = []) {
+  _buildSummaryLine(
+    text,
+    key,
+    hasStructuredLabel,
+    references = [],
+    fromCall = false
+  ) {
     const line =
       hasStructuredLabel && !delimiterInsideReference(text, references)
         ? splitLabel(text)
         : { label: "", text, hasLabel: false };
     return {
       key,
+      fromCall: fromCall === true,
       ...line,
       labelSegments: line.hasLabel
         ? linkRecordReferences(line.label, references, `${key}-label`)
@@ -1857,9 +1963,10 @@ export default class OpportunitySummary extends LightningElement {
 
   // The score arrives as free text such as "76/100 (Healthy)", with the
   // headline in either the badge or the first bullet depending on the payload.
-  _buildScoreCard(badge, items, references = []) {
+  _buildScoreCard(badge, items, references = [], fromCall = []) {
     const headline = badge || items[0] || "";
     const notes = badge ? items : items.slice(1);
+    const noteFromCall = badge ? fromCall : fromCall.slice(1);
 
     const scoreMatch = /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/.exec(headline);
     const labelMatch = /\(([^)]+)\)/.exec(headline);
@@ -1885,6 +1992,7 @@ export default class OpportunitySummary extends LightningElement {
       notes: notes.map((text, i) => ({
         key: `score-note-${i}`,
         text,
+        fromCall: noteFromCall[i] === true,
         segments: linkRecordReferences(text, references, `score-note-${i}`)
       }))
     };
