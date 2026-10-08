@@ -266,10 +266,38 @@ describe("c-ai-account-summary", () => {
     const element = await openWithHistoryEvents(25);
     const scroller = query(element, "[data-history-scroll]");
 
-    expect(scroller.className).toBe("history-scroll history-scroll_capped");
+    expect(scroller.className).toBe(
+      "history-scroll history-scroll_capped history-scroll_faded"
+    );
     expect(scroller.getAttribute("tabindex")).toBe("0");
     expect(scroller.getAttribute("aria-label")).toBe("Account history");
     expect(scroller.querySelectorAll("[data-history-event]")).toHaveLength(25);
+  });
+
+  function scrollHistory(scroller, scrollTop) {
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      value: 713
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 433
+    });
+    scroller.scrollTop = scrollTop;
+    scroller.dispatchEvent(new CustomEvent("scroll"));
+  }
+
+  it("drops the history fade at the end and brings it back on scroll up", async () => {
+    const element = await openWithHistoryEvents(25);
+    const scroller = query(element, "[data-history-scroll]");
+
+    scrollHistory(scroller, 280);
+    await flushPromises();
+    expect(scroller.classList.contains("history-scroll_faded")).toBe(false);
+
+    scrollHistory(scroller, 100);
+    await flushPromises();
+    expect(scroller.classList.contains("history-scroll_faded")).toBe(true);
   });
 
   it("stops the history card at the bottom of the tenth entry", async () => {

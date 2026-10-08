@@ -59,6 +59,7 @@ export default class AiAccountSummary extends LightningElement {
   /* Lists the user expanded with View more; cleared whenever the modal opens. */
   expandedLists = [];
   listRowLimits = getListRowLimits();
+  isHistoryScrolledToEnd = false;
 
   generatedAt = null;
   generatedLabel = "";
@@ -186,9 +187,21 @@ export default class AiAccountSummary extends LightningElement {
   }
 
   get historyScrollClass() {
-    return this.isHistoryCapped
+    if (!this.isHistoryCapped) {
+      return "history-scroll";
+    }
+    return this.isHistoryScrolledToEnd
       ? "history-scroll history-scroll_capped"
-      : "history-scroll";
+      : "history-scroll history-scroll_capped history-scroll_faded";
+  }
+
+  /* The fade stays only while entries remain below, so the last entry is never left faded. */
+  handleHistoryScroll(event) {
+    const { scrollTop, clientHeight, scrollHeight } = event.currentTarget;
+    const isAtEnd = scrollTop + clientHeight >= scrollHeight - 2;
+    if (isAtEnd !== this.isHistoryScrolledToEnd) {
+      this.isHistoryScrolledToEnd = isAtEnd;
+    }
   }
 
   /* A scrolling region must be reachable by keyboard so it can be scrolled without a mouse. */
@@ -334,6 +347,7 @@ export default class AiAccountSummary extends LightningElement {
       return;
     }
     this.expandedLists = [];
+    this.isHistoryScrolledToEnd = false;
     this.isModalOpen = true;
     this._logView();
     this._bindEscape();
