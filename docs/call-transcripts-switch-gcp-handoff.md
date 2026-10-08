@@ -15,7 +15,7 @@ Each request body has one new top-level field. It is always present, and it is a
 
 - `GCP_Feature_Toggle__c` is a hierarchy custom setting, so an admin can flip either switch without a deploy. The setting resolves for the viewing user, then the profile, then the org default.
 - Both fields default to `false`. With no setting record at all, Salesforce sends `false`.
-- Nothing else in either request changed. The Opportunity request still sends `recordId`, `opportunity.accountId`, `activities.tasks[].id` / `description` and `conversationEvidence`. The Account request still sends `recordId`.
+- The Opportunity request still sends `recordId`, `opportunity.accountId`, `activities.tasks[].id` / `description` and `conversationEvidence`. The Account request also sends `recordId`, plus new activity row fields and a wider activity filter (see the 2026-10-08 update below).
 - Salesforce sends no credentials and calls nothing new.
 
 Sample (Ids masked, other fields unchanged and left out):
@@ -31,6 +31,41 @@ Sample (Ids masked, other fields unchanged and left out):
   "enableAccountSummaryEnrichment": true,
   "enableAccountSummaryCallTranscripts": false, ... }
 ```
+
+## Update 2026-10-08: Account Summary activity rows
+
+Deployed to DevGss in deploy `0AfTH00000IOG650AH` (20/20 tests passed).
+
+- **New fields on each `tasks` and `events` row:**
+  - `id`: the 18-character record Id.
+  - `subject`.
+  - `createdDate`: an ISO-8601 datetime.
+  - `description`: cut to the first 1000 characters, with URLs left intact.
+  - Any of the four can be `null`, for example when the user can't read the field. DevGss clears `Event.Subject` when an event is saved, so event `subject` is often `null` there.
+- **Which activities are selected:** Tasks and Events now match on `AccountId = <account>` instead of `WhatId = <account>`. Activities logged on the account's opportunities, cases and contacts are now included. Before this change, Bank of America's call Task `00TTH00000MtVsv2AF` and both opportunity Events were missing because they are logged on the opportunity.
+- **Unchanged:**
+  - Caps: 5 tasks and 5 events, latest `ActivityDate` first.
+  - Date filter: `ActivityDate <= TODAY`, which includes today.
+  - Tasks with subtype `ListEmail` are still excluded.
+  - Activities with no `ActivityDate` are still left out.
+
+Sample `tasks` row (Ids masked):
+
+```json
+{
+  "id": "00TXXXXXXXXXXXXXXX",
+  "subject": "Call with Bank of America",
+  "createdDate": "2026-10-08T04:30:29.000Z",
+  "description": "RingSense call details link - https://ringsense.ops.ringcentral.com/calls/<UUID>\n…",
+  "activityDate": "2026-10-08",
+  "taskSubtype": "Call"
+}
+```
+
+New tests in `Test_GCPCalloutForAccountSummary`:
+
+- `shouldSendRingSenseFieldsOnTaskAndEventRows`: a Task and an Event logged on the account's opportunity are both sent, with all four fields and a 1000-character description that keeps the link.
+- `shouldSerializeTasksAsEmptyListWhenAccountHasNoTasks`: with no Tasks, the request still sends `tasks: []`.
 
 ## What Salesforce expects from GCP
 
