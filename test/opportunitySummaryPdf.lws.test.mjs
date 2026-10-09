@@ -10,7 +10,7 @@ import { buildPdfDocument } from "../force-app/main/default/lwc/opportunitySumma
 // `new Function("return this")()` returns undefined. Under those rules stock
 // pdfmake failed to initialize and LWS rejected loadScript with `undefined`.
 const resource = new URL(
-  "../force-app/main/default/staticresources/OpportunitySummaryPdf/",
+  "../force-app/main/default/staticresources/PdfRenderer/",
   import.meta.url
 );
 const source = (path) => readFileSync(new URL(path, resource), "utf8");

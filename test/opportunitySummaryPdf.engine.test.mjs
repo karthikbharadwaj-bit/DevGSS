@@ -5,9 +5,9 @@ import { createRequire } from "node:module";
 import { buildPdfDocument } from "../force-app/main/default/lwc/opportunitySummary/opportunitySummaryPdf.js";
 
 const require = createRequire(import.meta.url);
-const pdfMake = require("../force-app/main/default/staticresources/OpportunitySummaryPdf/build/pdfmake.min.js");
+const pdfMake = require("../force-app/main/default/staticresources/PdfRenderer/build/pdfmake.min.js");
 pdfMake.addVirtualFileSystem(
-  require("../force-app/main/default/staticresources/OpportunitySummaryPdf/build/vfs_fonts.js")
+  require("../force-app/main/default/staticresources/PdfRenderer/build/vfs_fonts.js")
 );
 const renderBuffer = (definition) =>
   new Promise((resolve, reject) => {

@@ -1,5 +1,5 @@
 import { loadScript } from "lightning/platformResourceLoader";
-import pdfResource from "@salesforce/resourceUrl/OpportunitySummaryPdf";
+import pdfResource from "@salesforce/resourceUrl/PdfRenderer";
 
 let rendererPromise;
 let failedAttempts = 0;

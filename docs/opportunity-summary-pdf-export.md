@@ -26,7 +26,7 @@ HTML or passes response objects directly to the PDF engine. Only HTTP(S) URLs
 without credentials become link annotations. Raw grounding URLs are not link text.
 
 `opportunitySummaryPdfDownload.js` loads three scripts from the
-`OpportunitySummaryPdf` static resource on the first Download PDF click, in this
+`PdfRenderer` static resource on the first Download PDF click, in this
 order: `lws-global-this.js` (project shim), unmodified pinned **pdfmake 0.2.23**,
 and its Roboto `vfs_fonts.js`. The renderer is reused for later downloads. Each
 `platformResourceLoader` stage has a 30-second timeout; rendering has a separate
@@ -78,7 +78,7 @@ appropriately. Library provenance and licenses are retained in the static resour
 ## Components
 
 - Modified LWC bundle: `opportunitySummary`.
-- New static resource: `OpportunitySummaryPdf` (approximately 1.9 MB unpacked).
+- New static resource: `PdfRenderer` (approximately 1.9 MB unpacked).
 - 23 new UI labels, prefixed `OpportunitySummaryPdf`: `Download`, `Preparing`,
   `Error`, `Started`, `Title`, `Snapshot`, `Exported`, `Record`, `Footer`, `Stage`,
   `Score`, `Executive`, `History`, `Win`, `Risk`, `Actions`, `Plan`, `Research`,

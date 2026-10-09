@@ -1,4 +1,4 @@
-# Opportunity Summary PDF renderer
+# Shared PDF renderer
 
 Vendored, unmodified browser distribution of pdfmake 0.2.23 (MIT):
 https://github.com/bpampuch/pdfmake/releases/tag/0.2.23
