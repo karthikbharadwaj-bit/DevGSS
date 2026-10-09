@@ -129,6 +129,18 @@ import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
 import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
 import listRowLimit from "@salesforce/label/c.AccountSummaryListRowLimit";
 import listRowsInitial from "@salesforce/label/c.AccountSummaryListRowsInitial";
+import pdfDownload from "@salesforce/label/c.AccountSummaryPdfDownload";
+import pdfPreparing from "@salesforce/label/c.AccountSummaryPdfPreparing";
+import pdfError from "@salesforce/label/c.AccountSummaryPdfError";
+import pdfStarted from "@salesforce/label/c.AccountSummaryPdfStarted";
+import pdfTitle from "@salesforce/label/c.AccountSummaryPdfTitle";
+import pdfSnapshot from "@salesforce/label/c.AccountSummaryPdfSnapshot";
+import pdfExported from "@salesforce/label/c.AccountSummaryPdfExported";
+import pdfDataAsOf from "@salesforce/label/c.AccountSummaryPdfDataAsOf";
+import pdfRecord from "@salesforce/label/c.AccountSummaryPdfRecord";
+import pdfFooter from "@salesforce/label/c.AccountSummaryPdfFooter";
+import pdfShowing from "@salesforce/label/c.AccountSummaryPdfShowing";
+import pdfSourceLink from "@salesforce/label/c.AccountSummaryPdfSourceLink";
 
 // Labels are text. Reject units, locale separators, booleans and non-finite numbers.
 export function positiveNumber(
@@ -311,7 +323,19 @@ export function getUiLabels() {
     researchKindBusinessEvent,
     researchKindFinancialSignal,
     researchKindLeadership,
-    evidenceButton
+    evidenceButton,
+    pdfDownload,
+    pdfPreparing,
+    pdfError,
+    pdfStarted,
+    pdfTitle,
+    pdfSnapshot,
+    pdfExported,
+    pdfDataAsOf,
+    pdfRecord,
+    pdfFooter,
+    pdfShowing,
+    pdfSourceLink
   };
 }
 

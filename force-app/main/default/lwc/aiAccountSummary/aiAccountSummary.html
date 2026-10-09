@@ -150,6 +150,24 @@
               </h2>
             </div>
             <div class="ai-modal__tools">
+              <template lwc:if={canExportPdf}>
+                <button
+                  type="button"
+                  class="pdf-download-button"
+                  data-download-pdf
+                  onclick={handleDownloadPdf}
+                  disabled={isExportingPdf}
+                  aria-busy={isExportingPdf}
+                >
+                  <lightning-icon
+                    icon-name="utility:download"
+                    size="xx-small"
+                    variant="inverse"
+                    alternative-text=""
+                  ></lightning-icon>
+                  <span>{pdfButtonLabel}</span>
+                </button>
+              </template>
               <template lwc:if={view.asOfLabel}>
                 <span class="meta-chip">{view.asOfLabel}</span>
               </template>
@@ -174,6 +192,31 @@
           </header>
 
           <div class="slds-modal__content ai-modal__body">
+            <a
+              data-pdf-anchor
+              class="slds-hide"
+              tabindex="-1"
+              aria-hidden="true"
+            ></a>
+            <p class="slds-assistive-text" role="status" aria-live="polite">
+              {pdfStatus}
+            </p>
+            <template lwc:if={pdfError}>
+              <div
+                class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small"
+                role="alert"
+                data-pdf-error
+              >
+                <lightning-icon
+                  icon-name="utility:error"
+                  size="x-small"
+                  variant="inverse"
+                  alternative-text=""
+                  class="slds-m-right_small"
+                ></lightning-icon>
+                <span>{pdfError}</span>
+              </div>
+            </template>
             <template lwc:if={showEmptyState}>
               <div class="page-status">
                 <p class="status-text">{labels.emptyMessage}</p>

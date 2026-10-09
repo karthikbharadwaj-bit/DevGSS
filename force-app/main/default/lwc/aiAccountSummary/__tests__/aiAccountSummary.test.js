@@ -4,6 +4,7 @@ import AiAccountSummary from "c/aiAccountSummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
 import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
+import * as pdfDownload from "../aiAccountSummaryPdfDownload";
 
 jest.mock(
   "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout",
@@ -517,6 +518,82 @@ describe("c-ai-account-summary", () => {
     await flushPromises();
 
     expect(query(element, "[role=dialog]")).toBeNull();
+  });
+
+  describe("PDF download", () => {
+    async function openSummary() {
+      const element = await mount();
+      await generate(element);
+      query(element, "[data-view-summary]").click();
+      await flushPromises();
+      return element;
+    }
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("does not load the PDF renderer until Download PDF is clicked", async () => {
+      const load = jest
+        .spyOn(pdfDownload, "loadPdfRenderer")
+        .mockResolvedValue({});
+      const element = await openSummary();
+
+      expect(query(element, "[data-download-pdf]").textContent).toContain(
+        "Download PDF"
+      );
+      expect(load).not.toHaveBeenCalled();
+    });
+
+    it("downloads the displayed summary without another callout", async () => {
+      const render = jest
+        .spyOn(pdfDownload, "renderPdf")
+        .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+      const download = jest
+        .spyOn(pdfDownload, "downloadPdf")
+        .mockImplementation(() => {});
+      const element = await openSummary();
+
+      query(element, "[data-download-pdf]").click();
+      await flushPromises();
+
+      expect(render).toHaveBeenCalledTimes(1);
+      expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+      const documentDefinition = JSON.stringify(render.mock.calls[0][1]);
+      [
+        "Miles Ahead Brands, LLC",
+        "Renewal 2026 is 122 days overdue",
+        "Bring the close date current",
+        "Provisioning for Renewal",
+        "Jaeline Dure",
+        "Opened a new depot."
+      ].forEach((value) => expect(documentDefinition).toContain(value));
+      expect(download).toHaveBeenCalledTimes(1);
+      expect(download.mock.calls[0][2]).toMatch(
+        /^Account Summary - Miles Ahead Brands, LLC - \d{4}-\d{2}-\d{2}\.pdf$/
+      );
+      expect(
+        query(element, '.ai-modal__body [role="status"]').textContent.trim()
+      ).toBe("PDF download started.");
+    });
+
+    it("shows an error and keeps the summary open when rendering fails", async () => {
+      jest.spyOn(pdfDownload, "renderPdf").mockRejectedValue(new Error("x"));
+      const download = jest
+        .spyOn(pdfDownload, "downloadPdf")
+        .mockImplementation(() => {});
+      const element = await openSummary();
+
+      query(element, "[data-download-pdf]").click();
+      await flushPromises();
+
+      expect(download).not.toHaveBeenCalled();
+      expect(query(element, "[data-pdf-error]").textContent).toContain(
+        "couldn’t download the PDF"
+      );
+      expect(query(element, "[data-download-pdf]").disabled).toBe(false);
+      expect(query(element, '[data-summary-section="header"]')).not.toBeNull();
+    });
   });
 
   describe("call insights", () => {

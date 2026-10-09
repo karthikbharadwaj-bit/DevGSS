@@ -12,7 +12,13 @@ import {
   getLoadingMessages,
   getUiLabels
 } from "./aiAccountSummaryConfig";
-import { buildAccountViewModel, isObject } from "./aiAccountSummaryModel";
+import {
+  buildAccountViewModel,
+  formatDate,
+  isObject
+} from "./aiAccountSummaryModel";
+import { buildPdfDocument, pdfFilename } from "./aiAccountSummaryPdf";
+import { renderPdf, downloadPdf } from "./aiAccountSummaryPdfDownload";
 
 const SUBFEATURE = "Account Summary";
 const LOADING_INTERVAL_MS = 3900;
@@ -31,6 +37,8 @@ const RELATED_LIST_OPPORTUNITIES = "Opportunities";
 const RELATED_LIST_CASES = "Cases";
 /* Account history grows with its entries up to this many, then scrolls inside the card. */
 const HISTORY_VISIBLE_EVENTS = 10;
+const ACCOUNT_FIELD_ROW = "account";
+const EMPTY_VALUE = "—";
 
 function storageEntryBytes(key, value) {
   return (String(key).length + String(value).length) * 2;
@@ -56,6 +64,10 @@ export default class AiAccountSummary extends LightningElement {
   hasFetched = false;
   aihViewLogged = false;
   view = null;
+  asOfDate = "";
+  isExportingPdf = false;
+  pdfError = "";
+  pdfStatus = "";
   /* Lists the user expanded with View more; cleared whenever the modal opens. */
   expandedLists = [];
   listRowLimits = getListRowLimits();
@@ -75,6 +87,7 @@ export default class AiAccountSummary extends LightningElement {
   _requestToken = 0;
   _highlightTimeoutId = null;
   _highlightedTarget = null;
+  _pdfToken = 0;
 
   @api
   get recordId() {
@@ -93,6 +106,7 @@ export default class AiAccountSummary extends LightningElement {
     this.errorMessage = "";
     this.isModalOpen = false;
     this.view = null;
+    this._cancelPdfExport();
     this._stopClock();
     this._stopElapsedClock();
     this._stopLoadingMessages();
@@ -118,6 +132,7 @@ export default class AiAccountSummary extends LightningElement {
 
   disconnectedCallback() {
     this._isConnected = false;
+    this._cancelPdfExport();
     this._stopClock();
     this._stopElapsedClock();
     this._stopLoadingMessages();
@@ -368,8 +383,83 @@ export default class AiAccountSummary extends LightningElement {
 
   closeModal() {
     this.isModalOpen = false;
+    this._cancelPdfExport();
     this._unbindEscape();
     this._clearEvidenceHighlight();
+  }
+
+  get canExportPdf() {
+    return (
+      this.hasFetched && this.hasContent && !this.isLoading && !this.isError
+    );
+  }
+
+  get pdfButtonLabel() {
+    return this.isExportingPdf
+      ? this.labels.pdfPreparing
+      : this.labels.pdfDownload;
+  }
+
+  get accountName() {
+    const row = this.view
+      ? this.view.header.rows.find((item) => item.key === ACCOUNT_FIELD_ROW)
+      : null;
+    return row && row.value !== EMPTY_VALUE ? row.value : "";
+  }
+
+  _cancelPdfExport() {
+    this._pdfToken += 1;
+    this.isExportingPdf = false;
+    this.pdfError = "";
+    this.pdfStatus = "";
+  }
+
+  async handleDownloadPdf() {
+    if (!this.canExportPdf || this.isExportingPdf || !this.isModalOpen) {
+      return;
+    }
+    const token = ++this._pdfToken;
+    this.isExportingPdf = true;
+    this.pdfError = "";
+    this.pdfStatus = this.labels.pdfPreparing;
+    try {
+      // Snapshot before loading the renderer, so collapsed lists and drawers never change
+      // what is exported and no second GCP call is made.
+      const snapshot = JSON.parse(
+        JSON.stringify({
+          recordId: this.recordId,
+          recordName: this.accountName,
+          recordUrl: `${window.location.origin}/lightning/r/Account/${encodeURIComponent(this.recordId)}/view`,
+          origin: window.location.origin,
+          generatedAt: this.generatedAt,
+          exportedAt: Date.now(),
+          asOfDate: this.asOfDate,
+          view: this.view
+        })
+      );
+      const blob = await renderPdf(
+        this,
+        buildPdfDocument(snapshot, this.labels)
+      );
+      if (token !== this._pdfToken || !this._isConnected || !this.isModalOpen) {
+        return;
+      }
+      downloadPdf(
+        this.template.querySelector("[data-pdf-anchor]"),
+        blob,
+        pdfFilename(snapshot.recordName, snapshot.recordId, snapshot.exportedAt)
+      );
+      this.pdfStatus = this.labels.pdfStarted;
+    } catch {
+      if (token === this._pdfToken && this._isConnected) {
+        this.pdfError = this.labels.pdfError;
+        this.pdfStatus = "";
+      }
+    } finally {
+      if (token === this._pdfToken) {
+        this.isExportingPdf = false;
+      }
+    }
   }
 
   /*
@@ -424,6 +514,7 @@ export default class AiAccountSummary extends LightningElement {
       return;
     }
     this.isModalOpen = false;
+    this._cancelPdfExport();
     this._unbindEscape();
     this.fetchSummary();
   }
@@ -493,6 +584,7 @@ export default class AiAccountSummary extends LightningElement {
 
   _applySummary(response, generatedAt) {
     this.view = buildAccountViewModel(response, this.labels, LOCALE);
+    this.asOfDate = formatDate(response.as_of_date, LOCALE);
     this.hasFetched = true;
     this.generatedAt = generatedAt;
     this._updateGeneratedLabel();
