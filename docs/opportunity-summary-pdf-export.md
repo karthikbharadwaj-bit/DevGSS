@@ -25,7 +25,7 @@ view models. It supports basic bold/italic markup and entities, but never execut
 HTML or passes response objects directly to the PDF engine. Only HTTP(S) URLs
 without credentials become link annotations. Raw grounding URLs are not link text.
 
-`opportunitySummaryPdfDownload.js` loads three scripts from the
+The shared `lwcPdfRenderer` service component (used by both summaries) loads three scripts from the
 `PdfRenderer` static resource on the first Download PDF click, in this
 order: `lws-global-this.js` (project shim), unmodified pinned **pdfmake 0.2.23**,
 and its Roboto `vfs_fonts.js`. The renderer is reused for later downloads. Each
@@ -91,7 +91,7 @@ admin-configured values of previously deployed labels.
 ## Verification
 
 ```sh
-npm run test:unit -- -- --runInBand --runTestsByPath force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummary.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryConfig.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryPdf.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryPdfDownload.test.js
+npm run test:unit -- -- --runInBand --runTestsByPath force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummary.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryConfig.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryPdf.test.js force-app/main/default/lwc/lwcPdfRenderer/__tests__/lwcPdfRenderer.test.js
 node --test test/opportunitySummaryPdf.engine.test.mjs test/opportunitySummaryPdf.lws.test.mjs
 npx eslint force-app/main/default/lwc/opportunitySummary/*.js force-app/main/default/lwc/opportunitySummary/__tests__/*.js
 ```

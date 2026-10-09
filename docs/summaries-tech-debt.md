@@ -47,6 +47,16 @@ to be done by hand in Setup.
       0AfTH00000IPI5p0AH). Salesforce will not delete it while a deployed LWC still
       imports it.
 - [ ] Never delete `PdfRenderer` when rolling back only one summary; both load it.
+- [ ] The new `lwcPdfRenderer` service component must deploy in the same deploy as
+      `opportunitySummary` and `aiAccountSummary`, since both import it (DevGss
+      0AfTH00000IPIU10AP). The same rollback rule applies: keep it while either summary
+      is deployed.
+- [ ] Sixteen Account labels left over from the old fallback tiles were deleted from DevGss
+      with a destructive deploy (0AfTH00000IPHPu0AP). Orgs that received them need the
+      same delete: `AccountSummaryTileRenewal`, `…RenewalPast`, `…Activity`,
+      `…GoingCold`, `…ClosedWon`, `…ClosedWonDetail`, `…RevenueAtRisk`,
+      `…OpenEscalations`, `…Escalations`, `…RedDays`, `…NextStep`, `…Overdue`,
+      `…OverdueDetail`, `…ClosedCases`, `…Dunning` and `AccountSummaryShowingCount`.
 
 ## Needs a person to test in Lightning
 
@@ -58,19 +68,11 @@ to be done by hand in Setup.
 
 ## Can be done on request (no access or decision needed)
 
-- [ ] **Opportunity PDF headings at a page bottom.** A heading can still be left at the
-      bottom of a page. The Account PDF has the fix (move a heading on when less than
-      60pt is left below it); it can be applied to the Opportunity PDF the same way.
-- [ ] **Stage rail in the Opportunity PDF.** The stage rail shows on screen only.
-- [ ] **Shared PDF loader.** `aiAccountSummaryPdfDownload.js` is a copy of
-      `opportunitySummaryPdfDownload.js`, because an LWC cannot import another bundle's
-      internal modules. Move it into one shared service LWC so a loader fix lands once.
-- [ ] **Orphaned Account labels in DevGss.** Sixteen labels removed from source are still
-      in the org: the fallback tile labels (`AccountSummaryTileRenewal`,
-      `…RenewalPast`, `…Activity`, `…GoingCold`, `…ClosedWon`, `…ClosedWonDetail`,
-      `…RevenueAtRisk`, `…OpenEscalations`, `…Escalations`, `…RedDays`, `…NextStep`,
-      `…Overdue`, `…OverdueDetail`, `…ClosedCases`, `…Dunning`) and
-      `AccountSummaryShowingCount`. A destructive deploy removes them.
+- [ ] **Shared PDF building blocks.** Both document builders still carry their own copy of
+      the HTML-to-text converter (`pdfText`) and the rule that keeps headings with their
+      content. They cannot move into `lwcPdfRenderer` yet: the Node renderer tests import
+      `opportunitySummaryPdf.js` directly and cannot resolve `c/` imports. Moving them
+      needs a module alias for those tests first.
 - [ ] **Renderer test names.** `test/opportunitySummaryPdf.engine.test.mjs` and
       `test/opportunitySummaryPdf.lws.test.mjs` now test the shared `PdfRenderer`
       resource; rename them to match.
