@@ -57,6 +57,7 @@ import pdfWin from "@salesforce/label/c.OpportunitySummaryPdfWin";
 import pdfRisk from "@salesforce/label/c.OpportunitySummaryPdfRisk";
 import pdfActions from "@salesforce/label/c.OpportunitySummaryPdfActions";
 import pdfPlan from "@salesforce/label/c.OpportunitySummaryPdfPlan";
+import pdfPostClose from "@salesforce/label/c.OpportunitySummaryPdfPostClose";
 import pdfResearch from "@salesforce/label/c.OpportunitySummaryPdfResearch";
 import pdfSupplemental from "@salesforce/label/c.OpportunitySummaryPdfSupplemental";
 import pdfSources from "@salesforce/label/c.OpportunitySummaryPdfSources";
@@ -167,6 +168,7 @@ export function getUiLabels() {
     pdfRisk,
     pdfActions,
     pdfPlan,
+    pdfPostClose,
     pdfResearch,
     pdfSupplemental,
     pdfSources,

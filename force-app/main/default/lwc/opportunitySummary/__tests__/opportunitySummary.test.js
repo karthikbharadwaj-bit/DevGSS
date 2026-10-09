@@ -1497,6 +1497,50 @@ describe("opportunitySummary closed deals", () => {
     expect(section(element, "actions")).not.toBeNull();
   });
 
+  async function downloadedPdfText(element) {
+    const render = jest
+      .spyOn(pdfDownload, "renderPdf")
+      .mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+    jest.spyOn(pdfDownload, "downloadPdf").mockImplementation(() => {});
+    element.shadowRoot.querySelector("[data-download-pdf]").click();
+    await flushPromises();
+    return JSON.stringify(render.mock.calls[0][1]);
+  }
+
+  it("exports a closed deal PDF with Post-Close Actions and chips but without hidden sections", async () => {
+    const element = await createComponent(closedDealResponse());
+
+    const documentDefinition = await downloadedPdfText(element);
+
+    expect(documentDefinition).toContain("Post-Close Actions");
+    expect(documentDefinition).toContain("Kickoff: ");
+    expect(documentDefinition).toContain("Schedule onboarding by 06.10.2026");
+    ["Order Type: ", "Upsell", "NPI Product Category: ", "AIR"].forEach(
+      (value) => expect(documentDefinition).toContain(value)
+    );
+    expect(documentDefinition).not.toContain("Should stay hidden");
+  });
+
+  it("keeps Win Factors, Risk Flags and Close Plan in an open deal PDF", async () => {
+    const element = await createComponent(
+      JSON.stringify({
+        success: true,
+        cards: [
+          { title: "Executive Summary", items: ["Healthy pipeline"] },
+          { title: "Win Factors", items: ["Strong champion"] },
+          { title: "Risk Flags", items: ["Budget unconfirmed"] },
+          { title: "Close Plan", items: ["Next: Meet the buyer"] }
+        ]
+      })
+    );
+
+    const documentDefinition = await downloadedPdfText(element);
+
+    ["Strong champion", "Budget unconfirmed", "Meet the buyer"].forEach(
+      (value) => expect(documentDefinition).toContain(value)
+    );
+  });
+
   it("hides the tiles for Closed Lost too", async () => {
     const element = await createComponent(
       closedDealResponse({ state: "closed_lost" })

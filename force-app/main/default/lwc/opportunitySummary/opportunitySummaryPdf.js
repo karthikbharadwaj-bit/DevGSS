@@ -231,9 +231,24 @@ export function buildPdfDocument(snapshot, labels) {
     margin: [0, 0, 0, 8] // Increased to separate dense bullet points
   });
 
-  const section = (title, items, { numbered = false, color = BLUE } = {}) => {
+  const chipLine = (chips) => ({
+    text: chips.flatMap((chip, i) => [
+      ...(i ? ["   ·   "] : []),
+      { text: `${plain(chip.label)}: `, bold: true, color: INK },
+      plain(chip.value)
+    ]),
+    style: "meta",
+    margin: [0, -4, 0, 10]
+  });
+
+  const section = (
+    title,
+    items,
+    { numbered = false, color = BLUE, chips = [] } = {}
+  ) => {
     if (!items?.length) return;
     heading(title, color === BLUE ? INK : color);
+    if (chips.length) content.push(chipLine(chips));
     content.push({
       [numbered ? "ol" : "ul"]: items.map(summaryLine),
       ...(numbered ? {} : { type: "square" }),
@@ -381,12 +396,15 @@ export function buildPdfDocument(snapshot, labels) {
     );
   }
 
-  section(labels.pdfExecutive, snapshot.executiveFacts);
+  section(labels.pdfExecutive, snapshot.executiveFacts, {
+    chips: snapshot.salesforceChips || []
+  });
   section(labels.pdfHistory, snapshot.history);
   section(labels.pdfWin, snapshot.winFactors, { color: WIN });
   section(labels.pdfRisk, snapshot.riskFlags, { color: RISK });
   section(labels.pdfActions, snapshot.nextActions, { numbered: true });
   section(labels.pdfPlan, snapshot.closePlan);
+  section(labels.pdfPostClose, snapshot.postCloseActions);
   (snapshot.extraSections || []).forEach((extra) =>
     section(extra.title, extra.items)
   );

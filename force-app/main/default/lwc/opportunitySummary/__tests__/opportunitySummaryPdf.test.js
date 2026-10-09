@@ -25,6 +25,10 @@ function fixture(overrides = {}) {
       headline: "74/100 (Healthy)",
       notes: [{ text: "Grounded score [E1]." }]
     },
+    salesforceChips: [
+      { label: "Order Type", value: "Upsell" },
+      { label: "Sector", value: "Public Sector" }
+    ],
     executiveFacts: [
       {
         label: "Focus",
@@ -36,6 +40,7 @@ function fixture(overrides = {}) {
     riskFlags: [{ text: "Budget unconfirmed" }],
     nextActions: [{ text: "Confirm budget" }],
     closePlan: [{ label: "Next", text: "Meet the buyer" }],
+    postCloseActions: [{ label: "Kickoff", text: "Schedule onboarding" }],
     extraSections: [
       { title: "Other context", items: [{ text: "Additional context" }] }
     ],
@@ -103,11 +108,16 @@ describe("Opportunity Summary PDF document", () => {
     [
       labels.pdfScore,
       labels.pdfExecutive,
+      "Order Type: ",
+      "Public Sector",
       labels.pdfHistory,
       labels.pdfWin,
       labels.pdfRisk,
       labels.pdfActions,
       labels.pdfPlan,
+      labels.pdfPostClose,
+      "Kickoff: ",
+      "Schedule onboarding",
       "Other context",
       labels.pdfResearch,
       labels.pdfSupplemental,
