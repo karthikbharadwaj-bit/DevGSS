@@ -1,4 +1,4 @@
-describe("Opportunity Summary PDF loading and download", () => {
+describe("PDF renderer loading and download", () => {
   let loadScript;
   let renderer;
   let downloadPdf;
@@ -45,7 +45,7 @@ describe("Opportunity Summary PDF loading and download", () => {
     jest.isolateModules(() => {
       loadScript = require("lightning/platformResourceLoader").loadScript;
       loadScript.mockImplementation(lwsLoadScript());
-      const module = require("../opportunitySummaryPdfDownload");
+      const module = require("c/lwcPdfRenderer");
       loadPdfRenderer = module.loadPdfRenderer;
       renderPdf = module.renderPdf;
       downloadPdf = module.downloadPdf;

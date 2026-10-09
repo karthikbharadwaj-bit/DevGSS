@@ -4,7 +4,7 @@ import {
 } from "../../../../../../test/jest-mocks/opportunitySummaryLabels";
 import { createElement } from "lwc";
 import * as summaryConfig from "../opportunitySummaryConfig";
-import * as pdfDownload from "../opportunitySummaryPdfDownload";
+import * as pdfDownload from "c/lwcPdfRenderer";
 import OpportunitySummary, {
   callInsightKeys,
   citedEvidenceIds,

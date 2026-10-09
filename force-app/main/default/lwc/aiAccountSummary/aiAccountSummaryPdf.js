@@ -10,23 +10,23 @@ const PANEL = "#f4f7fb";
 const WIN = "#2e844a";
 const RISK = "#a35200";
 const ALERT = "#ba0517";
-const PAGE_X = 36;
-const CONTENT_WIDTH = 523; // A4 width (595) minus margins (36 * 2)
-const TILES_PER_ROW = 5;
-const HEADER_FIELDS_PER_ROW = 4;
+const PAGE_X = 48;
+const CONTENT_WIDTH = 499; // A4 width (595) minus margins (48 * 2)
+const TILES_PER_ROW = 3;
+const HEADER_FIELDS_PER_ROW = 3;
 const EVIDENCE_ID = /^E\d+$/;
 const HISTORY_EVENT_LIMIT = 20;
 // Room for a heading plus its first couple of rows.
-const MIN_SPACE_AFTER_HEADING = 60;
+const MIN_SPACE_AFTER_HEADING = 90;
 // Stage names such as "5. Agreement" read as a sentence end when a line wraps after the number.
 const NUMBERED_STAGE = /(^|[^\d.])(\d{1,2}\.) (?=[A-Z])/g;
 // Marks the title and rule inside a heading, which never count as content following it.
 const HEADING_PART = 2;
 const BAND_COLORS = { green: WIN, amber: RISK, red: ALERT };
 const BAND_TINTS = { green: "#ebf7e6", amber: "#fef1e6", red: "#feded8" };
-const FLAG_PADDING = 10;
-const BAR_LABEL_WIDTH = 130;
-const BAR_POINTS_WIDTH = 34;
+const FLAG_PADDING = 14;
+const BAR_LABEL_WIDTH = 150;
+const BAR_POINTS_WIDTH = 40;
 const BAR_TRACK_WIDTH = 220;
 const BAR_FILL_COLORS = {
   "bar-fill": WIN,
@@ -172,13 +172,13 @@ export function pdfFilename(recordName, recordId, exportedAt) {
   return `Account Summary - ${name} - ${timestamp(exportedAt).slice(0, 10)}.pdf`;
 }
 
-function eyebrow(text, color = MUTED, margin = [0, 0, 0, 2]) {
+function eyebrow(text, color = MUTED, margin = [0, 0, 0, 4]) {
   return {
     text: plain(text).toUpperCase(),
-    fontSize: 6.5,
+    fontSize: 7.5,
     bold: true,
     color,
-    characterSpacing: 0.8,
+    characterSpacing: 1.2,
     margin
   };
 }
@@ -189,7 +189,7 @@ function rowRuleWidth(index, node) {
 }
 
 function cellPaddingRight(index, node) {
-  return index === node.table.widths.length - 1 ? 0 : 6;
+  return index === node.table.widths.length - 1 ? 0 : 8;
 }
 
 function barRatio(bar) {
@@ -210,8 +210,8 @@ function scoreBarRow(bar) {
           x: 0,
           y: 0,
           w: BAR_TRACK_WIDTH,
-          h: 4,
-          r: 2,
+          h: 6,
+          r: 3,
           color: RULE
         },
         ...(fill > 0
@@ -221,14 +221,14 @@ function scoreBarRow(bar) {
                 x: 0,
                 y: 0,
                 w: fill,
-                h: 4,
-                r: 2,
+                h: 6,
+                r: 3,
                 color: BAR_FILL_COLORS[bar.fillClass] || BLUE
               }
             ]
           : [])
       ],
-      margin: [0, 3.5, 0, 0]
+      margin: [0, 5, 0, 0]
     },
     {
       text: plain(bar.points),
@@ -247,9 +247,9 @@ function bandChip(band, color) {
         [
           {
             text: plain(band).toUpperCase(),
-            fontSize: 6.5,
+            fontSize: 7.5,
             bold: true,
-            characterSpacing: 0.6,
+            characterSpacing: 1,
             color: "#ffffff",
             fillColor: color
           }
@@ -258,10 +258,10 @@ function bandChip(band, color) {
     },
     layout: {
       defaultBorder: false,
-      paddingLeft: () => 5,
-      paddingRight: () => 5,
-      paddingTop: () => 1,
-      paddingBottom: () => 0.5
+      paddingLeft: () => 7,
+      paddingRight: () => 7,
+      paddingTop: () => 2,
+      paddingBottom: () => 1
     }
   };
 }
@@ -285,7 +285,7 @@ function chunk(items, size) {
 }
 
 // Borderless shaded grid used for the header fields and metric tiles.
-function panelGrid(cells, perRow, margin = [0, 0, 0, 6]) {
+function panelGrid(cells, perRow, margin = [0, 0, 0, 12]) {
   return {
     table: {
       widths: Array(perRow).fill("*"),
@@ -298,10 +298,10 @@ function panelGrid(cells, perRow, margin = [0, 0, 0, 6]) {
     layout: {
       defaultBorder: false,
       fillColor: () => PANEL,
-      paddingLeft: () => 8,
-      paddingRight: () => 8,
-      paddingTop: () => 5,
-      paddingBottom: () => 5
+      paddingLeft: () => 14,
+      paddingRight: () => 14,
+      paddingTop: () => 10,
+      paddingBottom: () => 10
     },
     margin
   };
@@ -327,7 +327,7 @@ export function buildPdfDocument(snapshot, labels) {
     stack: [
       {
         text: plain(title),
-        fontSize: 10.5,
+        fontSize: 13.5,
         bold: true,
         color,
         headlineLevel: HEADING_PART
@@ -341,23 +341,23 @@ export function buildPdfDocument(snapshot, labels) {
             y1: 0,
             x2: CONTENT_WIDTH,
             y2: 0,
-            lineWidth: 0.75,
+            lineWidth: 1,
             lineColor: RULE
           }
         ],
-        margin: [0, 2, 0, 0]
+        margin: [0, 6, 0, 0]
       }
     ],
-    margin: [0, 12, 0, 5],
+    margin: [0, 24, 0, 12],
     headlineLevel: 1
   });
 
-  const subheading = (text, color = MUTED, margin = [0, 4, 0, 2]) => ({
+  const subheading = (text, color = MUTED, margin = [0, 8, 0, 6]) => ({
     ...eyebrow(text, color, margin),
     headlineLevel: 1
   });
 
-  const note = (text, margin = [0, 0, 0, 4]) => ({
+  const note = (text, margin = [0, 0, 0, 10]) => ({
     text: pdfText(text),
     style: "meta",
     margin
@@ -404,19 +404,21 @@ export function buildPdfDocument(snapshot, labels) {
       hLineWidth: rowRuleWidth,
       vLineWidth: () => 0,
       hLineColor: () => RULE,
-      paddingLeft: (index) => (index === 0 ? 0 : 6),
+      paddingLeft: (index) => (index === 0 ? 0 : 8),
       paddingRight: cellPaddingRight,
-      paddingTop: () => 2.5,
-      paddingBottom: () => 2.5
+      paddingTop: () => 6,
+      paddingBottom: () => 6
     },
-    fontSize: 8.5,
-    margin: [0, 0, 0, 4]
+    fontSize: 9.5,
+    margin: [0, 0, 0, 8]
   });
 
   // A record name with its secondary details on one muted line beneath it.
   const cellWithSub = (main, subs) => {
     const sub = subs.filter(Boolean).map(plain).join("  ·  ");
-    return sub ? { stack: [main, { text: sub, style: "meta" }] } : main;
+    return sub
+      ? { stack: [main, { text: sub, style: "meta", margin: [0, 2, 0, 0] }] }
+      : main;
   };
 
   const showing = (shown, total) => {
@@ -446,16 +448,16 @@ export function buildPdfDocument(snapshot, labels) {
 
   // The label is a subheading, so it moves with its items when it lands at a page bottom.
   const signalRow = (title, items, color, emptyText) => [
-    subheading(title, color, [0, 2, 0, 2]),
+    subheading(title, color, [0, 4, 0, 8]),
     items?.length
       ? {
           ul: items.map((item) => ({
             text: titledLine(item.title, item.detail, item.evidence),
-            margin: [0, 0, 0, 2]
+            margin: [0, 0, 0, 8]
           })),
           type: "square",
           markerColor: color,
-          margin: [0, 0, 0, 4]
+          margin: [6, 0, 0, 8]
         }
       : note(emptyText)
   ];
@@ -468,7 +470,7 @@ export function buildPdfDocument(snapshot, labels) {
     return {
       columns: [
         {
-          width: 18,
+          width: 22,
           text: plain(item.id),
           bold: true,
           color: BLUE,
@@ -486,20 +488,39 @@ export function buildPdfDocument(snapshot, labels) {
                   },
                   ...links.flatMap((run, i) => [
                     ...(i ? [{ text: ", ", style: "meta" }] : []),
-                    { ...run, fontSize: 7.5 }
+                    { ...run, fontSize: 8.5 }
                   ])
                 ]
               : [])
           ]
         }
       ],
-      columnGap: 4,
-      margin: [0, 0, 0, 4],
+      columnGap: 6,
+      margin: [0, 0, 0, 10],
       unbreakable: true
     };
   };
 
-  // Title block, with the snapshot facts set to the right of the account name.
+  // Title block, then the snapshot facts in a shaded band beneath it.
+  content.push(eyebrow(labels.pdfTitle, BLUE, [0, 0, 0, 8]));
+  content.push({
+    text: recordTitle,
+    fontSize: 24,
+    bold: true,
+    color: INK,
+    lineHeight: 1.15,
+    margin: [0, 0, 0, 6]
+  });
+  const accountLink = safeLink(snapshot.recordUrl);
+  if (accountLink) {
+    content.push({
+      text: labels.pdfRecord,
+      link: accountLink,
+      color: BLUE,
+      fontSize: 9.5,
+      margin: [0, 0, 0, 18]
+    });
+  }
   const facts = [
     ...(snapshot.asOfDate
       ? [[labels.pdfDataAsOf, plain(snapshot.asOfDate)]]
@@ -507,48 +528,15 @@ export function buildPdfDocument(snapshot, labels) {
     [labels.pdfSnapshot, timestamp(snapshot.generatedAt)],
     [labels.pdfExported, timestamp(snapshot.exportedAt)]
   ];
-  const accountLink = safeLink(snapshot.recordUrl);
-  content.push({
-    columns: [
-      {
-        width: "*",
-        stack: [
-          eyebrow(labels.pdfTitle, BLUE),
-          {
-            text: recordTitle,
-            fontSize: 17,
-            bold: true,
-            color: INK,
-            lineHeight: 1.1
-          },
-          ...(accountLink
-            ? [
-                {
-                  text: labels.pdfRecord,
-                  link: accountLink,
-                  color: BLUE,
-                  fontSize: 8,
-                  margin: [0, 2, 0, 0]
-                }
-              ]
-            : [])
-        ]
-      },
-      {
-        width: "auto",
-        table: {
-          body: facts.map(([label, value]) => [
-            { ...eyebrow(label, MUTED, [0, 1, 0, 0]), alignment: "right" },
-            { text: value, bold: true, color: INK, fontSize: 8 }
-          ])
-        },
-        layout: "noBorders",
-        margin: [0, 2, 0, 0]
-      }
-    ],
-    columnGap: 12,
-    margin: [0, 0, 0, 8]
-  });
+  content.push(
+    panelGrid(
+      facts.map(([label, value]) => ({
+        stack: [eyebrow(label), { text: value, color: INK, bold: true }]
+      })),
+      facts.length,
+      [0, 0, 0, 16]
+    )
+  );
 
   // Account flag, row by row as in the modal: title and band, override, score, components, routing.
   const flag = view.flag || {};
@@ -557,7 +545,7 @@ export function buildPdfDocument(snapshot, labels) {
   const flagStack = [
     {
       columns: [
-        { ...eyebrow(labels.sectionFlag, INK, [0, 1.5, 0, 0]), width: "auto" },
+        { ...eyebrow(labels.sectionFlag, INK, [0, 2, 0, 0]), width: "auto" },
         ...(flag.band
           ? [{ width: "auto", stack: [bandChip(flag.band, bandColor)] }]
           : [])
@@ -590,14 +578,14 @@ export function buildPdfDocument(snapshot, labels) {
       },
       layout: {
         hLineWidth: () => 0,
-        vLineWidth: (index) => (index === 0 ? 2 : 0),
+        vLineWidth: (index) => (index === 0 ? 3 : 0),
         vLineColor: () => bandColor,
-        paddingLeft: () => 8,
-        paddingRight: () => 8,
-        paddingTop: () => 4,
-        paddingBottom: () => 4
+        paddingLeft: () => 12,
+        paddingRight: () => 12,
+        paddingTop: () => 8,
+        paddingBottom: () => 8
       },
-      margin: [0, 6, 0, 0]
+      margin: [0, 12, 0, 0]
     });
   }
   if (flag.hasScore || flag.scoreLabel || flag.amberFloor) {
@@ -610,7 +598,7 @@ export function buildPdfDocument(snapshot, labels) {
                 text: [
                   {
                     text: plain(flag.score),
-                    fontSize: 20,
+                    fontSize: 24,
                     bold: true,
                     color: bandColor
                   },
@@ -629,11 +617,11 @@ export function buildPdfDocument(snapshot, labels) {
               ? [{ text: plain(flag.amberFloor), style: "meta" }]
               : [])
           ],
-          margin: [0, 2, 0, 0]
+          margin: [0, 3, 0, 0]
         }
       ],
-      columnGap: 14,
-      margin: [0, 6, 0, 0]
+      columnGap: 16,
+      margin: [0, 12, 0, 0]
     });
   }
   if (flag.bars?.length) {
@@ -645,16 +633,16 @@ export function buildPdfDocument(snapshot, labels) {
       },
       layout: {
         defaultBorder: false,
-        paddingLeft: (index) => (index === 0 ? 0 : 8),
+        paddingLeft: (index) => (index === 0 ? 0 : 10),
         paddingRight: () => 0,
-        paddingTop: () => 1.5,
-        paddingBottom: () => 1.5
+        paddingTop: () => 3,
+        paddingBottom: () => 3
       },
-      margin: [0, 6, 0, 0]
+      margin: [0, 10, 0, 0]
     });
   }
   if (flag.routing?.length) {
-    flagStack.push(eyebrow(labels.routingHeading, MUTED, [0, 8, 0, 2]));
+    flagStack.push(eyebrow(labels.routingHeading, MUTED, [0, 14, 0, 6]));
     flagStack.push({
       ol: flag.routing.map((step) => ({
         text: [
@@ -662,7 +650,7 @@ export function buildPdfDocument(snapshot, labels) {
             ? [
                 {
                   text: `${routeTag(step)}  `,
-                  fontSize: 7,
+                  fontSize: 7.5,
                   bold: true,
                   color: BLUE
                 }
@@ -670,8 +658,9 @@ export function buildPdfDocument(snapshot, labels) {
             : []),
           ...pdfText(step.text, evidenceIds)
         ],
-        margin: [0, 0, 0, 2]
-      }))
+        margin: [0, 0, 0, 6]
+      })),
+      margin: [6, 0, 0, 0]
     });
   }
   if (flagStack.length > 1) {
@@ -682,10 +671,9 @@ export function buildPdfDocument(snapshot, labels) {
         fillColor: () => PANEL,
         paddingLeft: () => FLAG_PADDING,
         paddingRight: () => FLAG_PADDING,
-        paddingTop: () => 8,
-        paddingBottom: () => 8
-      },
-      margin: [0, 0, 0, 4]
+        paddingTop: () => 12,
+        paddingBottom: () => 12
+      }
     });
   }
 
@@ -709,11 +697,11 @@ export function buildPdfDocument(snapshot, labels) {
       content.push({
         ul: header.narrative.map((line) => ({
           text: pdfText(line.html, evidenceIds),
-          margin: [0, 0, 0, 3]
+          margin: [0, 0, 0, 8]
         })),
         type: "square",
         markerColor: BLUE,
-        margin: [0, 2, 0, 0]
+        margin: [6, 2, 0, 6]
       });
     }
   }
@@ -728,11 +716,17 @@ export function buildPdfDocument(snapshot, labels) {
             {
               text: plain(tile.value),
               color: INK,
-              fontSize: 11.5,
+              fontSize: 15,
               bold: true
             },
             ...(tile.detail
-              ? [{ text: plain(tile.detail), style: "meta" }]
+              ? [
+                  {
+                    text: plain(tile.detail),
+                    style: "meta",
+                    margin: [0, 2, 0, 0]
+                  }
+                ]
               : [])
           ]
         })),
@@ -756,14 +750,22 @@ export function buildPdfDocument(snapshot, labels) {
         return {
           text: [
             ...(tags
-              ? [{ text: `${tags}   `, fontSize: 7, bold: true, color: BLUE }]
+              ? [
+                  {
+                    text: `${tags}   `,
+                    fontSize: 7.5,
+                    bold: true,
+                    color: BLUE
+                  }
+                ]
               : []),
             ...titledLine(action.title, action.detail, action.evidence)
           ],
-          margin: [0, 0, 0, 3]
+          margin: [0, 0, 0, 8]
         };
       }),
-      markerColor: BLUE
+      markerColor: BLUE,
+      margin: [6, 0, 0, 6]
     });
   }
 
@@ -800,13 +802,13 @@ export function buildPdfDocument(snapshot, labels) {
         { text: `${plain(labels.agreementHeading)}: `, bold: true, color: INK },
         ...pdfText(opportunities.agreementText)
       ],
-      margin: [0, 0, 0, 3]
+      margin: [0, 2, 0, 8]
     });
   }
 
   const cases = view.cases || { open: [], closed: [] };
   content.push(heading(labels.sectionCases));
-  content.push(subheading(cases.openHeading, MUTED, [0, 0, 0, 2]));
+  content.push(subheading(cases.openHeading, MUTED, [0, 0, 0, 6]));
   if (cases.open.length) {
     content.push(
       dataTable(
@@ -881,7 +883,7 @@ export function buildPdfDocument(snapshot, labels) {
             : [])
         ])
       ],
-      margin: [0, 2, 0, 2]
+      margin: [0, 4, 0, 8]
     });
   }
   if (contacts.roleNote) contactStack.push(note(contacts.roleNote));
@@ -890,10 +892,10 @@ export function buildPdfDocument(snapshot, labels) {
 
   if (research.hasResearch) {
     content.push(heading(labels.sectionResearch));
-    content.push(note(labels.researchDisclaimer, [0, 0, 0, 5]));
+    content.push(note(labels.researchDisclaimer, [0, 0, 0, 12]));
     if (research.findings?.length) {
       content.push(
-        subheading(labels.researchCitedHeading, MUTED, [0, 0, 0, 3])
+        subheading(labels.researchCitedHeading, MUTED, [0, 0, 0, 8])
       );
       research.findings.forEach((item) => content.push(finding(item)));
     }
@@ -931,7 +933,7 @@ export function buildPdfDocument(snapshot, labels) {
                   ...eyebrow(
                     group.periodLabel,
                     isOpenNow ? RISK : MUTED,
-                    [0, 1.5, 0, 0]
+                    [0, 2, 0, 0]
                   ),
                   noWrap: true
                 }
@@ -944,7 +946,7 @@ export function buildPdfDocument(snapshot, labels) {
             { text: plain(event.date), alignment: "right", noWrap: true }
           ]);
         }),
-        [70, "*", "auto", "auto"]
+        [80, "*", "auto", "auto"]
       ),
       ...showing(HISTORY_EVENT_LIMIT - historyRemaining, historyTotal)
     );
@@ -959,16 +961,16 @@ export function buildPdfDocument(snapshot, labels) {
       creationDate: new Date(snapshot.exportedAt)
     },
     pageSize: "A4",
-    pageMargins: [PAGE_X, 36, PAGE_X, 36],
+    pageMargins: [PAGE_X, 56, PAGE_X, 56],
     background: (page, size) => ({
       canvas: [
-        { type: "rect", x: 0, y: 0, w: size.width, h: 4, color: BLUE },
+        { type: "rect", x: 0, y: 0, w: size.width, h: 6, color: BLUE },
         {
           type: "line",
           x1: PAGE_X,
-          y1: size.height - 30,
+          y1: size.height - 44,
           x2: size.width - PAGE_X,
-          y2: size.height - 30,
+          y2: size.height - 44,
           lineWidth: 0.5,
           lineColor: RULE
         }
@@ -976,12 +978,12 @@ export function buildPdfDocument(snapshot, labels) {
     }),
     defaultStyle: {
       font: "Roboto",
-      fontSize: 8.5,
-      lineHeight: 1.25,
+      fontSize: 10.5,
+      lineHeight: 1.45,
       color: TEXT
     },
     styles: {
-      meta: { fontSize: 7.5, color: MUTED }
+      meta: { fontSize: 8.5, color: MUTED }
     },
     header: (page) => {
       if (page <= 1) return null;
@@ -990,13 +992,13 @@ export function buildPdfDocument(snapshot, labels) {
           {
             text: labels.pdfTitle.toUpperCase(),
             bold: true,
-            characterSpacing: 0.8
+            characterSpacing: 1.2
           },
           { text: recordTitle, alignment: "right" }
         ],
-        margin: [PAGE_X, 16, PAGE_X, 0],
+        margin: [PAGE_X, 24, PAGE_X, 0],
         color: MUTED,
-        fontSize: 6.5
+        fontSize: 7.5
       };
     },
     footer: (page, total) => ({
@@ -1004,9 +1006,9 @@ export function buildPdfDocument(snapshot, labels) {
         { text: labels.pdfFooter, width: "*" },
         { text: `${page} / ${total}`, width: 45, alignment: "right" }
       ],
-      fontSize: 7,
+      fontSize: 8,
       color: MUTED,
-      margin: [PAGE_X, 14, PAGE_X, 0]
+      margin: [PAGE_X, 22, PAGE_X, 0]
     }),
     // Keep a heading on the same page as the content that follows it.
     pageBreakBefore: (node, followingNodesOrContainer) => {

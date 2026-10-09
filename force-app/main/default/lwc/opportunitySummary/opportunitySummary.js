@@ -6,7 +6,7 @@ import ACCOUNT_OBJECT from "@salesforce/schema/Account";
 import STAGE_NAME_FIELD from "@salesforce/schema/Opportunity.StageName";
 import NAME_FIELD from "@salesforce/schema/Opportunity.Name";
 import { buildPdfDocument, pdfFilename } from "./opportunitySummaryPdf";
-import { renderPdf, downloadPdf } from "./opportunitySummaryPdfDownload";
+import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
@@ -1336,18 +1336,19 @@ export default class OpportunitySummary extends LightningElement {
     return this.stageOptions.map((stage, index) => {
       const isComplete = index < currentIndex;
       const isCurrent = index === currentIndex;
-      let modifier = " is-upcoming";
+      let state = "upcoming";
       if (isComplete) {
-        modifier = " is-complete";
+        state = "complete";
       } else if (isCurrent) {
-        modifier = " is-current";
+        state = "current";
       }
 
       return {
         key: `stage-${index}`,
         label: stage.label,
+        state,
         showCheck: isComplete,
-        chipClass: `stage-chip${modifier}`
+        chipClass: `stage-chip is-${state}`
       };
     });
   }
@@ -1447,6 +1448,10 @@ export default class OpportunitySummary extends LightningElement {
           generatedAt: this.generatedAt,
           exportedAt: Date.now(),
           currentStage: this.currentStage,
+          stageTrail: this.stageTrail.map(({ label, state }) => ({
+            label,
+            state
+          })),
           scoreCard: this.scoreCard,
           executiveFacts: this.executiveFacts,
           salesforceChips: this.salesforceChips,

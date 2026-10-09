@@ -18,7 +18,7 @@ import {
   isObject
 } from "./aiAccountSummaryModel";
 import { buildPdfDocument, pdfFilename } from "./aiAccountSummaryPdf";
-import { renderPdf, downloadPdf } from "./aiAccountSummaryPdfDownload";
+import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
 
 const SUBFEATURE = "Account Summary";
 const LOADING_INTERVAL_MS = 3900;

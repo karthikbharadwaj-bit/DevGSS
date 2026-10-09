@@ -196,7 +196,68 @@ describe("Opportunity Summary PDF document", () => {
       )
     ).toBe(true);
     expect(doc.pageBreakBefore({ headlineLevel: 1 }, [])).toBe(true);
-    expect(doc.pageBreakBefore({ headlineLevel: 1 }, [{}])).toBe(false);
+    expect(doc.pageBreakBefore({ headlineLevel: 1 }, [{ text: "Row" }])).toBe(
+      false
+    );
+  });
+
+  it("moves a heading on when only its own parts, wrappers or page furniture follow it", () => {
+    const doc = buildPdfDocument(fixture(), labels);
+    const bottomHeading = { headlineLevel: 1, startPosition: { top: 780 } };
+    const ownRule = { headlineLevel: 2, startPosition: { top: 800 } };
+    const pageFooter = { text: "Footer", startPosition: { top: 20 } };
+    const movedTableWrapper = { table: {}, startPosition: { top: 805 } };
+    const nextContent = { text: "Row", startPosition: { top: 810 } };
+    expect(doc.pageBreakBefore(bottomHeading, [ownRule, pageFooter])).toBe(
+      true
+    );
+    expect(
+      doc.pageBreakBefore(bottomHeading, [ownRule, movedTableWrapper])
+    ).toBe(true);
+    expect(
+      doc.pageBreakBefore(bottomHeading, [ownRule, nextContent, pageFooter])
+    ).toBe(false);
+    const nearBottom = { top: 700, verticalRatio: 0.95, pageInnerHeight: 730 };
+    const midPage = { top: 300, verticalRatio: 0.4, pageInnerHeight: 730 };
+    expect(
+      doc.pageBreakBefore({ headlineLevel: 1, startPosition: nearBottom }, [
+        nextContent
+      ])
+    ).toBe(true);
+    expect(
+      doc.pageBreakBefore({ headlineLevel: 1, startPosition: midPage }, [
+        nextContent
+      ])
+    ).toBe(false);
+    expect(doc.pageBreakBefore({ text: "Body" }, [])).toBe(false);
+  });
+
+  it("draws the stage rail under the history heading, shaded by stage state", () => {
+    const stageTrail = [
+      { label: "1. Qualify", state: "complete" },
+      { label: "2. Discover", state: "complete" },
+      { label: "3. Solution", state: "complete" },
+      { label: "4. Proposal", state: "complete" },
+      { label: "5. Agreement", state: "current" },
+      { label: "6. Closed Won", state: "upcoming" }
+    ];
+    const doc = buildPdfDocument(fixture({ stageTrail }), labels);
+    const historyIndex = doc.content.findIndex((node) =>
+      textOf(node).includes(labels.pdfHistory)
+    );
+    const rail = doc.content[historyIndex + 1];
+    expect(rail.table.body).toHaveLength(2);
+    expect(rail.table.body[0]).toHaveLength(5);
+    const cells = rail.table.body.flat();
+    expect(cells[4]).toMatchObject({ text: "5. Agreement", color: "#ffffff" });
+    expect(cells[0].fillColor).not.toBe(cells[5].fillColor);
+    expect(textOf(doc.content[historyIndex + 2])).toContain("Stage changed.");
+
+    const withoutHistory = buildPdfDocument(
+      fixture({ stageTrail, history: [] }),
+      labels
+    );
+    expect(textOf(withoutHistory)).not.toContain("6. Closed Won");
   });
 
   it("uses text only for supplied markup and never creates dangerous PDF actions", () => {

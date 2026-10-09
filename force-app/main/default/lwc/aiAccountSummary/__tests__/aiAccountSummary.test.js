@@ -4,7 +4,7 @@ import AiAccountSummary from "c/aiAccountSummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
 import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
-import * as pdfDownload from "../aiAccountSummaryPdfDownload";
+import * as pdfDownload from "c/lwcPdfRenderer";
 
 jest.mock(
   "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout",

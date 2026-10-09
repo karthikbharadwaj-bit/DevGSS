@@ -10,6 +10,18 @@ const RISK = "#a35200";
 const PAGE_X = 48;
 const CONTENT_WIDTH = 499; // A4 width (595) minus margins (48 * 2)
 const EVIDENCE_ID = /^E\d+$/;
+// Room for a heading plus its first couple of lines.
+const MIN_SPACE_AFTER_HEADING = 90;
+// Marks the title and rule inside a heading, and the stage rail under it, which never
+// count as content following the heading.
+const HEADING_PART = 2;
+const STAGES_PER_ROW = 5;
+const STAGE_GAP = 4;
+const STAGE_CHIP_COLORS = {
+  complete: { fill: "#dbeaff", color: INK },
+  current: { fill: BLUE, color: "#ffffff" },
+  upcoming: { fill: "#f7f8fa", color: "#7a7a7a" }
+};
 
 const ENTITIES = {
   amp: "&",
@@ -179,6 +191,85 @@ function eyebrow(text, color = MUTED, margin = [0, 0, 0, 4]) {
   };
 }
 
+// Inner gaps between chips are white rules, so the outer edges stay flush with the page.
+function stageGap(index, count) {
+  return index === 0 || index === count ? 0 : STAGE_GAP;
+}
+
+// The stage journey as rows of chips, shaded like the modal's rail.
+function stageRail(stages) {
+  const cells = stages.map((stage) => {
+    const chip = STAGE_CHIP_COLORS[stage.state] || STAGE_CHIP_COLORS.upcoming;
+    return {
+      text: plain(stage.label),
+      fillColor: chip.fill,
+      color: chip.color,
+      bold: true,
+      fontSize: 8,
+      lineHeight: 1.2,
+      alignment: "center",
+      headlineLevel: HEADING_PART
+    };
+  });
+  const rows = [];
+  for (let index = 0; index < cells.length; index += STAGES_PER_ROW) {
+    const row = cells.slice(index, index + STAGES_PER_ROW);
+    rows.push([
+      ...row,
+      ...Array(STAGES_PER_ROW - row.length).fill({
+        text: "",
+        headlineLevel: HEADING_PART
+      })
+    ]);
+  }
+  return {
+    table: {
+      widths: Array(STAGES_PER_ROW).fill("*"),
+      dontBreakRows: true,
+      body: rows
+    },
+    layout: {
+      hLineWidth: (index, node) => stageGap(index, node.table.body.length),
+      vLineWidth: (index) => stageGap(index, STAGES_PER_ROW),
+      hLineColor: () => "#ffffff",
+      vLineColor: () => "#ffffff",
+      paddingLeft: () => 6,
+      paddingRight: () => 6,
+      paddingTop: () => 5,
+      paddingBottom: () => 5
+    },
+    margin: [0, 0, 0, 14]
+  };
+}
+
+// Keep a heading on the same page as the content that follows it.
+function keepHeadingWithContent(node, followingNodesOrContainer) {
+  const followingNodes = Array.isArray(followingNodesOrContainer)
+    ? followingNodesOrContainer
+    : followingNodesOrContainer?.getFollowingNodesOnPage?.() || [];
+  if (node.headlineLevel !== 1) {
+    return false;
+  }
+  // Rows moved by dontBreakRows still report their old position on this page, so a
+  // heading near the bottom moves on regardless of what appears to follow it.
+  const position = node.startPosition || {};
+  const spaceLeft =
+    (1 - (position.verticalRatio ?? 0)) * (position.pageInnerHeight ?? 0);
+  if (position.pageInnerHeight && spaceLeft < MIN_SPACE_AFTER_HEADING) {
+    return true;
+  }
+  // Page header/footer nodes are reported as following nodes too, but sit above the heading.
+  // Only drawn content counts: a table or list wrapper can start on this page while
+  // its rows have already moved to the next.
+  const top = position.top ?? 0;
+  return followingNodes.every(
+    (next) =>
+      next.headlineLevel === HEADING_PART ||
+      (next.text === undefined && !next.canvas && !next.image) ||
+      (next.startPosition?.top ?? Infinity) <= top
+  );
+}
+
 export function buildPdfDocument(snapshot, labels) {
   const groups = snapshot.researchGroups || [];
   const evidenceIds = new Set(
@@ -194,8 +285,15 @@ export function buildPdfDocument(snapshot, labels) {
   const heading = (title, color = INK) =>
     content.push({
       stack: [
-        { text: plain(title), fontSize: 13.5, bold: true, color },
         {
+          text: plain(title),
+          fontSize: 13.5,
+          bold: true,
+          color,
+          headlineLevel: HEADING_PART
+        },
+        {
+          headlineLevel: HEADING_PART,
           canvas: [
             {
               type: "line",
@@ -244,11 +342,12 @@ export function buildPdfDocument(snapshot, labels) {
   const section = (
     title,
     items,
-    { numbered = false, color = BLUE, chips = [] } = {}
+    { numbered = false, color = BLUE, chips = [], lead } = {}
   ) => {
     if (!items?.length) return;
     heading(title, color === BLUE ? INK : color);
     if (chips.length) content.push(chipLine(chips));
+    if (lead) content.push(lead);
     content.push({
       [numbered ? "ol" : "ul"]: items.map(summaryLine),
       ...(numbered ? {} : { type: "square" }),
@@ -399,7 +498,11 @@ export function buildPdfDocument(snapshot, labels) {
   section(labels.pdfExecutive, snapshot.executiveFacts, {
     chips: snapshot.salesforceChips || []
   });
-  section(labels.pdfHistory, snapshot.history);
+  section(labels.pdfHistory, snapshot.history, {
+    lead: snapshot.stageTrail?.length
+      ? stageRail(snapshot.stageTrail)
+      : undefined
+  });
   section(labels.pdfWin, snapshot.winFactors, { color: WIN });
   section(labels.pdfRisk, snapshot.riskFlags, { color: RISK });
   section(labels.pdfActions, snapshot.nextActions, { numbered: true });
@@ -520,12 +623,7 @@ export function buildPdfDocument(snapshot, labels) {
       color: MUTED,
       margin: [PAGE_X, 22, PAGE_X, 0]
     }),
-    pageBreakBefore: (node, followingNodesOrContainer) => {
-      const followingNodes = Array.isArray(followingNodesOrContainer)
-        ? followingNodesOrContainer
-        : followingNodesOrContainer?.getFollowingNodesOnPage?.() || [];
-      return node.headlineLevel === 1 && followingNodes.length === 0;
-    },
+    pageBreakBefore: keepHeadingWithContent,
     content
   };
 }
