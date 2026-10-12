@@ -344,7 +344,7 @@ private class Test_GCPCalloutForAccountSummary {
     String messageText = 'A 200 with a string body is a platform error, not a summary.';
     Assert.areEqual(false, result.get('success'), messageText);
     Assert.areEqual(
-      System.Label.AccountSummaryServerError,
+      System.Label.SummaryServerError,
       result.get('message'),
       messageText
     );
@@ -363,12 +363,12 @@ private class Test_GCPCalloutForAccountSummary {
 
     String messageText = 'Unreadable responses must return the generic server error.';
     Assert.areEqual(
-      System.Label.AccountSummaryServerError,
+      System.Label.SummaryServerError,
       invalid.get('message'),
       messageText
     );
     Assert.areEqual(
-      System.Label.AccountSummaryServerError,
+      System.Label.SummaryServerError,
       blank.get('message'),
       messageText
     );
@@ -390,7 +390,7 @@ private class Test_GCPCalloutForAccountSummary {
     String messageText = 'Only Account record Ids may generate a summary.';
     Assert.areEqual(false, wrongType.get('success'), messageText);
     Assert.areEqual(
-      System.Label.AccountSummaryServerError,
+      System.Label.SummaryServerError,
       wrongType.get('message'),
       messageText
     );

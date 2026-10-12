@@ -84,6 +84,10 @@ appropriately. Library provenance and licenses are retained in the static resour
   `Score`, `Executive`, `History`, `Win`, `Risk`, `Actions`, `Plan`, `PostClose`,
   `Research`, `Supplemental`, `Sources`, `Searches`, `Relevance`, `Action`.
   `PostClose` was added with the closed-deal handling in `f60a692`.
+  Since 2026-10-12, the seven strings Account Summary also uses (`Download`,
+  `Preparing`, `Error`, `Started`, `Snapshot`, `Exported`, `Footer`) are the shared
+  labels `SummaryPdf<Name>` in `Summary.labels-meta.xml`; the other 17 keep the
+  `OpportunitySummaryPdf` prefix.
 
 No Apex, endpoint, cache policy, enrichment toggle, or GCP changes. Deploy the
 bundle, static resource and new labels together when approved. Preserve any

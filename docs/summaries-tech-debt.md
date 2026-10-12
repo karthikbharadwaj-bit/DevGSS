@@ -58,6 +58,16 @@ to be done by hand in Setup.
       `…OpenEscalations`, `…Escalations`, `…RedDays`, `…NextStep`, `…Overdue`,
       `…OverdueDetail`, `…ClosedCases`, `…Dunning` and `AccountSummaryShowingCount`.
 
+- [ ] The 28 strings both summaries show (button text, status text, errors and seven PDF
+      strings) became shared `Summary*` labels in `Summary.labels-meta.xml` (DevGss deploy
+      0AfTH00000IQU6X0AX). In every other org, deploy `Summary.labels-meta.xml` together
+      with both feature label files, both callout classes and their tests, and both LWC
+      bundles. Then delete the 56 old copies (`OpportunitySummary<Name>` and
+      `AccountSummary<Name>` for the same 28 names) in a separate destructive deploy;
+      DevGss used 0AfTH00000IQMdf0AH. Salesforce refuses the delete while a deployed
+      component still imports an old label. Before deleting, copy any admin-edited value
+      or translation of an old label onto its shared label; DevGss had none.
+
 ## Needs a person to test in Lightning
 
 - [ ] Click Download PDF on a few real Accounts in DevGss: a long history, no research,

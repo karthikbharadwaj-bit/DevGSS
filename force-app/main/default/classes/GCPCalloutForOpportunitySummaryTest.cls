@@ -2634,7 +2634,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     String failureMessage = 'A failed Cloud Run call must return the generic error only.';
     Assert.areEqual(false, result.get('success'), failureMessage);
     Assert.areEqual(
-      System.Label.OpportunitySummaryServerError,
+      System.Label.SummaryServerError,
       result.get('message'),
       failureMessage
     );
@@ -2652,7 +2652,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     String blankMessage = 'An empty Cloud Run response must return the generic error.';
     Assert.areEqual(false, result.get('success'), blankMessage);
     Assert.areEqual(
-      System.Label.OpportunitySummaryServerError,
+      System.Label.SummaryServerError,
       result.get('message'),
       blankMessage
     );
@@ -2669,7 +2669,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     String configMessage = 'Missing endpoint settings must return the generic error.';
     Assert.areEqual(false, result.get('success'), configMessage);
     Assert.areEqual(
-      System.Label.OpportunitySummaryServerError,
+      System.Label.SummaryServerError,
       result.get('message'),
       configMessage
     );
@@ -2684,7 +2684,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     String blankIdMessage = 'A blank record Id must return the generic error.';
     Assert.areEqual(false, result.get('success'), blankIdMessage);
     Assert.areEqual(
-      System.Label.OpportunitySummaryServerError,
+      System.Label.SummaryServerError,
       result.get('message'),
       blankIdMessage
     );

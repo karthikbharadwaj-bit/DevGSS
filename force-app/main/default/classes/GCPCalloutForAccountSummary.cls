@@ -340,7 +340,7 @@ public with sharing class GCPCalloutForAccountSummary {
       );
     } catch (Exception e) {
       PlatformLog.logException(LOG_SOURCE, e);
-      return errorJson(System.Label.AccountSummaryServerError);
+      return errorJson(System.Label.SummaryServerError);
     }
   }
 
@@ -714,7 +714,7 @@ public with sharing class GCPCalloutForAccountSummary {
         : new Map<String, Object>();
     } catch (JSONException e) {
       PlatformLog.logException(LOG_SOURCE, e);
-      return errorJson(System.Label.AccountSummaryServerError);
+      return errorJson(System.Label.SummaryServerError);
     }
 
     Integer statusCode = toInteger(envelope.get(RESPONSE_STATUS_CODE));
@@ -740,7 +740,7 @@ public with sharing class GCPCalloutForAccountSummary {
     if (statusCode == STATUS_UNPROCESSABLE) {
       return errorJson(System.Label.AccountSummaryUnavailableError);
     }
-    return errorJson(System.Label.AccountSummaryServerError);
+    return errorJson(System.Label.SummaryServerError);
   }
 
   /* Service messages name fields, not record values, so they are safe to keep for support. */

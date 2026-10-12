@@ -142,7 +142,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   // details must never reach the UI.
   private static String userFacingError {
     get {
-      return System.Label.OpportunitySummaryServerError;
+      return System.Label.SummaryServerError;
     }
   }
 

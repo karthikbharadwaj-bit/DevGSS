@@ -2,23 +2,30 @@ const fs = require("fs");
 const path = require("path");
 
 // Use the deployable defaults so regressions in label metadata are visible to tests.
-const xml = fs.readFileSync(
-  path.resolve(
-    __dirname,
-    "../../force-app/main/default/labels/OpportunitySummary.labels-meta.xml"
-  ),
-  "utf8"
-);
-const document = new global.DOMParser().parseFromString(xml, "application/xml");
-if (document.querySelector("parsererror")) {
-  throw new Error("Invalid Opportunity Summary label metadata");
+// Shared Summary* labels live in their own file and are read alongside the feature's.
+function readLabels(fileName, description) {
+  const xml = fs.readFileSync(
+    path.resolve(__dirname, `../../force-app/main/default/labels/${fileName}`),
+    "utf8"
+  );
+  const document = new global.DOMParser().parseFromString(
+    xml,
+    "application/xml"
+  );
+  if (document.querySelector("parsererror")) {
+    throw new Error(`Invalid ${description} label metadata`);
+  }
+  return Object.fromEntries(
+    [...document.getElementsByTagName("labels")].map((entry) => [
+      entry.getElementsByTagName("fullName")[0].textContent,
+      entry.getElementsByTagName("value")[0].textContent
+    ])
+  );
 }
-const defaults = Object.fromEntries(
-  [...document.getElementsByTagName("labels")].map((entry) => [
-    entry.getElementsByTagName("fullName")[0].textContent,
-    entry.getElementsByTagName("value")[0].textContent
-  ])
-);
+const defaults = {
+  ...readLabels("OpportunitySummary.labels-meta.xml", "Opportunity Summary"),
+  ...readLabels("Summary.labels-meta.xml", "shared Summary")
+};
 const values = { ...defaults };
 
 Object.keys(defaults).forEach((name) => {
@@ -35,7 +42,8 @@ Object.keys(defaults).forEach((name) => {
 });
 
 export function setLabel(suffix, value) {
-  values[`OpportunitySummary${suffix}`] = value;
+  const featureName = `OpportunitySummary${suffix}`;
+  values[featureName in defaults ? featureName : `Summary${suffix}`] = value;
 }
 
 export function resetLabels() {
