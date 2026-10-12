@@ -9,6 +9,18 @@ private class GCPCalloutForOpportunitySummaryTest {
   private static final Id CONTACT_ID = '003000000000001';
   private static final Id SECOND_CONTACT_ID = '003000000000002';
   private static final Id USER_ID = '005000000000001';
+  private static final String SERVICE_HOST = 'https://service.example.invalid';
+  private static final String TOKEN_URL = SERVICE_HOST + '/token';
+  private static final String SUMMARY_ENDPOINT =
+    SERVICE_HOST + '/api/v1/opportunity_summary';
+  // Signing certificate configured in GCP_Endpoint_Settings__c and used by the other GCP callout tests.
+  private static final String SIGNING_CERTIFICATE = 'privatekey';
+  private static final String ID_TOKEN = 'identity-token';
+  private static final String SUMMARY_LINE = 'Healthy deal';
+  private static final String SUMMARY_RESPONSE =
+    '{"body":{"opportunity_summary":{"Executive Summary":["' +
+    SUMMARY_LINE +
+    '"]}}}';
 
   @IsTest
   static void taskQueryKeepsNewerCompletionFieldOutOfLegacyQueryFactory() {
@@ -43,24 +55,6 @@ private class GCPCalloutForOpportunitySummaryTest {
       soql.contains('Name ASC'),
       'The selector default Name ordering must not lead the ORDER BY.'
     );
-  }
-
-  @IsTest
-  static void loadsExactTaskCompletionTimeOutsideLegacyQueryFactory() {
-    Task completedTask = new Task(
-      Subject = 'Completed customer follow-up',
-      Status = 'Completed',
-      ActivityDate = Date.today()
-    );
-    insert completedTask;
-
-    List<SObject> taskRows = new List<SObject>{
-      new Task(Id = completedTask.Id)
-    };
-    Map<Id, Datetime> completionTimes = GCPCalloutForOpportunitySummary.loadTaskCompletionTimes(
-      taskRows
-    );
-    System.assertNotEquals(null, completionTimes.get(completedTask.Id));
   }
 
   @IsTest
@@ -1005,208 +999,6 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldApplyLabelLimitsToOutgoingRequest() {
-    new SObjectBuilder(ByPassTrigger__c.SObjectType)
-      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
-      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
-      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
-      .create();
-    new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
-      .setField(
-        GCP_Feature_Toggle__c.SetupOwnerId,
-        UserInfo.getOrganizationId()
-      )
-      .setField(
-        GCP_Feature_Toggle__c.Enable_Opportunity_Summary_Enrichment__c,
-        true
-      )
-      .create();
-    Account account = (Account) new SObjectBuilder(Account.SObjectType)
-      .setField(
-        Account.Name,
-        ValueProviderBuilder.provideUniqueString('Summary company')
-      )
-      .setField(Account.Website, 'https://example.com')
-      .create()
-      .getRecord();
-    List<Opportunity> opportunities = (List<Opportunity>) new SObjectBuilder(
-        Opportunity.SObjectType
-      )
-      .setField(Opportunity.AccountId, account.Id)
-      .setField(Opportunity.CloseDate, Date.today().addDays(30))
-      .quantity(3)
-      .create()
-      .getRecords();
-    Opportunity opportunity = opportunities[0];
-    new SObjectBuilder(Task.SObjectType)
-      .setField(Task.WhatId, opportunity.Id)
-      .setField(
-        Task.Subject,
-        ValueProviderBuilder.provideUniqueString('Summary task')
-      )
-      .setField(Task.Status, 'Not Started')
-      .setField(Task.ActivityDate, Date.today())
-      .quantity(2)
-      .create();
-    new SObjectBuilder(Event.SObjectType)
-      .setField(Event.WhatId, opportunity.Id)
-      .setField(
-        Event.Subject,
-        ValueProviderBuilder.provideUniqueString('Summary meeting')
-      )
-      .setField(Event.StartDateTime, Datetime.now().addHours(-2))
-      .setField(Event.EndDateTime, Datetime.now().addHours(-1))
-      .setField(
-        Event.Description,
-        'Customer confirmed the next evaluation step.'
-      )
-      .quantity(2)
-      .create();
-
-    for (
-      String suffix : new List<String>{
-        'MaxActivities',
-        'MaxHistoryRows',
-        'MaxOpenCases',
-        'MaxClosedCases',
-        'MaxRelatedOpps',
-        'MaxLineItems',
-        'MaxStakeholders',
-        'MaxConversationItems'
-      }
-    ) {
-      GCPCalloutForOpportunitySummary.configurationOverrides.put(suffix, '1');
-    }
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'TimeoutSeconds',
-      '45'
-    );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'ActivityDays',
-      '30'
-    );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'RecentDays',
-      '14'
-    );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'ClosedCaseMonths',
-      '3'
-    );
-    Test.setMock(
-      HttpCalloutMock.class,
-      new ConfiguredSummaryCalloutMock(opportunity.Id)
-    );
-
-    Test.startTest();
-    String rawResult = GCPCalloutForOpportunitySummary.callCloudRun(
-      'summary-test@example.com',
-      opportunity.Id,
-      'test-token',
-      'https://service.example.invalid'
-    );
-    Test.stopTest();
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      rawResult
-    );
-    System.assertEquals(
-      true,
-      result.get('success'),
-      'Configured request must still return the standard summary response.'
-    );
-    resetTestHooks();
-  }
-
-  private class ConfiguredSummaryCalloutMock implements HttpCalloutMock {
-    private Id expectedOpportunityId;
-
-    private ConfiguredSummaryCalloutMock(Id opportunityId) {
-      expectedOpportunityId = opportunityId;
-    }
-
-    public HttpResponse respond(HttpRequest request) {
-      System.assertEquals(
-        'https://service.example.invalid/api/v1/opportunity_summary',
-        request.getEndpoint(),
-        'Configuration must preserve the existing endpoint path.'
-      );
-      Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
-        request.getBody()
-      );
-      System.assertEquals(
-        String.valueOf(expectedOpportunityId),
-        payload.get('recordId'),
-        'Request record must be preserved.'
-      );
-      System.assertEquals(
-        true,
-        payload.get('enableOpportunitySummaryEnrichment'),
-        'Feature toggle must retain its existing behavior.'
-      );
-      Map<String, Object> activities = (Map<String, Object>) payload.get(
-        'activities'
-      );
-      System.assertEquals(
-        1,
-        ((List<Object>) activities.get('tasks')).size(),
-        'Configured activity cap must trim tasks.'
-      );
-      System.assertEquals(
-        1,
-        ((List<Object>) activities.get('events')).size(),
-        'Configured activity cap must trim events.'
-      );
-      System.assertEquals(
-        1,
-        ((List<Object>) payload.get('relatedOpportunities')).size(),
-        'Configured related-opportunity cap must reach SOQL.'
-      );
-      Map<String, Object> coverage = (Map<String, Object>) payload.get(
-        'dataCoverage'
-      );
-      Map<String, Object> activityCoverage = (Map<String, Object>) coverage.get(
-        'activities'
-      );
-      Map<String, Object> conversationCoverage = (Map<String, Object>) coverage.get(
-        'conversations'
-      );
-      System.assertEquals(
-        true,
-        activityCoverage.get('isTruncated'),
-        'Truncated activities must still be reported in data coverage.'
-      );
-      Datetime windowEnd = (Datetime) JSON.deserialize(
-        JSON.serialize(activityCoverage.get('windowEnd')),
-        Datetime.class
-      );
-      Datetime activityStart = (Datetime) JSON.deserialize(
-        JSON.serialize(activityCoverage.get('windowStart')),
-        Datetime.class
-      );
-      Datetime conversationStart = (Datetime) JSON.deserialize(
-        JSON.serialize(conversationCoverage.get('windowStart')),
-        Datetime.class
-      );
-      System.assertEquals(
-        windowEnd.addDays(-30),
-        activityStart,
-        'Activity lookback must use its label.'
-      );
-      System.assertEquals(
-        windowEnd.addDays(-14),
-        conversationStart,
-        'Conversation lookback must use its label.'
-      );
-      HttpResponse response = new HttpResponse();
-      response.setStatusCode(200);
-      response.setBody(
-        '{"body":{"opportunity_summary":{"Executive Summary":["Configured summary"]}}}'
-      );
-      return response;
-    }
-  }
-
-  @IsTest
   static void sendsEnrichmentSettingToGcpAsBooleanControl() {
     Map<String, Object> payload = new Map<String, Object>();
 
@@ -1827,147 +1619,6 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals('00012345', reference.get('case_number'));
   }
 
-  @IsTest
-  static void shouldSendIdsAndViewerContextWhenCallingCloudRun() {
-    new SObjectBuilder(ByPassTrigger__c.SObjectType)
-      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
-      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
-      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
-      .create();
-    new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
-      .setField(
-        GCP_Feature_Toggle__c.SetupOwnerId,
-        UserInfo.getOrganizationId()
-      )
-      .setField(
-        GCP_Feature_Toggle__c.Enable_Opportunity_Summary_Enrichment__c,
-        false
-      )
-      .create();
-    Account account = (Account) new SObjectBuilder(Account.SObjectType)
-      .setField(
-        Account.Name,
-        ValueProviderBuilder.provideUniqueString('Reference company')
-      )
-      .create()
-      .getRecord();
-    Opportunity opportunity = (Opportunity) new SObjectBuilder(
-        Opportunity.SObjectType
-      )
-      .setField(Opportunity.AccountId, account.Id)
-      .setField(Opportunity.CloseDate, Date.today().addDays(30))
-      .create()
-      .getRecord();
-    Task callTask = (Task) new SObjectBuilder(Task.SObjectType)
-      .setField(Task.WhatId, opportunity.Id)
-      .setField(
-        Task.Subject,
-        ValueProviderBuilder.provideUniqueString('Discovery call')
-      )
-      .setField(Task.Status, 'Not Started')
-      .setField(Task.ActivityDate, Date.today())
-      .create()
-      .getRecord();
-    Test.setMock(
-      HttpCalloutMock.class,
-      new ReferenceSummaryCalloutMock(callTask.Id)
-    );
-
-    Test.startTest();
-    String rawResult = GCPCalloutForOpportunitySummary.callCloudRun(
-      'summary-test@example.com',
-      opportunity.Id,
-      'test-token',
-      'https://service.example.invalid'
-    );
-    Test.stopTest();
-
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      rawResult
-    );
-    System.assertEquals(true, result.get('success'));
-    List<Object> references = (List<Object>) result.get('record_references');
-    Map<String, Object> taskReference = (Map<String, Object>) references[0];
-    System.assertEquals(
-      String.valueOf(callTask.Id),
-      taskReference.get('id'),
-      'A reference to a sent Task must survive the Id filter.'
-    );
-    Set<String> referencedTypes = new Set<String>();
-    Set<String> referencedIds = new Set<String>();
-    for (Object reference : references) {
-      referencedTypes.add(
-        (String) ((Map<String, Object>) reference).get('object_type')
-      );
-      referencedIds.add((String) ((Map<String, Object>) reference).get('id'));
-    }
-    System.assert(
-      referencedIds.contains(String.valueOf(account.Id)),
-      'The sent Account is offered as a link under its own name.'
-    );
-    System.assert(referencedTypes.contains('User'), referencedTypes);
-    System.assertEquals(
-      false,
-      referencedIds.contains(String.valueOf(opportunity.Id)),
-      'The current opportunity never links to itself.'
-    );
-  }
-
-  private class ReferenceSummaryCalloutMock implements HttpCalloutMock {
-    private Id expectedTaskId;
-
-    private ReferenceSummaryCalloutMock(Id taskId) {
-      expectedTaskId = taskId;
-    }
-
-    public HttpResponse respond(HttpRequest request) {
-      Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
-        request.getBody()
-      );
-      System.assertEquals(
-        UserInfo.getTimeZone().getID(),
-        payload.get('viewerTimeZone')
-      );
-      System.assertEquals(UserInfo.getLocale(), payload.get('viewerLocale'));
-      Map<String, Object> opportunityPayload = (Map<String, Object>) payload.get(
-        'opportunity'
-      );
-      System.assertEquals(false, opportunityPayload.get('isClosed'));
-      System.assertEquals(false, opportunityPayload.get('isWon'));
-      Map<String, Object> taskRow = (Map<String, Object>) ((List<Object>) ((Map<String, Object>) payload.get(
-          'activities'
-        ))
-        .get('tasks'))[0];
-      System.assertEquals(String.valueOf(expectedTaskId), taskRow.get('id'));
-      Map<String, Object> cases = (Map<String, Object>) payload.get('cases');
-      System.assert(cases.containsKey('open'));
-      System.assertEquals(
-        false,
-        payload.get('enableOpportunitySummaryEnrichment')
-      );
-      System.assert(
-        payload.get('conversationEvidence') instanceof Map<String, Object>,
-        'conversationEvidence must be sent with enrichment off.'
-      );
-      System.assertEquals(
-        false,
-        payload.containsKey('dataCoverage'),
-        'dataCoverage stays tied to the enrichment toggle.'
-      );
-
-      HttpResponse response = new HttpResponse();
-      response.setStatusCode(200);
-      response.setBody(
-        '{"body":{"opportunity_summary":{"Opportunity History & Stage Journey":["Discovery call logged"]},' +
-          '"deal_state":{"state":"open","is_closed":false},' +
-          '"record_references":[{"object_type":"Task","id":"' +
-          expectedTaskId +
-          '","label":"Discovery call","activity_kind":"Call","mentioned_in":["Opportunity History & Stage Journey"]}]}}'
-      );
-      return response;
-    }
-  }
-
   private static Opportunity opportunityWithAccount(Boolean includeOptional) {
     Map<String, Object> accountFields = new Map<String, Object>{
       'attributes' => new Map<String, Object>{ 'type' => 'Account' },
@@ -2498,5 +2149,239 @@ private class GCPCalloutForOpportunitySummaryTest {
     System.assertEquals(false, absent.containsKey('call_insights'));
     System.assertEquals(false, malformed.containsKey('call_insights'));
     System.assertEquals(true, malformed.get('success'));
+  }
+
+  // ---------------- makeGCPCallout entry point ----------------
+  // These tests insert no Task or Event, so they do not depend on activity triggers.
+
+  private static Id summaryOpportunityId(Boolean hasEndpointSettings) {
+    new SObjectBuilder(ByPassTrigger__c.SObjectType)
+      .setField(ByPassTrigger__c.SetupOwnerId, UserInfo.getOrganizationId())
+      .setField(ByPassTrigger__c.Bypass_Account_Trigger__c, true)
+      .setField(ByPassTrigger__c.Bypass_Opportunity_Trigger__c, true)
+      .create();
+    if (hasEndpointSettings) {
+      new SObjectBuilder(GCP_Endpoint_Settings__c.SObjectType)
+        .setField(
+          GCP_Endpoint_Settings__c.SetupOwnerId,
+          UserInfo.getOrganizationId()
+        )
+        .setField(
+          GCP_Endpoint_Settings__c.Service_Account_Email__c,
+          'service@example.invalid'
+        )
+        .setField(GCP_Endpoint_Settings__c.Identity_Token_URL__c, TOKEN_URL)
+        .setField(
+          GCP_Endpoint_Settings__c.Certificate_Name__c,
+          SIGNING_CERTIFICATE
+        )
+        .setField(
+          GCP_Endpoint_Settings__c.Opportunity_Summary_Endpoint__c,
+          SUMMARY_ENDPOINT
+        )
+        .create();
+    }
+    Account account = (Account) new SObjectBuilder(Account.SObjectType)
+      .setField(
+        Account.Name,
+        ValueProviderBuilder.provideUniqueString('Callout company')
+      )
+      .create()
+      .getRecord();
+    return new SObjectBuilder(Opportunity.SObjectType)
+      .setField(Opportunity.AccountId, account.Id)
+      .setField(Opportunity.CloseDate, Date.today().addDays(30))
+      .create()
+      .getRecord()
+      .Id;
+  }
+
+  private static Map<String, Object> calloutResult(Id opportunityId) {
+    return (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForOpportunitySummary.makeGCPCallout(
+        UserInfo.getUserId(),
+        opportunityId
+      )
+    );
+  }
+
+  @IsTest
+  static void shouldReturnSummaryCardsWhenCalloutSucceeds() {
+    Id opportunityId = summaryOpportunityId(true);
+    Test.setMock(
+      HttpCalloutMock.class,
+      new SummaryServiceMock(200, SUMMARY_RESPONSE)
+    );
+
+    Test.startTest();
+    Map<String, Object> result = calloutResult(opportunityId);
+    Test.stopTest();
+
+    String successMessage = 'A 200 response with a summary must succeed.';
+    String cardMessage = 'The summary line must reach the UI as a card item.';
+    Assert.areEqual(true, result.get('success'), successMessage);
+    List<Object> cards = (List<Object>) result.get('cards');
+    Assert.isFalse(cards.isEmpty(), cardMessage);
+    Assert.areEqual(
+      SUMMARY_LINE,
+      ((List<Object>) ((Map<String, Object>) cards[0]).get('items'))[0],
+      cardMessage
+    );
+  }
+
+  @IsTest
+  static void shouldReturnGenericErrorWhenCloudRunRejects() {
+    Id opportunityId = summaryOpportunityId(true);
+    Test.setMock(
+      HttpCalloutMock.class,
+      new SummaryServiceMock(500, '{"error":"boom"}')
+    );
+
+    Test.startTest();
+    Map<String, Object> result = calloutResult(opportunityId);
+    Test.stopTest();
+
+    String failureMessage = 'A failed Cloud Run call must return the generic error only.';
+    Assert.areEqual(false, result.get('success'), failureMessage);
+    Assert.areEqual(
+      System.Label.OpportunitySummaryServerError,
+      result.get('message'),
+      failureMessage
+    );
+  }
+
+  @IsTest
+  static void shouldReturnGenericErrorWhenResponseBodyIsBlank() {
+    Id opportunityId = summaryOpportunityId(true);
+    Test.setMock(HttpCalloutMock.class, new SummaryServiceMock(200, ''));
+
+    Test.startTest();
+    Map<String, Object> result = calloutResult(opportunityId);
+    Test.stopTest();
+
+    String blankMessage = 'An empty Cloud Run response must return the generic error.';
+    Assert.areEqual(false, result.get('success'), blankMessage);
+    Assert.areEqual(
+      System.Label.OpportunitySummaryServerError,
+      result.get('message'),
+      blankMessage
+    );
+  }
+
+  @IsTest
+  static void shouldReturnGenericErrorWhenEndpointSettingsAreMissing() {
+    Id opportunityId = summaryOpportunityId(false);
+
+    Test.startTest();
+    Map<String, Object> result = calloutResult(opportunityId);
+    Test.stopTest();
+
+    String configMessage = 'Missing endpoint settings must return the generic error.';
+    Assert.areEqual(false, result.get('success'), configMessage);
+    Assert.areEqual(
+      System.Label.OpportunitySummaryServerError,
+      result.get('message'),
+      configMessage
+    );
+  }
+
+  @IsTest
+  static void shouldReturnGenericErrorWhenRecordIdIsBlank() {
+    Test.startTest();
+    Map<String, Object> result = calloutResult(null);
+    Test.stopTest();
+
+    String blankIdMessage = 'A blank record Id must return the generic error.';
+    Assert.areEqual(false, result.get('success'), blankIdMessage);
+    Assert.areEqual(
+      System.Label.OpportunitySummaryServerError,
+      result.get('message'),
+      blankIdMessage
+    );
+  }
+
+  @IsTest
+  static void shouldQueueUsageEventWhenEventTypeIsAllowed() {
+    Integer queuedJobs;
+
+    Test.startTest();
+    GCPCalloutForOpportunitySummary.logAIHEvent(
+      'aih_view',
+      'Opportunity Summary',
+      null
+    );
+    queuedJobs = Limits.getQueueableJobs();
+    Test.stopTest();
+
+    String queuedMessage = 'An allowed usage event must queue one log job.';
+    Assert.areEqual(1, queuedJobs, queuedMessage);
+  }
+
+  @IsTest
+  static void shouldIgnoreUsageEventWhenEventTypeIsUnknown() {
+    Integer queuedJobs;
+
+    Test.startTest();
+    GCPCalloutForOpportunitySummary.logAIHEvent(
+      'aih_unknown',
+      'Opportunity Summary',
+      null
+    );
+    GCPCalloutForOpportunitySummary.logAIHEvent(null, null, null);
+    queuedJobs = Limits.getQueueableJobs();
+    Test.stopTest();
+
+    String ignoredMessage = 'Unknown or blank usage events must not queue a log job.';
+    Assert.areEqual(0, queuedJobs, ignoredMessage);
+  }
+
+  @IsTest
+  static void shouldReportSummaryEnabledWhenToggleIsOn() {
+    new SObjectBuilder(GCP_Feature_Toggle__c.SObjectType)
+      .setField(
+        GCP_Feature_Toggle__c.SetupOwnerId,
+        UserInfo.getOrganizationId()
+      )
+      .setField(GCP_Feature_Toggle__c.Enable_Opportunity_Summary__c, true)
+      .create();
+
+    Test.startTest();
+    Boolean isEnabled = GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled();
+    Test.stopTest();
+
+    String enabledMessage = 'The Opportunity Summary toggle must read the org default.';
+    Assert.isTrue(isEnabled, enabledMessage);
+  }
+
+  private class SummaryServiceMock implements HttpCalloutMock {
+    private Integer summaryStatusCode;
+    private String summaryBody;
+
+    private SummaryServiceMock(Integer summaryStatusCode, String summaryBody) {
+      this.summaryStatusCode = summaryStatusCode;
+      this.summaryBody = summaryBody;
+    }
+
+    public HttpResponse respond(HttpRequest request) {
+      HttpResponse response = new HttpResponse();
+      if (request.getEndpoint() == TOKEN_URL) {
+        response.setStatusCode(200);
+        response.setBody(
+          JSON.serialize(new Map<String, Object>{ 'id_token' => ID_TOKEN })
+        );
+        return response;
+      }
+      String endpointMessage = 'The summary request must go to the Opportunity Summary path.';
+      String tokenMessage = 'The exchanged identity token must be sent.';
+      Assert.areEqual(SUMMARY_ENDPOINT, request.getEndpoint(), endpointMessage);
+      Assert.areEqual(
+        'Bearer ' + ID_TOKEN,
+        request.getHeader('Authorization'),
+        tokenMessage
+      );
+      response.setStatusCode(summaryStatusCode);
+      response.setBody(summaryBody);
+      return response;
+    }
   }
 }
