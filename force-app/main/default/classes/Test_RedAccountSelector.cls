@@ -1,17 +1,23 @@
 /* Covers the Red_Account__c selector used by Account Summary. */
 @IsTest
 private class Test_RedAccountSelector {
+  private static final String ID_SUFFIX = '0'.repeat(12);
+
   @IsTest
-  static void shouldBuildRedAccountQueryWhenSelectingRedAccounts() {
+  static void shouldQueryEscalationsNewestFirstWhenSelectingForAccountSummary() {
+    Id accountId = Account.SObjectType.getDescribe().getKeyPrefix() + ID_SUFFIX;
+
     Test.startTest();
     QueryFactory factory = new RedAccountSelector()
-      .selectRedAccounts()
+      .selectEscalationsForAccountSummary(accountId)
       .selectFields(new List<Schema.SObjectField>{ Red_Account__c.Status__c })
       .setQuery();
     Test.stopTest();
 
     String objectMessage = 'The selector must query Red_Account__c.';
     String fieldMessage = 'The selector must keep the requested fields.';
+    String conditionMessage = 'Escalations must be limited to the requested account.';
+    String orderMessage = 'Escalations must be ordered by Red start date, newest first.';
     Assert.isTrue(
       factory.getQuery().contains('FROM Red_Account__c'),
       objectMessage
@@ -19,6 +25,15 @@ private class Test_RedAccountSelector {
     Assert.isTrue(
       factory.getSelectedFields().contains('Status__c'),
       fieldMessage
+    );
+    Assert.areEqual(
+      'EscalatedAccount__c = :bind0',
+      factory.getCondition(),
+      conditionMessage
+    );
+    Assert.isTrue(
+      factory.getQuery().contains('ORDER BY Red_Start_Date__c DESC'),
+      orderMessage
     );
   }
 
@@ -34,18 +49,12 @@ private class Test_RedAccountSelector {
   }
 
   @IsTest
-  static void shouldCreateSelectorWhenUsingAlternateConstructors() {
+  static void shouldCreateSelectorWhenUsingSecurityConstructor() {
     Test.startTest();
-    RedAccountSelector relationshipSelector = new RedAccountSelector(
-      'Escalations__r',
-      Account.SObjectType
-    );
     RedAccountSelector securitySelector = new RedAccountSelector(true, true);
     Test.stopTest();
 
-    String relationshipMessage = 'The relationship constructor must create a selector.';
     String securityMessage = 'The security constructor must create a selector.';
-    Assert.isNotNull(relationshipSelector, relationshipMessage);
     Assert.isNotNull(securitySelector, securityMessage);
   }
 }

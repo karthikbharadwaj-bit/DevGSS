@@ -1,6 +1,36 @@
 public with sharing class GCPCalloutForOpportunitySummary {
   private static final String AUTH_CONFIG_NAME = 'opportunitySummary';
   private static final String ENDPOINT_PATH = '/api/v1/opportunity_summary';
+  private static final String HTTP_METHOD_POST = 'POST';
+  private static final String HEADER_CONTENT_TYPE = 'Content-Type';
+  private static final String HEADER_AUTHORIZATION = 'Authorization';
+  private static final String CONTENT_TYPE_JSON = 'application/json';
+  private static final String BEARER_PREFIX = 'Bearer ';
+  private static final Integer HTTP_OK = 200;
+  private static final String TIMEOUT_LABEL_SUFFIX = 'TimeoutSeconds';
+  private static final Integer DEFAULT_TIMEOUT_SECONDS = 120;
+  private static final Integer MAX_TIMEOUT_SECONDS = 120;
+  private static final Integer MILLISECONDS_PER_SECOND = 1000;
+  private static final String LOG_SOURCE = 'GCPCalloutForOpportunitySummary';
+  private static final String RELATIONSHIP_OWNER = 'Owner';
+  private static final String RELATIONSHIP_ACCOUNT = 'Account';
+  private static final String RELATIONSHIP_CONTACT = 'Contact';
+  private static final String RELATIONSHIP_PRODUCT = 'Product2';
+  private static final String LOG_CONTEXT_SEPARATOR = ': ';
+  private static final String CONTEXT_CALLOUT = 'Callout error';
+  private static final String CONTEXT_QUERY = 'Database query error';
+  private static final String CONTEXT_CONFIGURATION = 'Configuration error';
+  private static final String CONTEXT_UNEXPECTED = 'Unexpected error';
+  private static final String CONTEXT_TASK_COMPLETION = 'Task completion time query';
+  private static final String CONTEXT_PARTICIPANTS = 'Activity participant loading';
+  private static final String CONTEXT_TASK_RELATIONS = 'Task relation query';
+  private static final String CONTEXT_EVENT_RELATIONS = 'Event relation query';
+  private static final String CONTEXT_CONTACTS = 'Participant contact query';
+  private static final String HTTP_FAILURE_MESSAGE = 'Cloud Run call failed. Status: ';
+  private static final String MISSING_RECORD_ID_MESSAGE = 'Opportunity Summary was called without a record Id.';
+  private static final String EMPTY_RESPONSE_MESSAGE = 'Opportunity Summary service returned an empty body.';
+  private static final String NON_CARD_RESPONSE_MESSAGE = 'Opportunity Summary service returned a non-card message.';
+  private static final String UNEXPECTED_RESPONSE_MESSAGE = 'Opportunity Summary service returned an unexpected response format.';
   private static final String ENRICHMENT_SWITCH_FIELD = 'Enable_Opportunity_Summary_Enrichment__c';
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
   private static final String CALL_TRANSCRIPTS_REQUEST_FIELD = 'enableOpportunitySummaryCallTranscripts';
@@ -120,10 +150,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   public static String makeGCPCallout(String userId, String recordId) {
     try {
       if (String.isBlank(recordId)) {
-        System.debug(
-          LoggingLevel.ERROR,
-          'Opportunity Summary called without a record Id.'
-        );
+        recordFailure(MISSING_RECORD_ID_MESSAGE);
         return errorJson(userFacingError);
       }
 
@@ -143,13 +170,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
         config.cloudRunEndpoint
       );
     } catch (CalloutException ce) {
-      return logAndFail('Callout error', ce);
+      return logAndFail(CONTEXT_CALLOUT, ce);
     } catch (QueryException qe) {
-      return logAndFail('Database query error', qe);
+      return logAndFail(CONTEXT_QUERY, qe);
     } catch (GCPAuthUtil.GCPCalloutException ae) {
-      return logAndFail('Configuration error', ae);
+      return logAndFail(CONTEXT_CONFIGURATION, ae);
     } catch (Exception e) {
-      return logAndFail('Unexpected error', e);
+      return logAndFail(CONTEXT_UNEXPECTED, e);
+    } finally {
+      flushFailureLogs();
     }
   }
 
@@ -172,60 +201,38 @@ public with sharing class GCPCalloutForOpportunitySummary {
     String endpoint
   ) {
     Map<String, Object> payload = buildPayload(username, recordId);
-    System.debug(
-      'Heap after payload built (queries):: ' +
-        Limits.getHeapSize() +
-        ' / ' +
-        Limits.getLimitHeapSize()
-    );
-
     String requestBody = serializePayloadWithinLimit(payload);
 
     HttpRequest req = new HttpRequest();
     req.setEndpoint(buildServiceEndpoint(endpoint));
-    req.setMethod('POST');
-    req.setHeader('Content-Type', 'application/json');
-    req.setHeader('Authorization', 'Bearer ' + idToken);
+    req.setMethod(HTTP_METHOD_POST);
+    req.setHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON);
+    req.setHeader(HEADER_AUTHORIZATION, BEARER_PREFIX + idToken);
     req.setBody(requestBody);
-    req.setTimeout(configuredInteger('TimeoutSeconds', 120, 120) * 1000);
-
-    System.debug(
-      'Opportunity Summary request bytes:: ' + Blob.valueOf(requestBody).size()
-    );
-    System.debug(
-      'Opportunity Summary request body:: ' + Json.serialize(requestBody)
-    );
-
-    Http h = new Http();
-    HttpResponse res = h.send(req);
-    System.debug('Opportunity Summary response status::' + res.getStatusCode());
-    System.debug(
-      'Opportunity Summary response body::' + json.serialize(res.getBody())
+    req.setTimeout(
+      configuredInteger(
+        TIMEOUT_LABEL_SUFFIX,
+        DEFAULT_TIMEOUT_SECONDS,
+        MAX_TIMEOUT_SECONDS
+      ) * MILLISECONDS_PER_SECOND
     );
 
-    if (res.getStatusCode() != 200) {
-      throw new CalloutException(
-        'Cloud Run call failed. Status: ' + res.getStatusCode()
-      );
+    HttpResponse res = new Http().send(req);
+    if (res.getStatusCode() != HTTP_OK) {
+      throw new CalloutException(HTTP_FAILURE_MESSAGE + res.getStatusCode());
     }
 
     String responseBody = res.getBody();
     if (String.isBlank(responseBody)) {
+      recordFailure(EMPTY_RESPONSE_MESSAGE);
       return errorJson(userFacingError);
     }
 
-    String result = buildResult(
+    return buildResult(
       JSON.deserializeUntyped(responseBody),
       referenceableRecordIds(payload),
       namedRecordReferences(payload)
     );
-    System.debug(
-      'Heap after summary generated:: ' +
-        Limits.getHeapSize() +
-        ' / ' +
-        Limits.getLimitHeapSize()
-    );
-    return result;
   }
 
   // ---------------- Payload assembly ----------------
@@ -242,7 +249,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
     );
     Integer recentEvidenceDays = getRecentEvidenceLookbackDays();
     // AccountId may have been stripped for FLS; fall back to null (no related account context).
-    Id accountId = (Id) readableField(opp, 'AccountId');
+    Id accountId = (Id) GCPSummaryUtil.readableField(
+      opp,
+      Opportunity.AccountId
+    );
 
     Map<String, Object> caseBuckets = getCases(accountId);
     ActivityData activityData = getActivityData(
@@ -318,54 +328,14 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
   private static Opportunity getOpportunity(Id recordId) {
     List<Opportunity> opps = (List<Opportunity>) new OpportunitySelector()
-      .selectOpportunities()
-      .withoutSelectorFieldsIncluded()
-      .selectFields(
-        new List<String>{
-          'Id',
-          'Name',
-          'Amount',
-          'CurrencyIsoCode',
-          'Type',
-          'LeadSource',
-          'StageName',
-          'IsClosed',
-          'IsWon',
-          'Probability',
-          'ForecastCategory',
-          'CloseDate',
-          'CreatedDate',
-          'LastModifiedDate',
-          'NextStep',
-          'Description',
-          'Intended_Product__c',
-          'Order_Type__c',
-          'Downgrade_Reason_Opp__c',
-          'Primary_Loss_Reason__c',
-          'Primary_Competitor__c',
-          'Website__c',
-          'OwnerId',
-          'Owner.Name',
-          'AccountId',
-          'Account.Name',
-          'Account.Industry',
-          'Account.Sector__c',
-          'Account.Website',
-          'Account.BillingCity',
-          'Account.BillingState',
-          'Account.BillingCountry'
-        }
-      )
-      .setCondition('Id = :bind0')
-      .setLimit(1)
-      .setQueryBindings(new List<Object>{ recordId })
+      .selectOpportunityForSummary(recordId)
       .executeQuery();
     if (opps.isEmpty()) {
       throw new QueryException('Opportunity not found for Id ' + recordId);
     }
     // FLS: QueryFactory runs Database.query (system mode), and `with sharing` only enforces
     // row-level sharing — strip fields the running user cannot read before the GCP payload.
-    return (Opportunity) stripReadable(opps)[0];
+    return (Opportunity) GCPSummaryUtil.stripReadable(opps)[0];
   }
 
   @TestVisible
@@ -373,67 +343,113 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Opportunity opp,
     Boolean enrichmentEnabled
   ) {
-    SObject owner = readableRelated(opp, 'Owner');
-    SObject account = readableRelated(opp, 'Account');
+    SObject owner = readableRelated(opp, RELATIONSHIP_OWNER);
+    SObject relatedAccount = readableRelated(opp, RELATIONSHIP_ACCOUNT);
     Map<String, Object> opportunityMap = new Map<String, Object>{
-      'id' => readableField(opp, 'Id'),
-      'name' => readableField(opp, 'Name'),
-      'amount' => readableField(opp, 'Amount'),
-      'currencyIsoCode' => readableField(opp, 'CurrencyIsoCode'),
-      'type' => readableField(opp, 'Type'),
-      'leadSource' => readableField(opp, 'LeadSource'),
-      'stageName' => readableField(opp, 'StageName'),
-      'probability' => readableField(opp, 'Probability'),
-      'forecastCategory' => readableField(opp, 'ForecastCategory'),
-      'closeDate' => readableField(opp, 'CloseDate'),
-      'createdDate' => readableField(opp, 'CreatedDate'),
-      'lastModifiedDate' => readableField(opp, 'LastModifiedDate'),
-      'nextStep' => readableField(opp, 'NextStep'),
-      'description' => truncateText((String) readableField(opp, 'Description')),
-      'ownerId' => readableField(opp, 'OwnerId'),
-      'ownerName' => readableField(owner, 'Name'),
-      'accountId' => readableField(opp, 'AccountId'),
-      'accountIndustry' => readableField(account, 'Industry'),
-      'accountCity' => readableField(account, 'BillingCity'),
-      'accountCountry' => readableField(account, 'BillingCountry')
+      'id' => GCPSummaryUtil.readableField(opp, Opportunity.Id),
+      'name' => GCPSummaryUtil.readableField(opp, Opportunity.Name),
+      'amount' => GCPSummaryUtil.readableField(opp, Opportunity.Amount),
+      'currencyIsoCode' => GCPSummaryUtil.readableField(
+        opp,
+        Opportunity.CurrencyIsoCode
+      ),
+      'type' => GCPSummaryUtil.readableField(opp, Opportunity.Type),
+      'leadSource' => GCPSummaryUtil.readableField(opp, Opportunity.LeadSource),
+      'stageName' => GCPSummaryUtil.readableField(opp, Opportunity.StageName),
+      'probability' => GCPSummaryUtil.readableField(
+        opp,
+        Opportunity.Probability
+      ),
+      'forecastCategory' => GCPSummaryUtil.readableField(
+        opp,
+        Opportunity.ForecastCategory
+      ),
+      'closeDate' => GCPSummaryUtil.readableField(opp, Opportunity.CloseDate),
+      'createdDate' => GCPSummaryUtil.readableField(
+        opp,
+        Opportunity.CreatedDate
+      ),
+      'lastModifiedDate' => GCPSummaryUtil.readableField(
+        opp,
+        Opportunity.LastModifiedDate
+      ),
+      'nextStep' => GCPSummaryUtil.readableField(opp, Opportunity.NextStep),
+      'description' => truncateText(
+        (String) GCPSummaryUtil.readableField(opp, Opportunity.Description)
+      ),
+      'ownerId' => GCPSummaryUtil.readableField(opp, Opportunity.OwnerId),
+      'ownerName' => GCPSummaryUtil.readableField(owner, User.Name),
+      'accountId' => GCPSummaryUtil.readableField(opp, Opportunity.AccountId),
+      'accountIndustry' => GCPSummaryUtil.readableField(
+        relatedAccount,
+        Account.Industry
+      ),
+      'accountCity' => GCPSummaryUtil.readableField(
+        relatedAccount,
+        Account.BillingCity
+      ),
+      'accountCountry' => GCPSummaryUtil.readableField(
+        relatedAccount,
+        Account.BillingCountry
+      )
     };
     putIfPresent(opportunityMap, 'accountName', resolvedAccountName(opp));
     // GCP rejects non-boolean values, so omit the flags when they are unreadable.
-    putIfPresent(opportunityMap, 'isClosed', readableField(opp, 'IsClosed'));
-    putIfPresent(opportunityMap, 'isWon', readableField(opp, 'IsWon'));
+    putIfPresent(
+      opportunityMap,
+      'isClosed',
+      GCPSummaryUtil.readableField(opp, Opportunity.IsClosed)
+    );
+    putIfPresent(
+      opportunityMap,
+      'isWon',
+      GCPSummaryUtil.readableField(opp, Opportunity.IsWon)
+    );
     // Order_Type__c is the acquisition/upsell/downsell picklist; sent unchanged.
     // Type (New/Existing/Renewal) is not a deal motion and is already sent as `type`.
     putIfPresent(
       opportunityMap,
       'dealMotion',
-      normalizedText(readableField(opp, 'Order_Type__c'))
+      normalizedText(
+        GCPSummaryUtil.readableField(opp, Opportunity.Order_Type__c)
+      )
     );
     // Loss context for closed deals; GCP accepts at most 300 characters per key.
     putIfPresent(
       opportunityMap,
       'lossReason',
-      lossFieldText(readableField(opp, 'Downgrade_Reason_Opp__c'))
+      lossFieldText(
+        GCPSummaryUtil.readableField(opp, Opportunity.Downgrade_Reason_Opp__c)
+      )
     );
     putIfPresent(
       opportunityMap,
       'lossReasonDetail',
-      lossFieldText(readableField(opp, 'Primary_Loss_Reason__c'))
+      lossFieldText(
+        GCPSummaryUtil.readableField(opp, Opportunity.Primary_Loss_Reason__c)
+      )
     );
     putIfPresent(
       opportunityMap,
       'lostToCompetitor',
-      lossFieldText(readableField(opp, 'Primary_Competitor__c'))
+      lossFieldText(
+        GCPSummaryUtil.readableField(opp, Opportunity.Primary_Competitor__c)
+      )
     );
     // Sector exists only on Account (text, not a picklist).
     putIfPresent(
       opportunityMap,
       'sector',
-      normalizedText(readableField(account, 'Sector__c'))
+      normalizedText(
+        GCPSummaryUtil.readableField(relatedAccount, Account.Sector__c)
+      )
     );
     putIfPresent(
       opportunityMap,
       'intendedProduct',
-      normalizedText(readableField(opp, 'Intended_Product__c'))
+      normalizedText(
+        GCPSummaryUtil.readableField(opp, Opportunity.Intended_Product__c)
+      )
     );
 
     if (enrichmentEnabled) {
@@ -445,7 +461,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       putIfPresent(
         opportunityMap,
         'accountState',
-        readableField(account, 'BillingState')
+        GCPSummaryUtil.readableField(relatedAccount, Account.BillingState)
       );
     }
     return opportunityMap;
@@ -469,8 +485,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
   }
 
   private static String resolvedAccountName(Opportunity opp) {
-    SObject account = readableRelated(opp, 'Account');
-    String accountName = normalizedText(readableField(account, 'Name'));
+    SObject relatedAccount = readableRelated(opp, RELATIONSHIP_ACCOUNT);
+    String accountName = normalizedText(
+      GCPSummaryUtil.readableField(relatedAccount, Account.Name)
+    );
     return String.isBlank(accountName) ||
       configuredList('UnresolvedNames', UNRESOLVED_ACCOUNT_NAMES, false)
         .contains(accountName.toLowerCase())
@@ -504,13 +522,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
   }
 
   private static String resolvedAccountWebsite(Opportunity opp) {
-    SObject account = readableRelated(opp, 'Account');
-    String accountWebsite = normalizedText(readableField(account, 'Website'));
+    SObject relatedAccount = readableRelated(opp, RELATIONSHIP_ACCOUNT);
+    String accountWebsite = normalizedText(
+      GCPSummaryUtil.readableField(relatedAccount, Account.Website)
+    );
     if (String.isNotBlank(accountWebsite)) {
       return sanitizedPublicWebsite(accountWebsite);
     }
     return sanitizedPublicWebsite(
-      normalizedText(readableField(opp, 'Website__c'))
+      normalizedText(GCPSummaryUtil.readableField(opp, Opportunity.Website__c))
     );
   }
 
@@ -540,6 +560,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         authority.toLowerCase() +
         (String.isBlank(path) ? '' : path);
     } catch (Exception ignored) {
+      // Free-text website values are often not URLs; they are dropped, not reported.
       return null;
     }
   }
@@ -572,7 +593,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static List<Map<String, Object>> getStageHistory(Id recordId) {
     List<Map<String, Object>> rows = new List<Map<String, Object>>();
     // Selector returns newest first; reverse so the payload stays chronological.
-    List<SObject> histories = stripReadable(
+    List<SObject> histories = GCPSummaryUtil.stripReadable(
       new OpportunityHistorySelector()
         .selectStageHistoryByOpportunityId(recordId)
         .setLimit(maxHistoryRows)
@@ -582,12 +603,30 @@ public with sharing class GCPCalloutForOpportunitySummary {
       OpportunityHistory h = (OpportunityHistory) histories[i];
       rows.add(
         new Map<String, Object>{
-          'stageName' => readableField(h, 'StageName'),
-          'amount' => readableField(h, 'Amount'),
-          'probability' => readableField(h, 'Probability'),
-          'closeDate' => readableField(h, 'CloseDate'),
-          'forecastCategory' => readableField(h, 'ForecastCategory'),
-          'createdDate' => readableField(h, 'CreatedDate')
+          'stageName' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.StageName
+          ),
+          'amount' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.Amount
+          ),
+          'probability' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.Probability
+          ),
+          'closeDate' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.CloseDate
+          ),
+          'forecastCategory' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.ForecastCategory
+          ),
+          'createdDate' => GCPSummaryUtil.readableField(
+            h,
+            OpportunityHistory.CreatedDate
+          )
         }
       );
     }
@@ -601,7 +640,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       'Amount',
       'Probability'
     };
-    List<SObject> histories = stripReadable(
+    List<SObject> histories = GCPSummaryUtil.stripReadable(
       new OpportunityFieldHistorySelector()
         .selectFieldHistoryByOpportunityIdAndFields(recordId, trackedFields)
         .setLimit(maxHistoryRows)
@@ -611,10 +650,22 @@ public with sharing class GCPCalloutForOpportunitySummary {
       OpportunityFieldHistory fh = (OpportunityFieldHistory) histories[i];
       rows.add(
         new Map<String, Object>{
-          'field' => readableField(fh, 'Field'),
-          'oldValue' => readableField(fh, 'OldValue'),
-          'newValue' => readableField(fh, 'NewValue'),
-          'createdDate' => readableField(fh, 'CreatedDate')
+          'field' => GCPSummaryUtil.readableField(
+            fh,
+            OpportunityFieldHistory.Field
+          ),
+          'oldValue' => GCPSummaryUtil.readableField(
+            fh,
+            OpportunityFieldHistory.OldValue
+          ),
+          'newValue' => GCPSummaryUtil.readableField(
+            fh,
+            OpportunityFieldHistory.NewValue
+          ),
+          'createdDate' => GCPSummaryUtil.readableField(
+            fh,
+            OpportunityFieldHistory.CreatedDate
+          )
         }
       );
     }
@@ -628,7 +679,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   ) {
     Datetime windowEnd = Datetime.now();
     Datetime activitySince = windowEnd.addDays(-activityLookbackDays);
-    List<SObject> tasks = stripReadable(
+    List<SObject> tasks = GCPSummaryUtil.stripReadable(
       buildTaskQuery(recordId, activitySince).executeQuery()
     );
     Boolean tasksTruncated = trimOverflow(tasks, maxActivities);
@@ -640,36 +691,21 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
     // QueryFactory cannot validate Owner.Name on Event — Owner is polymorphic
     // (User | Calendar) and Calendar has no Name field. Resolve User names separately.
-    List<SObject> events = stripReadable(
+    List<SObject> events = GCPSummaryUtil.stripReadable(
       new EventSelector()
-        .selectEventsByWhatIds(new Set<Id>{ recordId })
-        .selectFields(
-          new List<String>{
-            'Id',
-            'WhoId',
-            'Subject',
-            'StartDateTime',
-            'EndDateTime',
-            'CreatedDate',
-            'OwnerId',
-            'Description'
-          }
+        .selectEventsByWhatIdSinceForSummary(
+          recordId,
+          activitySince,
+          maxActivities + 1
         )
-        .withoutSelectorOrderByIncluded()
-        .setCondition('WhatId IN :bind0 AND StartDateTime >= :bind1')
-        .setQueryBindings(
-          new List<Object>{ new Set<Id>{ recordId }, activitySince }
-        )
-        .addOrdering(Event.StartDateTime, QueryFactory.SortOrder.DESCENDING)
-        .setLimit(maxActivities + 1)
         .executeQuery()
     );
     Boolean eventsTruncated = trimOverflow(events, maxActivities);
 
     Set<Id> ownerIds = new Set<Id>();
     for (SObject sobj : events) {
-      Id ownerId = (Id) readableField(sobj, 'OwnerId');
-      if (ownerId != null && String.valueOf(ownerId).startsWith('005')) {
+      Id ownerId = (Id) GCPSummaryUtil.readableField(sobj, Event.OwnerId);
+      if (ownerId != null && ownerId.getSObjectType() == User.SObjectType) {
         ownerIds.add(ownerId);
       }
     }
@@ -677,12 +713,15 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Map<Id, String> ownerNamesById = new Map<Id, String>();
     if (!ownerIds.isEmpty()) {
       for (
-        SObject sobj : stripReadable(
+        SObject sobj : GCPSummaryUtil.stripReadable(
           new UserSelector().selectUsersByIds(ownerIds).executeQuery()
         )
       ) {
-        Id userId = (Id) readableField(sobj, 'Id');
-        String userName = (String) readableField(sobj, 'Name');
+        Id userId = (Id) GCPSummaryUtil.readableField(sobj, User.Id);
+        String userName = (String) GCPSummaryUtil.readableField(
+          sobj,
+          User.Name
+        );
         if (userId != null) {
           ownerNamesById.put(userId, userName);
         }
@@ -717,17 +756,12 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Id recordId,
     Datetime activitySince
   ) {
-    // QueryFactory validates fields through SObjectDescribeHelper, which is compiled
-    // at API 41. CompletedDateTime was added after that version, so selecting it here
-    // raises InvalidFieldException even though the current Task API supports it.
     return new TaskSelector()
-      .selectTasksByWhatIdForOpportunitySummary(recordId)
-      .selectFields(
-        new List<String>{ 'Id', 'WhoId', 'IsClosed', 'TaskSubtype' }
-      )
-      .setCondition('WhatId = :bind0 AND CreatedDate >= :bind1')
-      .setQueryBindings(new List<Object>{ recordId, activitySince })
-      .setLimit(maxActivities + 1);
+      .selectTasksByWhatIdSinceForOpportunitySummary(
+        recordId,
+        activitySince,
+        maxActivities + 1
+      );
   }
 
   @TestVisible
@@ -736,7 +770,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   ) {
     Set<Id> taskIds = new Set<Id>();
     for (SObject taskRecord : tasks) {
-      Id taskId = (Id) readableField(taskRecord, 'Id');
+      Id taskId = (Id) GCPSummaryUtil.readableField(taskRecord, Task.Id);
       if (taskId != null) {
         taskIds.add(taskId);
       }
@@ -746,25 +780,23 @@ public with sharing class GCPCalloutForOpportunitySummary {
     }
 
     try {
-      // This class is compiled at API 64, where the exact Task completion timestamp
-      // is available. Keep this query outside the legacy QueryFactory validation path.
-      List<SObject> completionRows = stripReadable(
-        [
-          SELECT Id, CompletedDateTime
-          FROM Task
-          WHERE Id IN :taskIds
-        ]
+      List<SObject> completionRows = GCPSummaryUtil.stripReadable(
+        new TaskSelector().selectTaskCompletionTimesByIds(taskIds)
       );
       Map<Id, Datetime> completionTimesByTaskId = new Map<Id, Datetime>();
       for (SObject completionRow : completionRows) {
         completionTimesByTaskId.put(
-          (Id) readableField(completionRow, 'Id'),
-          (Datetime) readableField(completionRow, 'CompletedDateTime')
+          (Id) GCPSummaryUtil.readableField(completionRow, Task.Id),
+          (Datetime) GCPSummaryUtil.readableField(
+            completionRow,
+            Task.CompletedDateTime
+          )
         );
       }
       return completionTimesByTaskId;
-    } catch (QueryException ignored) {
+    } catch (QueryException e) {
       // Conversation evidence is optional; preserve the established activity payload.
+      recordFailure(CONTEXT_TASK_COMPLETION, e);
       return null;
     }
   }
@@ -819,7 +851,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
     ActivityParticipantResult participantResult = new ActivityParticipantResult();
     try {
       participantResult = activityParticipantProvider.load(tasks, events);
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      recordFailure(CONTEXT_PARTICIPANTS, e);
       participantResult.status = 'error';
       participantResult.reasonCode = 'participant_retrieval_error';
     }
@@ -829,27 +862,35 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
     for (SObject sobj : tasks) {
       Task taskRecord = (Task) sobj;
-      SObject owner = readableRelated(taskRecord, 'Owner');
+      SObject owner = readableRelated(taskRecord, RELATIONSHIP_OWNER);
       Map<String, Object> row = new Map<String, Object>{
-        'id' => readableField(taskRecord, 'Id'),
-        'subject' => readableField(taskRecord, 'Subject'),
-        'status' => readableField(taskRecord, 'Status'),
-        'type' => readableField(taskRecord, 'Type'),
-        'activityDate' => readableField(taskRecord, 'ActivityDate'),
-        'createdDate' => readableField(taskRecord, 'CreatedDate'),
-        'ownerName' => readableField(owner, 'Name'),
+        'id' => GCPSummaryUtil.readableField(taskRecord, Task.Id),
+        'subject' => GCPSummaryUtil.readableField(taskRecord, Task.Subject),
+        'status' => GCPSummaryUtil.readableField(taskRecord, Task.Status),
+        'type' => GCPSummaryUtil.readableField(taskRecord, Task.Type),
+        'activityDate' => GCPSummaryUtil.readableField(
+          taskRecord,
+          Task.ActivityDate
+        ),
+        'createdDate' => GCPSummaryUtil.readableField(
+          taskRecord,
+          Task.CreatedDate
+        ),
+        'ownerName' => GCPSummaryUtil.readableField(owner, User.Name),
         'description' => truncateText(
-          (String) readableField(taskRecord, 'Description')
+          (String) GCPSummaryUtil.readableField(taskRecord, Task.Description)
         )
       };
       // TaskSubtype = 'Call' is how calls are logged; Type is usually blank.
       putIfPresent(
         row,
         'taskSubtype',
-        normalizedText(readableField(taskRecord, 'TaskSubtype'))
+        normalizedText(
+          GCPSummaryUtil.readableField(taskRecord, Task.TaskSubtype)
+        )
       );
       if (enrichmentEnabled) {
-        Id taskId = (Id) readableField(taskRecord, 'Id');
+        Id taskId = (Id) GCPSummaryUtil.readableField(taskRecord, Task.Id);
         row.put('sourceRecordId', taskId);
         row.put('participants', participantsFor(participantResult, taskId));
       }
@@ -858,20 +899,32 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
     for (SObject sobj : events) {
       Event eventRecord = (Event) sobj;
-      Id ownerId = (Id) readableField(eventRecord, 'OwnerId');
+      Id ownerId = (Id) GCPSummaryUtil.readableField(
+        eventRecord,
+        Event.OwnerId
+      );
       Map<String, Object> row = new Map<String, Object>{
-        'id' => readableField(eventRecord, 'Id'),
-        'subject' => readableField(eventRecord, 'Subject'),
-        'startDateTime' => readableField(eventRecord, 'StartDateTime'),
-        'endDateTime' => readableField(eventRecord, 'EndDateTime'),
-        'createdDate' => readableField(eventRecord, 'CreatedDate'),
+        'id' => GCPSummaryUtil.readableField(eventRecord, Event.Id),
+        'subject' => GCPSummaryUtil.readableField(eventRecord, Event.Subject),
+        'startDateTime' => GCPSummaryUtil.readableField(
+          eventRecord,
+          Event.StartDateTime
+        ),
+        'endDateTime' => GCPSummaryUtil.readableField(
+          eventRecord,
+          Event.EndDateTime
+        ),
+        'createdDate' => GCPSummaryUtil.readableField(
+          eventRecord,
+          Event.CreatedDate
+        ),
         'ownerName' => eventOwnerNamesById.get(ownerId),
         'description' => truncateText(
-          (String) readableField(eventRecord, 'Description')
+          (String) GCPSummaryUtil.readableField(eventRecord, Event.Description)
         )
       };
       if (enrichmentEnabled) {
-        Id eventId = (Id) readableField(eventRecord, 'Id');
+        Id eventId = (Id) GCPSummaryUtil.readableField(eventRecord, Event.Id);
         row.put('sourceRecordId', eventId);
         row.put('participants', participantsFor(participantResult, eventId));
       }
@@ -903,39 +956,49 @@ public with sharing class GCPCalloutForOpportunitySummary {
 
   private static CollectionData getStakeholderData(Id recordId) {
     CollectionData data = new CollectionData();
-    List<SObject> roles = stripReadable(
+    List<SObject> roles = GCPSummaryUtil.stripReadable(
       new OpportunityContactRoleSelector()
-        .selectOpportunityContactRolesByOppId(new List<Object>{ recordId })
-        .selectFields(
-          new List<String>{
-            'Contact.Name',
-            'Contact.Title',
-            'Contact.Email',
-            'Contact.Phone',
-            'Contact.LastActivityDate'
-          }
-        )
-        .addOrdering(
-          OpportunityContactRole.IsPrimary,
-          QueryFactory.SortOrder.DESCENDING
-        )
-        .setLimit(maxStakeholders + 1)
+        .selectStakeholdersForSummary(recordId, maxStakeholders + 1)
         .executeQuery()
     );
     data.isTruncated = trimOverflow(roles, maxStakeholders);
     for (SObject sobj : roles) {
       OpportunityContactRole r = (OpportunityContactRole) sobj;
-      SObject contact = readableRelated(r, 'Contact');
+      SObject stakeholderContact = readableRelated(r, RELATIONSHIP_CONTACT);
       data.rows.add(
         new Map<String, Object>{
-          'role' => readableField(r, 'Role'),
-          'isPrimary' => readableField(r, 'IsPrimary'),
-          'contactId' => readableField(r, 'ContactId'),
-          'name' => readableField(contact, 'Name'),
-          'title' => readableField(contact, 'Title'),
-          'email' => readableField(contact, 'Email'),
-          'phone' => readableField(contact, 'Phone'),
-          'lastActivityDate' => readableField(contact, 'LastActivityDate')
+          'role' => GCPSummaryUtil.readableField(
+            r,
+            OpportunityContactRole.Role
+          ),
+          'isPrimary' => GCPSummaryUtil.readableField(
+            r,
+            OpportunityContactRole.IsPrimary
+          ),
+          'contactId' => GCPSummaryUtil.readableField(
+            r,
+            OpportunityContactRole.ContactId
+          ),
+          'name' => GCPSummaryUtil.readableField(
+            stakeholderContact,
+            Contact.Name
+          ),
+          'title' => GCPSummaryUtil.readableField(
+            stakeholderContact,
+            Contact.Title
+          ),
+          'email' => GCPSummaryUtil.readableField(
+            stakeholderContact,
+            Contact.Email
+          ),
+          'phone' => GCPSummaryUtil.readableField(
+            stakeholderContact,
+            Contact.Phone
+          ),
+          'lastActivityDate' => GCPSummaryUtil.readableField(
+            stakeholderContact,
+            Contact.LastActivityDate
+          )
         }
       );
     }
@@ -956,50 +1019,38 @@ public with sharing class GCPCalloutForOpportunitySummary {
     }
 
     Date closedSince = Date.today().addMonths(-closedCaseMonths);
-    List<SObject> cases = stripReadable(
+    List<SObject> cases = GCPSummaryUtil.stripReadable(
       new CaseSelector()
-        .selectCases()
-        .selectFields(
-          new List<String>{
-            'Id',
-            'CaseNumber',
-            'Subject',
-            'Status',
-            'Priority',
-            'IsClosed',
-            'IsEscalated',
-            'CreatedDate',
-            'ClosedDate',
-            'Owner.Name',
-            'Description'
-          }
+        .selectCasesForOpportunitySummary(
+          accountId,
+          closedSince,
+          maxOpenCases + maxClosedCases
         )
-        .setCondition(
-          'AccountId = :bind0 AND (IsClosed = false OR ClosedDate >= :bind1)'
-        )
-        .addOrdering(Case.CreatedDate, QueryFactory.SortOrder.DESCENDING)
-        .setQueryBindings(new List<Object>{ accountId, closedSince })
-        .setLimit(maxOpenCases + maxClosedCases)
         .executeQuery()
     );
 
     for (SObject sobj : cases) {
       Case c = (Case) sobj;
-      SObject owner = readableRelated(c, 'Owner');
+      SObject owner = readableRelated(c, RELATIONSHIP_OWNER);
       Map<String, Object> row = new Map<String, Object>{
-        'id' => readableField(c, 'Id'),
-        'caseNumber' => readableField(c, 'CaseNumber'),
-        'subject' => readableField(c, 'Subject'),
-        'status' => readableField(c, 'Status'),
-        'priority' => readableField(c, 'Priority'),
-        'isEscalated' => readableField(c, 'IsEscalated'),
-        'createdDate' => readableField(c, 'CreatedDate'),
-        'closedDate' => readableField(c, 'ClosedDate'),
-        'ownerName' => readableField(owner, 'Name'),
-        'description' => truncateText((String) readableField(c, 'Description'))
+        'id' => GCPSummaryUtil.readableField(c, Case.Id),
+        'caseNumber' => GCPSummaryUtil.readableField(c, Case.CaseNumber),
+        'subject' => GCPSummaryUtil.readableField(c, Case.Subject),
+        'status' => GCPSummaryUtil.readableField(c, Case.Status),
+        'priority' => GCPSummaryUtil.readableField(c, Case.Priority),
+        'isEscalated' => GCPSummaryUtil.readableField(c, Case.IsEscalated),
+        'createdDate' => GCPSummaryUtil.readableField(c, Case.CreatedDate),
+        'closedDate' => GCPSummaryUtil.readableField(c, Case.ClosedDate),
+        'ownerName' => GCPSummaryUtil.readableField(owner, User.Name),
+        'description' => truncateText(
+          (String) GCPSummaryUtil.readableField(c, Case.Description)
+        )
       };
       // IsClosed may be stripped; treat missing as open so we do not drop the row.
-      Boolean isClosed = (Boolean) readableField(c, 'IsClosed');
+      Boolean isClosed = (Boolean) GCPSummaryUtil.readableField(
+        c,
+        Case.IsClosed
+      );
       if (isClosed == true) {
         if (recentlyClosed.size() < maxClosedCases) {
           recentlyClosed.add(row);
@@ -1020,23 +1071,9 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Boolean enrichmentEnabled
   ) {
     CollectionData data = new CollectionData();
-    List<SObject> lineItems = stripReadable(
+    List<SObject> lineItems = GCPSummaryUtil.stripReadable(
       new OpportunityLineItemSelector()
-        .selectLineItemsByOpportunityIdForSummary(recordId)
-        .selectFields(
-          new List<String>{
-            'Product2.Family',
-            'Product2.Sub_Category__c',
-            'Product2.Subgroup__c',
-            'Product2.Group__c',
-            'Product2.Description',
-            'Product2.Product_Description__c',
-            'Product2.CategoryName__c',
-            'Product2.LicenseGroup__c',
-            'Product2.ServiceCategory__c'
-          }
-        )
-        .setLimit(maxLineItems + 1)
+        .selectLineItemsWithProductContextForSummary(recordId, maxLineItems + 1)
         .executeQuery()
     );
     data.isTruncated = trimOverflow(lineItems, maxLineItems);
@@ -1054,54 +1091,90 @@ public with sharing class GCPCalloutForOpportunitySummary {
     List<Map<String, Object>> rows = new List<Map<String, Object>>();
     for (SObject sobj : lineItems) {
       OpportunityLineItem li = (OpportunityLineItem) sobj;
-      SObject product = readableRelated(li, 'Product2');
+      SObject product = readableRelated(li, RELATIONSHIP_PRODUCT);
       Map<String, Object> row = new Map<String, Object>{
-        'name' => readableField(li, 'Name'),
-        'productId' => readableField(li, 'Product2Id'),
-        'productName' => readableField(product, 'Name'),
-        'quantity' => readableField(li, 'Quantity'),
-        'unitPrice' => readableField(li, 'UnitPrice'),
-        'totalPrice' => readableField(li, 'TotalPrice'),
-        'discount' => readableField(li, 'Discount'),
-        'serviceDate' => readableField(li, 'ServiceDate'),
-        'description' => truncateText((String) readableField(li, 'Description'))
+        'name' => GCPSummaryUtil.readableField(li, OpportunityLineItem.Name),
+        'productId' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.Product2Id
+        ),
+        'productName' => GCPSummaryUtil.readableField(product, Product2.Name),
+        'quantity' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.Quantity
+        ),
+        'unitPrice' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.UnitPrice
+        ),
+        'totalPrice' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.TotalPrice
+        ),
+        'discount' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.Discount
+        ),
+        'serviceDate' => GCPSummaryUtil.readableField(
+          li,
+          OpportunityLineItem.ServiceDate
+        ),
+        'description' => truncateText(
+          (String) GCPSummaryUtil.readableField(
+            li,
+            OpportunityLineItem.Description
+          )
+        )
       };
       if (enrichmentEnabled) {
         putIfPresent(
           row,
           'productFamily',
-          activeProductFamily(readableField(product, 'Family'))
+          activeProductFamily(
+            GCPSummaryUtil.readableField(product, Product2.Family)
+          )
         );
         putIfPresent(
           row,
           'productLine',
-          normalizedText(readableField(product, 'Sub_Category__c'))
+          normalizedText(
+            GCPSummaryUtil.readableField(product, Product2.Sub_Category__c)
+          )
         );
         putIfPresent(
           row,
           'productSubgroup',
-          readableField(product, 'Subgroup__c')
+          GCPSummaryUtil.readableField(product, Product2.Subgroup__c)
         );
-        putIfPresent(row, 'productGroup', readableField(product, 'Group__c'));
+        putIfPresent(
+          row,
+          'productGroup',
+          GCPSummaryUtil.readableField(product, Product2.Group__c)
+        );
         putIfPresent(
           row,
           'productDescription',
-          truncateText((String) readableField(product, 'Description'))
+          truncateText(
+            (String) GCPSummaryUtil.readableField(product, Product2.Description)
+          )
         );
         putIfPresent(
           row,
           'productCatalogDescription',
           truncateText(
-            (String) readableField(product, 'Product_Description__c')
+            (String) GCPSummaryUtil.readableField(
+              product,
+              Product2.Product_Description__c
+            )
           )
         );
         putIfPresent(
           row,
           'productCategoryName',
-          readableField(product, 'CategoryName__c')
+          GCPSummaryUtil.readableField(product, Product2.CategoryName__c)
         );
         List<String> licenseGroups = splitMultiSelect(
-          readableField(product, 'LicenseGroup__c')
+          GCPSummaryUtil.readableField(product, Product2.LicenseGroup__c)
         );
         if (!licenseGroups.isEmpty()) {
           row.put('licenseGroups', licenseGroups);
@@ -1109,7 +1182,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         putIfPresent(
           row,
           'serviceCategory',
-          readableField(product, 'ServiceCategory__c')
+          GCPSummaryUtil.readableField(product, Product2.ServiceCategory__c)
         );
       }
       rows.add(row);
@@ -1164,21 +1237,20 @@ public with sharing class GCPCalloutForOpportunitySummary {
       if (!taskIds.isEmpty()) {
         if (TaskRelation.SObjectType.getDescribe().isAccessible()) {
           try {
-            taskRelations = stripReadable(
-              new QueryFactory(TaskRelation.SObjectType)
-                .selectFields(
-                  new List<String>{ 'TaskId', 'RelationId', 'IsWhat' }
+            taskRelations = GCPSummaryUtil.stripReadable(
+              new TaskRelationSelector()
+                .selectWhoRelationsByTaskIds(
+                  taskIds,
+                  MAX_ACTIVITY_RELATIONS + 1
                 )
-                .setCondition('TaskId IN :bind0 AND IsWhat = false')
-                .setQueryBindings(new List<Object>{ taskIds })
-                .setLimit(MAX_ACTIVITY_RELATIONS + 1)
                 .executeQuery()
             );
             if (trimOverflow(taskRelations, MAX_ACTIVITY_RELATIONS)) {
               relationsTruncated = true;
               unavailableSources.add('task_relations_limit');
             }
-          } catch (Exception ignored) {
+          } catch (Exception e) {
+            recordFailure(CONTEXT_TASK_RELATIONS, e);
             unavailableSources.add('task_relations_error');
           }
         } else {
@@ -1189,21 +1261,17 @@ public with sharing class GCPCalloutForOpportunitySummary {
       if (!eventIds.isEmpty()) {
         if (EventRelation.SObjectType.getDescribe().isAccessible()) {
           try {
-            eventRelations = stripReadable(
-              new QueryFactory(EventRelation.SObjectType)
-                .selectFields(
-                  new List<String>{ 'EventId', 'RelationId', 'IsInvitee' }
-                )
-                .setCondition('EventId IN :bind0')
-                .setQueryBindings(new List<Object>{ eventIds })
-                .setLimit(MAX_ACTIVITY_RELATIONS + 1)
+            eventRelations = GCPSummaryUtil.stripReadable(
+              new EventRelationSelector()
+                .selectRelationsByEventIds(eventIds, MAX_ACTIVITY_RELATIONS + 1)
                 .executeQuery()
             );
             if (trimOverflow(eventRelations, MAX_ACTIVITY_RELATIONS)) {
               relationsTruncated = true;
               unavailableSources.add('event_relations_limit');
             }
-          } catch (Exception ignored) {
+          } catch (Exception e) {
+            recordFailure(CONTEXT_EVENT_RELATIONS, e);
             unavailableSources.add('event_relations_error');
           }
         } else {
@@ -1239,11 +1307,9 @@ public with sharing class GCPCalloutForOpportunitySummary {
       }
 
       try {
-        List<SObject> contacts = stripReadable(
-          new QueryFactory(Contact.SObjectType)
-            .selectFields(new List<String>{ 'Id', 'Name', 'Title' })
-            .setCondition('Id IN :bind0')
-            .setQueryBindings(new List<Object>{ contactIds })
+        List<SObject> contacts = GCPSummaryUtil.stripReadable(
+          new ContactSelector()
+            .selectContactNamesByIds(contactIds)
             .executeQuery()
         );
         result.participantsByActivityId = materializeParticipants(
@@ -1251,7 +1317,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
           contacts
         );
         return result;
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        recordFailure(CONTEXT_CONTACTS, e);
         result.status = 'error';
         result.reasonCode = 'contact_retrieval_error';
         return result;
@@ -1271,8 +1338,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
     for (SObject record : tasks) {
       addParticipantEvidence(
         evidenceByKey,
-        (Id) readableField(record, 'Id'),
-        contactId(readableField(record, 'WhoId')),
+        (Id) GCPSummaryUtil.readableField(record, Task.Id),
+        contactId(GCPSummaryUtil.readableField(record, Task.WhoId)),
         'unknown',
         'Task.WhoId contact link'
       );
@@ -1280,8 +1347,8 @@ public with sharing class GCPCalloutForOpportunitySummary {
     for (SObject record : events) {
       addParticipantEvidence(
         evidenceByKey,
-        (Id) readableField(record, 'Id'),
-        contactId(readableField(record, 'WhoId')),
+        (Id) GCPSummaryUtil.readableField(record, Event.Id),
+        contactId(GCPSummaryUtil.readableField(record, Event.WhoId)),
         'unknown',
         'Event.WhoId contact link'
       );
@@ -1289,18 +1356,25 @@ public with sharing class GCPCalloutForOpportunitySummary {
     for (SObject record : taskRelations) {
       addParticipantEvidence(
         evidenceByKey,
-        (Id) readableField(record, 'TaskId'),
-        contactId(readableField(record, 'RelationId')),
+        (Id) GCPSummaryUtil.readableField(record, TaskRelation.TaskId),
+        contactId(
+          GCPSummaryUtil.readableField(record, TaskRelation.RelationId)
+        ),
         'unknown',
         'TaskRelation.RelationId contact link'
       );
     }
     for (SObject record : eventRelations) {
-      Boolean isInvitee = (Boolean) readableField(record, 'IsInvitee');
+      Boolean isInvitee = (Boolean) GCPSummaryUtil.readableField(
+        record,
+        EventRelation.IsInvitee
+      );
       addParticipantEvidence(
         evidenceByKey,
-        (Id) readableField(record, 'EventId'),
-        contactId(readableField(record, 'RelationId')),
+        (Id) GCPSummaryUtil.readableField(record, EventRelation.EventId),
+        contactId(
+          GCPSummaryUtil.readableField(record, EventRelation.RelationId)
+        ),
         isInvitee == true ? 'invited' : 'unknown',
         isInvitee == true
           ? 'EventRelation invitee record'
@@ -1351,7 +1425,10 @@ public with sharing class GCPCalloutForOpportunitySummary {
   ) {
     Map<Id, SObject> contactsById = new Map<Id, SObject>();
     for (SObject contactRecord : contacts) {
-      Id contactRecordId = (Id) readableField(contactRecord, 'Id');
+      Id contactRecordId = (Id) GCPSummaryUtil.readableField(
+        contactRecord,
+        Contact.Id
+      );
       if (contactRecordId != null) {
         contactsById.put(contactRecordId, contactRecord);
       }
@@ -1368,8 +1445,16 @@ public with sharing class GCPCalloutForOpportunitySummary {
         'participationStatus' => item.participationStatus,
         'evidenceSource' => item.evidenceSource
       };
-      putIfPresent(participant, 'name', readableField(contactRecord, 'Name'));
-      putIfPresent(participant, 'title', readableField(contactRecord, 'Title'));
+      putIfPresent(
+        participant,
+        'name',
+        GCPSummaryUtil.readableField(contactRecord, Contact.Name)
+      );
+      putIfPresent(
+        participant,
+        'title',
+        GCPSummaryUtil.readableField(contactRecord, Contact.Title)
+      );
       if (!participantsByActivityId.containsKey(item.activityId)) {
         participantsByActivityId.put(
           item.activityId,
@@ -1411,18 +1496,24 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Set<Id> seenActivityIds = new Set<Id>();
 
     for (SObject record : tasks) {
-      Id activityId = (Id) readableField(record, 'Id');
+      Id activityId = (Id) GCPSummaryUtil.readableField(record, Task.Id);
       Datetime occurredAt = taskCompletionTimesById.get(activityId);
       if (occurredAt == null) {
-        occurredAt = (Datetime) readableField(record, 'CompletedDateTime');
+        occurredAt = (Datetime) GCPSummaryUtil.readableField(
+          record,
+          Task.CompletedDateTime
+        );
       }
-      Boolean isClosed = (Boolean) readableField(record, 'IsClosed');
+      Boolean isClosed = (Boolean) GCPSummaryUtil.readableField(
+        record,
+        Task.IsClosed
+      );
       addConversationCandidate(
         candidates,
         seenActivityIds,
         activityId,
         occurredAt,
-        (String) readableField(record, 'Description'),
+        (String) GCPSummaryUtil.readableField(record, Task.Description),
         'Task',
         isClosed == true,
         participantsByActivityId,
@@ -1431,15 +1522,21 @@ public with sharing class GCPCalloutForOpportunitySummary {
       );
     }
     for (SObject record : events) {
-      Id activityId = (Id) readableField(record, 'Id');
-      Datetime occurredAt = (Datetime) readableField(record, 'StartDateTime');
-      Datetime endedAt = (Datetime) readableField(record, 'EndDateTime');
+      Id activityId = (Id) GCPSummaryUtil.readableField(record, Event.Id);
+      Datetime occurredAt = (Datetime) GCPSummaryUtil.readableField(
+        record,
+        Event.StartDateTime
+      );
+      Datetime endedAt = (Datetime) GCPSummaryUtil.readableField(
+        record,
+        Event.EndDateTime
+      );
       addConversationCandidate(
         candidates,
         seenActivityIds,
         activityId,
         occurredAt,
-        (String) readableField(record, 'Description'),
+        (String) GCPSummaryUtil.readableField(record, Event.Description),
         'Event',
         endedAt != null && endedAt <= windowEnd,
         participantsByActivityId,
@@ -1697,7 +1794,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static Set<Id> recordIds(List<SObject> records) {
     Set<Id> ids = new Set<Id>();
     for (SObject record : records) {
-      Id recordId = (Id) readableField(record, 'Id');
+      Id recordId = (Id) record.Id;
       if (recordId != null) {
         ids.add(recordId);
       }
@@ -1715,6 +1812,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
         ? candidate
         : null;
     } catch (Exception ignored) {
+      // Relation and Who Ids can point at Leads or carry non-Id values; only Contacts count.
       return null;
     }
   }
@@ -1876,25 +1974,43 @@ public with sharing class GCPCalloutForOpportunitySummary {
     if (accountId == null) {
       return rows;
     }
-    List<SObject> related = stripReadable(
+    List<SObject> related = GCPSummaryUtil.stripReadable(
       buildRelatedOpportunitiesQuery(accountId, currentOppId).executeQuery()
     );
     for (SObject sobj : related) {
       Opportunity opp = (Opportunity) sobj;
       rows.add(
         new Map<String, Object>{
-          'id' => readableField(opp, 'Id'),
-          'name' => readableField(opp, 'Name'),
-          'amount' => readableField(opp, 'Amount'),
-          'currencyIsoCode' => readableField(opp, 'CurrencyIsoCode'),
-          'type' => readableField(opp, 'Type'),
-          'stageName' => readableField(opp, 'StageName'),
-          'forecastCategory' => readableField(opp, 'ForecastCategory'),
-          'probability' => readableField(opp, 'Probability'),
-          'isWon' => readableField(opp, 'IsWon'),
-          'isClosed' => readableField(opp, 'IsClosed'),
-          'closeDate' => readableField(opp, 'CloseDate'),
-          'createdDate' => readableField(opp, 'CreatedDate')
+          'id' => GCPSummaryUtil.readableField(opp, Opportunity.Id),
+          'name' => GCPSummaryUtil.readableField(opp, Opportunity.Name),
+          'amount' => GCPSummaryUtil.readableField(opp, Opportunity.Amount),
+          'currencyIsoCode' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.CurrencyIsoCode
+          ),
+          'type' => GCPSummaryUtil.readableField(opp, Opportunity.Type),
+          'stageName' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.StageName
+          ),
+          'forecastCategory' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.ForecastCategory
+          ),
+          'probability' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.Probability
+          ),
+          'isWon' => GCPSummaryUtil.readableField(opp, Opportunity.IsWon),
+          'isClosed' => GCPSummaryUtil.readableField(opp, Opportunity.IsClosed),
+          'closeDate' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.CloseDate
+          ),
+          'createdDate' => GCPSummaryUtil.readableField(
+            opp,
+            Opportunity.CreatedDate
+          )
         }
       );
     }
@@ -1907,65 +2023,26 @@ public with sharing class GCPCalloutForOpportunitySummary {
     Id currentOppId
   ) {
     return new OpportunitySelector()
-      .selectOpportunities()
-      .withoutSelectorFieldsIncluded()
-      .selectFields(
-        new List<String>{
-          'Id',
-          'Name',
-          'Amount',
-          'CurrencyIsoCode',
-          'Type',
-          'StageName',
-          'ForecastCategory',
-          'Probability',
-          'IsWon',
-          'IsClosed',
-          'CloseDate',
-          'CreatedDate'
-        }
-      )
-      // The selector's default Name ordering would come first and make the limit
-      // keep the first opportunities alphabetically instead of the most recent.
-      .withoutSelectorOrderByIncluded()
-      .setCondition('AccountId = :bind0 AND Id != :bind1')
-      .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING)
-      .setQueryBindings(new List<Object>{ accountId, currentOppId })
-      .setLimit(maxRelatedOpps);
+      .selectRelatedOpportunitiesForSummary(
+        accountId,
+        currentOppId,
+        maxRelatedOpps
+      );
   }
 
   // QueryFactory / selectors run in system mode; `with sharing` only enforces row-level
   // sharing. Strip fields the running user cannot read before they reach the GCP payload.
   // enforceRootObjectCRUD=false so missing object access on related types (Case, Task, …)
   // yields empty field sets instead of NoAccessException aborting the whole summary.
-  private static List<SObject> stripReadable(List<SObject> records) {
-    if (records == null || records.isEmpty()) {
-      return records == null ? new List<SObject>() : records;
-    }
-    return System.Security.stripInaccessible(
-        System.AccessType.READABLE,
-        records,
-        false
-      )
-      .getRecords();
-  }
-
   // stripInaccessible REMOVES an inaccessible field from the record — it does NOT null it
   // out. A direct getter on a removed field throws System.SObjectException. Reading via
   // getPopulatedFieldsAsMap() returns null instead, so the payload still builds from what
   // the user CAN read.
-  private static Object readableField(SObject record, String fieldApiName) {
-    if (record == null || String.isBlank(fieldApiName)) {
-      return null;
-    }
-    return record.getPopulatedFieldsAsMap().get(fieldApiName);
-  }
-
   private static SObject readableRelated(
     SObject record,
     String relationshipName
   ) {
-    Object related = readableField(record, relationshipName);
+    Object related = GCPSummaryUtil.readableField(record, relationshipName);
     return related instanceof SObject ? (SObject) related : null;
   }
 
@@ -2036,19 +2113,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
       return JSON.serializePretty(result);
     }
 
-    Object body = getBody(raw);
-    if (body instanceof String) {
-      System.debug(
-        LoggingLevel.ERROR,
-        'Opportunity Summary service returned a non-card message.'
-      );
-    } else {
-      System.debug(
-        LoggingLevel.ERROR,
-        'Opportunity Summary service returned an unexpected response format.'
-      );
-    }
-
+    recordFailure(
+      getBody(raw) instanceof String
+        ? NON_CARD_RESPONSE_MESSAGE
+        : UNEXPECTED_RESPONSE_MESSAGE
+    );
     return errorJson(userFacingError);
   }
 
@@ -2471,6 +2540,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     try {
       return Id.valueOf(String.valueOf(value));
     } catch (Exception ignored) {
+      // Ids in the service response are model output; malformed ones are filtered out.
       return null;
     }
   }
@@ -2495,11 +2565,41 @@ public with sharing class GCPCalloutForOpportunitySummary {
   }
 
   private static String logAndFail(String context, Exception e) {
-    System.debug(
-      LoggingLevel.ERROR,
-      'Opportunity Summary failed: ' + context + '.'
-    );
+    recordFailure(context, e);
     return errorJson(userFacingError);
+  }
+
+  /*
+   * Failures are collected and written once the callout has finished: Salesforce rejects a
+   * callout after uncommitted DML, so logging mid-request would break the summary itself.
+   */
+  @TestVisible
+  private static List<PlatformLog__c> pendingFailureLogs = new List<PlatformLog__c>();
+
+  private static void recordFailure(String context, Exception e) {
+    pendingFailureLogs.add(
+      PlatformLog.buildLog(
+        LOG_SOURCE + LOG_CONTEXT_SEPARATOR + context,
+        e.getMessage(),
+        e.getStackTraceString(),
+        null,
+        null
+      )
+    );
+  }
+
+  private static void recordFailure(String message) {
+    pendingFailureLogs.add(
+      PlatformLog.buildLog(LOG_SOURCE, message, null, null, null)
+    );
+  }
+
+  private static void flushFailureLogs() {
+    if (pendingFailureLogs.isEmpty()) {
+      return;
+    }
+    PlatformLog.logResults(pendingFailureLogs);
+    pendingFailureLogs = new List<PlatformLog__c>();
   }
 
   // ---------------- Feature toggle & telemetry ----------------
@@ -2530,6 +2630,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     try {
       return System.Label.get('', 'OpportunitySummary' + suffix, 'en_US');
     } catch (Exception ignored) {
+      // A missing technical label falls back to the coded default.
       return null;
     }
   }
@@ -2555,6 +2656,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
       Integer value = Integer.valueOf(raw.trim());
       return value > 0 && value <= maximum ? value : fallback;
     } catch (Exception ignored) {
+      // Digits beyond the Integer range fall back to the coded default.
       return fallback;
     }
   }
@@ -2631,41 +2733,5 @@ public with sharing class GCPCalloutForOpportunitySummary {
   public static Boolean isOpportunitySummaryEnabled() {
     GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
     return (setting != null && setting.Enable_Opportunity_Summary__c == true);
-  }
-
-  @AuraEnabled(cacheable=false)
-  public static void logAIHEvent(
-    String eventType,
-    String subfeature,
-    String feedback
-  ) {
-    Set<String> allowed = new Set<String>{
-      'aih_view',
-      'aih_like',
-      'aih_dislike',
-      'aih_feedback'
-    };
-    if (String.isBlank(eventType) || !allowed.contains(eventType)) {
-      return;
-    }
-
-    String safeSubfeature = String.isBlank(subfeature)
-      ? 'Unknown'
-      : subfeature.left(80);
-    String safeFeedback = String.isBlank(feedback) ? null : feedback.left(1000);
-
-    Map<String, Object> payload = new Map<String, Object>{
-      'subfeature' => safeSubfeature
-    };
-    if (safeFeedback != null) {
-      payload.put('feedback', safeFeedback);
-    }
-
-    System.enqueueJob(
-      new AIUsageLogQueueable(
-        new List<String>{ eventType },
-        JSON.serialize(payload)
-      )
-    );
   }
 }

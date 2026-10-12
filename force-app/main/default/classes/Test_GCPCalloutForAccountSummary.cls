@@ -167,7 +167,9 @@ private class Test_GCPCalloutForAccountSummary {
     Account summaryAccount = testAccount();
     GCPCalloutForAccountSummary.ListSpec historySpec;
     for (
-      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs()
+      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs(
+        summaryAccount.Id
+      )
     ) {
       if (spec.key == 'accountHistory') {
         historySpec = spec;
@@ -175,10 +177,7 @@ private class Test_GCPCalloutForAccountSummary {
     }
 
     Test.startTest();
-    String condition = GCPCalloutForAccountSummary.buildListQuery(
-        historySpec,
-        summaryAccount.Id
-      )
+    String condition = GCPCalloutForAccountSummary.buildListQuery(historySpec)
       .getCondition();
     Test.stopTest();
 
@@ -865,12 +864,13 @@ private class Test_GCPCalloutForAccountSummary {
 
     Test.startTest();
     for (
-      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs()
+      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs(
+        summaryAccount.Id
+      )
     ) {
       keyToCondition.put(
         spec.key,
-        GCPCalloutForAccountSummary.buildListQuery(spec, summaryAccount.Id)
-          .getCondition()
+        GCPCalloutForAccountSummary.buildListQuery(spec).getCondition()
       );
     }
     Test.stopTest();
@@ -881,7 +881,7 @@ private class Test_GCPCalloutForAccountSummary {
       String condition = keyToCondition.get(listKey);
       Assert.isTrue(condition.contains('IsClosed = true'), senderMessage);
       Assert.isTrue(
-        condition.contains('\'Automation Service\''),
+        condition.contains('CreatedBy.Name NOT IN :bind1'),
         senderMessage
       );
       Assert.isTrue(
@@ -895,5 +895,49 @@ private class Test_GCPCalloutForAccountSummary {
         eventMessage
       );
     }
+  }
+
+  @IsTest
+  static void shouldReadAutomatedSendersFromLabelWhenFilteringTasks() {
+    GCPCalloutForAccountSummary.labelSuffixToValue.put(
+      'ExcludedActivityCreators',
+      ' Automation Service , ,RC Support Agent'
+    );
+
+    Test.startTest();
+    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    Test.stopTest();
+
+    String parseMessage = 'Creator names must be trimmed and blank entries dropped.';
+    Assert.areEqual(
+      new List<String>{ 'Automation Service', 'RC Support Agent' },
+      creators,
+      parseMessage
+    );
+  }
+
+  @IsTest
+  static void shouldSkipCreatorFilterValuesWhenLabelIsBlank() {
+    GCPCalloutForAccountSummary.labelSuffixToValue.put(
+      'ExcludedActivityCreators',
+      ''
+    );
+
+    Test.startTest();
+    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    Test.stopTest();
+
+    String blankMessage = 'A blank label must give an empty creator list, not null.';
+    Assert.isTrue(creators.isEmpty(), blankMessage);
+  }
+
+  @IsTest
+  static void shouldShipDefaultAutomatedSendersWhenLabelIsDeployed() {
+    Test.startTest();
+    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    Test.stopTest();
+
+    String defaultMessage = 'The deployed label must list the automated senders.';
+    Assert.isTrue(creators.contains('Automation Service'), defaultMessage);
   }
 }

@@ -1872,4 +1872,14 @@ public inherited sharing class AccountSelector extends SObjectSelector {
             .setCondition('Id IN :bind0')
             .setQueryBindings( accIds );
     }
+
+    public QueryFactory selectAccountForSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectAccountForSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('Id = :bind0')
+            .setQueryBindings(new List<Object> { accountId })
+            .setLimit(1);
+    }
 }

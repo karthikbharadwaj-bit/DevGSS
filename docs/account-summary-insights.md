@@ -73,7 +73,7 @@ The rules come from an analysis of a year of BISUAT activity (2026-10-08). The g
 - **Completed only** (`IsClosed = true`). Open tasks are plans. In BISUAT almost all of them were system to-dos: 1,252 "The account for case # has not been found, please reassign." tasks on cases, and 269 "Follow up with X regarding their expiring trial" tasks on accounts.
 - **No list emails** (`TaskSubtype != 'ListEmail'`).
 - **Nothing dated in the future.** A blank ActivityDate is allowed.
-- **No automated senders**, matched on the creator's name: Automation Service (third-party activation and quantity-change emails on opportunities), RC Support Agent (case auto-acknowledgements), User Marketo, Workato Integration User, AIM GTM Intelligence and Comm ODS Integration.
+- **No automated senders**, matched on the creator's name: Automation Service (third-party activation and quantity-change emails on opportunities), RC Support Agent (case auto-acknowledgements), User Marketo, Workato Integration User, AIM GTM Intelligence and Comm ODS Integration. The list is the comma-separated Custom Label `AccountSummaryExcludedActivityCreators`, so admins can change it without a deploy.
 - **No auto-acknowledgements:** subjects starting "Email: Thank you for contacting us".
 
 **Why case tasks are a separate list.** Salesforce fills `Task.AccountId` from the Account, Opportunity, Contract, a custom child of Account, or the task's Contact. It does not fill it from a Case. In DevGss, 122 of 129 case tasks from the last 90 days had no `AccountId`. A task on a Case whose Contact belongs to the account already has `AccountId` set, so it goes in `tasks`, and `caseTasks` leaves it out to avoid duplicates.

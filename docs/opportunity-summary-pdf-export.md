@@ -11,7 +11,7 @@ pending download. Errors are retryable and do not discard the displayed summary.
 - Opportunity name (optional UI API field, record ID fallback) and record link.
 - Original summary-received timestamp and separate export timestamp, both UTC.
 - Current stage explicitly labelled **Stage at export**.
-- Deal score and every existing summary section, including additional sections.
+- Deal score and every summary section shown on screen, including additional sections. Closed (won or lost) deals print Post-Close Actions and leave out Win Factors, Risk Flags and Close Plan, as the modal does.
 - Exact configured AI research disclaimer whenever enrichment is present.
 - Public Research Used with internal evidence links and labelled source links.
 - Additional Company Updates, even when collapsed, with its relationship helper,
@@ -79,10 +79,11 @@ appropriately. Library provenance and licenses are retained in the static resour
 
 - Modified LWC bundle: `opportunitySummary`.
 - New static resource: `PdfRenderer` (approximately 1.9 MB unpacked).
-- 23 new UI labels, prefixed `OpportunitySummaryPdf`: `Download`, `Preparing`,
+- 24 new UI labels, prefixed `OpportunitySummaryPdf`: `Download`, `Preparing`,
   `Error`, `Started`, `Title`, `Snapshot`, `Exported`, `Record`, `Footer`, `Stage`,
-  `Score`, `Executive`, `History`, `Win`, `Risk`, `Actions`, `Plan`, `Research`,
-  `Supplemental`, `Sources`, `Searches`, `Relevance`, `Action`.
+  `Score`, `Executive`, `History`, `Win`, `Risk`, `Actions`, `Plan`, `PostClose`,
+  `Research`, `Supplemental`, `Sources`, `Searches`, `Relevance`, `Action`.
+  `PostClose` was added with the closed-deal handling in `f60a692`.
 
 No Apex, endpoint, cache policy, enrichment toggle, or GCP changes. Deploy the
 bundle, static resource and new labels together when approved. Preserve any

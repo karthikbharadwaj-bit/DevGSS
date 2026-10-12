@@ -43,11 +43,11 @@ Deployed to DevGss in deploy `0AfTH00000IOG650AH` (20/20 tests passed).
   - `description`: cut to the first 1000 characters, with URLs left intact.
   - Any of the four can be `null`, for example when the user can't read the field. DevGss clears `Event.Subject` when an event is saved, so event `subject` is often `null` there.
 - **Which activities are selected:** Tasks and Events now match on `AccountId = <account>` instead of `WhatId = <account>`. Activities logged on the account's opportunities, cases and contacts are now included. Before this change, Bank of America's call Task `00TTH00000MtVsv2AF` and both opportunity Events were missing because they are logged on the opportunity.
-- **Unchanged:**
-  - Caps: 5 tasks and 5 events, latest `ActivityDate` first.
-  - Date filter: `ActivityDate <= TODAY`, which includes today.
-  - Tasks with subtype `ListEmail` are still excluded.
-  - Activities with no `ActivityDate` are still left out.
+- **Unchanged at the time:** caps of 5 tasks and 5 events, the `ActivityDate <= TODAY` filter, and the `ListEmail` exclusion.
+- **Superseded on 2026-10-08:** activity retrieval was reworked. The current rules are in [Account Summary insights](account-summary-insights.md):
+  - Caps: 20 tasks, 10 case tasks, 10 events and 5 upcoming events, latest `ActivityDate` first.
+  - Tasks must be completed. A task with no `ActivityDate` is now included; anything dated in the future is not.
+  - Tasks from the automated senders in the `AccountSummaryExcludedActivityCreators` label, `ListEmail` tasks and the "Email: Thank you for contacting us" auto-reply are left out. Events of Type "System Use" are left out.
 
 Sample `tasks` row (Ids masked):
 

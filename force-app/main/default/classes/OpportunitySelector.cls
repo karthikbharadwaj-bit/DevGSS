@@ -1320,4 +1320,102 @@ public inherited sharing class OpportunitySelector extends SObjectSelector {
             .setCondition('AccountId IN :bind0 AND RecordTypeId = :bind1')
             .setQueryBindings(bindings);
     }
+
+    /**
+     * The opportunity and account fields sent to the Opportunity Summary service.
+     */
+    public QueryFactory selectOpportunityForSummary(Id opportunityId) {
+        return newQueryFactory()
+            .setFactoryName('selectOpportunityForSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .selectFields(new List<Schema.SObjectField> {
+                Opportunity.Id,
+                Opportunity.Name,
+                Opportunity.Amount,
+                Opportunity.CurrencyIsoCode,
+                Opportunity.Type,
+                Opportunity.LeadSource,
+                Opportunity.StageName,
+                Opportunity.IsClosed,
+                Opportunity.IsWon,
+                Opportunity.Probability,
+                Opportunity.ForecastCategory,
+                Opportunity.CloseDate,
+                Opportunity.CreatedDate,
+                Opportunity.LastModifiedDate,
+                Opportunity.NextStep,
+                Opportunity.Description,
+                Opportunity.Intended_Product__c,
+                Opportunity.Order_Type__c,
+                Opportunity.Downgrade_Reason_Opp__c,
+                Opportunity.Primary_Loss_Reason__c,
+                Opportunity.Primary_Competitor__c,
+                Opportunity.Website__c,
+                Opportunity.OwnerId,
+                Opportunity.AccountId
+            })
+            .selectFields(new List<String> {
+                'Owner.Name',
+                'Account.Name',
+                'Account.Industry',
+                'Account.Sector__c',
+                'Account.Website',
+                'Account.BillingCity',
+                'Account.BillingState',
+                'Account.BillingCountry'
+            })
+            .setCondition('Id = :bind0')
+            .setQueryBindings(new List<Object> { opportunityId })
+            .setLimit(1);
+    }
+
+    /**
+     * Other opportunities on the same account, most recent close date first. The selector's
+     * default Name ordering is left out so the limit keeps the latest deals, not the first by name.
+     */
+    public QueryFactory selectRelatedOpportunitiesForSummary(Id accountId, Id excludedOpportunityId, Integer rowLimit) {
+        return newQueryFactory()
+            .setFactoryName('selectRelatedOpportunitiesForSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .selectFields(new List<Schema.SObjectField> {
+                Opportunity.Id,
+                Opportunity.Name,
+                Opportunity.Amount,
+                Opportunity.CurrencyIsoCode,
+                Opportunity.Type,
+                Opportunity.StageName,
+                Opportunity.ForecastCategory,
+                Opportunity.Probability,
+                Opportunity.IsWon,
+                Opportunity.IsClosed,
+                Opportunity.CloseDate,
+                Opportunity.CreatedDate
+            })
+            .setCondition('AccountId = :bind0 AND Id != :bind1')
+            .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING)
+            .setQueryBindings(new List<Object> { accountId, excludedOpportunityId })
+            .setLimit(rowLimit);
+    }
+
+    public QueryFactory selectOpenOpportunitiesForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectOpenOpportunitiesForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0 AND IsClosed = false')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.ASCENDING, false);
+    }
+
+    public QueryFactory selectClosedOpportunitiesForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectClosedOpportunitiesForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0 AND IsClosed = true')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Opportunity.CloseDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

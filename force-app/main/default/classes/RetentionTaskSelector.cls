@@ -27,4 +27,14 @@ public inherited sharing class RetentionTaskSelector extends SObjectSelector {
             .setFactoryName('selectRetentionTasks')
             .selectFields(getDefaultFieldList());
     }
+
+    public QueryFactory selectRetentionTasksForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectRetentionTasksForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('Account__c = :bind0')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Retention_Task__c.CreatedDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

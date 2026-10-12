@@ -30,4 +30,17 @@ public inherited sharing class AccountHistorySelector extends SObjectSelector {
             .addOrdering('CreatedDate', QueryFactory.SortOrder.ASCENDING)
             .setQueryBindings(bindings);
     }
+
+    /**
+     * Status and Owner are the only tracked Account fields that change in production. An Owner change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
+     */
+    public QueryFactory selectStatusAndOwnerChangesForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectStatusAndOwnerChangesForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0 AND Field IN (\'RC_Account_Status__c\', \'Owner\') AND DataType = \'Text\' AND CreatedDate = LAST_N_DAYS:90')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(AccountHistory.CreatedDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

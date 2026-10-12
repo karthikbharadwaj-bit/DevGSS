@@ -3,7 +3,7 @@ import { createElement } from "lwc";
 import AiAccountSummary from "c/aiAccountSummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
-import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
+import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import * as pdfDownload from "c/lwcPdfRenderer";
 
 jest.mock(
@@ -17,7 +17,7 @@ jest.mock(
   { virtual: true }
 );
 jest.mock(
-  "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent",
+  "@salesforce/apex/AISummaryController.logAIHEvent",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );

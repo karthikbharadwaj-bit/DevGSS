@@ -66,6 +66,47 @@ to be done by hand in Setup.
 - [ ] Same check on a closed-won and a closed-lost Opportunity, to confirm Post-Close
       Actions prints and Win Factors, Risk Flags and Close Plan do not.
 
+## Deferred from the 2026-10-12 standards review
+
+These were kept as they are on purpose. Each one needs a design change, not a cleanup.
+
+- [ ] **Numbers and JSON stored as Custom Labels.** `*TimeoutSeconds`, `*CacheHours`,
+      `*ActivityDays`, `*ExcludedActivityCreators` and the list caps are settings, which
+      the standards put in Custom Metadata or Custom Settings. Moving them means a new
+      metadata type, a migration of admin-set values, and rewriting both technical-label
+      readers.
+- [ ] **Raw `HttpRequest` instead of `HttpHelper`.** Both callouts and `GCPAuthUtil` build
+      the request themselves, because the endpoint and bearer token come from
+      `GCPAuthUtil` rather than a Named Credential. Moving to `HttpHelper` needs a Named
+      Credential for each GCP service.
+- [ ] **JSON error replies.** Both `@AuraEnabled` callouts return `{success:false, message}`
+      instead of an `'Error: '` string. Both LWCs parse this shape; changing it changes the
+      Apex and both components together.
+- [ ] **GCP payload keys are string literals.** The keys (`opportunity`, `accountWebsite`
+      and so on) are the GCP contract and appear once each, so they were not turned into
+      constants.
+- [ ] **Field lists for the Account lists live in the callout class.** The
+      `*_FIELD_TO_KEY` maps choose both the fields and their payload keys, so
+      `GCPCalloutForAccountSummary` adds the fields to the selector's query. The
+      standards want field lists in the selector.
+- [ ] **Similar helpers that are not identical.** Only `stripReadable` and
+      `readableField` matched, and they moved to `GCPSummaryUtil`. The others differ:
+  - `buildServiceEndpoint`: Opportunity removes every trailing slash, Account removes one.
+  - `errorJson`: Opportunity pretty-prints, Account does not.
+  - The toggle getters read different `GCP_Feature_Toggle__c` fields.
+  - The PDF builders' `pdfText` and heading-keep rule (see below).
+- [ ] **Shared usage logger.** Both summaries now call `AISummaryController.logAIHEvent`.
+      Its comment says it "will diverge soon"; if it does, give the summaries their own.
+- [ ] **Opportunity test class.** It is still named `GCPCalloutForOpportunitySummaryTest`
+      (the standard is `Test_GCPCalloutForOpportunitySummary`) and has no `@TestSetup`,
+      because it builds records in memory. Its fake Ids now come from each object's key
+      prefix instead of literals.
+- [ ] **Selectors without their own test class.** `TaskSelector` and
+      `OpportunityLineItemSelector` came from DevGss without one. The summary callout
+      tests run every summary method on them.
+- [ ] **`derived_metrics` is unused.** Account Summary passes it through to the LWC,
+      which never reads it.
+
 ## Can be done on request (no access or decision needed)
 
 - [ ] **Shared PDF building blocks.** Both document builders still carry their own copy of

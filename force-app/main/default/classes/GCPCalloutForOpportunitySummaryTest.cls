@@ -1,14 +1,23 @@
 @IsTest
 private class GCPCalloutForOpportunitySummaryTest {
-  private static final Id OPPORTUNITY_ID = '006000000000001';
-  private static final Id ACCOUNT_ID = '001000000000001';
-  private static final Id PRODUCT_ID = '01t000000000001';
-  private static final Id LINE_ITEM_ID = '00k000000000001';
-  private static final Id TASK_ID = '00T000000000001';
-  private static final Id EVENT_ID = '00U000000000001';
-  private static final Id CONTACT_ID = '003000000000001';
-  private static final Id SECOND_CONTACT_ID = '003000000000002';
-  private static final Id USER_ID = '005000000000001';
+  private static final Id OPPORTUNITY_ID = syntheticId(
+    Opportunity.SObjectType,
+    1
+  );
+  private static final Id ACCOUNT_ID = syntheticId(Account.SObjectType, 1);
+  private static final Id PRODUCT_ID = syntheticId(Product2.SObjectType, 1);
+  private static final Id LINE_ITEM_ID = syntheticId(
+    OpportunityLineItem.SObjectType,
+    1
+  );
+  private static final Id TASK_ID = syntheticId(Task.SObjectType, 1);
+  private static final Id EVENT_ID = syntheticId(Event.SObjectType, 1);
+  private static final Id CONTACT_ID = syntheticId(Contact.SObjectType, 1);
+  private static final Id SECOND_CONTACT_ID = syntheticId(
+    Contact.SObjectType,
+    2
+  );
+  private static final Id USER_ID = syntheticId(User.SObjectType, 1);
   private static final String SERVICE_HOST = 'https://service.example.invalid';
   private static final String TOKEN_URL = SERVICE_HOST + '/token';
   private static final String SUMMARY_ENDPOINT =
@@ -23,15 +32,21 @@ private class GCPCalloutForOpportunitySummaryTest {
     '"]}}}';
 
   @IsTest
-  static void taskQueryKeepsNewerCompletionFieldOutOfLegacyQueryFactory() {
+  static void shouldKeepCompletionFieldOutOfTaskQueryWhenBuildingActivityQuery() {
     QueryFactory taskQuery = GCPCalloutForOpportunitySummary.buildTaskQuery(
       OPPORTUNITY_ID,
       Datetime.now().addDays(-180)
     );
 
     String soql = taskQuery.setQuery().getQuery();
-    System.assert(soql.contains('IsClosed'));
-    System.assertEquals(false, soql.contains('CompletedDateTime'));
+    Assert.isTrue(
+      soql.contains('IsClosed'),
+      'Expected true: soql.contains(\'IsClosed\')'
+    );
+    Assert.isFalse(
+      soql.contains('CompletedDateTime'),
+      'Expected false: soql.contains(\'CompletedDateTime\')'
+    );
   }
 
   @IsTest
@@ -45,53 +60,98 @@ private class GCPCalloutForOpportunitySummaryTest {
       .getQuery();
     Test.stopTest();
 
-    System.assert(
+    Assert.isTrue(
       soql.contains('ORDER BY CloseDate DESC NULLS FIRST'),
       'The most recent close dates must survive the limit: ' + soql
     );
-    System.assert(soql.contains('LIMIT 25'), soql);
-    System.assertEquals(
-      false,
+    Assert.isTrue(soql.contains('LIMIT 25'), soql);
+    Assert.isFalse(
       soql.contains('Name ASC'),
       'The selector default Name ordering must not lead the ORDER BY.'
     );
   }
 
   @IsTest
-  static void featureDisabledPreservesExistingShapes() {
+  static void shouldPreserveExistingShapesWhenEnrichmentDisabled() {
     Opportunity opportunityRecord = opportunityWithAccount(true);
     Map<String, Object> opportunityPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
       opportunityRecord,
       false
     );
 
-    System.assertEquals('Example Opportunity', opportunityPayload.get('name'));
-    System.assertEquals('Example Co', opportunityPayload.get('accountName'));
-    System.assertEquals(
-      false,
-      opportunityPayload.containsKey('accountWebsite')
+    Assert.areEqual(
+      'Example Opportunity',
+      opportunityPayload.get('name'),
+      'Unexpected value for opportunityPayload.get(\'name\')'
     );
-    System.assertEquals(false, opportunityPayload.containsKey('accountState'));
+    Assert.areEqual(
+      'Example Co',
+      opportunityPayload.get('accountName'),
+      'Unexpected value for opportunityPayload.get(\'accountName\')'
+    );
+    Assert.isFalse(
+      opportunityPayload.containsKey('accountWebsite'),
+      'Expected false: opportunityPayload.containsKey(\'accountWebsite\')'
+    );
+    Assert.isFalse(
+      opportunityPayload.containsKey('accountState'),
+      'Expected false: opportunityPayload.containsKey(\'accountState\')'
+    );
 
     List<Map<String, Object>> lineItems = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{ lineItemWithProduct(true) },
       false
     );
-    System.assertEquals(1, lineItems.size());
-    System.assertEquals('Example Product', lineItems[0].get('productName'));
-    System.assertEquals(false, lineItems[0].containsKey('productFamily'));
-    System.assertEquals(false, lineItems[0].containsKey('productLine'));
-    System.assertEquals(false, lineItems[0].containsKey('productSubgroup'));
-    System.assertEquals(false, lineItems[0].containsKey('productGroup'));
-    System.assertEquals(false, lineItems[0].containsKey('productDescription'));
-    System.assertEquals(
-      false,
-      lineItems[0].containsKey('productCatalogDescription')
+    Assert.areEqual(
+      1,
+      lineItems.size(),
+      'Unexpected value for lineItems.size()'
     );
-    System.assertEquals(false, lineItems[0].containsKey('productCategoryName'));
-    System.assertEquals(false, lineItems[0].containsKey('licenseGroups'));
-    System.assertEquals(false, lineItems[0].containsKey('serviceCategory'));
-    System.assertEquals(false, lineItems[0].containsKey('productCapabilities'));
+    Assert.areEqual(
+      'Example Product',
+      lineItems[0].get('productName'),
+      'Unexpected value for lineItems[0].get(\'productName\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productFamily'),
+      'Expected false: lineItems[0].containsKey(\'productFamily\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productLine'),
+      'Expected false: lineItems[0].containsKey(\'productLine\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productSubgroup'),
+      'Expected false: lineItems[0].containsKey(\'productSubgroup\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productGroup'),
+      'Expected false: lineItems[0].containsKey(\'productGroup\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productDescription'),
+      'Expected false: lineItems[0].containsKey(\'productDescription\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productCatalogDescription'),
+      'Expected false: lineItems[0].containsKey(\'productCatalogDescription\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productCategoryName'),
+      'Expected false: lineItems[0].containsKey(\'productCategoryName\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('licenseGroups'),
+      'Expected false: lineItems[0].containsKey(\'licenseGroups\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('serviceCategory'),
+      'Expected false: lineItems[0].containsKey(\'serviceCategory\')'
+    );
+    Assert.isFalse(
+      lineItems[0].containsKey('productCapabilities'),
+      'Expected false: lineItems[0].containsKey(\'productCapabilities\')'
+    );
 
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new FailingParticipantProvider();
     try {
@@ -115,45 +175,72 @@ private class GCPCalloutForOpportunitySummaryTest {
         false,
         false
       );
-      System.assertEquals(1, activityData.tasks.size());
-      System.assertEquals(
-        false,
-        activityData.tasks[0].containsKey('sourceRecordId')
+      Assert.areEqual(
+        1,
+        activityData.tasks.size(),
+        'Unexpected value for activityData.tasks.size()'
       );
-      System.assertEquals(
-        false,
-        activityData.tasks[0].containsKey('participants')
+      Assert.isFalse(
+        activityData.tasks[0].containsKey('sourceRecordId'),
+        'Expected false: activityData.tasks[0].containsKey(\'sourceRecordId\')'
       );
-      System.assertEquals(0, activityData.conversations.size());
+      Assert.isFalse(
+        activityData.tasks[0].containsKey('participants'),
+        'Expected false: activityData.tasks[0].containsKey(\'participants\')'
+      );
+      Assert.areEqual(
+        0,
+        activityData.conversations.size(),
+        'Unexpected value for activityData.conversations.size()'
+      );
     } finally {
       resetTestHooks();
     }
   }
 
   @IsTest
-  static void mapsPublicCompanyIdentityAndOmitsUnreadableOptionalFields() {
+  static void shouldMapCompanyIdentityWhenOptionalFieldsUnreadable() {
     Map<String, Object> populated = GCPCalloutForOpportunitySummary.buildOpportunityMap(
       opportunityWithAccount(true),
       true
     );
-    System.assertEquals(
+    Assert.areEqual(
       'https://www.example.com',
-      populated.get('accountWebsite')
+      populated.get('accountWebsite'),
+      'Unexpected value for populated.get(\'accountWebsite\')'
     );
-    System.assertEquals('Technology', populated.get('accountIndustry'));
-    System.assertEquals('United States', populated.get('accountCountry'));
-    System.assertEquals('California', populated.get('accountState'));
+    Assert.areEqual(
+      'Technology',
+      populated.get('accountIndustry'),
+      'Unexpected value for populated.get(\'accountIndustry\')'
+    );
+    Assert.areEqual(
+      'United States',
+      populated.get('accountCountry'),
+      'Unexpected value for populated.get(\'accountCountry\')'
+    );
+    Assert.areEqual(
+      'California',
+      populated.get('accountState'),
+      'Unexpected value for populated.get(\'accountState\')'
+    );
 
     Map<String, Object> inaccessible = GCPCalloutForOpportunitySummary.buildOpportunityMap(
       opportunityWithAccount(false),
       true
     );
-    System.assertEquals(false, inaccessible.containsKey('accountWebsite'));
-    System.assertEquals(false, inaccessible.containsKey('accountState'));
+    Assert.isFalse(
+      inaccessible.containsKey('accountWebsite'),
+      'Expected false: inaccessible.containsKey(\'accountWebsite\')'
+    );
+    Assert.isFalse(
+      inaccessible.containsKey('accountState'),
+      'Expected false: inaccessible.containsKey(\'accountState\')'
+    );
   }
 
   @IsTest
-  static void mapsCampaignDerivedProductAndValidatedWebsiteFallback() {
+  static void shouldMapCampaignProductAndWebsiteFallbackWhenBuildingRequest() {
     Opportunity fallbackOpportunity = opportunityWithIdentity(
       ' Example Co ',
       null,
@@ -165,11 +252,20 @@ private class GCPCalloutForOpportunitySummaryTest {
       true
     );
 
-    System.assertEquals('Example Co', fallback.get('accountName'));
-    System.assertEquals('RingCX', fallback.get('intendedProduct'));
-    System.assertEquals(
+    Assert.areEqual(
+      'Example Co',
+      fallback.get('accountName'),
+      'Unexpected value for fallback.get(\'accountName\')'
+    );
+    Assert.areEqual(
+      'RingCX',
+      fallback.get('intendedProduct'),
+      'Unexpected value for fallback.get(\'intendedProduct\')'
+    );
+    Assert.areEqual(
       'https://research.example.com/company',
-      fallback.get('accountWebsite')
+      fallback.get('accountWebsite'),
+      'Unexpected value for fallback.get(\'accountWebsite\')'
     );
 
     Opportunity accountWebsitePreferred = opportunityWithIdentity(
@@ -182,11 +278,15 @@ private class GCPCalloutForOpportunitySummaryTest {
       accountWebsitePreferred,
       true
     );
-    System.assertEquals(
+    Assert.areEqual(
       'https://official.example.com/about',
-      preferred.get('accountWebsite')
+      preferred.get('accountWebsite'),
+      'Unexpected value for preferred.get(\'accountWebsite\')'
     );
-    System.assertEquals(false, preferred.containsKey('intendedProduct'));
+    Assert.isFalse(
+      preferred.containsKey('intendedProduct'),
+      'Expected false: preferred.containsKey(\'intendedProduct\')'
+    );
 
     Opportunity invalidAccountWebsite = opportunityWithIdentity(
       'Example Co',
@@ -198,34 +298,40 @@ private class GCPCalloutForOpportunitySummaryTest {
       invalidAccountWebsite,
       true
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       invalid.containsKey('accountWebsite'),
       'Opportunity.Website__c is used only when Account.Website is blank.'
     );
   }
 
   @IsTest
-  static void disablesOnlyEnrichmentForUnresolvedCompanyIdentity() {
+  static void shouldDisableOnlyEnrichmentWhenCompanyIdentityUnresolved() {
     Opportunity placeholder = opportunityWithIdentity(
       ' NEW COMPANY ',
       null,
       null,
       null
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         placeholder
-      )
+      ),
+      'Expected false: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, placeholder )'
     );
     Map<String, Object> placeholderPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
       placeholder,
       false
     );
-    System.assertEquals('Example Opportunity', placeholderPayload.get('name'));
-    System.assertEquals(false, placeholderPayload.containsKey('accountName'));
+    Assert.areEqual(
+      'Example Opportunity',
+      placeholderPayload.get('name'),
+      'Unexpected value for placeholderPayload.get(\'name\')'
+    );
+    Assert.isFalse(
+      placeholderPayload.containsKey('accountName'),
+      'Expected false: placeholderPayload.containsKey(\'accountName\')'
+    );
 
     Opportunity genericDomainWithoutWebsite = opportunityWithIdentity(
       'yahoo.com',
@@ -233,12 +339,12 @@ private class GCPCalloutForOpportunitySummaryTest {
       null,
       null
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         genericDomainWithoutWebsite
-      )
+      ),
+      'Expected false: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, genericDomainWithoutW...'
     );
 
     Opportunity genericDomainWithWebsite = opportunityWithIdentity(
@@ -247,15 +353,14 @@ private class GCPCalloutForOpportunitySummaryTest {
       null,
       null
     );
-    System.assertEquals(
-      true,
+    Assert.isTrue(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         genericDomainWithWebsite
-      )
+      ),
+      'Expected true: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, genericDomainWithWebs...'
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         false,
         genericDomainWithWebsite
@@ -265,101 +370,153 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void rejectsPrivateCredentialedAndNonHttpWebsites() {
-    System.assertEquals(
-      null,
+  static void shouldRejectWebsiteWhenPrivateCredentialedOrNonHttp() {
+    Assert.isNull(
       GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
         'https://user:secret@example.com'
-      )
+      ),
+      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'https://user:secret@example.co...'
     );
-    System.assertEquals(
-      null,
+    Assert.isNull(
       GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
         'http://192.168.1.10/internal'
-      )
+      ),
+      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'http://192.168.1.10/internal\' )'
     );
-    System.assertEquals(
-      null,
+    Assert.isNull(
       GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
         'ftp://example.com/file'
-      )
+      ),
+      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'ftp://example.com/file\' )'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'https://www.example.com/public',
       GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
         ' https://www.example.com/public?token=removed#section '
-      )
+      ),
+      'Unexpected value for GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \' https://www.example.com/publi...'
     );
   }
 
   @IsTest
-  static void mapsProductCatalogContextWithoutInventingCapabilities() {
+  static void shouldMapProductCatalogContextWhenLineItemsLoaded() {
     List<Map<String, Object>> populated = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{ lineItemWithProductContext() },
       true
     );
-    System.assertEquals('Service', populated[0].get('productFamily'));
-    System.assertEquals('Contact Center', populated[0].get('productLine'));
-    System.assertEquals('[210] Main', populated[0].get('productSubgroup'));
-    System.assertEquals('[200] Services', populated[0].get('productGroup'));
-    System.assertEquals(
-      'Customer-facing product description',
-      populated[0].get('productDescription')
+    Assert.areEqual(
+      'Service',
+      populated[0].get('productFamily'),
+      'Unexpected value for populated[0].get(\'productFamily\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
+      'Contact Center',
+      populated[0].get('productLine'),
+      'Unexpected value for populated[0].get(\'productLine\')'
+    );
+    Assert.areEqual(
+      '[210] Main',
+      populated[0].get('productSubgroup'),
+      'Unexpected value for populated[0].get(\'productSubgroup\')'
+    );
+    Assert.areEqual(
+      '[200] Services',
+      populated[0].get('productGroup'),
+      'Unexpected value for populated[0].get(\'productGroup\')'
+    );
+    Assert.areEqual(
+      'Customer-facing product description',
+      populated[0].get('productDescription'),
+      'Unexpected value for populated[0].get(\'productDescription\')'
+    );
+    Assert.areEqual(
       1001,
       ((String) populated[0].get('productCatalogDescription')).length(),
       'The existing text limit applies to catalogue descriptions.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'Collaboration Services',
-      populated[0].get('productCategoryName')
+      populated[0].get('productCategoryName'),
+      'Unexpected value for populated[0].get(\'productCategoryName\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       new List<String>{ 'Core Licenses', 'Digital Lines' },
-      (List<String>) populated[0].get('licenseGroups')
+      (List<String>) populated[0].get('licenseGroups'),
+      'Unexpected value for (List<String>) populated[0].get(\'licenseGroups\')'
     );
-    System.assertEquals('OFFICE_LICENSE', populated[0].get('serviceCategory'));
-    System.assertEquals(false, populated[0].containsKey('productCapabilities'));
+    Assert.areEqual(
+      'OFFICE_LICENSE',
+      populated[0].get('serviceCategory'),
+      'Unexpected value for populated[0].get(\'serviceCategory\')'
+    );
+    Assert.isFalse(
+      populated[0].containsKey('productCapabilities'),
+      'Expected false: populated[0].containsKey(\'productCapabilities\')'
+    );
 
     List<Map<String, Object>> unavailable = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{ lineItemWithProduct(false) },
       true
     );
-    System.assertEquals(false, unavailable[0].containsKey('productFamily'));
-    System.assertEquals(false, unavailable[0].containsKey('productLine'));
-    System.assertEquals(false, unavailable[0].containsKey('productSubgroup'));
-    System.assertEquals(false, unavailable[0].containsKey('productGroup'));
-    System.assertEquals(
-      false,
-      unavailable[0].containsKey('productDescription')
+    Assert.isFalse(
+      unavailable[0].containsKey('productFamily'),
+      'Expected false: unavailable[0].containsKey(\'productFamily\')'
     );
-    System.assertEquals(
-      false,
-      unavailable[0].containsKey('productCatalogDescription')
+    Assert.isFalse(
+      unavailable[0].containsKey('productLine'),
+      'Expected false: unavailable[0].containsKey(\'productLine\')'
     );
-    System.assertEquals(
-      false,
-      unavailable[0].containsKey('productCategoryName')
+    Assert.isFalse(
+      unavailable[0].containsKey('productSubgroup'),
+      'Expected false: unavailable[0].containsKey(\'productSubgroup\')'
     );
-    System.assertEquals(false, unavailable[0].containsKey('licenseGroups'));
-    System.assertEquals(false, unavailable[0].containsKey('serviceCategory'));
-    System.assertEquals('Example Product', unavailable[0].get('productName'));
+    Assert.isFalse(
+      unavailable[0].containsKey('productGroup'),
+      'Expected false: unavailable[0].containsKey(\'productGroup\')'
+    );
+    Assert.isFalse(
+      unavailable[0].containsKey('productDescription'),
+      'Expected false: unavailable[0].containsKey(\'productDescription\')'
+    );
+    Assert.isFalse(
+      unavailable[0].containsKey('productCatalogDescription'),
+      'Expected false: unavailable[0].containsKey(\'productCatalogDescription\')'
+    );
+    Assert.isFalse(
+      unavailable[0].containsKey('productCategoryName'),
+      'Expected false: unavailable[0].containsKey(\'productCategoryName\')'
+    );
+    Assert.isFalse(
+      unavailable[0].containsKey('licenseGroups'),
+      'Expected false: unavailable[0].containsKey(\'licenseGroups\')'
+    );
+    Assert.isFalse(
+      unavailable[0].containsKey('serviceCategory'),
+      'Expected false: unavailable[0].containsKey(\'serviceCategory\')'
+    );
+    Assert.areEqual(
+      'Example Product',
+      unavailable[0].get('productName'),
+      'Unexpected value for unavailable[0].get(\'productName\')'
+    );
 
     List<Map<String, Object>> inactiveFamily = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{ lineItemWithProductValues('Overage', ' Main ') },
       true
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       inactiveFamily[0].containsKey('productFamily'),
       'Inactive or historical family values are not promoted into research context.'
     );
-    System.assertEquals('Main', inactiveFamily[0].get('productLine'));
+    Assert.areEqual(
+      'Main',
+      inactiveFamily[0].get('productLine'),
+      'Unexpected value for inactiveFamily[0].get(\'productLine\')'
+    );
   }
 
   @IsTest
-  static void mapsMultipleLineItemsWithoutQueriesInTheLoop() {
+  static void shouldMapAllLineItemsWhenOpportunityHasSeveral() {
     Integer queriesBefore = Limits.getQueries();
     List<Map<String, Object>> rows = GCPCalloutForOpportunitySummary.buildLineItemRows(
       new List<SObject>{
@@ -369,14 +526,26 @@ private class GCPCalloutForOpportunitySummaryTest {
       true
     );
 
-    System.assertEquals(2, rows.size());
-    System.assertEquals('Contact Center', rows[0].get('productLine'));
-    System.assertEquals('Main', rows[1].get('productLine'));
-    System.assertEquals(queriesBefore, Limits.getQueries());
+    Assert.areEqual(2, rows.size(), 'Unexpected value for rows.size()');
+    Assert.areEqual(
+      'Contact Center',
+      rows[0].get('productLine'),
+      'Unexpected value for rows[0].get(\'productLine\')'
+    );
+    Assert.areEqual(
+      'Main',
+      rows[1].get('productLine'),
+      'Unexpected value for rows[1].get(\'productLine\')'
+    );
+    Assert.areEqual(
+      queriesBefore,
+      Limits.getQueries(),
+      'Unexpected value for Limits.getQueries()'
+    );
   }
 
   @IsTest
-  static void mapsLinkedParticipantsWithoutTreatingOwnerAsCustomer() {
+  static void shouldExcludeOwnerFromCustomersWhenMappingParticipants() {
     Task taskRecord = taskRecord(
       TASK_ID,
       null,
@@ -410,19 +579,27 @@ private class GCPCalloutForOpportunitySummaryTest {
       }
     );
 
-    System.assertEquals(1, participants.get(TASK_ID).size());
-    System.assertEquals(
+    Assert.areEqual(
+      1,
+      participants.get(TASK_ID).size(),
+      'Unexpected value for participants.get(TASK_ID).size()'
+    );
+    Assert.areEqual(
       CONTACT_ID,
       participants.get(TASK_ID)[0].get('contactId'),
       'A TaskRelation contact is included even without an Opportunity Contact Role.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'unknown',
-      participants.get(TASK_ID)[0].get('participationStatus')
+      participants.get(TASK_ID)[0].get('participationStatus'),
+      'Unexpected value for participants.get(TASK_ID)[0].get(\'participationStatus\')'
     );
-    System.assertEquals(2, participants.get(EVENT_ID).size());
-    System.assertEquals(
-      false,
+    Assert.areEqual(
+      2,
+      participants.get(EVENT_ID).size(),
+      'Unexpected value for participants.get(EVENT_ID).size()'
+    );
+    Assert.isFalse(
       containsContact(participants, TASK_ID, USER_ID),
       'The Salesforce activity owner must not become a customer participant.'
     );
@@ -431,23 +608,25 @@ private class GCPCalloutForOpportunitySummaryTest {
       participants.get(EVENT_ID),
       CONTACT_ID
     );
-    System.assertEquals(
+    Assert.areEqual(
       'invited',
-      invitedParticipant.get('participationStatus')
+      invitedParticipant.get('participationStatus'),
+      'Unexpected value for invitedParticipant.get(\'participationStatus\')'
     );
-    System.assertNotEquals(
+    Assert.areNotEqual(
       'attended',
       invitedParticipant.get('participationStatus'),
       'Invitation evidence must not be promoted to attendance.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'EventRelation invitee record',
-      invitedParticipant.get('evidenceSource')
+      invitedParticipant.get('evidenceSource'),
+      'Unexpected value for invitedParticipant.get(\'evidenceSource\')'
     );
   }
 
   @IsTest
-  static void omitsInaccessibleOptionalContactFields() {
+  static void shouldOmitContactFieldsWhenInaccessible() {
     List<GCPCalloutForOpportunitySummary.ParticipantEvidence> evidence = GCPCalloutForOpportunitySummary.collectParticipantEvidence(
       new List<SObject>{
         taskRecord(TASK_ID, CONTACT_ID, USER_ID, true, Datetime.now(), 'Notes')
@@ -462,13 +641,23 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Map<String, Object> participant = participants.get(TASK_ID)[0];
 
-    System.assertEquals(CONTACT_ID, participant.get('contactId'));
-    System.assertEquals(false, participant.containsKey('name'));
-    System.assertEquals(false, participant.containsKey('title'));
+    Assert.areEqual(
+      CONTACT_ID,
+      participant.get('contactId'),
+      'Unexpected value for participant.get(\'contactId\')'
+    );
+    Assert.isFalse(
+      participant.containsKey('name'),
+      'Expected false: participant.containsKey(\'name\')'
+    );
+    Assert.isFalse(
+      participant.containsKey('title'),
+      'Expected false: participant.containsKey(\'title\')'
+    );
   }
 
   @IsTest
-  static void reportsEmptyAndInaccessibleCoverageWithoutClaimingAbsence() {
+  static void shouldReportCoverageStatusWhenDataEmptyOrInaccessible() {
     Datetime windowEnd = Datetime.now();
     GCPCalloutForOpportunitySummary.ActivityData activityData = new GCPCalloutForOpportunitySummary.ActivityData();
     activityData.activityWindowStart = windowEnd.addDays(-180);
@@ -483,9 +672,10 @@ private class GCPCalloutForOpportunitySummaryTest {
       stakeholders,
       lineItems
     );
-    System.assertEquals(
+    Assert.areEqual(
       'not_found',
-      coverageEntry(emptyCoverage, 'lineItems').get('status')
+      coverageEntry(emptyCoverage, 'lineItems').get('status'),
+      'Unexpected value for coverageEntry(emptyCoverage, \'lineItems\').get(\'status\')'
     );
 
     lineItems.isAccessible = false;
@@ -495,30 +685,35 @@ private class GCPCalloutForOpportunitySummaryTest {
       stakeholders,
       lineItems
     );
-    System.assertEquals(
+    Assert.areEqual(
       'not_found',
-      coverageEntry(coverage, 'stakeholders').get('status')
+      coverageEntry(coverage, 'stakeholders').get('status'),
+      'Unexpected value for coverageEntry(coverage, \'stakeholders\').get(\'status\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'not_found',
-      coverageEntry(coverage, 'activities').get('status')
+      coverageEntry(coverage, 'activities').get('status'),
+      'Unexpected value for coverageEntry(coverage, \'activities\').get(\'status\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'not_found',
-      coverageEntry(coverage, 'conversations').get('status')
+      coverageEntry(coverage, 'conversations').get('status'),
+      'Unexpected value for coverageEntry(coverage, \'conversations\').get(\'status\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'not_accessible',
-      coverageEntry(coverage, 'lineItems').get('status')
+      coverageEntry(coverage, 'lineItems').get('status'),
+      'Unexpected value for coverageEntry(coverage, \'lineItems\').get(\'status\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'transcripts_not_supported_no_recent_notes',
-      coverageEntry(coverage, 'conversations').get('reasonCode')
+      coverageEntry(coverage, 'conversations').get('reasonCode'),
+      'Unexpected value for coverageEntry(coverage, \'conversations\').get(\'reasonCode\')'
     );
   }
 
   @IsTest
-  static void buildsTraceableDeduplicatedAndTruncatedConversationNotes() {
+  static void shouldDeduplicateAndTruncateNotesWhenBuildingConversationEvidence() {
     Datetime windowEnd = Datetime.now();
     Event meeting = eventRecord(
       EVENT_ID,
@@ -542,29 +737,57 @@ private class GCPCalloutForOpportunitySummaryTest {
       windowEnd
     );
 
-    System.assertEquals(
+    Assert.areEqual(
       1,
       result.items.size(),
       'Duplicate source records are removed.'
     );
     Map<String, Object> item = result.items[0];
-    System.assertEquals(EVENT_ID, item.get('sourceRecordId'));
-    System.assertEquals(EVENT_ID, item.get('relatedActivityId'));
-    System.assertEquals('Event', item.get('sourceType'));
-    System.assertEquals('notes', item.get('contentType'));
-    System.assertEquals(4000, ((String) item.get('text')).length());
-    System.assertEquals(true, item.get('isTruncated'));
-    System.assertEquals(true, result.isTruncated);
-    System.assertEquals('text_limit', result.reasonCode);
+    Assert.areEqual(
+      EVENT_ID,
+      item.get('sourceRecordId'),
+      'Unexpected value for item.get(\'sourceRecordId\')'
+    );
+    Assert.areEqual(
+      EVENT_ID,
+      item.get('relatedActivityId'),
+      'Unexpected value for item.get(\'relatedActivityId\')'
+    );
+    Assert.areEqual(
+      'Event',
+      item.get('sourceType'),
+      'Unexpected value for item.get(\'sourceType\')'
+    );
+    Assert.areEqual(
+      'notes',
+      item.get('contentType'),
+      'Unexpected value for item.get(\'contentType\')'
+    );
+    Assert.areEqual(
+      4000,
+      ((String) item.get('text')).length(),
+      'Unexpected value for ((String) item.get(\'text\')).length()'
+    );
+    Assert.areEqual(
+      true,
+      item.get('isTruncated'),
+      'Expected true: item.get(\'isTruncated\')'
+    );
+    Assert.isTrue(result.isTruncated, 'Expected true: result.isTruncated');
+    Assert.areEqual(
+      'text_limit',
+      result.reasonCode,
+      'Unexpected value for result.reasonCode'
+    );
   }
 
   @IsTest
-  static void enforcesConversationCountAndCompletedActivityRules() {
+  static void shouldEnforceCountAndCompletionRulesWhenSelectingConversations() {
     Datetime windowEnd = Datetime.now();
     List<SObject> tasks = new List<SObject>();
     Map<Id, List<Map<String, Object>>> participants = new Map<Id, List<Map<String, Object>>>();
     for (Integer i = 1; i <= 11; i++) {
-      Id taskId = syntheticId('00T', i);
+      Id taskId = syntheticId(Task.SObjectType, i);
       tasks.add(
         taskRecord(
           taskId,
@@ -580,7 +803,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         participantMap(taskId, CONTACT_ID, 'unknown').get(taskId)
       );
     }
-    Id openTaskId = syntheticId('00T', 20);
+    Id openTaskId = syntheticId(Task.SObjectType, 20);
     tasks.add(
       taskRecord(
         openTaskId,
@@ -604,13 +827,21 @@ private class GCPCalloutForOpportunitySummaryTest {
       windowEnd
     );
 
-    System.assertEquals(10, result.items.size());
-    System.assertEquals(true, result.isTruncated);
-    System.assertEquals('item_limit', result.reasonCode);
+    Assert.areEqual(
+      10,
+      result.items.size(),
+      'Unexpected value for result.items.size()'
+    );
+    Assert.isTrue(result.isTruncated, 'Expected true: result.isTruncated');
+    Assert.areEqual(
+      'item_limit',
+      result.reasonCode,
+      'Unexpected value for result.reasonCode'
+    );
   }
 
   @IsTest
-  static void optionalParticipantFailurePreservesCoreActivities() {
+  static void shouldPreserveCoreActivitiesWhenParticipantLookupFails() {
     Datetime windowEnd = Datetime.now();
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new FailingParticipantProvider();
     try {
@@ -635,24 +866,46 @@ private class GCPCalloutForOpportunitySummaryTest {
         false
       );
 
-      System.assertEquals(1, data.tasks.size());
-      System.assertEquals(TASK_ID, data.tasks[0].get('sourceRecordId'));
-      System.assertEquals(
-        0,
-        ((List<Map<String, Object>>) data.tasks[0].get('participants')).size()
+      Assert.areEqual(
+        1,
+        data.tasks.size(),
+        'Unexpected value for data.tasks.size()'
       );
-      System.assertEquals('error', data.participantStatus);
-      System.assertEquals('error', data.conversationStatus);
-      System.assertEquals(0, data.conversations.size());
+      Assert.areEqual(
+        TASK_ID,
+        data.tasks[0].get('sourceRecordId'),
+        'Unexpected value for data.tasks[0].get(\'sourceRecordId\')'
+      );
+      Assert.areEqual(
+        0,
+        ((List<Map<String, Object>>) data.tasks[0].get('participants')).size(),
+        'Unexpected value for ((List<Map<String, Object>>) data.tasks[0].get(\'participants\')).size()'
+      );
+      Assert.areEqual(
+        'error',
+        data.participantStatus,
+        'Unexpected value for data.participantStatus'
+      );
+      Assert.areEqual(
+        'error',
+        data.conversationStatus,
+        'Unexpected value for data.conversationStatus'
+      );
+      Assert.areEqual(
+        0,
+        data.conversations.size(),
+        'Unexpected value for data.conversations.size()'
+      );
 
       Map<String, Object> coverage = GCPCalloutForOpportunitySummary.buildDataCoverage(
         data,
         new GCPCalloutForOpportunitySummary.CollectionData(),
         new GCPCalloutForOpportunitySummary.CollectionData()
       );
-      System.assertEquals(
+      Assert.areEqual(
         'error',
-        coverageEntry(coverage, 'conversations').get('status')
+        coverageEntry(coverage, 'conversations').get('status'),
+        'Unexpected value for coverageEntry(coverage, \'conversations\').get(\'status\')'
       );
     } finally {
       resetTestHooks();
@@ -660,7 +913,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void trimsConversationEvidenceBeforeRejectingOversizedCorePayload() {
+  static void shouldTrimConversationEvidenceWhenPayloadOversized() {
     GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 600;
     try {
       Map<String, Object> payload = new Map<String, Object>{
@@ -684,7 +937,10 @@ private class GCPCalloutForOpportunitySummaryTest {
       String serialized = GCPCalloutForOpportunitySummary.serializePayloadWithinLimit(
         payload
       );
-      System.assert(Blob.valueOf(serialized).size() < 600);
+      Assert.isTrue(
+        Blob.valueOf(serialized).size() < 600,
+        'Expected true: Blob.valueOf(serialized).size() < 600'
+      );
       Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(
         serialized
       );
@@ -694,10 +950,15 @@ private class GCPCalloutForOpportunitySummaryTest {
       Map<String, Object> conversations = (Map<String, Object>) coverage.get(
         'conversations'
       );
-      System.assertEquals(true, conversations.get('isTruncated'));
-      System.assertEquals(
+      Assert.areEqual(
+        true,
+        conversations.get('isTruncated'),
+        'Expected true: conversations.get(\'isTruncated\')'
+      );
+      Assert.areEqual(
         'request_size_limit',
-        conversations.get('reasonCode')
+        conversations.get('reasonCode'),
+        'Unexpected value for conversations.get(\'reasonCode\')'
       );
 
       Map<String, Object> participantPayload = new Map<String, Object>{
@@ -740,17 +1001,19 @@ private class GCPCalloutForOpportunitySummaryTest {
       );
       List<Object> parsedTasks = (List<Object>) parsedActivities.get('tasks');
       Map<String, Object> parsedTask = (Map<String, Object>) parsedTasks[0];
-      System.assertEquals(
+      Assert.areEqual(
         0,
-        ((List<Object>) parsedTask.get('participants')).size()
+        ((List<Object>) parsedTask.get('participants')).size(),
+        'Unexpected value for ((List<Object>) parsedTask.get(\'participants\')).size()'
       );
       Map<String, Object> participantCoverage = (Map<String, Object>) participantParsed.get(
         'dataCoverage'
       );
-      System.assertEquals(
+      Assert.areEqual(
         'request_size_limit',
         ((Map<String, Object>) participantCoverage.get('activities'))
-          .get('reasonCode')
+          .get('reasonCode'),
+        'Unexpected value for ((Map<String, Object>) participantCoverage.get(\'activities\')) .get(\'reasonCode\')'
       );
 
       payload.put('core', 'x'.repeat(700));
@@ -760,9 +1023,12 @@ private class GCPCalloutForOpportunitySummaryTest {
       );
       try {
         GCPCalloutForOpportunitySummary.serializePayloadWithinLimit(payload);
-        System.assert(false, 'An oversized core payload must fail explicitly.');
+        Assert.isTrue(false, 'An oversized core payload must fail explicitly.');
       } catch (Exception expected) {
-        System.assert(expected.getMessage().contains('core request exceeds'));
+        Assert.isTrue(
+          expected.getMessage().contains('core request exceeds'),
+          'Expected true: expected.getMessage().contains(\'core request exceeds\')'
+        );
       }
     } finally {
       resetTestHooks();
@@ -785,20 +1051,18 @@ private class GCPCalloutForOpportunitySummaryTest {
     String toggleMessage = 'Enrichment enablement must still honor the existing feature setting.';
 
     Test.startTest();
-    System.assertEquals(
+    Assert.areEqual(
       30,
       GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
       labelMessage
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
       toggleMessage
     );
     setting.put('Enable_Opportunity_Summary_Enrichment__c', true);
     update setting;
-    System.assertEquals(
-      true,
+    Assert.isTrue(
       GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
       toggleMessage
     );
@@ -806,7 +1070,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'RecentDays',
       '366'
     );
-    System.assertEquals(
+    Assert.areEqual(
       90,
       GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
       'Invalid lookback must use the default.'
@@ -833,23 +1097,23 @@ private class GCPCalloutForOpportunitySummaryTest {
         '999999999999999999'
       }
     ) {
-      System.assertEquals(
+      Assert.areEqual(
         50,
         GCPCalloutForOpportunitySummary.parsePositiveInteger(raw, 50, 50),
         fallbackMessage
       );
     }
-    System.assertEquals(
+    Assert.areEqual(
       1,
       GCPCalloutForOpportunitySummary.parsePositiveInteger(' 1 ', 50, 50),
       'The lower bound must be accepted.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       50,
       GCPCalloutForOpportunitySummary.parsePositiveInteger('50', 50, 50),
       'The upper bound must be accepted.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       15,
       GCPCalloutForOpportunitySummary.parsePositiveInteger('15', 50, 50),
       'A lower valid cap must be accepted.'
@@ -862,7 +1126,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     Set<String> fallback = new Set<String>{ 'GMAIL.COM' };
     String fallbackMessage = 'Invalid domain configuration must retain the safe fallback.';
     Test.startTest();
-    System.assertEquals(
+    Assert.areEqual(
       new Set<String>{ 'example.com', 'mail.example.org' },
       GCPCalloutForOpportunitySummary.parseConfigurationList(
         ' Example.com\n\nMAIL.EXAMPLE.ORG\r\nexample.com ',
@@ -871,7 +1135,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       ),
       'Lists must normalize case and whitespace and remove duplicates.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       new Set<String>{ 'gmail.com' },
       GCPCalloutForOpportunitySummary.parseConfigurationList(
         '  ',
@@ -880,7 +1144,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       ),
       fallbackMessage
     );
-    System.assertEquals(
+    Assert.areEqual(
       new Set<String>{ 'gmail.com' },
       GCPCalloutForOpportunitySummary.parseConfigurationList(
         'example.com\nhttps://unsafe.example.com',
@@ -893,7 +1157,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldApplyConfiguredIdentityExclusions() {
+  private static void shouldExcludeIdentityValuesWhenConfigured() {
     GCPCalloutForOpportunitySummary.configurationOverrides.put(
       'UnresolvedNames',
       ' Placeholder Customer\nPLACEHOLDER CUSTOMER '
@@ -903,24 +1167,21 @@ private class GCPCalloutForOpportunitySummaryTest {
       'personal.example'
     );
     Test.startTest();
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity('placeholder customer', null, null, null)
       ),
       'Configured placeholder names must disable enrichment.'
     );
-    System.assertEquals(
-      false,
+    Assert.isFalse(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity('personal.example', null, null, null)
       ),
       'Configured generic domains must require a company website.'
     );
-    System.assertEquals(
-      true,
+    Assert.isTrue(
       GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity(
@@ -937,7 +1198,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldApplyConfiguredActivityAndConversationCaps() {
+  private static void shouldCapActivitiesAndConversationsWhenConfigured() {
     GCPCalloutForOpportunitySummary.configurationOverrides.put(
       'MaxActivities',
       '4'
@@ -950,7 +1211,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     List<SObject> tasks = new List<SObject>();
     Map<Id, List<Map<String, Object>>> participants = new Map<Id, List<Map<String, Object>>>();
     for (Integer sequence = 1; sequence <= 2; sequence++) {
-      Id taskId = syntheticId('00T', sequence);
+      Id taskId = syntheticId(Task.SObjectType, sequence);
       tasks.add(
         taskRecord(
           taskId,
@@ -981,17 +1242,16 @@ private class GCPCalloutForOpportunitySummaryTest {
       windowEnd
     );
     Test.stopTest();
-    System.assert(
+    Assert.isTrue(
       query.toLowerCase().contains('limit 5'),
       'Query must request the configured cap plus one overflow row.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       1,
       result.items.size(),
       'Conversation cap must come from the label.'
     );
-    System.assertEquals(
-      true,
+    Assert.isTrue(
       result.isTruncated,
       'Coverage must still report truncation under configured caps.'
     );
@@ -999,34 +1259,37 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void sendsEnrichmentSettingToGcpAsBooleanControl() {
+  static void shouldSendEnrichmentFlagAsBooleanWhenBuildingRequest() {
     Map<String, Object> payload = new Map<String, Object>();
 
     GCPCalloutForOpportunitySummary.addEnrichmentRequestControl(payload, false);
-    System.assertEquals(
+    Assert.areEqual(
       false,
-      payload.get('enableOpportunitySummaryEnrichment')
+      payload.get('enableOpportunitySummaryEnrichment'),
+      'Expected false: payload.get(\'enableOpportunitySummaryEnrichment\')'
     );
 
     GCPCalloutForOpportunitySummary.addEnrichmentRequestControl(payload, true);
-    System.assertEquals(
+    Assert.areEqual(
       true,
-      payload.get('enableOpportunitySummaryEnrichment')
+      payload.get('enableOpportunitySummaryEnrichment'),
+      'Expected true: payload.get(\'enableOpportunitySummaryEnrichment\')'
     );
   }
 
   @IsTest
-  static void retainsExactOpportunitySummaryEndpoint() {
-    System.assertEquals(
+  static void shouldUseExactEndpointWhenBaseUrlConfigured() {
+    Assert.areEqual(
       'https://service.example.invalid/api/v1/opportunity_summary',
       GCPCalloutForOpportunitySummary.buildServiceEndpoint(
         'https://service.example.invalid/api/v1/another_route'
-      )
+      ),
+      'Unexpected value for GCPCalloutForOpportunitySummary.buildServiceEndpoint( \'https://service.example.invalid/...'
     );
   }
 
   @IsTest
-  static void legacyResponseRemainsBackwardCompatibleWithoutEnrichment() {
+  static void shouldParseLegacyResponseWhenEnrichmentAbsent() {
     Object raw = JSON.deserializeUntyped(
       '{"statusCode":200,"body":{"opportunity_summary":{"Executive Summary":["CRM summary"]}}}'
     );
@@ -1035,17 +1298,24 @@ private class GCPCalloutForOpportunitySummaryTest {
       GCPCalloutForOpportunitySummary.buildResult(raw)
     );
 
-    System.assertEquals(true, result.get('success'));
-    System.assertEquals(1, ((List<Object>) result.get('cards')).size());
-    System.assertEquals(
-      false,
+    Assert.areEqual(
+      true,
+      result.get('success'),
+      'Expected true: result.get(\'success\')'
+    );
+    Assert.areEqual(
+      1,
+      ((List<Object>) result.get('cards')).size(),
+      'Unexpected value for ((List<Object>) result.get(\'cards\')).size()'
+    );
+    Assert.isFalse(
       result.containsKey('opportunity_enrichment'),
       'The optional field must remain absent for legacy responses.'
     );
   }
 
   @IsTest
-  static void passesOptionalEnrichmentThroughWithSnakeCaseFields() {
+  static void shouldPassEnrichmentThroughWhenFieldsAreSnakeCase() {
     Object raw = JSON.deserializeUntyped(
       '{"statusCode":200,"body":{' +
         '"opportunity_summary":{"Executive Summary":["Research-backed summary. [E1]"]},' +
@@ -1080,25 +1350,40 @@ private class GCPCalloutForOpportunitySummaryTest {
       'items'
     ))[0];
 
-    System.assertEquals(true, result.get('success'));
-    System.assertEquals(7, ((List<Object>) finding.get('source_indices'))[0]);
-    System.assertEquals(
+    Assert.areEqual(
+      true,
+      result.get('success'),
+      'Expected true: result.get(\'success\')'
+    );
+    Assert.areEqual(
+      7,
+      ((List<Object>) finding.get('source_indices'))[0],
+      'Unexpected value for ((List<Object>) finding.get(\'source_indices\'))[0]'
+    );
+    Assert.areEqual(
       'not_established',
-      supplementalUpdates.get('relationship_to_opportunity')
+      supplementalUpdates.get('relationship_to_opportunity'),
+      'Unexpected value for supplementalUpdates.get(\'relationship_to_opportunity\')'
     );
-    System.assertEquals('E2', supplementalItem.get('id'));
-    System.assertEquals(
+    Assert.areEqual(
+      'E2',
+      supplementalItem.get('id'),
+      'Unexpected value for supplementalItem.get(\'id\')'
+    );
+    Assert.areEqual(
       8,
-      ((List<Object>) supplementalItem.get('source_indices'))[0]
+      ((List<Object>) supplementalItem.get('source_indices'))[0],
+      'Unexpected value for ((List<Object>) supplementalItem.get(\'source_indices\'))[0]'
     );
-    System.assertEquals(
+    Assert.areEqual(
       '<style>.chip{}</style><a href="https://google.com">Search</a>',
-      searchEntryPoint.get('rendered_content')
+      searchEntryPoint.get('rendered_content'),
+      'Unexpected value for searchEntryPoint.get(\'rendered_content\')'
     );
   }
 
   @IsTest
-  static void malformedOptionalEnrichmentDoesNotInvalidateSummary() {
+  static void shouldKeepSummaryWhenEnrichmentMalformed() {
     Object raw = JSON.deserializeUntyped(
       '{"statusCode":200,"body":{"opportunity_summary":{"Risk Flags":["CRM risk"]},"opportunity_enrichment":["invalid"]}}'
     );
@@ -1107,9 +1392,20 @@ private class GCPCalloutForOpportunitySummaryTest {
       GCPCalloutForOpportunitySummary.buildResult(raw)
     );
 
-    System.assertEquals(true, result.get('success'));
-    System.assertEquals(1, ((List<Object>) result.get('cards')).size());
-    System.assertEquals(false, result.containsKey('opportunity_enrichment'));
+    Assert.areEqual(
+      true,
+      result.get('success'),
+      'Expected true: result.get(\'success\')'
+    );
+    Assert.areEqual(
+      1,
+      ((List<Object>) result.get('cards')).size(),
+      'Unexpected value for ((List<Object>) result.get(\'cards\')).size()'
+    );
+    Assert.isFalse(
+      result.containsKey('opportunity_enrichment'),
+      'Expected false: result.containsKey(\'opportunity_enrichment\')'
+    );
   }
 
   @IsTest
@@ -1120,12 +1416,12 @@ private class GCPCalloutForOpportunitySummaryTest {
     GCPCalloutForOpportunitySummary.addViewerContext(payload);
     Test.stopTest();
 
-    System.assertEquals(
+    Assert.areEqual(
       UserInfo.getTimeZone().getID(),
       payload.get('viewerTimeZone'),
       'Time zone must describe the viewing user.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       UserInfo.getLocale(),
       payload.get('viewerLocale'),
       'Locale must describe the viewing user.'
@@ -1155,15 +1451,28 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assert(closedPayload.get('isClosed') instanceof Boolean);
-    System.assertEquals(true, closedPayload.get('isClosed'));
-    System.assertEquals(false, closedPayload.get('isWon'));
-    System.assertEquals(
+    Assert.isTrue(
+      closedPayload.get('isClosed') instanceof Boolean,
+      'Expected true: closedPayload.get(\'isClosed\') instanceof Boolean'
+    );
+    Assert.areEqual(
+      true,
+      closedPayload.get('isClosed'),
+      'Expected true: closedPayload.get(\'isClosed\')'
+    );
+    Assert.areEqual(
       false,
+      closedPayload.get('isWon'),
+      'Expected false: closedPayload.get(\'isWon\')'
+    );
+    Assert.isFalse(
       unreadablePayload.containsKey('isClosed'),
       'Unreadable flags must be omitted, never sent as null or text.'
     );
-    System.assertEquals(false, unreadablePayload.containsKey('isWon'));
+    Assert.isFalse(
+      unreadablePayload.containsKey('isWon'),
+      'Expected false: unreadablePayload.containsKey(\'isWon\')'
+    );
   }
 
   @IsTest
@@ -1190,18 +1499,25 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assertEquals(
+    Assert.areEqual(
       'Upsell + Downsell',
-      classifiedPayload.get('dealMotion')
+      classifiedPayload.get('dealMotion'),
+      'Unexpected value for classifiedPayload.get(\'dealMotion\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       'Transportation, Travel & Leisure',
-      classifiedPayload.get('sector')
+      classifiedPayload.get('sector'),
+      'Unexpected value for classifiedPayload.get(\'sector\')'
     );
-    System.assertEquals(false, blankPayload.containsKey('dealMotion'));
-    System.assertEquals(false, blankPayload.containsKey('sector'));
-    System.assertEquals(
-      false,
+    Assert.isFalse(
+      blankPayload.containsKey('dealMotion'),
+      'Expected false: blankPayload.containsKey(\'dealMotion\')'
+    );
+    Assert.isFalse(
+      blankPayload.containsKey('sector'),
+      'Expected false: blankPayload.containsKey(\'sector\')'
+    );
+    Assert.isFalse(
       blankPayload.containsKey('npiProductCategories'),
       'No NPI field exists in the org, so none is sent.'
     );
@@ -1237,23 +1553,23 @@ private class GCPCalloutForOpportunitySummaryTest {
       );
       Test.stopTest();
 
-      System.assertEquals(
+      Assert.areEqual(
         1,
         activityData.conversations.size(),
         'Conversation notes must not depend on the enrichment toggle.'
       );
-      System.assertEquals(
+      Assert.areEqual(
         'Buyer agreed to the pricing.',
-        activityData.conversations[0].get('text')
+        activityData.conversations[0].get('text'),
+        'Unexpected value for activityData.conversations[0].get(\'text\')'
       );
-      System.assertEquals(
-        false,
+      Assert.isFalse(
         activityData.tasks[0].containsKey('participants'),
         'Activity rows keep their non-enrichment shape.'
       );
-      System.assertEquals(
-        false,
-        activityData.tasks[0].containsKey('sourceRecordId')
+      Assert.isFalse(
+        activityData.tasks[0].containsKey('sourceRecordId'),
+        'Expected false: activityData.tasks[0].containsKey(\'sourceRecordId\')'
       );
     } finally {
       resetTestHooks();
@@ -1284,9 +1600,17 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assertEquals('Lost', lostPayload.get('lossReason'));
-    System.assertEquals('Price', lostPayload.get('lossReasonDetail'));
-    System.assertEquals(
+    Assert.areEqual(
+      'Lost',
+      lostPayload.get('lossReason'),
+      'Unexpected value for lostPayload.get(\'lossReason\')'
+    );
+    Assert.areEqual(
+      'Price',
+      lostPayload.get('lossReasonDetail'),
+      'Unexpected value for lostPayload.get(\'lossReasonDetail\')'
+    );
+    Assert.areEqual(
       300,
       ((String) lostPayload.get('lostToCompetitor')).length(),
       'Loss fields are capped at the 300 characters GCP accepts.'
@@ -1298,8 +1622,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         'lostToCompetitor'
       }
     ) {
-      System.assertEquals(
-        false,
+      Assert.isFalse(
         blankPayload.containsKey(key),
         'Blank loss fields are left out, never sent as null.'
       );
@@ -1324,7 +1647,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       new List<SObject>{
         callTask,
         taskRecord(
-          syntheticId('00T', 2),
+          syntheticId(Task.SObjectType, 2),
           CONTACT_ID,
           USER_ID,
           true,
@@ -1343,9 +1666,12 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assertEquals('Call', activityData.tasks[0].get('taskSubtype'));
-    System.assertEquals(
-      false,
+    Assert.areEqual(
+      'Call',
+      activityData.tasks[0].get('taskSubtype'),
+      'Unexpected value for activityData.tasks[0].get(\'taskSubtype\')'
+    );
+    Assert.isFalse(
       activityData.tasks[1].containsKey('taskSubtype'),
       'A blank subtype is left out.'
     );
@@ -1353,7 +1679,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldNameAccountAndContactsSentWhenBuildingReferences() {
-    Id sharedNameContactId = syntheticId('003', 3);
+    Id sharedNameContactId = syntheticId(Contact.SObjectType, 3);
     Map<String, Object> payload = new Map<String, Object>{
       'opportunity' => new Map<String, Object>{
         'id' => OPPORTUNITY_ID,
@@ -1365,7 +1691,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       },
       'relatedOpportunities' => new List<Map<String, Object>>{
         new Map<String, Object>{
-          'id' => syntheticId('006', 2),
+          'id' => syntheticId(Opportunity.SObjectType, 2),
           'name' => 'Example Co - Renewal 2025'
         }
       },
@@ -1378,7 +1704,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'cases' => new Map<String, Object>{
         'open' => new List<Map<String, Object>>{
           new Map<String, Object>{
-            'id' => syntheticId('500', 1),
+            'id' => syntheticId(Case.SObjectType, 1),
             'caseNumber' => '00012345',
             'subject' => 'Porting delay on main line'
           }
@@ -1389,7 +1715,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         'tasks' => new List<Map<String, Object>>{
           new Map<String, Object>{ 'id' => TASK_ID, 'subject' => 'Call' },
           new Map<String, Object>{
-            'id' => syntheticId('00T', 2),
+            'id' => syntheticId(Task.SObjectType, 2),
             'subject' => 'Discovery call with IT'
           }
         },
@@ -1410,7 +1736,7 @@ private class GCPCalloutForOpportunitySummaryTest {
           'name' => 'Jo'
         },
         new Map<String, Object>{
-          'contactId' => syntheticId('003', 4),
+          'contactId' => syntheticId(Contact.SObjectType, 4),
           'name' => 'Sam Same'
         }
       },
@@ -1447,7 +1773,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         namedRecord.get('object_type') + ':' + namedRecord.get('label')
       );
     }
-    System.assertEquals(
+    Assert.areEqual(
       new List<String>{
         'User:Riley Rep',
         'Account:Example Co',
@@ -1473,9 +1799,12 @@ private class GCPCalloutForOpportunitySummaryTest {
         EVENT_ID
       }
     ) {
-      System.assert(referenceableIds.contains(expectedId), expectedId);
+      Assert.isTrue(referenceableIds.contains(expectedId), expectedId);
     }
-    System.assertEquals(false, referenceableIds.contains(OPPORTUNITY_ID));
+    Assert.isFalse(
+      referenceableIds.contains(OPPORTUNITY_ID),
+      'Expected false: referenceableIds.contains(OPPORTUNITY_ID)'
+    );
   }
 
   @IsTest
@@ -1511,23 +1840,32 @@ private class GCPCalloutForOpportunitySummaryTest {
     Test.stopTest();
 
     List<Object> references = (List<Object>) result.get('record_references');
-    System.assertEquals(
+    Assert.areEqual(
       2,
       references.size(),
       'A record GCP referenced keeps only GCP\'s link; Salesforce adds the Account.'
     );
     Map<String, Object> accountReference = (Map<String, Object>) references[1];
-    System.assertEquals('Account', accountReference.get('object_type'));
-    System.assertEquals('salesforce', accountReference.get('source'));
-    System.assertEquals(
+    Assert.areEqual(
+      'Account',
+      accountReference.get('object_type'),
+      'Unexpected value for accountReference.get(\'object_type\')'
+    );
+    Assert.areEqual(
+      'salesforce',
+      accountReference.get('source'),
+      'Unexpected value for accountReference.get(\'source\')'
+    );
+    Assert.areEqual(
       new List<Object>{ 'Executive Summary', 'Next Best Actions' },
-      accountReference.get('mentioned_in')
+      accountReference.get('mentioned_in'),
+      'Unexpected value for accountReference.get(\'mentioned_in\')'
     );
   }
 
   @IsTest
   static void shouldCollectReferenceableIdsWhenPayloadHasCasesAndActivities() {
-    Id caseId = syntheticId('500', 1);
+    Id caseId = syntheticId(Case.SObjectType, 1);
     Map<String, Object> payload = new Map<String, Object>{
       'cases' => new Map<String, Object>{
         'open' => new List<Map<String, Object>>{
@@ -1552,7 +1890,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assertEquals(
+    Assert.areEqual(
       new Set<Id>{ caseId, TASK_ID, EVENT_ID },
       ids,
       'Only Case, Task and Event Ids sent to GCP may become links.'
@@ -1561,8 +1899,8 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldPassClosedDealFieldsAndOnlySentReferencesWhenBuildingResult() {
-    Id caseId = syntheticId('500', 1);
-    Id unsentCaseId = syntheticId('500', 2);
+    Id caseId = syntheticId(Case.SObjectType, 1);
+    Id unsentCaseId = syntheticId(Case.SObjectType, 2);
     String body =
       '{"body":{' +
       '"opportunity_summary":{"Executive Summary":["Case 00012345 is open"],"Post-Close Actions":["Kickoff: Schedule onboarding"]},' +
@@ -1598,25 +1936,47 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.stopTest();
 
-    System.assertEquals(true, result.get('success'));
-    System.assertEquals(2, ((List<Object>) result.get('cards')).size());
+    Assert.areEqual(
+      true,
+      result.get('success'),
+      'Expected true: result.get(\'success\')'
+    );
+    Assert.areEqual(
+      2,
+      ((List<Object>) result.get('cards')).size(),
+      'Unexpected value for ((List<Object>) result.get(\'cards\')).size()'
+    );
     Map<String, Object> dealState = (Map<String, Object>) result.get(
       'deal_state'
     );
-    System.assertEquals(true, dealState.get('is_closed'));
-    System.assertEquals(
+    Assert.areEqual(
+      true,
+      dealState.get('is_closed'),
+      'Expected true: dealState.get(\'is_closed\')'
+    );
+    Assert.areEqual(
       'Upsell',
-      ((Map<String, Object>) result.get('salesforce_fields')).get('deal_motion')
+      ((Map<String, Object>) result.get('salesforce_fields'))
+        .get('deal_motion'),
+      'Unexpected value for ((Map<String, Object>) result.get(\'salesforce_fields\')).get(\'deal_motion\')'
     );
     List<Object> references = (List<Object>) result.get('record_references');
-    System.assertEquals(
+    Assert.areEqual(
       1,
       references.size(),
       'Unsent, mistyped, unsupported and unplaced references must be dropped.'
     );
     Map<String, Object> reference = (Map<String, Object>) references[0];
-    System.assertEquals(String.valueOf(caseId), reference.get('id'));
-    System.assertEquals('00012345', reference.get('case_number'));
+    Assert.areEqual(
+      String.valueOf(caseId),
+      reference.get('id'),
+      'Unexpected value for reference.get(\'id\')'
+    );
+    Assert.areEqual(
+      '00012345',
+      reference.get('case_number'),
+      'Unexpected value for reference.get(\'case_number\')'
+    );
   }
 
   private static Opportunity opportunityWithAccount(Boolean includeOptional) {
@@ -1922,8 +2282,11 @@ private class GCPCalloutForOpportunitySummaryTest {
     return (Map<String, Object>) coverage.get(key);
   }
 
-  private static Id syntheticId(String prefix, Integer sequence) {
-    return Id.valueOf(prefix + String.valueOf(sequence).leftPad(12, '0'));
+  private static Id syntheticId(Schema.SObjectType type, Integer sequence) {
+    return Id.valueOf(
+      type.getDescribe().getKeyPrefix() +
+      String.valueOf(sequence).leftPad(12, '0')
+    );
   }
 
   private static void resetTestHooks() {
@@ -2012,52 +2375,58 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void sendsCallTranscriptsTrueAsJsonBooleanWhenSettingOn() {
+  static void shouldSendCallTranscriptsTrueWhenSettingOn() {
     Map<String, Object> payload = serializedPayloadWithTranscriptSetting(true);
 
-    System.assert(
+    Assert.isTrue(
       payload.get('enableOpportunitySummaryCallTranscripts') instanceof Boolean,
       'The switch must serialize as a JSON boolean, not a string.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       true,
-      payload.get('enableOpportunitySummaryCallTranscripts')
+      payload.get('enableOpportunitySummaryCallTranscripts'),
+      'Expected true: payload.get(\'enableOpportunitySummaryCallTranscripts\')'
     );
   }
 
   @IsTest
-  static void sendsCallTranscriptsFalseAsJsonBooleanWhenSettingOff() {
+  static void shouldSendCallTranscriptsFalseWhenSettingOff() {
     Map<String, Object> payload = serializedPayloadWithTranscriptSetting(false);
 
-    System.assert(
+    Assert.isTrue(
       payload.get('enableOpportunitySummaryCallTranscripts') instanceof Boolean,
       'The switch must serialize as a JSON boolean, not a string.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       false,
-      payload.get('enableOpportunitySummaryCallTranscripts')
+      payload.get('enableOpportunitySummaryCallTranscripts'),
+      'Expected false: payload.get(\'enableOpportunitySummaryCallTranscripts\')'
     );
   }
 
   @IsTest
-  static void sendsCallTranscriptsFalseWhenNoSettingRecordExists() {
-    System.assertEquals(0, [SELECT COUNT() FROM GCP_Feature_Toggle__c]);
+  static void shouldSendCallTranscriptsFalseWhenNoSettingRecordExists() {
+    Assert.areEqual(
+      0,
+      [SELECT COUNT() FROM GCP_Feature_Toggle__c],
+      'Unexpected value for [SELECT COUNT() FROM GCP_Feature_Toggle__c]'
+    );
 
     Map<String, Object> payload = serializedPayloadWithTranscriptSetting(null);
 
-    System.assertEquals(
-      true,
+    Assert.isTrue(
       payload.containsKey('enableOpportunitySummaryCallTranscripts'),
       'The field is always sent, never omitted.'
     );
-    System.assertEquals(
+    Assert.areEqual(
       false,
-      payload.get('enableOpportunitySummaryCallTranscripts')
+      payload.get('enableOpportunitySummaryCallTranscripts'),
+      'Expected false: payload.get(\'enableOpportunitySummaryCallTranscripts\')'
     );
   }
 
   @IsTest
-  static void requestControlIsNeverNull() {
+  static void shouldAlwaysSendRequestControlWhenBuildingRequest() {
     Map<String, Object> payload = new Map<String, Object>();
 
     GCPCalloutForOpportunitySummary.addCallTranscriptsRequestControl(
@@ -2065,14 +2434,15 @@ private class GCPCalloutForOpportunitySummaryTest {
       null
     );
 
-    System.assertEquals(
+    Assert.areEqual(
       false,
-      payload.get('enableOpportunitySummaryCallTranscripts')
+      payload.get('enableOpportunitySummaryCallTranscripts'),
+      'Expected false: payload.get(\'enableOpportunitySummaryCallTranscripts\')'
     );
   }
 
   @IsTest
-  static void responseWithAndWithoutCallTranscriptsBlockRendersTheSame() {
+  static void shouldRenderSameCardWhenCallTranscriptsBlockPresentOrAbsent() {
     String summary = '"opportunity_summary":{"Executive Summary":["CRM summary"]}';
     Object withoutBlock = JSON.deserializeUntyped(
       '{"statusCode":200,"body":{' + summary + '}}'
@@ -2090,11 +2460,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     String resultWith = GCPCalloutForOpportunitySummary.buildResult(withBlock);
 
-    System.assertEquals(
+    Assert.areEqual(
       true,
-      ((Map<String, Object>) JSON.deserializeUntyped(resultWith)).get('success')
+      ((Map<String, Object>) JSON.deserializeUntyped(resultWith))
+        .get('success'),
+      'Expected true: ((Map<String, Object>) JSON.deserializeUntyped(resultWith)).get(\'success\')'
     );
-    System.assertEquals(
+    Assert.areEqual(
       resultWithout,
       resultWith,
       'The optional call_transcripts block must not change what the UI receives.'
@@ -2102,7 +2474,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void passesCallInsightsThroughUnchanged() {
+  static void shouldPassCallInsightsThroughWhenPresent() {
     Object raw = JSON.deserializeUntyped(
       '{"statusCode":200,"body":{' +
         '"opportunity_summary":{"Executive Summary":["Healthy deal","Buyer needs 400 seats by March"]},' +
@@ -2114,11 +2486,19 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     List<Object> insights = (List<Object>) result.get('call_insights');
-    System.assertEquals(1, insights.size());
+    Assert.areEqual(1, insights.size(), 'Unexpected value for insights.size()');
     Map<String, Object> insight = (Map<String, Object>) insights[0];
-    System.assertEquals('Executive Summary', insight.get('section'));
-    System.assertEquals(1, insight.get('index'));
-    System.assertEquals(
+    Assert.areEqual(
+      'Executive Summary',
+      insight.get('section'),
+      'Unexpected value for insight.get(\'section\')'
+    );
+    Assert.areEqual(
+      1,
+      insight.get('index'),
+      'Unexpected value for insight.get(\'index\')'
+    );
+    Assert.areEqual(
       'Buyer needs 400 seats by March',
       ((List<Object>) ((Map<String, Object>) ((List<Object>) result.get(
           'cards'
@@ -2129,7 +2509,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  static void omitsCallInsightsWhenAbsentOrMalformed() {
+  static void shouldOmitCallInsightsWhenAbsentOrMalformed() {
     String summary = '"opportunity_summary":{"Executive Summary":["CRM summary"]}';
     Map<String, Object> absent = (Map<String, Object>) JSON.deserializeUntyped(
       GCPCalloutForOpportunitySummary.buildResult(
@@ -2146,9 +2526,19 @@ private class GCPCalloutForOpportunitySummaryTest {
       )
     );
 
-    System.assertEquals(false, absent.containsKey('call_insights'));
-    System.assertEquals(false, malformed.containsKey('call_insights'));
-    System.assertEquals(true, malformed.get('success'));
+    Assert.isFalse(
+      absent.containsKey('call_insights'),
+      'Expected false: absent.containsKey(\'call_insights\')'
+    );
+    Assert.isFalse(
+      malformed.containsKey('call_insights'),
+      'Expected false: malformed.containsKey(\'call_insights\')'
+    );
+    Assert.areEqual(
+      true,
+      malformed.get('success'),
+      'Expected true: malformed.get(\'success\')'
+    );
   }
 
   // ---------------- makeGCPCallout entry point ----------------
@@ -2298,41 +2688,6 @@ private class GCPCalloutForOpportunitySummaryTest {
       result.get('message'),
       blankIdMessage
     );
-  }
-
-  @IsTest
-  static void shouldQueueUsageEventWhenEventTypeIsAllowed() {
-    Integer queuedJobs;
-
-    Test.startTest();
-    GCPCalloutForOpportunitySummary.logAIHEvent(
-      'aih_view',
-      'Opportunity Summary',
-      null
-    );
-    queuedJobs = Limits.getQueueableJobs();
-    Test.stopTest();
-
-    String queuedMessage = 'An allowed usage event must queue one log job.';
-    Assert.areEqual(1, queuedJobs, queuedMessage);
-  }
-
-  @IsTest
-  static void shouldIgnoreUsageEventWhenEventTypeIsUnknown() {
-    Integer queuedJobs;
-
-    Test.startTest();
-    GCPCalloutForOpportunitySummary.logAIHEvent(
-      'aih_unknown',
-      'Opportunity Summary',
-      null
-    );
-    GCPCalloutForOpportunitySummary.logAIHEvent(null, null, null);
-    queuedJobs = Limits.getQueueableJobs();
-    Test.stopTest();
-
-    String ignoredMessage = 'Unknown or blank usage events must not queue a log job.';
-    Assert.areEqual(0, queuedJobs, ignoredMessage);
   }
 
   @IsTest

@@ -1,70 +1,4 @@
-import loading1 from "@salesforce/label/c.OpportunitySummaryLoading1";
-import loading2 from "@salesforce/label/c.OpportunitySummaryLoading2";
-import loading3 from "@salesforce/label/c.OpportunitySummaryLoading3";
-import loading4 from "@salesforce/label/c.OpportunitySummaryLoading4";
-import loading5 from "@salesforce/label/c.OpportunitySummaryLoading5";
-import loading6 from "@salesforce/label/c.OpportunitySummaryLoading6";
-import loading7 from "@salesforce/label/c.OpportunitySummaryLoading7";
-import loading8 from "@salesforce/label/c.OpportunitySummaryLoading8";
-import researchDisclaimer from "@salesforce/label/c.OpportunitySummaryResearchDisclaimer";
-import searchLimitation from "@salesforce/label/c.OpportunitySummarySearchLimitation";
-import genericError from "@salesforce/label/c.OpportunitySummaryGenericError";
-import emptyMessage from "@salesforce/label/c.OpportunitySummaryEmptyMessage";
-import missingRecord from "@salesforce/label/c.OpportunitySummaryMissingRecord";
-import supplementalHelper from "@salesforce/label/c.OpportunitySummarySupplementalHelper";
-import researchHelper from "@salesforce/label/c.OpportunitySummaryResearchHelper";
-import workingEyebrow from "@salesforce/label/c.OpportunitySummaryWorkingEyebrow";
-import workingTitle from "@salesforce/label/c.OpportunitySummaryWorkingTitle";
-import workingHint from "@salesforce/label/c.OpportunitySummaryWorkingHint";
-import errorEyebrow from "@salesforce/label/c.OpportunitySummaryErrorEyebrow";
-import errorTitle from "@salesforce/label/c.OpportunitySummaryErrorTitle";
-import retryButton from "@salesforce/label/c.OpportunitySummaryRetryButton";
-import readyEyebrow from "@salesforce/label/c.OpportunitySummaryReadyEyebrow";
-import readyTitle from "@salesforce/label/c.OpportunitySummaryReadyTitle";
-import readyHint from "@salesforce/label/c.OpportunitySummaryReadyHint";
-import viewButton from "@salesforce/label/c.OpportunitySummaryViewButton";
-import idleEyebrow from "@salesforce/label/c.OpportunitySummaryIdleEyebrow";
-import idleTitle from "@salesforce/label/c.OpportunitySummaryIdleTitle";
-import idleHint from "@salesforce/label/c.OpportunitySummaryIdleHint";
-import generateButton from "@salesforce/label/c.OpportunitySummaryGenerateButton";
-import refreshButton from "@salesforce/label/c.OpportunitySummaryRefreshButton";
-import poweredBy from "@salesforce/label/c.OpportunitySummaryPoweredBy";
-import generatedNow from "@salesforce/label/c.OpportunitySummaryGeneratedNow";
-import generatedMinute from "@salesforce/label/c.OpportunitySummaryGeneratedMinute";
-import generatedMinutes from "@salesforce/label/c.OpportunitySummaryGeneratedMinutes";
-import generatedHour from "@salesforce/label/c.OpportunitySummaryGeneratedHour";
-import generatedHours from "@salesforce/label/c.OpportunitySummaryGeneratedHours";
-import elapsed from "@salesforce/label/c.OpportunitySummaryElapsed";
-import errorIcon from "@salesforce/label/c.OpportunitySummaryErrorIcon";
-import readyIcon from "@salesforce/label/c.OpportunitySummaryReadyIcon";
-import cacheHours from "@salesforce/label/c.OpportunitySummaryCacheHours";
-import cacheMaxKB from "@salesforce/label/c.OpportunitySummaryCacheMaxKB";
-import researchGroups from "@salesforce/label/c.OpportunitySummaryResearchGroups";
-import pdfDownload from "@salesforce/label/c.OpportunitySummaryPdfDownload";
-import pdfPreparing from "@salesforce/label/c.OpportunitySummaryPdfPreparing";
-import pdfError from "@salesforce/label/c.OpportunitySummaryPdfError";
-import pdfStarted from "@salesforce/label/c.OpportunitySummaryPdfStarted";
-import pdfTitle from "@salesforce/label/c.OpportunitySummaryPdfTitle";
-import pdfSnapshot from "@salesforce/label/c.OpportunitySummaryPdfSnapshot";
-import pdfExported from "@salesforce/label/c.OpportunitySummaryPdfExported";
-import pdfRecord from "@salesforce/label/c.OpportunitySummaryPdfRecord";
-import pdfFooter from "@salesforce/label/c.OpportunitySummaryPdfFooter";
-import pdfStage from "@salesforce/label/c.OpportunitySummaryPdfStage";
-import pdfScore from "@salesforce/label/c.OpportunitySummaryPdfScore";
-import pdfExecutive from "@salesforce/label/c.OpportunitySummaryPdfExecutive";
-import pdfHistory from "@salesforce/label/c.OpportunitySummaryPdfHistory";
-import pdfWin from "@salesforce/label/c.OpportunitySummaryPdfWin";
-import pdfRisk from "@salesforce/label/c.OpportunitySummaryPdfRisk";
-import pdfActions from "@salesforce/label/c.OpportunitySummaryPdfActions";
-import pdfPlan from "@salesforce/label/c.OpportunitySummaryPdfPlan";
-import pdfPostClose from "@salesforce/label/c.OpportunitySummaryPdfPostClose";
-import pdfResearch from "@salesforce/label/c.OpportunitySummaryPdfResearch";
-import pdfSupplemental from "@salesforce/label/c.OpportunitySummaryPdfSupplemental";
-import pdfSources from "@salesforce/label/c.OpportunitySummaryPdfSources";
-import pdfSearches from "@salesforce/label/c.OpportunitySummaryPdfSearches";
-import pdfRelevance from "@salesforce/label/c.OpportunitySummaryPdfRelevance";
-import pdfAction from "@salesforce/label/c.OpportunitySummaryPdfAction";
-import fromCall from "@salesforce/label/c.OpportunitySummaryFromCall";
+import { labels } from "./opportunitySummaryLabels";
 
 const DEFAULT_RESEARCH_GROUPS = [
   { kind: "leadership", label: "Current Leadership" },
@@ -96,8 +30,8 @@ export function positiveNumber(
 
 export function getCachePolicy() {
   return {
-    ttlMs: positiveNumber(cacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
-    maxBytes: positiveNumber(cacheMaxKB, 512, 1, 512, true) * 1024
+    ttlMs: positiveNumber(labels.cacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
+    maxBytes: positiveNumber(labels.cacheMaxKB, 512, 1, 512, true) * 1024
   };
 }
 
@@ -146,88 +80,88 @@ export function parseResearchGroups(raw) {
 }
 
 export function getResearchGroups() {
-  return parseResearchGroups(researchGroups);
+  return parseResearchGroups(labels.researchGroups);
 }
 
 export function getUiLabels() {
   return {
-    pdfDownload,
-    pdfPreparing,
-    pdfError,
-    pdfStarted,
-    pdfTitle,
-    pdfSnapshot,
-    pdfExported,
-    pdfRecord,
-    pdfFooter,
-    pdfStage,
-    pdfScore,
-    pdfExecutive,
-    pdfHistory,
-    pdfWin,
-    pdfRisk,
-    pdfActions,
-    pdfPlan,
-    pdfPostClose,
-    pdfResearch,
-    pdfSupplemental,
-    pdfSources,
-    pdfSearches,
-    pdfRelevance,
-    pdfAction,
-    loading1,
-    loading2,
-    loading3,
-    loading4,
-    loading5,
-    loading6,
-    loading7,
-    loading8,
-    researchDisclaimer,
-    searchLimitation,
-    genericError,
-    emptyMessage,
-    fromCall,
-    missingRecord,
-    supplementalHelper,
-    researchHelper,
-    workingEyebrow,
-    workingTitle,
-    workingHint,
-    errorEyebrow,
-    errorTitle,
-    retryButton,
-    readyEyebrow,
-    readyTitle,
-    readyHint,
-    viewButton,
-    idleEyebrow,
-    idleTitle,
-    idleHint,
-    generateButton,
-    refreshButton,
-    poweredBy,
-    generatedNow,
-    generatedMinute,
-    generatedMinutes,
-    generatedHour,
-    generatedHours,
-    elapsed,
-    errorIcon,
-    readyIcon
+    pdfDownload: labels.pdfDownload,
+    pdfPreparing: labels.pdfPreparing,
+    pdfError: labels.pdfError,
+    pdfStarted: labels.pdfStarted,
+    pdfTitle: labels.pdfTitle,
+    pdfSnapshot: labels.pdfSnapshot,
+    pdfExported: labels.pdfExported,
+    pdfRecord: labels.pdfRecord,
+    pdfFooter: labels.pdfFooter,
+    pdfStage: labels.pdfStage,
+    pdfScore: labels.pdfScore,
+    pdfExecutive: labels.pdfExecutive,
+    pdfHistory: labels.pdfHistory,
+    pdfWin: labels.pdfWin,
+    pdfRisk: labels.pdfRisk,
+    pdfActions: labels.pdfActions,
+    pdfPlan: labels.pdfPlan,
+    pdfPostClose: labels.pdfPostClose,
+    pdfResearch: labels.pdfResearch,
+    pdfSupplemental: labels.pdfSupplemental,
+    pdfSources: labels.pdfSources,
+    pdfSearches: labels.pdfSearches,
+    pdfRelevance: labels.pdfRelevance,
+    pdfAction: labels.pdfAction,
+    loading1: labels.loading1,
+    loading2: labels.loading2,
+    loading3: labels.loading3,
+    loading4: labels.loading4,
+    loading5: labels.loading5,
+    loading6: labels.loading6,
+    loading7: labels.loading7,
+    loading8: labels.loading8,
+    researchDisclaimer: labels.researchDisclaimer,
+    searchLimitation: labels.searchLimitation,
+    genericError: labels.genericError,
+    emptyMessage: labels.emptyMessage,
+    fromCall: labels.fromCall,
+    missingRecord: labels.missingRecord,
+    supplementalHelper: labels.supplementalHelper,
+    researchHelper: labels.researchHelper,
+    workingEyebrow: labels.workingEyebrow,
+    workingTitle: labels.workingTitle,
+    workingHint: labels.workingHint,
+    errorEyebrow: labels.errorEyebrow,
+    errorTitle: labels.errorTitle,
+    retryButton: labels.retryButton,
+    readyEyebrow: labels.readyEyebrow,
+    readyTitle: labels.readyTitle,
+    readyHint: labels.readyHint,
+    viewButton: labels.viewButton,
+    idleEyebrow: labels.idleEyebrow,
+    idleTitle: labels.idleTitle,
+    idleHint: labels.idleHint,
+    generateButton: labels.generateButton,
+    refreshButton: labels.refreshButton,
+    poweredBy: labels.poweredBy,
+    generatedNow: labels.generatedNow,
+    generatedMinute: labels.generatedMinute,
+    generatedMinutes: labels.generatedMinutes,
+    generatedHour: labels.generatedHour,
+    generatedHours: labels.generatedHours,
+    elapsed: labels.elapsed,
+    errorIcon: labels.errorIcon,
+    readyIcon: labels.readyIcon
   };
 }
 
 export function getLoadingMessages() {
   return [
-    loading1,
-    loading2,
-    loading3,
-    loading4,
-    loading5,
-    loading6,
-    loading7,
-    loading8
+    labels.loading1,
+    labels.loading2,
+    labels.loading3,
+    labels.loading4,
+    labels.loading5,
+    labels.loading6,
+    labels.loading7,
+    labels.loading8
   ];
 }
 

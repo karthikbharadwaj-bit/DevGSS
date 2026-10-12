@@ -10,7 +10,7 @@ import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
-import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
+import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import isOpportunitySummaryEnabled from "@salesforce/apex/GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled";
 
 import {

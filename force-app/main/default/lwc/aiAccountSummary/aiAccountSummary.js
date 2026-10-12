@@ -4,7 +4,7 @@ import USER_ID from "@salesforce/user/Id";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
-import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
+import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import {
   formatLabel,
   getCachePolicy,

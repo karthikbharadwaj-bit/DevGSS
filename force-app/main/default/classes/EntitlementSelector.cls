@@ -293,4 +293,13 @@ public inherited sharing class EntitlementSelector extends SObjectSelector {
             .setCondition('Account__c = :bind0 AND PackageCatalogId__c = NULL')
             .setQueryBindings(new List<Object>{ accId });
     }
+
+    public QueryFactory selectActiveEntitlementsForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectActiveEntitlementsForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('Account__c = :bind0 AND Active__c = true')
+            .setQueryBindings(new List<Object> { accountId });
+    }
 }

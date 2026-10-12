@@ -166,4 +166,14 @@ public with sharing class ContractSelector extends SObjectSelector {
             .setCondition('AccountId IN :bind0')
             .setQueryBindings(bindings);
     }
+
+    public QueryFactory selectContractsForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectContractsForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Contract.EndDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

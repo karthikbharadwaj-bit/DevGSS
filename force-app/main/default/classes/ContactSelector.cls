@@ -585,4 +585,45 @@ public inherited sharing class ContactSelector extends SObjectSelector {
             .setCondition('AccountId = :bind0 AND Id != :bind1')
             .setQueryBindings(new List<Object>{ accountId, primaryContactId });
     }
+
+    public QueryFactory selectContactByEmailsForBTCases(List<Object> bindings) {
+        return newQueryFactory()
+            .setFactoryName('selectContactByEmailsForBTCases')
+            .withoutSelectorFieldsIncluded()
+            .selectFields(new List<Schema.SObjectField> {
+                Contact.Id,
+                Contact.Email,
+                Contact.AccountId
+            })
+            .withoutSelectorOrderByIncluded()
+            .setCondition('Email IN :bind0 AND Account.RC_Brand__c = :bind1')
+            .addOrdering(Contact.LastModifiedDate, QueryFactory.SortOrder.DESCENDING)
+            .addOrdering(Contact.CreatedDate, QueryFactory.SortOrder.DESCENDING)
+            .addOrdering(Contact.Id, QueryFactory.SortOrder.DESCENDING)
+            .setQueryBindings(bindings);
+    }
+
+    public QueryFactory selectContactNamesByIds(Set<Id> contactIds) {
+        return newQueryFactory()
+            .setFactoryName('selectContactNamesByIds')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .selectFields(new List<Schema.SObjectField> {
+                Contact.Id,
+                Contact.Name,
+                Contact.Title
+            })
+            .setCondition('Id IN :bind0')
+            .setQueryBindings(new List<Object> { contactIds });
+    }
+
+    public QueryFactory selectContactsForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectContactsForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Contact.LastActivityDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

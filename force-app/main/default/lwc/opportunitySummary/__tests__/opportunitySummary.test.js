@@ -19,7 +19,7 @@ import OpportunitySummary, {
   splitLabel
 } from "c/opportunitySummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
-import logAIHEvent from "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent";
+import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import isOpportunitySummaryEnabled from "@salesforce/apex/GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled";
 
 jest.mock(
@@ -28,7 +28,7 @@ jest.mock(
   { virtual: true }
 );
 jest.mock(
-  "@salesforce/apex/GCPCalloutForOpportunitySummary.logAIHEvent",
+  "@salesforce/apex/AISummaryController.logAIHEvent",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -1321,6 +1321,7 @@ function closedDealResponse({ state = "closed_won", references } = {}) {
       },
       { title: "Win Factors", items: ["Should stay hidden"] },
       { title: "Risk Flags", items: ["Should stay hidden"] },
+      { title: "Close Plan", items: ["Legal: Should stay hidden"] },
       { title: "Next Best Actions", items: ["Confirm onboarding owner"] },
       {
         title: "Post-Close Actions",
@@ -1519,6 +1520,7 @@ describe("opportunitySummary closed deals", () => {
       (value) => expect(documentDefinition).toContain(value)
     );
     expect(documentDefinition).not.toContain("Should stay hidden");
+    expect(documentDefinition).not.toContain("Close Plan");
   });
 
   it("keeps Win Factors, Risk Flags and Close Plan in an open deal PDF", async () => {

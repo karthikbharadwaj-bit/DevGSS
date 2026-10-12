@@ -19,6 +19,8 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String LABEL_PREFIX = 'AccountSummary';
   private static final String LABEL_BASE_LANGUAGE = 'en_US';
   private static final String TIMEOUT_LABEL_SUFFIX = 'TimeoutSeconds';
+  private static final String EXCLUDED_CREATORS_LABEL_SUFFIX = 'ExcludedActivityCreators';
+  private static final String LIST_VALUE_SEPARATOR = ',';
   private static final String LOG_SOURCE = 'GCPCalloutForAccountSummary';
   private static final String DIGITS_PATTERN = '[0-9]+';
   private static final String RELATIONSHIP_SEPARATOR = '.';
@@ -91,44 +93,6 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String RESPONSE_ENRICHMENT = 'account_enrichment';
   private static final String RESULT_SUCCESS = 'success';
   private static final String RESULT_MESSAGE = 'message';
-
-  private static final String CONDITION_ACCOUNT = 'Id = :bind0';
-  private static final String CONDITION_OPEN_OPPORTUNITIES = 'AccountId = :bind0 AND IsClosed = false';
-  private static final String CONDITION_CLOSED_OPPORTUNITIES = 'AccountId = :bind0 AND IsClosed = true';
-  private static final String CONDITION_OPEN_CASES = 'AccountId = :bind0 AND IsClosed = false';
-  private static final String CONDITION_RECENTLY_CLOSED_CASES = 'AccountId = :bind0 AND IsClosed = true AND ClosedDate = LAST_N_DAYS:183';
-  private static final String CONDITION_ESCALATIONS = 'EscalatedAccount__c = :bind0';
-  private static final String CONDITION_ENTITLEMENTS = 'Account__c = :bind0 AND Active__c = true';
-  private static final String CONDITION_ACCOUNT_CHILD = 'AccountId = :bind0';
-  private static final String CONDITION_RETENTION_TASKS = 'Account__c = :bind0';
-  /*
-   * Activity worth summarising is a completed contact with the customer. Open tasks are to-dos,
-   * and these senders and subjects are automated notices (BISUAT analysis, 2026-10-08).
-   */
-  private static final String HUMAN_TASK_FILTER =
-    ' AND IsClosed = true AND TaskSubtype != \'ListEmail\'' +
-    ' AND (ActivityDate = null OR ActivityDate <= TODAY)' +
-    ' AND CreatedBy.Name NOT IN (\'Automation Service\', \'RC Support Agent\', \'User Marketo\',' +
-    ' \'Workato Integration User\', \'AIM GTM Intelligence\', \'Comm ODS Integration\')' +
-    ' AND (NOT Subject LIKE \'Email: Thank you for contacting us%\')';
-  /* AccountId covers activities on the Account, its Opportunities, Contracts and Contacts. */
-  private static final String CONDITION_TASKS =
-    'AccountId = :bind0' + HUMAN_TASK_FILTER;
-  /*
-   * Salesforce does not roll Case activities up to the Account, so they need their own query.
-   * Rows whose AccountId already matches (through the Contact) are in the tasks list.
-   */
-  private static final String CONDITION_CASE_TASKS =
-    'WhatId IN (SELECT Id FROM Case WHERE AccountId = :bind0) AND AccountId != :bind0' +
-    HUMAN_TASK_FILTER;
-  /* System Use events are integration records on Implementation__c, not meetings. */
-  private static final String CONDITION_EVENTS = 'AccountId = :bind0 AND ActivityDate <= TODAY AND Type != \'System Use\'';
-  private static final String CONDITION_UPCOMING_EVENTS = 'AccountId = :bind0 AND ActivityDate = NEXT_N_DAYS:30 AND Type != \'System Use\'';
-  /*
-   * Status and Owner are the only tracked Account fields that change in production. An Owner
-   * change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
-   */
-  private static final String CONDITION_ACCOUNT_HISTORY = 'AccountId = :bind0 AND Field IN (\'RC_Account_Status__c\', \'Owner\') AND DataType = \'Text\' AND CreatedDate = LAST_N_DAYS:90';
 
   /* Keys the service reads as dates even though the org stores a datetime. */
   private static final Set<String> DATE_ONLY_KEYS = new Set<String>{
@@ -472,8 +436,8 @@ public with sharing class GCPCalloutForAccountSummary {
 
     /* Every list is always sent: [] tells the service the query ran and found nothing. */
     Map<String, Object> listKeyToCoverage = new Map<String, Object>();
-    for (ListSpec spec : listSpecs()) {
-      List<SObject> rows = queryList(spec, accountId);
+    for (ListSpec spec : listSpecs(accountId)) {
+      List<SObject> rows = queryList(spec);
       Boolean isTruncated = rows.size() > spec.maxRows;
       List<SObject> keptRows = isTruncated ? trimTo(rows, spec.maxRows) : rows;
       payload.put(
@@ -493,78 +457,60 @@ public with sharing class GCPCalloutForAccountSummary {
   }
 
   @TestVisible
-  private static List<ListSpec> listSpecs() {
+  private static List<ListSpec> listSpecs(Id accountId) {
+    List<String> excludedCreators = excludedActivityCreators();
     return new List<ListSpec>{
       new ListSpec(
           LIST_OPEN_OPPORTUNITIES,
-          new OpportunitySelector(),
-          CONDITION_OPEN_OPPORTUNITIES,
+          new OpportunitySelector()
+            .selectOpenOpportunitiesForAccountSummary(accountId),
           OPEN_OPPORTUNITY_LIMIT
         )
         .withFields(
           OPEN_OPPORTUNITY_FIELD_TO_KEY,
           OPEN_OPPORTUNITY_RELATED_FIELD_TO_KEY
-        )
-        .orderBy(
-          Opportunity.CloseDate,
-          QueryFactory.SortOrder.ASCENDING,
-          false
         ),
       new ListSpec(
           LIST_CLOSED_OPPORTUNITIES,
-          new OpportunitySelector(),
-          CONDITION_CLOSED_OPPORTUNITIES,
+          new OpportunitySelector()
+            .selectClosedOpportunitiesForAccountSummary(accountId),
           CLOSED_OPPORTUNITY_LIMIT
         )
         .withFields(
           CLOSED_OPPORTUNITY_FIELD_TO_KEY,
           CLOSED_OPPORTUNITY_RELATED_FIELD_TO_KEY
-        )
-        .orderBy(
-          Opportunity.CloseDate,
-          QueryFactory.SortOrder.DESCENDING,
-          true
         ),
       new ListSpec(
           LIST_OPEN_CASES,
-          new CaseSelector(),
-          CONDITION_OPEN_CASES,
+          new CaseSelector().selectOpenCasesForAccountSummary(accountId),
           OPEN_CASE_LIMIT
         )
-        .withFields(OPEN_CASE_FIELD_TO_KEY, OPEN_CASE_RELATED_FIELD_TO_KEY)
-        .orderBy(Case.CreatedDate, QueryFactory.SortOrder.ASCENDING, false),
+        .withFields(OPEN_CASE_FIELD_TO_KEY, OPEN_CASE_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_RECENTLY_CLOSED_CASES,
-          new CaseSelector(),
-          CONDITION_RECENTLY_CLOSED_CASES,
+          new CaseSelector()
+            .selectRecentlyClosedCasesForAccountSummary(accountId),
           RECENTLY_CLOSED_CASE_LIMIT
         )
-        .withFields(CLOSED_CASE_FIELD_TO_KEY, CLOSED_CASE_RELATED_FIELD_TO_KEY)
-        .orderBy(Case.ClosedDate, QueryFactory.SortOrder.DESCENDING, true),
-      /* All escalations, open or not: lifetime count and days in Red need the full history. */
+        .withFields(CLOSED_CASE_FIELD_TO_KEY, CLOSED_CASE_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_ESCALATIONS,
-          new RedAccountSelector(),
-          CONDITION_ESCALATIONS,
+          new RedAccountSelector()
+            .selectEscalationsForAccountSummary(accountId),
           ESCALATION_LIMIT
         )
-        .withFields(ESCALATION_FIELD_TO_KEY, null)
-        .orderBy(
-          Red_Account__c.Red_Start_Date__c,
-          QueryFactory.SortOrder.DESCENDING,
-          true
-        ),
+        .withFields(ESCALATION_FIELD_TO_KEY, null),
       new ListSpec(
           LIST_ENTITLEMENTS,
-          new EntitlementSelector(),
-          CONDITION_ENTITLEMENTS,
+          new EntitlementSelector()
+            .selectActiveEntitlementsForAccountSummary(accountId),
           ENTITLEMENT_LIMIT
         )
         .withFields(ENTITLEMENT_FIELD_TO_KEY, null),
       new ListSpec(
           LIST_ACCOUNT_TEAM,
-          new AccountTeamMemberSelector(),
-          CONDITION_ACCOUNT_CHILD,
+          new AccountTeamMemberSelector()
+            .selectTeamMembersForAccountSummary(accountId),
           ACCOUNT_TEAM_LIMIT
         )
         .withFields(
@@ -573,99 +519,73 @@ public with sharing class GCPCalloutForAccountSummary {
         ),
       new ListSpec(
           LIST_CONTACTS,
-          new ContactSelector(),
-          CONDITION_ACCOUNT_CHILD,
+          new ContactSelector().selectContactsForAccountSummary(accountId),
           CONTACT_LIMIT
         )
-        .withFields(CONTACT_FIELD_TO_KEY, null)
-        .orderBy(
-          Contact.LastActivityDate,
-          QueryFactory.SortOrder.DESCENDING,
-          true
-        ),
-      new ListSpec(LIST_TASKS, new TaskSelector(), CONDITION_TASKS, TASK_LIMIT)
-        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY)
-        .orderBy(Task.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
+        .withFields(CONTACT_FIELD_TO_KEY, null),
+      new ListSpec(
+          LIST_TASKS,
+          new TaskSelector()
+            .selectHumanTasksForAccountSummary(accountId, excludedCreators),
+          TASK_LIMIT
+        )
+        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_CASE_TASKS,
-          new TaskSelector(),
-          CONDITION_CASE_TASKS,
+          new TaskSelector()
+            .selectHumanCaseTasksForAccountSummary(accountId, excludedCreators),
           CASE_TASK_LIMIT
         )
-        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY)
-        .orderBy(Task.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
+        .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_EVENTS,
-          new EventSelector(),
-          CONDITION_EVENTS,
+          new EventSelector().selectPastEventsForAccountSummary(accountId),
           EVENT_LIMIT
         )
-        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY)
-        .orderBy(Event.ActivityDate, QueryFactory.SortOrder.DESCENDING, true),
+        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_UPCOMING_EVENTS,
-          new EventSelector(),
-          CONDITION_UPCOMING_EVENTS,
+          new EventSelector().selectUpcomingEventsForAccountSummary(accountId),
           UPCOMING_EVENT_LIMIT
         )
-        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY)
-        .orderBy(Event.StartDateTime, QueryFactory.SortOrder.ASCENDING, true),
+        .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_RETENTION_TASKS,
-          new RetentionTaskSelector(),
-          CONDITION_RETENTION_TASKS,
+          new RetentionTaskSelector()
+            .selectRetentionTasksForAccountSummary(accountId),
           RETENTION_TASK_LIMIT
         )
-        .withFields(RETENTION_TASK_FIELD_TO_KEY, null)
-        .orderBy(
-          Retention_Task__c.CreatedDate,
-          QueryFactory.SortOrder.DESCENDING,
-          true
-        ),
+        .withFields(RETENTION_TASK_FIELD_TO_KEY, null),
       new ListSpec(
           LIST_ORDERS,
-          new OrderSelector(),
-          CONDITION_ACCOUNT_CHILD,
+          new OrderSelector().selectOrdersForAccountSummary(accountId),
           ORDER_LIMIT
         )
-        .withFields(ORDER_FIELD_TO_KEY, null)
-        .orderBy(Order.EffectiveDate, QueryFactory.SortOrder.DESCENDING, true),
+        .withFields(ORDER_FIELD_TO_KEY, null),
       new ListSpec(
           LIST_CONTRACTS,
-          new ContractSelector(),
-          CONDITION_ACCOUNT_CHILD,
+          new ContractSelector().selectContractsForAccountSummary(accountId),
           CONTRACT_LIMIT
         )
-        .withFields(CONTRACT_FIELD_TO_KEY, null)
-        .orderBy(Contract.EndDate, QueryFactory.SortOrder.DESCENDING, true),
+        .withFields(CONTRACT_FIELD_TO_KEY, null),
       new ListSpec(
           LIST_ACCOUNT_HISTORY,
-          new AccountHistorySelector(),
-          CONDITION_ACCOUNT_HISTORY,
+          new AccountHistorySelector()
+            .selectStatusAndOwnerChangesForAccountSummary(accountId),
           ACCOUNT_HISTORY_LIMIT
         )
         .withFields(ACCOUNT_HISTORY_FIELD_TO_KEY, null)
-        .orderBy(
-          AccountHistory.CreatedDate,
-          QueryFactory.SortOrder.DESCENDING,
-          true
-        )
     };
   }
 
   private static Account queryAccount(Id accountId) {
-    List<SObject> accounts = stripReadable(
+    List<SObject> accounts = GCPSummaryUtil.stripReadable(
       new AccountSelector()
-        .newQueryFactory()
-        .withoutSelectorFieldsIncluded()
-        .withoutSelectorOrderByIncluded()
+        .selectAccountForSummary(accountId)
         .selectFields(
           new List<Schema.SObjectField>(ACCOUNT_FIELD_TO_KEY.keySet())
         )
         .selectFields(new List<String>(ACCOUNT_RELATED_FIELD_TO_KEY.keySet()))
-        .setCondition(CONDITION_ACCOUNT)
-        .setQueryBindings(new List<Object>{ accountId })
-        .setLimit(1)
         .executeQuery()
     );
     if (accounts.isEmpty()) {
@@ -676,25 +596,18 @@ public with sharing class GCPCalloutForAccountSummary {
 
   /* Queries one row past the cap so a full page can be told apart from a truncated one. */
   @TestVisible
-  private static QueryFactory buildListQuery(ListSpec spec, Id accountId) {
-    QueryFactory query = spec.selector.newQueryFactory()
-      .withoutSelectorFieldsIncluded()
-      .withoutSelectorOrderByIncluded()
+  private static QueryFactory buildListQuery(ListSpec spec) {
+    QueryFactory query = spec.query
       .selectFields(new List<Schema.SObjectField>(spec.fieldToKey.keySet()))
-      .setCondition(spec.condition)
-      .setQueryBindings(new List<Object>{ accountId })
       .setLimit(spec.maxRows + 1);
     if (!spec.relatedFieldToKey.isEmpty()) {
       query.selectFields(new List<String>(spec.relatedFieldToKey.keySet()));
     }
-    if (spec.orderField != null) {
-      query.addOrdering(spec.orderField, spec.direction, spec.isNullsLast);
-    }
     return query;
   }
 
-  private static List<SObject> queryList(ListSpec spec, Id accountId) {
-    return stripReadable(buildListQuery(spec, accountId).executeQuery());
+  private static List<SObject> queryList(ListSpec spec) {
+    return GCPSummaryUtil.stripReadable(buildListQuery(spec).executeQuery());
   }
 
   @TestVisible
@@ -720,7 +633,7 @@ public with sharing class GCPCalloutForAccountSummary {
     Map<String, Object> row = new Map<String, Object>();
     for (Schema.SObjectField field : fieldToKey.keySet()) {
       String key = fieldToKey.get(field);
-      Object value = readableField(record, String.valueOf(field));
+      Object value = GCPSummaryUtil.readableField(record, field);
       if (value instanceof Datetime && DATE_ONLY_KEYS.contains(key)) {
         value = ((Datetime) value).date();
       } else if (value instanceof String && TRUNCATED_TEXT_KEYS.contains(key)) {
@@ -746,35 +659,16 @@ public with sharing class GCPCalloutForAccountSummary {
   }
 
   private static Object readableRelatedField(SObject record, String fieldPath) {
-    Object related = readableField(
+    Object related = GCPSummaryUtil.readableField(
       record,
       fieldPath.substringBefore(RELATIONSHIP_SEPARATOR)
     );
     return related instanceof SObject
-      ? readableField(
+      ? GCPSummaryUtil.readableField(
           (SObject) related,
           fieldPath.substringAfter(RELATIONSHIP_SEPARATOR)
         )
       : null;
-  }
-
-  /*
-   * QueryFactory runs in system mode and `with sharing` only covers row access, so fields the
-   * user cannot read are stripped. A stripped field is removed rather than nulled, which is why
-   * values are read through getPopulatedFieldsAsMap instead of a direct getter.
-   */
-  private static List<SObject> stripReadable(List<SObject> records) {
-    if (records == null || records.isEmpty()) {
-      return new List<SObject>();
-    }
-    return Security.stripInaccessible(AccessType.READABLE, records, false)
-      .getRecords();
-  }
-
-  private static Object readableField(SObject record, String fieldApiName) {
-    return record == null
-      ? null
-      : record.getPopulatedFieldsAsMap().get(fieldApiName);
   }
 
   private static List<SObject> trimTo(List<SObject> records, Integer maxRows) {
@@ -894,21 +788,20 @@ public with sharing class GCPCalloutForAccountSummary {
   // ---------------- Configuration ----------------
 
   /* Technical labels are read in the base language so a translation can never change behavior. */
+  private static String technicalLabel(String suffix) {
+    if (Test.isRunningTest() && labelSuffixToValue.containsKey(suffix)) {
+      return labelSuffixToValue.get(suffix);
+    }
+    return System.Label.get(
+      LABEL_NAMESPACE,
+      LABEL_PREFIX + suffix,
+      LABEL_BASE_LANGUAGE
+    );
+  }
+
   @TestVisible
   private static Integer timeoutSeconds() {
-    String raw;
-    if (
-      Test.isRunningTest() &&
-      labelSuffixToValue.containsKey(TIMEOUT_LABEL_SUFFIX)
-    ) {
-      raw = labelSuffixToValue.get(TIMEOUT_LABEL_SUFFIX);
-    } else {
-      raw = System.Label.get(
-        LABEL_NAMESPACE,
-        LABEL_PREFIX + TIMEOUT_LABEL_SUFFIX,
-        LABEL_BASE_LANGUAGE
-      );
-    }
+    String raw = technicalLabel(TIMEOUT_LABEL_SUFFIX);
     if (String.isBlank(raw) || !Pattern.matches(DIGITS_PATTERN, raw.trim())) {
       return DEFAULT_TIMEOUT_SECONDS;
     }
@@ -919,29 +812,35 @@ public with sharing class GCPCalloutForAccountSummary {
       : DEFAULT_TIMEOUT_SECONDS;
   }
 
+  /* Integration users whose tasks are automated notices rather than customer contact. */
+  @TestVisible
+  private static List<String> excludedActivityCreators() {
+    List<String> names = new List<String>();
+    String raw = technicalLabel(EXCLUDED_CREATORS_LABEL_SUFFIX);
+    if (String.isBlank(raw)) {
+      return names;
+    }
+    for (String name : raw.split(LIST_VALUE_SEPARATOR)) {
+      if (String.isNotBlank(name)) {
+        names.add(name.trim());
+      }
+    }
+    return names;
+  }
+
   // ---------------- Types ----------------
 
   @TestVisible
   private class ListSpec {
     public String key;
-    public SObjectSelector selector;
-    public String condition;
+    public QueryFactory query;
     public Integer maxRows;
     public Map<Schema.SObjectField, String> fieldToKey = new Map<Schema.SObjectField, String>();
     public Map<String, String> relatedFieldToKey = new Map<String, String>();
-    public Schema.SObjectField orderField;
-    public QueryFactory.SortOrder direction;
-    public Boolean isNullsLast;
 
-    public ListSpec(
-      String key,
-      SObjectSelector selector,
-      String condition,
-      Integer maxRows
-    ) {
+    public ListSpec(String key, QueryFactory query, Integer maxRows) {
       this.key = key;
-      this.selector = selector;
-      this.condition = condition;
+      this.query = query;
       this.maxRows = maxRows;
     }
 
@@ -953,17 +852,6 @@ public with sharing class GCPCalloutForAccountSummary {
       if (relatedFieldToKey != null) {
         this.relatedFieldToKey = relatedFieldToKey;
       }
-      return this;
-    }
-
-    public ListSpec orderBy(
-      Schema.SObjectField orderField,
-      QueryFactory.SortOrder direction,
-      Boolean isNullsLast
-    ) {
-      this.orderField = orderField;
-      this.direction = direction;
-      this.isNullsLast = isNullsLast;
       return this;
     }
   }

@@ -1,6 +1,6 @@
 # Opportunity Summary Custom Label configuration
 
-All 80 labels live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`. Find them in Setup → Custom Labels by the `OpportunitySummary` prefix or the `OpportunitySummary.Configuration` / `OpportunitySummary.UI` categories. The 23 PDF-specific UI labels are listed in [PDF export](opportunity-summary-pdf-export.md).
+All 82 labels live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`. Find them in Setup → Custom Labels by the `OpportunitySummary` prefix or the `OpportunitySummary.Configuration` / `OpportunitySummary.UI` categories. The 24 PDF-specific UI labels are listed in [PDF export](opportunity-summary-pdf-export.md).
 
 Every name below has the prefix `OpportunitySummary`. For example, `CacheHours` means `OpportunitySummaryCacheHours`. Defaults preserve the current behavior. Endpoint routing, enrichment enablement, on-demand generation and modal opening, loading cadence, panel defaults, and Beta presentation are unchanged.
 
@@ -38,7 +38,7 @@ Do not translate technical labels. Apex explicitly reads their `en_US` values. L
 ## Structured configuration
 
 - `UnresolvedNames`: one excluded account name per line. Matching trims whitespace, ignores case and removes duplicates. Blank configuration uses the existing five-name fallback.
-- `GenericEmailDomains`: one bare domain per line (no scheme or path). Matching trims whitespace, ignores case and removes duplicates. Blank or malformed configuration falls back to the existing fourteen-domain list.
+- `GenericEmailDomains`: one bare domain per line (no scheme or path). Matching trims whitespace, ignores case and removes duplicates. Blank or malformed configuration falls back to the built-in thirteen-domain list.
 - `ResearchGroups`: JSON array with `kind`, `label`, optional integer `order`, and optional Boolean `active`. `kind` must be unique after lowercasing and contain letters, digits, underscores or hyphens, starting with a letter. Labels must be nonblank. Unknown kinds become supported by adding an entry. Disabled groups are omitted. Invalid JSON, an empty array, duplicate kinds or invalid fields restore the two original groups.
 
 Example research configuration:
@@ -123,4 +123,4 @@ npm run test:unit -- -- --runInBand --runTestsByPath force-app/main/default/lwc/
 
 The LWC tests load the deployable label defaults and cover configured TTL/budget, fallback validation, configurable research groups and UI text, source handling, and the existing on-demand flow. `GCPCalloutForOpportunitySummaryTest` covers numeric/list parsing, identity exclusions, the recent-days migration, and configurable activity/conversation caps.
 
-Deploy the label metadata together with both Apex classes and the entire `opportunitySummary` bundle when the changes are approved. No custom setting fields need to be added. Existing request and response field names are unchanged.
+Deploy the label metadata together with both Apex classes and the entire `opportunitySummary` bundle when the changes are approved. No custom setting fields need to be added. Existing request and response field names are unchanged; the fields added since are listed in the [enrichment handoff](opportunity-summary-enrichment-gcp-handoff.md).

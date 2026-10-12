@@ -353,4 +353,14 @@ public inherited sharing class OrderSelector extends SObjectSelector {
             .setCondition('Id IN :bind0')
             .setQueryBindings(bindings);
     }
+
+    public QueryFactory selectOrdersForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectOrdersForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Order.EffectiveDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

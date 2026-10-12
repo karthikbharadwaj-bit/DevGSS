@@ -488,4 +488,67 @@ public inherited sharing class CaseSelector extends SObjectSelector {
             .setLimit(1);
     }
 
+    public QueryFactory selectCasesForBTCustomerResponseCheck(List<Object> bindings) {
+        return newQueryFactory()
+            .setFactoryName('selectCasesForBTCustomerResponseCheck')
+            .selectFields(new List<Schema.SObjectField>{
+                Case.Id,
+                Case.Brand_Account__c,
+                Case.CaseNumber,
+                Case.Original_RecordType__c,
+                Case.RecordTypeId
+            })
+            .selectFields(new List<String>{ 'Contact.Email' })
+            .setCondition('Id IN :bind0')
+            .setQueryBindings(bindings)
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded();
+    }
+
+    /**
+     * Open cases on the account plus cases closed since the given date, newest first.
+     */
+    public QueryFactory selectCasesForOpportunitySummary(Id accountId, Date closedSince, Integer rowLimit) {
+        return newQueryFactory()
+            .setFactoryName('selectCasesForOpportunitySummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .selectFields(new List<Schema.SObjectField> {
+                Case.Id,
+                Case.CaseNumber,
+                Case.Subject,
+                Case.Status,
+                Case.Priority,
+                Case.IsClosed,
+                Case.IsEscalated,
+                Case.CreatedDate,
+                Case.ClosedDate,
+                Case.Description
+            })
+            .selectFields(new List<String> { 'Owner.Name' })
+            .setCondition('AccountId = :bind0 AND (IsClosed = false OR ClosedDate >= :bind1)')
+            .addOrdering(Case.CreatedDate, QueryFactory.SortOrder.DESCENDING)
+            .setQueryBindings(new List<Object> { accountId, closedSince })
+            .setLimit(rowLimit);
+    }
+
+    public QueryFactory selectOpenCasesForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectOpenCasesForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0 AND IsClosed = false')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Case.CreatedDate, QueryFactory.SortOrder.ASCENDING, false);
+    }
+
+    public QueryFactory selectRecentlyClosedCasesForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectRecentlyClosedCasesForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0 AND IsClosed = true AND ClosedDate = LAST_N_DAYS:183')
+            .setQueryBindings(new List<Object> { accountId })
+            .addOrdering(Case.ClosedDate, QueryFactory.SortOrder.DESCENDING, true);
+    }
 }

@@ -49,4 +49,13 @@ public inherited sharing class AccountTeamMemberSelector extends SObjectSelector
                 .setCondition('AccountId IN :bind0 AND TeamMemberRole = :bind1')
                 .setQueryBindings(bindings);
     }
+
+    public QueryFactory selectTeamMembersForAccountSummary(Id accountId) {
+        return newQueryFactory()
+            .setFactoryName('selectTeamMembersForAccountSummary')
+            .withoutSelectorFieldsIncluded()
+            .withoutSelectorOrderByIncluded()
+            .setCondition('AccountId = :bind0')
+            .setQueryBindings(new List<Object> { accountId });
+    }
 }

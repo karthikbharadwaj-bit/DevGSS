@@ -1,15 +1,8 @@
 public inherited sharing class RedAccountSelector extends SObjectSelector {
-  private static final String FACTORY_NAME = 'selectRedAccounts';
+  private static final String ESCALATIONS_FACTORY_NAME = 'selectEscalationsForAccountSummary';
 
   public RedAccountSelector() {
     super();
-  }
-
-  public RedAccountSelector(
-    String relationshipName,
-    SObjectType relationshipBase
-  ) {
-    super(relationshipName, relationshipBase);
   }
 
   public RedAccountSelector(Boolean enforceCRUD, Boolean enforceFLS) {
@@ -28,10 +21,21 @@ public inherited sharing class RedAccountSelector extends SObjectSelector {
     };
   }
 
-  public QueryFactory selectRedAccounts() {
+  /**
+   * Every escalation on the account, open or not: lifetime count and days in Red need the full
+   * history. Newest Red start first.
+   */
+  public QueryFactory selectEscalationsForAccountSummary(Id accountId) {
     return newQueryFactory()
-      .setFactoryName(FACTORY_NAME)
+      .setFactoryName(ESCALATIONS_FACTORY_NAME)
       .withoutSelectorFieldsIncluded()
-      .withoutSelectorOrderByIncluded();
+      .withoutSelectorOrderByIncluded()
+      .setCondition('EscalatedAccount__c = :bind0')
+      .setQueryBindings(new List<Object>{ accountId })
+      .addOrdering(
+        Red_Account__c.Red_Start_Date__c,
+        QueryFactory.SortOrder.DESCENDING,
+        true
+      );
   }
 }

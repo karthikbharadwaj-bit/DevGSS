@@ -223,4 +223,21 @@ public inherited sharing class OpportunityContactRoleSelector extends SObjectSel
             .setQueryBindings(bindings)
             .setCondition('ContactId IN :bind0 AND Opportunity.isClosed = true AND Opportunity.isWon = true');
     }
+
+    /**
+     * Contact roles with the contact details sent as stakeholders, primary contact first.
+     */
+    public QueryFactory selectStakeholdersForSummary(Id opportunityId, Integer rowLimit) {
+        return selectOpportunityContactRolesByOppId(new List<Object> { opportunityId })
+            .setFactoryName('selectStakeholdersForSummary')
+            .selectFields(new List<String> {
+                'Contact.Name',
+                'Contact.Title',
+                'Contact.Email',
+                'Contact.Phone',
+                'Contact.LastActivityDate'
+            })
+            .addOrdering(OpportunityContactRole.IsPrimary, QueryFactory.SortOrder.DESCENDING)
+            .setLimit(rowLimit);
+    }
 }
