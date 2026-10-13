@@ -62,6 +62,30 @@ describe("Opportunity Summary label configuration", () => {
     expect(positiveNumber("1", 512, 1, 512, true)).toBe(1);
   });
 
+  it("rotates through the eight deployed loading lines in order", () => {
+    const messages = configuredModule().getLoadingMessages();
+    expect(messages).toHaveLength(8);
+    expect(messages[0]).toBe(
+      "Gathering opportunity details and stage history…"
+    );
+    expect(messages[7]).toBe(
+      "Almost there — assembling your decision-ready summary."
+    );
+  });
+
+  it("uses the loading lines an admin configures", () => {
+    setLabel("LoadingMessages", " Checking the deal… | Almost done. ");
+    expect(configuredModule().getLoadingMessages()).toEqual([
+      "Checking the deal…",
+      "Almost done."
+    ]);
+  });
+
+  it("falls back to the built-in loading lines when the label is blank", () => {
+    setLabel("LoadingMessages", "");
+    expect(configuredModule().getLoadingMessages()).toHaveLength(8);
+  });
+
   it("adds and orders configured research kinds and excludes disabled groups", () => {
     setLabel(
       "ResearchGroups",

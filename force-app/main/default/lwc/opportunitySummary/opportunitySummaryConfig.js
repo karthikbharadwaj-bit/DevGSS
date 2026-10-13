@@ -109,14 +109,6 @@ export function getUiLabels() {
     pdfSearches: labels.pdfSearches,
     pdfRelevance: labels.pdfRelevance,
     pdfAction: labels.pdfAction,
-    loading1: labels.loading1,
-    loading2: labels.loading2,
-    loading3: labels.loading3,
-    loading4: labels.loading4,
-    loading5: labels.loading5,
-    loading6: labels.loading6,
-    loading7: labels.loading7,
-    loading8: labels.loading8,
     researchDisclaimer: labels.researchDisclaimer,
     searchLimitation: labels.searchLimitation,
     genericError: labels.genericError,
@@ -153,16 +145,7 @@ export function getUiLabels() {
 }
 
 export function getLoadingMessages() {
-  return [
-    labels.loading1,
-    labels.loading2,
-    labels.loading3,
-    labels.loading4,
-    labels.loading5,
-    labels.loading6,
-    labels.loading7,
-    labels.loading8
-  ];
+  return [...labels.loadingMessages];
 }
 
 export function formatLabel(template, value) {

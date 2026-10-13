@@ -16,15 +16,16 @@ A rule of thumb: **if a number or sentence appears on screen, GCP produced it.**
 
 ### Switches and settings
 
-| Setting                                                       | Where                                                                 | Effect                                                                               |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `Enable_Account_Summary__c`                                   | Custom setting `GCP_Feature_Toggle__c` (user, profile or org default) | Shows or hides the whole component.                                                  |
-| `Enable_Account_Summary_Enrichment__c`                        | Same                                                                  | Sent as `enableAccountSummaryEnrichment`. Asks GCP to run public web research.       |
-| `Account_Summary_Call_Transcripts__c`                         | Same                                                                  | Sent as `enableAccountSummaryCallTranscripts`. Kill switch for call transcripts.     |
-| `Account_Summary_Endpoint__c`                                 | Custom setting `GCP_Endpoint_Settings__c`                             | The GCP service URL. Apex always calls its `/api/v1/account_summary` path.           |
-| `AccountSummaryTimeoutSeconds`                                | Custom label                                                          | Callout timeout. Default and maximum 120 seconds.                                    |
-| `AccountSummaryCacheHours`, `AccountSummaryCacheMaxKB`        | Custom labels                                                         | Browser cache lifetime (default 1 hour) and size (default 512 KB).                   |
-| `AccountSummaryListRowsInitial`, `AccountSummaryListRowLimit` | Custom labels                                                         | Opportunity and case rows before and after View more (3 and 10; never more than 10). |
+| Setting                                                       | Where                                                                 | Effect                                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Enable_Account_Summary__c`                                   | Custom setting `GCP_Feature_Toggle__c` (user, profile or org default) | Shows or hides the whole component.                                                                 |
+| `Enable_Account_Summary_Enrichment__c`                        | Same                                                                  | Sent as `enableAccountSummaryEnrichment`. Asks GCP to run public web research.                      |
+| `Account_Summary_Call_Transcripts__c`                         | Same                                                                  | Sent as `enableAccountSummaryCallTranscripts`. Kill switch for call transcripts.                    |
+| `Account_Summary_Endpoint__c`                                 | Custom setting `GCP_Endpoint_Settings__c`                             | The GCP service URL. Apex always calls its `/api/v1/account_summary` path.                          |
+| `AccountSummaryTimeoutSeconds`                                | Custom label                                                          | Callout timeout. Default and maximum 120 seconds.                                                   |
+| `AccountSummaryCacheHours`, `AccountSummaryCacheMaxKB`        | Custom labels                                                         | Browser cache lifetime (default 1 hour) and size (default 512 KB).                                  |
+| `AccountSummaryListRowsInitial`, `AccountSummaryListRowLimit` | Custom labels                                                         | Opportunity and case rows before and after View more (3 and 10; never more than 10).                |
+| `AccountSummaryLoadingMessages`                               | Custom label                                                          | Lines shown in turn while the summary builds, separated by `\|`. Blank uses all six built-in lines. |
 
 ## What Salesforce sends to GCP
 

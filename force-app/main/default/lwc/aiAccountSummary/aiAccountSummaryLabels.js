@@ -1,12 +1,8 @@
+import { splitLabelList } from "c/lwcLabelUtils";
 import genericError from "@salesforce/label/c.SummaryGenericError";
 import missingRecord from "@salesforce/label/c.AccountSummaryMissingRecord";
 import emptyMessage from "@salesforce/label/c.AccountSummaryEmptyMessage";
-import loading1 from "@salesforce/label/c.AccountSummaryLoading1";
-import loading2 from "@salesforce/label/c.AccountSummaryLoading2";
-import loading3 from "@salesforce/label/c.AccountSummaryLoading3";
-import loading4 from "@salesforce/label/c.AccountSummaryLoading4";
-import loading5 from "@salesforce/label/c.AccountSummaryLoading5";
-import loading6 from "@salesforce/label/c.AccountSummaryLoading6";
+import loadingMessages from "@salesforce/label/c.AccountSummaryLoadingMessages";
 import title from "@salesforce/label/c.AccountSummaryTitle";
 import modalTitle from "@salesforce/label/c.AccountSummaryModalTitle";
 import betaChip from "@salesforce/label/c.AccountSummaryBetaChip";
@@ -148,14 +144,14 @@ export const labels = {
     "We're having trouble generating this summary right now. Please try again later.",
   missingRecord: missingRecord || "No account record is available.",
   emptyMessage: emptyMessage || "No summary is available for this account yet.",
-  loading1: loading1 || "Gathering account details, revenue, and licenses…",
-  loading2: loading2 || "Reviewing open opportunities and recent closed deals…",
-  loading3:
-    loading3 || "Checking open cases, escalations, and retention signals…",
-  loading4:
-    loading4 || "Securing sensitive details with advanced protection checks…",
-  loading5: loading5 || "Scoring account health and applying overrides…",
-  loading6: loading6 || "Almost there — assembling your account brief.",
+  loadingMessages: splitLabelList(loadingMessages, [
+    "Gathering account details, revenue, and licenses…",
+    "Reviewing open opportunities and recent closed deals…",
+    "Checking open cases, escalations, and retention signals…",
+    "Securing sensitive details with advanced protection checks…",
+    "Scoring account health and applying overrides…",
+    "Almost there — assembling your account brief."
+  ]),
   title: title || "Account Summary",
   modalTitle: modalTitle || "Account Summary (Beta)",
   betaChip: betaChip || "Beta",

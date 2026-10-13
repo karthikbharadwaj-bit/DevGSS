@@ -1,11 +1,5 @@
-import loading1 from "@salesforce/label/c.OpportunitySummaryLoading1";
-import loading2 from "@salesforce/label/c.OpportunitySummaryLoading2";
-import loading3 from "@salesforce/label/c.OpportunitySummaryLoading3";
-import loading4 from "@salesforce/label/c.OpportunitySummaryLoading4";
-import loading5 from "@salesforce/label/c.OpportunitySummaryLoading5";
-import loading6 from "@salesforce/label/c.OpportunitySummaryLoading6";
-import loading7 from "@salesforce/label/c.OpportunitySummaryLoading7";
-import loading8 from "@salesforce/label/c.OpportunitySummaryLoading8";
+import { splitLabelList } from "c/lwcLabelUtils";
+import loadingMessages from "@salesforce/label/c.OpportunitySummaryLoadingMessages";
 import researchDisclaimer from "@salesforce/label/c.OpportunitySummaryResearchDisclaimer";
 import searchLimitation from "@salesforce/label/c.OpportunitySummarySearchLimitation";
 import genericError from "@salesforce/label/c.SummaryGenericError";
@@ -67,20 +61,16 @@ import pdfAction from "@salesforce/label/c.OpportunitySummaryPdfAction";
 import fromCall from "@salesforce/label/c.SummaryFromCall";
 
 export const labels = {
-  loading1: loading1 || "Gathering opportunity details and stage history…",
-  loading2: loading2 || "Reviewing recent activities, tasks, and meetings…",
-  loading3: loading3 || "Mapping the buying group and stakeholder engagement…",
-  loading4:
-    loading4 ||
+  loadingMessages: splitLabelList(loadingMessages, [
+    "Gathering opportunity details and stage history…",
+    "Reviewing recent activities, tasks, and meetings…",
+    "Mapping the buying group and stakeholder engagement…",
     "Checking related cases and prior opportunities on this account…",
-  loading5:
-    loading5 || "Securing sensitive details with advanced protection checks…",
-  loading6:
-    loading6 ||
+    "Securing sensitive details with advanced protection checks…",
     "Activating Gemini to score deal health, risks, and win factors…",
-  loading7: loading7 || "Shaping your next best actions and close plan…",
-  loading8:
-    loading8 || "Almost there — assembling your decision-ready summary.",
+    "Shaping your next best actions and close plan…",
+    "Almost there — assembling your decision-ready summary."
+  ]),
   researchDisclaimer:
     researchDisclaimer ||
     "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.",

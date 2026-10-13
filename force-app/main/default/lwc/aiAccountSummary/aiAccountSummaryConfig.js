@@ -61,12 +61,6 @@ export function getUiLabels() {
     genericError: labels.genericError,
     missingRecord: labels.missingRecord,
     emptyMessage: labels.emptyMessage,
-    loading1: labels.loading1,
-    loading2: labels.loading2,
-    loading3: labels.loading3,
-    loading4: labels.loading4,
-    loading5: labels.loading5,
-    loading6: labels.loading6,
     title: labels.title,
     modalTitle: labels.modalTitle,
     betaChip: labels.betaChip,
@@ -198,14 +192,7 @@ export function getUiLabels() {
 }
 
 export function getLoadingMessages() {
-  return [
-    labels.loading1,
-    labels.loading2,
-    labels.loading3,
-    labels.loading4,
-    labels.loading5,
-    labels.loading6
-  ];
+  return [...labels.loadingMessages];
 }
 
 /* Replaces {0}, {1}… with the matching values, leaving unknown placeholders untouched. */

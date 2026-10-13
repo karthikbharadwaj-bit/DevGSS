@@ -74,6 +74,28 @@ describe("Account Summary cache configuration", () => {
     });
   });
 
+  it("rotates through the six deployed loading lines in order", () => {
+    const messages = configuredModule().getLoadingMessages();
+    expect(messages).toHaveLength(6);
+    expect(messages[0]).toBe(
+      "Gathering account details, revenue, and licenses…"
+    );
+    expect(messages[5]).toBe("Almost there — assembling your account brief.");
+  });
+
+  it("uses the loading lines an admin configures", () => {
+    setLabel("LoadingMessages", " Checking revenue… | Almost done. ");
+    expect(configuredModule().getLoadingMessages()).toEqual([
+      "Checking revenue…",
+      "Almost done."
+    ]);
+  });
+
+  it("falls back to the built-in loading lines when the label is blank", () => {
+    setLabel("LoadingMessages", " | ");
+    expect(configuredModule().getLoadingMessages()).toHaveLength(6);
+  });
+
   it("falls back to the defaults for a zero, fraction or non-number", () => {
     ["0", "2.5", "five", ""].forEach((value) => {
       setLabel("ListRowsInitial", value);

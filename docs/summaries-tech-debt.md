@@ -67,6 +67,14 @@ to be done by hand in Setup.
       DevGss used 0AfTH00000IQMdf0AH. Salesforce refuses the delete while a deployed
       component still imports an old label. Before deleting, copy any admin-edited value
       or translation of an old label onto its shared label; DevGss had none.
+- [ ] The numbered loading labels became one `|`-separated label per summary:
+      `AccountSummaryLoadingMessages` replaces `AccountSummaryLoading1`–`6`, and
+      `OpportunitySummaryLoadingMessages` replaces `OpportunitySummaryLoading1`–`8`
+      (DevGss deploy 0AfTH00000IQmoD0AT). In every other org, deploy both feature label
+      files with the new `lwcLabelUtils` module and both LWC bundles first, then delete the
+      14 numbered labels in a separate destructive deploy; DevGss used 0AfTH00000IQmpp0AD.
+      Before deleting, join any admin-edited lines into the new label in order; a
+      translation of a numbered label has to be re-entered as one `|`-separated translation.
 
 ## Needs a person to test in Lightning
 
