@@ -75,6 +75,13 @@ to be done by hand in Setup.
       14 numbered labels in a separate destructive deploy; DevGss used 0AfTH00000IQmpp0AD.
       Before deleting, join any admin-edited lines into the new label in order; a
       translation of a numbered label has to be re-entered as one `|`-separated translation.
+- [ ] Three Account Summary labels repeated another label's text and were removed (DevGss
+      deploy 0AfTH00000IQnSX0A1): the Owner column now uses `AccountSummaryFieldOwner`,
+      the PDF title uses `AccountSummaryTitle`, and the PDF source link uses
+      `AccountSummaryFieldSource`. In every other org, deploy `AccountSummary.labels-meta.xml`
+      with the `aiAccountSummary` bundle, then delete `AccountSummaryColOwner`,
+      `AccountSummaryPdfTitle` and `AccountSummaryPdfSourceLink` separately; DevGss used
+      0AfTH00000IQnU90AL. An admin edit to a deleted label is lost, so check them first.
 
 ## Needs a person to test in Lightning
 

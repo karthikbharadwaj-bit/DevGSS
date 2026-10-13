@@ -91,7 +91,6 @@ import colAmount from "@salesforce/label/c.AccountSummaryColAmount";
 import colCloseDate from "@salesforce/label/c.AccountSummaryColCloseDate";
 import colSubject from "@salesforce/label/c.AccountSummaryColSubject";
 import colPriority from "@salesforce/label/c.AccountSummaryColPriority";
-import colOwner from "@salesforce/label/c.AccountSummaryColOwner";
 import colAge from "@salesforce/label/c.AccountSummaryColAge";
 import colClosed from "@salesforce/label/c.AccountSummaryColClosed";
 import colContact from "@salesforce/label/c.AccountSummaryColContact";
@@ -129,15 +128,12 @@ import pdfDownload from "@salesforce/label/c.SummaryPdfDownload";
 import pdfPreparing from "@salesforce/label/c.SummaryPdfPreparing";
 import pdfError from "@salesforce/label/c.SummaryPdfError";
 import pdfStarted from "@salesforce/label/c.SummaryPdfStarted";
-import pdfTitle from "@salesforce/label/c.AccountSummaryPdfTitle";
 import pdfSnapshot from "@salesforce/label/c.SummaryPdfSnapshot";
 import pdfExported from "@salesforce/label/c.SummaryPdfExported";
 import pdfDataAsOf from "@salesforce/label/c.AccountSummaryPdfDataAsOf";
 import pdfRecord from "@salesforce/label/c.AccountSummaryPdfRecord";
 import pdfFooter from "@salesforce/label/c.SummaryPdfFooter";
 import pdfShowing from "@salesforce/label/c.AccountSummaryPdfShowing";
-import pdfSourceLink from "@salesforce/label/c.AccountSummaryPdfSourceLink";
-
 export const labels = {
   genericError:
     genericError ||
@@ -242,7 +238,7 @@ export const labels = {
   colCloseDate: colCloseDate || "Close date",
   colSubject: colSubject || "Subject",
   colPriority: colPriority || "Priority",
-  colOwner: colOwner || "Owner",
+  colOwner: fieldOwner || "Owner",
   colAge: colAge || "Age",
   colClosed: colClosed || "Closed",
   colContact: colContact || "Name and title",
@@ -288,7 +284,7 @@ export const labels = {
     pdfError ||
     "We couldn’t download the PDF. Your summary is still available. Please try again.",
   pdfStarted: pdfStarted || "PDF download started.",
-  pdfTitle: pdfTitle || "Account Summary",
+  pdfTitle: title || "Account Summary",
   pdfSnapshot: pdfSnapshot || "Summary received",
   pdfExported: pdfExported || "Exported",
   pdfDataAsOf: pdfDataAsOf || "Data as of",
@@ -297,5 +293,5 @@ export const labels = {
     pdfFooter ||
     "AI-generated • Verify important details before sharing or making decisions.",
   pdfShowing: pdfShowing || "Showing {0} of {1}",
-  pdfSourceLink: pdfSourceLink || "Source"
+  pdfSourceLink: fieldSource || "Source"
 };
