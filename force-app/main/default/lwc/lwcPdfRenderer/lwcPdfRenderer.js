@@ -1,5 +1,6 @@
 import { loadScript } from "lightning/platformResourceLoader";
 import pdfResource from "@salesforce/resourceUrl/PdfRenderer";
+import { toPdfDefinition } from "./pdfText";
 
 let rendererPromise;
 let failedAttempts = 0;
@@ -111,7 +112,7 @@ export function loadPdfRenderer(component) {
 
 export async function renderPdf(component, definition) {
   const renderer = await loadPdfRenderer(component);
-  const blob = await getPdfBlob(renderer, definition);
+  const blob = await getPdfBlob(renderer, toPdfDefinition(definition));
   if (!blob?.size) throw new Error("Empty PDF");
   return new Blob([blob], { type: "application/pdf" });
 }

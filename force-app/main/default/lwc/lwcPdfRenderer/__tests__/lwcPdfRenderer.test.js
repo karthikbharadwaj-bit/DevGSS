@@ -75,6 +75,16 @@ describe("PDF renderer loading and download", () => {
     expect(renderer.createPdf).toHaveBeenCalledTimes(2);
   });
 
+  it("hands the renderer text the bundled font can draw", async () => {
+    await renderPdf(
+      {},
+      { content: ["Created on Sep 16, 2026 7:38\u202FAM\u2009PDT"] }
+    );
+    expect(renderer.createPdf).toHaveBeenCalledWith({
+      content: ["Created on Sep 16, 2026 7:38\u00A0AM PDT"]
+    });
+  });
+
   it("names the failed stage when LWS rejects without an error and retries from fresh URLs", async () => {
     failingPaths = ["/build/pdfmake.min.js"];
     await expect(renderPdf({}, {})).rejects.toThrow(
