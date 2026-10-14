@@ -19,13 +19,15 @@ to be done by hand in Setup.
 
 ## Needs a decision
 
-- [ ] **Who can run Account Summary.** Only System Administrator has Apex access to
-      `GCPCalloutForAccountSummary`. Opportunity Summary is granted through
-      `AI_Reporting_Tool` and `Support_Agent_AI_Assist_Access`. Decide whether the same
-      permission sets should get Account Summary.
-- [ ] **Where Account Summary appears.** `Account_Record_Page2` (the default Account page
-      for RC Sales View and System Administrator) has not been retrieved or changed,
-      so the component is not placed on it yet.
+- [ ] **Who can run Account Summary.** `AI_Reporting_Tool` got Apex access to
+      `GCPCalloutForAccountSummary` on 2026-10-13 in DevGss, matching Opportunity Summary.
+      `Support_Agent_AI_Assist_Access` still has Opportunity Summary only; decide whether it
+      should get Account Summary too. Source has only a partial `AI_Reporting_Tool` (the two
+      callout class accesses), because every permission set retrieve from DevGss fails
+      with `UNKNOWN_EXCEPTION` (-494916924).
+- [x] **Where Account Summary appears.** `Account_Record_Page2` (the default Account page
+      for RC Sales View and System Administrator) shows `aiAccountSummary` at the top of the
+      sidebar since 2026-10-14, for users with the `AI_Reporting_Access` custom permission.
 - [ ] **Unused Opportunity field.** `GCP_Feature_Toggle__c.Opportunity_Summary_Recent_Days__c`
       is no longer read by Opportunity Summary. Keep it or delete it (a Setup delete).
 - [ ] **Google Search Suggestions in the Opportunity PDF.** The modal shows them and the
