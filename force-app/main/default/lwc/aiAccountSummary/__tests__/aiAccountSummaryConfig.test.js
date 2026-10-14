@@ -4,12 +4,13 @@ import {
 } from "../../../../../../test/jest-mocks/accountSummaryLabels";
 import { positiveNumber } from "../aiAccountSummaryConfig";
 
-function configuredModule() {
+function configuredModule(settings) {
   let config;
   // Salesforce label imports are resolved once per module load.
   jest.isolateModules(() => {
     config = require("../aiAccountSummaryConfig");
   });
+  config.applyClientSettings(settings);
   return config;
 }
 
@@ -25,18 +26,24 @@ describe("Account Summary cache configuration", () => {
   });
 
   it("uses configured cache hours and storage size", () => {
-    setLabel("CacheHours", " 2.5 ");
-    setLabel("CacheMaxKB", "128");
-    expect(configuredModule().getCachePolicy()).toEqual({
+    expect(
+      configuredModule({
+        CacheHours: " 2.5 ",
+        CacheMaxKB: "128"
+      }).getCachePolicy()
+    ).toEqual({
       ttlMs: 9000000,
       maxBytes: 131072
     });
   });
 
-  it("falls back when cache labels are out of range or not numbers", () => {
-    setLabel("CacheHours", "48");
-    setLabel("CacheMaxKB", "64KB");
-    expect(configuredModule().getCachePolicy()).toEqual({
+  it("falls back when cache settings are out of range or not numbers", () => {
+    expect(
+      configuredModule({
+        CacheHours: "48",
+        CacheMaxKB: "64KB"
+      }).getCachePolicy()
+    ).toEqual({
       ttlMs: 3600000,
       maxBytes: 524288
     });
@@ -57,18 +64,24 @@ describe("Account Summary cache configuration", () => {
   });
 
   it("uses configured row counts but never more than ten", () => {
-    setLabel("ListRowsInitial", " 4 ");
-    setLabel("ListRowLimit", "25");
-    expect(configuredModule().getListRowLimits()).toEqual({
+    expect(
+      configuredModule({
+        ListRowsInitial: " 4 ",
+        ListRowLimit: "25"
+      }).getListRowLimits()
+    ).toEqual({
       initialRows: 4,
       maxRows: 10
     });
   });
 
   it("never shows more rows first than after View more", () => {
-    setLabel("ListRowsInitial", "8");
-    setLabel("ListRowLimit", "6");
-    expect(configuredModule().getListRowLimits()).toEqual({
+    expect(
+      configuredModule({
+        ListRowsInitial: "8",
+        ListRowLimit: "6"
+      }).getListRowLimits()
+    ).toEqual({
       initialRows: 6,
       maxRows: 6
     });
@@ -98,12 +111,26 @@ describe("Account Summary cache configuration", () => {
 
   it("falls back to the defaults for a zero, fraction or non-number", () => {
     ["0", "2.5", "five", ""].forEach((value) => {
-      setLabel("ListRowsInitial", value);
-      setLabel("ListRowLimit", value);
-      expect(configuredModule().getListRowLimits()).toEqual({
+      expect(
+        configuredModule({
+          ListRowsInitial: value,
+          ListRowLimit: value
+        }).getListRowLimits()
+      ).toEqual({
         initialRows: 3,
         maxRows: 10
       });
+    });
+  });
+
+  it("uses the defaults when the settings call returned nothing", () => {
+    expect(configuredModule(null).getListRowLimits()).toEqual({
+      initialRows: 3,
+      maxRows: 10
+    });
+    expect(configuredModule("not settings").getCachePolicy()).toEqual({
+      ttlMs: 3600000,
+      maxBytes: 524288
     });
   });
 });

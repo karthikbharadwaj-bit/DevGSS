@@ -31,9 +31,8 @@ import generatedHours from "@salesforce/label/c.SummaryGeneratedHours";
 import elapsed from "@salesforce/label/c.SummaryElapsed";
 import errorIcon from "@salesforce/label/c.SummaryErrorIcon";
 import readyIcon from "@salesforce/label/c.SummaryReadyIcon";
-import cacheHours from "@salesforce/label/c.OpportunitySummaryCacheHours";
-import cacheMaxKB from "@salesforce/label/c.OpportunitySummaryCacheMaxKB";
-import researchGroups from "@salesforce/label/c.OpportunitySummaryResearchGroups";
+import researchLeadership from "@salesforce/label/c.OpportunitySummaryResearchLeadership";
+import researchPriority from "@salesforce/label/c.OpportunitySummaryResearchPriority";
 import pdfDownload from "@salesforce/label/c.SummaryPdfDownload";
 import pdfPreparing from "@salesforce/label/c.SummaryPdfPreparing";
 import pdfError from "@salesforce/label/c.SummaryPdfError";
@@ -115,11 +114,8 @@ export const labels = {
   elapsed: elapsed || "{0} elapsed",
   errorIcon: errorIcon || "Error",
   readyIcon: readyIcon || "Ready",
-  cacheHours: cacheHours || "1",
-  cacheMaxKB: cacheMaxKB || "512",
-  researchGroups:
-    researchGroups ||
-    '[{"kind":"leadership","label":"Current Leadership","order":1,"active":true},{"kind":"priority","label":"Company Direction and Priorities","order":2,"active":true}]',
+  researchLeadership: researchLeadership || "Current Leadership",
+  researchPriority: researchPriority || "Company Direction and Priorities",
   pdfDownload: pdfDownload || "Download PDF",
   pdfPreparing: pdfPreparing || "Preparing PDF…",
   pdfError:

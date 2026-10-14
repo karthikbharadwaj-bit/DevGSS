@@ -1,11 +1,12 @@
 import { labels } from "./opportunitySummaryLabels";
 
-const DEFAULT_RESEARCH_GROUPS = [
-  { kind: "leadership", label: "Current Leadership" },
-  { kind: "priority", label: "Company Direction and Priorities" }
+/* Public Research Used shows these kinds in this order; findings of any other kind are dropped. */
+const RESEARCH_GROUPS = [
+  { kind: "leadership", label: labels.researchLeadership },
+  { kind: "priority", label: labels.researchPriority }
 ];
 
-// Labels are text. Reject units, locale separators, booleans and non-finite numbers.
+// Settings arrive as text. Reject units, locale separators, booleans and non-finite numbers.
 export function positiveNumber(
   raw,
   fallback,
@@ -28,59 +29,25 @@ export function positiveNumber(
     : fallback;
 }
 
+let clientSettings = {};
+
+/* Values from Summary_Setting__mdt, read through Apex. Until they arrive, every setting uses its default. */
+export function applyClientSettings(settings) {
+  clientSettings =
+    settings && typeof settings === "object" ? { ...settings } : {};
+}
+
 export function getCachePolicy() {
   return {
-    ttlMs: positiveNumber(labels.cacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
-    maxBytes: positiveNumber(labels.cacheMaxKB, 512, 1, 512, true) * 1024
+    ttlMs:
+      positiveNumber(clientSettings.CacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
+    maxBytes:
+      positiveNumber(clientSettings.CacheMaxKB, 512, 1, 512, true) * 1024
   };
 }
 
-export function parseResearchGroups(raw) {
-  try {
-    const entries = JSON.parse(raw);
-    if (!Array.isArray(entries) || !entries.length) {
-      return DEFAULT_RESEARCH_GROUPS;
-    }
-    const seen = new Set();
-    const groups = entries.map((entry, index) => {
-      if (
-        !entry ||
-        typeof entry !== "object" ||
-        typeof entry.kind !== "string" ||
-        typeof entry.label !== "string"
-      ) {
-        throw new Error("Invalid research group");
-      }
-      const kind = entry.kind.trim().toLowerCase();
-      const label = entry.label.trim();
-      if (
-        !/^[a-z][a-z0-9_-]*$/.test(kind) ||
-        !label ||
-        seen.has(kind) ||
-        (entry.active !== undefined && typeof entry.active !== "boolean") ||
-        (entry.order !== undefined && !Number.isSafeInteger(entry.order))
-      ) {
-        throw new Error("Invalid research group");
-      }
-      seen.add(kind);
-      return {
-        kind,
-        label,
-        active: entry.active !== false,
-        order: entry.order ?? index
-      };
-    });
-    return groups
-      .filter((group) => group.active)
-      .sort((left, right) => left.order - right.order)
-      .map(({ kind, label }) => ({ kind, label }));
-  } catch {
-    return DEFAULT_RESEARCH_GROUPS;
-  }
-}
-
 export function getResearchGroups() {
-  return parseResearchGroups(labels.researchGroups);
+  return RESEARCH_GROUPS.map((group) => ({ ...group }));
 }
 
 export function getUiLabels() {

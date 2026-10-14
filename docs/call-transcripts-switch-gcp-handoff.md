@@ -47,7 +47,7 @@ Deployed to DevGss in deploy `0AfTH00000IOG650AH` (20/20 tests passed).
 - **Superseded on 2026-10-08:** activity retrieval was reworked. The current rules are in [Account Summary insights](account-summary-insights.md):
   - Caps: 20 tasks, 10 case tasks, 10 events and 5 upcoming events, latest `ActivityDate` first.
   - Tasks must be completed. A task with no `ActivityDate` is now included; anything dated in the future is not.
-  - Tasks from the automated senders in the `AccountSummaryExcludedActivityCreators` label, `ListEmail` tasks and the "Email: Thank you for contacting us" auto-reply are left out. Events of Type "System Use" are left out.
+  - Tasks from the automated senders in the `ExcludedActivityCreators__c` setting (`AccountSummary` record of `Summary_Setting__mdt`), `ListEmail` tasks and the "Email: Thank you for contacting us" auto-reply are left out. Events of Type "System Use" are left out.
 
 Sample `tasks` row (Ids masked):
 

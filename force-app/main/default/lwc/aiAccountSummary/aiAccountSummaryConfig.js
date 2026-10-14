@@ -1,6 +1,6 @@
 import { labels } from "./aiAccountSummaryLabels";
 
-// Labels are text. Reject units, locale separators, booleans and non-finite numbers.
+// Settings arrive as text. Reject units, locale separators, booleans and non-finite numbers.
 export function positiveNumber(
   raw,
   fallback,
@@ -23,14 +23,24 @@ export function positiveNumber(
     : fallback;
 }
 
+let clientSettings = {};
+
+/* Values from Summary_Setting__mdt, read through Apex. Until they arrive, every setting uses its default. */
+export function applyClientSettings(settings) {
+  clientSettings =
+    settings && typeof settings === "object" ? { ...settings } : {};
+}
+
 export function getCachePolicy() {
   return {
-    ttlMs: positiveNumber(labels.cacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
-    maxBytes: positiveNumber(labels.cacheMaxKB, 512, 1, 512, true) * 1024
+    ttlMs:
+      positiveNumber(clientSettings.CacheHours, 1, 1 / 60, 24) * 60 * 60 * 1000,
+    maxBytes:
+      positiveNumber(clientSettings.CacheMaxKB, 512, 1, 512, true) * 1024
   };
 }
 
-/* Admins can change both labels, but a list never shows more than this many rows. */
+/* Admins can change both settings, but a list never shows more than this many rows. */
 const MAX_LIST_ROWS = 10;
 const DEFAULT_INITIAL_ROWS = 3;
 
@@ -43,10 +53,10 @@ function cappedRowCount(raw, fallback) {
 
 /* Rows shown first, and after View more; the first count never exceeds the second. */
 export function getListRowLimits() {
-  const maxRows = cappedRowCount(labels.listRowLimit, MAX_LIST_ROWS);
+  const maxRows = cappedRowCount(clientSettings.ListRowLimit, MAX_LIST_ROWS);
   return {
     initialRows: Math.min(
-      cappedRowCount(labels.listRowsInitial, DEFAULT_INITIAL_ROWS),
+      cappedRowCount(clientSettings.ListRowsInitial, DEFAULT_INITIAL_ROWS),
       maxRows
     ),
     maxRows

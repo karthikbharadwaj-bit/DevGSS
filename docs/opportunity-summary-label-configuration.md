@@ -1,12 +1,15 @@
-# Opportunity Summary Custom Label configuration
+# Opportunity Summary configuration
 
-Opportunity Summary uses 75 labels. 47 live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`. The other 28 are shared with Account Summary and live in `force-app/main/default/labels/Summary.labels-meta.xml`, named `Summary<Name>` in category `Summary.Shared` (see [UI labels](#ui-labels)). Find them in Setup → Custom Labels by the `OpportunitySummary` prefix or the `OpportunitySummary.Configuration` / `OpportunitySummary.UI` categories. The 24 PDF-specific UI labels are listed in [PDF export](opportunity-summary-pdf-export.md).
+Opportunity Summary reads its settings from custom metadata and its on-screen text from Custom Labels.
 
-Every name below has the prefix `OpportunitySummary`. For example, `CacheHours` means `OpportunitySummaryCacheHours`. Defaults preserve the current behavior. Endpoint routing, enrichment enablement, on-demand generation and modal opening, loading cadence, panel defaults, and Beta presentation are unchanged.
+- **Settings** (numbers, lists and limits) are fields on the `OpportunitySummary` record of the `Summary_Setting__mdt` custom metadata type, one field per setting, for example `CacheHours__c`. Edit the record in Setup → Custom Metadata Types → Summary Setting → Manage Records. Each field's help text gives its accepted values. Account Summary has its own `AccountSummary` record on the same type, and later summaries get their own records.
+- **Text** uses 60 labels. 32 live in `force-app/main/default/labels/OpportunitySummary.labels-meta.xml`, category `OpportunitySummary.UI`. The other 28 are shared with Account Summary and live in `force-app/main/default/labels/Summary.labels-meta.xml`, named `Summary<Name>` in category `Summary.Shared` (see [UI labels](#ui-labels)). The 24 PDF-specific UI labels are listed in [PDF export](opportunity-summary-pdf-export.md).
 
-## Numeric configuration
+The settings below are fields on the `OpportunitySummary` record; `CacheHours` means the field `CacheHours__c`. Defaults preserve the current behavior. Endpoint routing, enrichment enablement, on-demand generation and modal opening, loading cadence, panel defaults, and Beta presentation are unchanged.
 
-| Label suffix           | Default | Accepted values                        |
+## Numeric settings
+
+| Field                  | Default | Accepted values                        |
 | ---------------------- | ------- | -------------------------------------- |
 | `CacheHours`           | 1       | Browser cache hours: 0.0167-24         |
 | `CacheMaxKB`           | 512     | Browser cache KiB: 1-512               |
@@ -23,51 +26,27 @@ Every name below has the prefix `OpportunitySummary`. For example, `CacheHours` 
 | `MaxStakeholders`      | 25      | Stakeholder cap: 1-25                  |
 | `MaxConversationItems` | 10      | Conversation evidence cap: 1-10        |
 
-Values are plain numeric text without units. Cache hours may be fractional (minimum one minute, maximum 24 hours); all other numeric values are positive integers. Missing, malformed, zero, negative, fractional integer values and values above the documented maximum use the original default. Record caps can be lowered; the original ceilings remain in code to protect payload size and heap.
+These are Number fields, so only numbers can be entered. Cache hours may be fractional (minimum one minute, maximum 24 hours); all other values are positive whole numbers. Blank, zero, negative or fractional values and values above the documented maximum use the original default. Record caps can be lowered; the original ceilings remain in code to protect payload size and heap.
 
 `MaxActivities` applies separately to Tasks and Events. `MaxHistoryRows` applies separately to stage history and tracked-field history. The cache cap is a fixed KiB budget over the Opportunity Summary entries available in browser localStorage, including their keys, using UTF-16 size estimation. It is not a measurement of ten percent of browser quota. Entries too large to cache still render normally. TTL is checked when reading/cleaning storage; it does not automatically regenerate an already displayed summary.
 
-Do not translate technical labels. Apex explicitly reads their `en_US` values. LWC imports resolve labels for the current language, so technical label translations must not be created. UI text labels can be translated normally. Reload the Lightning page after label changes; already loaded JavaScript does not hot-reload imported labels.
+Apex reads the record once per transaction with SOQL through `SummarySettingSelector`, so long text values are never cut at 255 characters, and reads each field by its token, so a misspelled setting fails to compile instead of silently using the default. The component gets `CacheHours` and `CacheMaxKB` from `GCPCalloutForOpportunitySummary.getClientSettings` when it loads; until they arrive, or if that call fails, it uses the defaults. Custom metadata is not translated, and users need no extra permission to read it because only Apex reads it. Reload the Lightning page after changing a setting or a label.
 
 ## Recent-days migration
 
-`OpportunitySummaryRecentDays` replaces runtime reads of `GCP_Feature_Toggle__c.Opportunity_Summary_Recent_Days__c`. The old field is retained, but edits to it no longer affect this flow. The new label defaults to 90. Before a future deployment, review any org/profile/user overrides of the old setting and choose the desired single shared label value; Custom Labels do not preserve hierarchy-setting overrides.
+`OpportunitySummaryRecentDays` replaces runtime reads of `GCP_Feature_Toggle__c.Opportunity_Summary_Recent_Days__c`. The old field is retained, but edits to it no longer affect this flow. The setting defaults to 90. Before a future deployment, review any org/profile/user overrides of the old field and choose the desired single shared value; custom metadata does not preserve hierarchy-setting overrides.
 
 `Enable_Opportunity_Summary__c` and `Enable_Opportunity_Summary_Enrichment__c` continue using their existing feature settings and company-identity checks.
 
-## Structured configuration
+## List settings and loading lines
 
-- `UnresolvedNames`: one excluded account name per line. Matching trims whitespace, ignores case and removes duplicates. Blank configuration uses the existing five-name fallback.
-- `GenericEmailDomains`: one bare domain per line (no scheme or path). Matching trims whitespace, ignores case and removes duplicates. Blank or malformed configuration falls back to the built-in thirteen-domain list.
-- `LoadingMessages`: the lines shown in turn while a summary is generated, in display order, separated by `|`. Spaces around each line are trimmed and blank entries are skipped, so lines can be added, removed or reordered. A blank label uses the eight built-in lines. A line cannot contain `|`.
-- `ResearchGroups`: JSON array with `kind`, `label`, optional integer `order`, and optional Boolean `active`. `kind` must be unique after lowercasing and contain letters, digits, underscores or hyphens, starting with a letter. Labels must be nonblank. Unknown kinds become supported by adding an entry. Disabled groups are omitted. Invalid JSON, an empty array, duplicate kinds or invalid fields restore the two original groups.
+- `UnresolvedNames` (long text field): one excluded account name per line. Matching trims whitespace, ignores case and removes duplicates. A blank value uses the existing five-name fallback.
+- `GenericEmailDomains` (long text field): one bare domain per line (no scheme or path). Matching trims whitespace, ignores case and removes duplicates. A blank or malformed value falls back to the built-in thirteen-domain list.
+- `LoadingMessages` (label): the lines shown in turn while a summary is generated, in display order, separated by `|`. Spaces around each line are trimmed and blank entries are skipped, so lines can be added, removed or reordered. A blank label uses the eight built-in lines. A line cannot contain `|`.
 
-Example research configuration:
+## Public research groups
 
-```json
-[
-  {
-    "kind": "leadership",
-    "label": "Current Leadership",
-    "order": 1,
-    "active": true
-  },
-  {
-    "kind": "priority",
-    "label": "Company Direction and Priorities",
-    "order": 2,
-    "active": true
-  },
-  {
-    "kind": "expansion",
-    "label": "Expansion Updates",
-    "order": 3,
-    "active": true
-  }
-]
-```
-
-Custom Label values must fit within 1,000 characters. Research group order controls only Public Research Used; supplemental updates retain their independent display and source associations. This label configures response rendering, not which kinds GCP generates.
+Public Research Used shows leadership findings, then priority findings, under the headings `ResearchLeadership` and `ResearchPriority`. Findings of any other kind are not shown there; supplemental updates keep their own display and source links. The groups and their order are fixed in `opportunitySummaryConfig.js`; only the headings are configurable. This controls how the response is shown, not which kinds GCP generates.
 
 ## UI labels
 
@@ -83,6 +62,8 @@ Labels marked (shared) are used by both summaries and are named `Summary<Name>` 
 | `EmptyMessage`              | No summary is available for this opportunity yet.                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `MissingRecord`             | No opportunity record is available.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `SupplementalHelper`        | These public company updates were not linked to the current opportunity by the AI analysis.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `ResearchLeadership`        | Current Leadership                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `ResearchPriority`          | Company Direction and Priorities                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `ResearchHelper`            | Public information used to enrich this opportunity summary. Public signals do not prove customer requirements, budget, buying intent, or decision authority.                                                                                                                                                                                                                                                                                                                   |
 | `WorkingEyebrow` (shared)   | Request in flight                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `WorkingTitle`              | Building your opportunity brief                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -117,6 +98,6 @@ Labels marked (shared) are used by both summaries and are named `Summary<Name>` 
 npm run test:unit -- -- --runInBand --runTestsByPath force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummary.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryConfig.test.js
 ```
 
-The LWC tests load the deployable label defaults and cover configured TTL/budget, fallback validation, configurable research groups and UI text, source handling, and the existing on-demand flow. `GCPCalloutForOpportunitySummaryTest` covers numeric/list parsing, identity exclusions, the recent-days migration, and configurable activity/conversation caps.
+The LWC tests load the deployable label defaults and cover settings from `getClientSettings`, fallback validation when the settings call fails, research headings and UI text, source handling, and the existing on-demand flow. `GCPCalloutForOpportunitySummaryTest` covers deployed and overridden settings, numeric/list parsing, identity exclusions, the recent-days migration, and configurable activity/conversation caps.
 
-Deploy the label metadata together with both Apex classes and the entire `opportunitySummary` bundle when the changes are approved. No custom setting fields need to be added. Existing request and response field names are unchanged; the fields added since are listed in the [enrichment handoff](opportunity-summary-enrichment-gcp-handoff.md).
+Deploy the `Summary_Setting__mdt` type with its 19 fields and the `AccountSummary` and `OpportunitySummary` records, `SummarySettingSelector`, `SummarySettingHelper` and `Test_SummarySettingHelper`, the label metadata, both Apex classes and the entire `opportunitySummary` bundle together. Delete the 17 replaced labels in a separate destructive deploy afterwards, once nothing references them. No custom setting fields need to be added. Existing request and response field names are unchanged; the fields added since are listed in the [enrichment handoff](opportunity-summary-enrichment-gcp-handoff.md).

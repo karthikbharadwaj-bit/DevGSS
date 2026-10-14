@@ -5,6 +5,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     1
   );
   private static final Id ACCOUNT_ID = syntheticId(Account.SObjectType, 1);
+  private static final String OPPORTUNITY_SETTING_NAME = 'OpportunitySummary';
   private static final Id PRODUCT_ID = syntheticId(Product2.SObjectType, 1);
   private static final Id LINE_ITEM_ID = syntheticId(
     OpportunityLineItem.SObjectType,
@@ -1036,25 +1037,22 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldUseLabelWindowWhenLegacySettingDiffers() {
+  private static void shouldUseConfiguredWindowWhenLegacySettingDiffers() {
     GCP_Feature_Toggle__c setting = new GCP_Feature_Toggle__c(
       SetupOwnerId = UserInfo.getOrganizationId()
     );
     setting.put('Enable_Opportunity_Summary_Enrichment__c', false);
     setting.put('Opportunity_Summary_Recent_Days__c', 45);
     insert setting;
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'RecentDays',
-      '30'
-    );
-    String labelMessage = 'The recent evidence label must supersede the legacy setting.';
+    overrideSettings(new Summary_Setting__mdt(RecentDays__c = 30));
+    String windowMessage = 'The RecentDays setting must supersede the legacy custom setting.';
     String toggleMessage = 'Enrichment enablement must still honor the existing feature setting.';
 
     Test.startTest();
     Assert.areEqual(
       30,
       GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
-      labelMessage
+      windowMessage
     );
     Assert.isFalse(
       GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
@@ -1066,10 +1064,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
       toggleMessage
     );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'RecentDays',
-      '366'
-    );
+    overrideSettings(new Summary_Setting__mdt(RecentDays__c = 366));
     Assert.areEqual(
       90,
       GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
@@ -1080,45 +1075,24 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldUseDefaultsWhenNumericLabelsAreInvalid() {
-    String fallbackMessage = 'Malformed or unsafe numeric configuration must use the default.';
+  private static void shouldUseDefaultsWhenNumericSettingsAreInvalid() {
+    String fallbackMessage = 'Blank, fractional or out-of-range values must use the default.';
     Test.startTest();
-    for (
-      String raw : new List<String>{
-        null,
-        '',
-        ' ',
-        '0',
-        '-1',
-        '1.5',
-        '51',
-        '50 days',
-        '1e1',
-        '999999999999999999'
-      }
-    ) {
-      Assert.areEqual(
-        50,
-        GCPCalloutForOpportunitySummary.parsePositiveInteger(raw, 50, 50),
-        fallbackMessage
-      );
-    }
-    Assert.areEqual(
-      1,
-      GCPCalloutForOpportunitySummary.parsePositiveInteger(' 1 ', 50, 50),
-      'The lower bound must be accepted.'
-    );
-    Assert.areEqual(
-      50,
-      GCPCalloutForOpportunitySummary.parsePositiveInteger('50', 50, 50),
-      'The upper bound must be accepted.'
-    );
-    Assert.areEqual(
-      15,
-      GCPCalloutForOpportunitySummary.parsePositiveInteger('15', 50, 50),
-      'A lower valid cap must be accepted.'
-    );
+    overrideSettings(new Summary_Setting__mdt(RecentDays__c = 1.5));
+    Integer fractional = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    overrideSettings(new Summary_Setting__mdt(RecentDays__c = 0));
+    Integer zero = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    overrideSettings(new Summary_Setting__mdt());
+    Integer blank = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    overrideSettings(new Summary_Setting__mdt(RecentDays__c = 15));
+    Integer configured = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
     Test.stopTest();
+    resetTestHooks();
+
+    Assert.areEqual(90, fractional, fallbackMessage);
+    Assert.areEqual(90, zero, fallbackMessage);
+    Assert.areEqual(90, blank, fallbackMessage);
+    Assert.areEqual(15, configured, 'A valid value must be used.');
   }
 
   @IsTest
@@ -1158,13 +1132,11 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   private static void shouldExcludeIdentityValuesWhenConfigured() {
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'UnresolvedNames',
-      ' Placeholder Customer\nPLACEHOLDER CUSTOMER '
-    );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'GenericEmailDomains',
-      'personal.example'
+    overrideSettings(
+      new Summary_Setting__mdt(
+        UnresolvedNames__c = ' Placeholder Customer\nPLACEHOLDER CUSTOMER ',
+        GenericEmailDomains__c = 'personal.example'
+      )
     );
     Test.startTest();
     Assert.isFalse(
@@ -1199,13 +1171,11 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   private static void shouldCapActivitiesAndConversationsWhenConfigured() {
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'MaxActivities',
-      '4'
-    );
-    GCPCalloutForOpportunitySummary.configurationOverrides.put(
-      'MaxConversationItems',
-      '1'
+    overrideSettings(
+      new Summary_Setting__mdt(
+        MaxActivities__c = 4,
+        MaxConversationItems__c = 1
+      )
     );
     Datetime windowEnd = Datetime.now();
     List<SObject> tasks = new List<SObject>();
@@ -1249,7 +1219,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     Assert.areEqual(
       1,
       result.items.size(),
-      'Conversation cap must come from the label.'
+      'Conversation cap must come from the setting.'
     );
     Assert.isTrue(
       result.isTruncated,
@@ -2289,8 +2259,15 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
   }
 
+  private static void overrideSettings(Summary_Setting__mdt setting) {
+    SummarySettingHelper.settingNameToOverrideMap.put(
+      OPPORTUNITY_SETTING_NAME,
+      setting
+    );
+  }
+
   private static void resetTestHooks() {
-    GCPCalloutForOpportunitySummary.configurationOverrides.clear();
+    SummarySettingHelper.settingNameToOverrideMap.clear();
     GCPCalloutForOpportunitySummary.activityParticipantProvider = new GCPCalloutForOpportunitySummary.ActivityParticipantProvider();
     GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 2 * 1024 * 1024;
   }
@@ -2706,6 +2683,39 @@ private class GCPCalloutForOpportunitySummaryTest {
 
     String enabledMessage = 'The Opportunity Summary toggle must read the org default.';
     Assert.isTrue(isEnabled, enabledMessage);
+  }
+
+  // ── getClientSettings ───
+  @IsTest
+  static void shouldReturnDeployedCacheSettingsWhenNoOverrideIsSet() {
+    resetTestHooks();
+
+    Test.startTest();
+    Map<String, String> settings = GCPCalloutForOpportunitySummary.getClientSettings();
+    Test.stopTest();
+
+    String keysMessage = 'The LWC needs exactly the two cache settings.';
+    String valueMessage = 'Each client setting must carry its deployed Summary_Setting__mdt value.';
+    Assert.areEqual(
+      new Set<String>{ 'CacheHours', 'CacheMaxKB' },
+      settings.keySet(),
+      keysMessage
+    );
+    Assert.areEqual('1', settings.get('CacheHours'), valueMessage);
+    Assert.areEqual('512', settings.get('CacheMaxKB'), valueMessage);
+  }
+
+  @IsTest
+  static void shouldReturnOverriddenCacheSettingWhenConfigured() {
+    resetTestHooks();
+    overrideSettings(new Summary_Setting__mdt(CacheMaxKB__c = 128));
+
+    Test.startTest();
+    Map<String, String> settings = GCPCalloutForOpportunitySummary.getClientSettings();
+    Test.stopTest();
+
+    String overrideMessage = 'A configured cache size must reach the LWC unchanged.';
+    Assert.areEqual('128', settings.get('CacheMaxKB'), overrideMessage);
   }
 
   private class SummaryServiceMock implements HttpCalloutMock {

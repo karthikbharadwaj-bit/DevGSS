@@ -21,6 +21,7 @@ import OpportunitySummary, {
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
 import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import isOpportunitySummaryEnabled from "@salesforce/apex/GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled";
+import getClientSettings from "@salesforce/apex/GCPCalloutForOpportunitySummary.getClientSettings";
 
 jest.mock(
   "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout",
@@ -37,6 +38,11 @@ jest.mock(
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
+jest.mock(
+  "@salesforce/apex/GCPCalloutForOpportunitySummary.getClientSettings",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
 jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
   virtual: true
 });
@@ -49,12 +55,17 @@ const GOOGLE_REDIRECT_URL =
 const AI_RESEARCH_DISCLAIMER =
   "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details and sources before using it in customer or deal decisions.";
 
+beforeEach(() => {
+  getClientSettings.mockResolvedValue({});
+});
+
 function reloadConfiguration() {
   let configured;
   jest.isolateModules(() => {
     configured = require("../opportunitySummaryConfig");
   });
   [
+    "applyClientSettings",
     "getCachePolicy",
     "getUiLabels",
     "getResearchGroups",
@@ -558,8 +569,8 @@ describe("opportunitySummary public research", () => {
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
   });
 
-  it("restores a 90-minute-old summary when the cache label permits two hours", async () => {
-    setLabel("CacheHours", "2");
+  it("restores a 90-minute-old summary when the cache setting permits two hours", async () => {
+    getClientSettings.mockResolvedValue({ CacheHours: "2" });
     reloadConfiguration();
     localStorage.setItem(
       CACHE_KEY,
@@ -577,7 +588,7 @@ describe("opportunitySummary public research", () => {
   });
 
   it("discards a summary when the configured shorter TTL has expired", async () => {
-    setLabel("CacheHours", "0.25");
+    getClientSettings.mockResolvedValue({ CacheHours: "0.25" });
     reloadConfiguration();
     localStorage.setItem(
       CACHE_KEY,
@@ -594,22 +605,36 @@ describe("opportunitySummary public research", () => {
     expect(localStorage.getItem(CACHE_KEY)).toBeNull();
   });
 
+  it("restores a cached summary with the default TTL when the settings cannot be loaded", async () => {
+    getClientSettings.mockRejectedValue(new Error("unavailable"));
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(
+        cachedSummaryEntry({
+          cachedAt: Date.now() - 30 * 60 * 1000
+        })
+      )
+    );
+    const element = await mountComponent();
+    expect(
+      element.shadowRoot.querySelector("[data-summary-ready]")
+    ).not.toBeNull();
+    expect(makeGCPCallout).not.toHaveBeenCalled();
+  });
+
   it("renders fresh results even when a configured smaller cache budget rejects them", async () => {
-    setLabel("CacheMaxKB", "1");
+    getClientSettings.mockResolvedValue({ CacheMaxKB: "1" });
     reloadConfiguration();
     const element = await createComponent(response());
     expect(element.shadowRoot.querySelector(".slds-modal")).not.toBeNull();
     expect(localStorage.getItem(CACHE_KEY)).toBeNull();
   });
 
-  it("renders configured UI copy and research kinds without changing the request", async () => {
+  it("renders configured UI copy and research headings without changing the request", async () => {
     setLabel("GenerateButton", "Prepare brief");
     setLabel("ReadyTitle", "Your brief is ready");
     setLabel("ResearchDisclaimer", "Configured research disclaimer");
-    setLabel(
-      "ResearchGroups",
-      JSON.stringify([{ kind: "expansion", label: "Growth news", order: 1 }])
-    );
+    setLabel("ResearchLeadership", "Leadership news");
     reloadConfiguration();
     const element = await mountComponent();
     expect(
@@ -621,8 +646,8 @@ describe("opportunitySummary public research", () => {
           findings: [
             {
               id: "E8",
-              kind: "expansion",
-              fact: "A new office opened.",
+              kind: "leadership",
+              fact: "A new chief executive was appointed.",
               source_indices: [0]
             }
           ]
@@ -635,9 +660,9 @@ describe("opportunitySummary public research", () => {
     element.shadowRoot.querySelector("[data-view-summary]").click();
     await flushPromises();
     expect(
-      element.shadowRoot.querySelector("[data-research-group=expansion]")
+      element.shadowRoot.querySelector("[data-research-group=leadership]")
         .textContent
-    ).toContain("Growth news");
+    ).toContain("Leadership news");
     expect(
       element.shadowRoot.querySelector("[data-enrichment-disclaimer]")
         .textContent

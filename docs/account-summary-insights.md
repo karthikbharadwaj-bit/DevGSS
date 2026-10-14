@@ -16,16 +16,18 @@ A rule of thumb: **if a number or sentence appears on screen, GCP produced it.**
 
 ### Switches and settings
 
-| Setting                                                       | Where                                                                 | Effect                                                                                              |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `Enable_Account_Summary__c`                                   | Custom setting `GCP_Feature_Toggle__c` (user, profile or org default) | Shows or hides the whole component.                                                                 |
-| `Enable_Account_Summary_Enrichment__c`                        | Same                                                                  | Sent as `enableAccountSummaryEnrichment`. Asks GCP to run public web research.                      |
-| `Account_Summary_Call_Transcripts__c`                         | Same                                                                  | Sent as `enableAccountSummaryCallTranscripts`. Kill switch for call transcripts.                    |
-| `Account_Summary_Endpoint__c`                                 | Custom setting `GCP_Endpoint_Settings__c`                             | The GCP service URL. Apex always calls its `/api/v1/account_summary` path.                          |
-| `AccountSummaryTimeoutSeconds`                                | Custom label                                                          | Callout timeout. Default and maximum 120 seconds.                                                   |
-| `AccountSummaryCacheHours`, `AccountSummaryCacheMaxKB`        | Custom labels                                                         | Browser cache lifetime (default 1 hour) and size (default 512 KB).                                  |
-| `AccountSummaryListRowsInitial`, `AccountSummaryListRowLimit` | Custom labels                                                         | Opportunity and case rows before and after View more (3 and 10; never more than 10).                |
-| `AccountSummaryLoadingMessages`                               | Custom label                                                          | Lines shown in turn while the summary builds, separated by `\|`. Blank uses all six built-in lines. |
+| Setting                                 | Where                                                                 | Effect                                                                                              |
+| --------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Enable_Account_Summary__c`             | Custom setting `GCP_Feature_Toggle__c` (user, profile or org default) | Shows or hides the whole component.                                                                 |
+| `Enable_Account_Summary_Enrichment__c`  | Same                                                                  | Sent as `enableAccountSummaryEnrichment`. Asks GCP to run public web research.                      |
+| `Account_Summary_Call_Transcripts__c`   | Same                                                                  | Sent as `enableAccountSummaryCallTranscripts`. Kill switch for call transcripts.                    |
+| `Account_Summary_Endpoint__c`           | Custom setting `GCP_Endpoint_Settings__c`                             | The GCP service URL. Apex always calls its `/api/v1/account_summary` path.                          |
+| `TimeoutSeconds__c`                     | `AccountSummary` record of custom metadata `Summary_Setting__mdt`     | Callout timeout. Default and maximum 120 seconds.                                                   |
+| `CacheHours__c`, `CacheMaxKB__c`        | Same record                                                           | Browser cache lifetime (default 1 hour) and size (default 512 KB).                                  |
+| `ListRowsInitial__c`, `ListRowLimit__c` | Same record                                                           | Opportunity and case rows before and after View more (3 and 10; never more than 10).                |
+| `AccountSummaryLoadingMessages`         | Custom label                                                          | Lines shown in turn while the summary builds, separated by `\|`. Blank uses all six built-in lines. |
+
+Each `Summary_Setting__mdt` field is one setting, and each summary has its own record (`AccountSummary`, `OpportunitySummary`). Edit them in Setup → Custom Metadata Types → Summary Setting → Manage Records. Apex reads the record once per transaction through `SummarySettingSelector`. The component gets the cache and row settings from `GCPCalloutForAccountSummary.getClientSettings` when it loads, and uses the defaults until they arrive or if the call fails. Users need no extra permission for them.
 
 ## What Salesforce sends to GCP
 
@@ -74,7 +76,7 @@ The rules come from an analysis of a year of BISUAT activity (2026-10-08). The g
 - **Completed only** (`IsClosed = true`). Open tasks are plans. In BISUAT almost all of them were system to-dos: 1,252 "The account for case # has not been found, please reassign." tasks on cases, and 269 "Follow up with X regarding their expiring trial" tasks on accounts.
 - **No list emails** (`TaskSubtype != 'ListEmail'`).
 - **Nothing dated in the future.** A blank ActivityDate is allowed.
-- **No automated senders**, matched on the creator's name: Automation Service (third-party activation and quantity-change emails on opportunities), RC Support Agent (case auto-acknowledgements), User Marketo, Workato Integration User, AIM GTM Intelligence and Comm ODS Integration. The list is the comma-separated Custom Label `AccountSummaryExcludedActivityCreators`, so admins can change it without a deploy.
+- **No automated senders**, matched on the creator's name: Automation Service (third-party activation and quantity-change emails on opportunities), RC Support Agent (case auto-acknowledgements), User Marketo, Workato Integration User, AIM GTM Intelligence and Comm ODS Integration. The list is the comma-separated `ExcludedActivityCreators__c` field on the `AccountSummary` record of `Summary_Setting__mdt`, so admins can change it without a deploy.
 - **No auto-acknowledgements:** subjects starting "Email: Thank you for contacting us".
 
 **Why case tasks are a separate list.** Salesforce fills `Task.AccountId` from the Account, Opportunity, Contract, a custom child of Account, or the task's Contact. It does not fill it from a Case. In DevGss, 122 of 129 case tasks from the last 90 days had no `AccountId`. A task on a Case whose Contact belongs to the account already has `AccountId` set, so it goes in `tasks`, and `caseTasks` leaves it out to avoid duplicates.

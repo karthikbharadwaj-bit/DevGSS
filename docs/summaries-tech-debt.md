@@ -82,6 +82,23 @@ to be done by hand in Setup.
       with the `aiAccountSummary` bundle, then delete `AccountSummaryColOwner`,
       `AccountSummaryPdfTitle` and `AccountSummaryPdfSourceLink` separately; DevGss used
       0AfTH00000IQnU90AL. An admin edit to a deleted label is lost, so check them first.
+- [ ] Deployed to DevGss only (0AfTH00000IRh050AD; the 23 old labels were deleted there
+      with 0AfTH00000IRh890AD): the 22 configuration labels moved to the new custom
+      metadata type `Summary_Setting__mdt`. Each setting is a typed field (Number, or long
+      text for the three lists; 19 fields), and each summary has one record:
+      `AccountSummary` and `OpportunitySummary`. Lead and Deal summaries add a record and
+      only the fields they don't share. `OpportunitySummaryResearchGroups` (JSON) was
+      replaced by the fixed list in `opportunitySummaryConfig.js` plus two heading labels,
+      `OpportunitySummaryResearchLeadership` and `OpportunitySummaryResearchPriority`.
+      Deploy the type, its 19 fields and 2 records, `SummarySettingSelector`,
+      `SummarySettingHelper` and `Test_SummarySettingHelper`, both feature label files,
+      both callout classes and their tests, and both LWC bundles together. Then delete the
+      23 old labels (6 `AccountSummary*` and 17 `OpportunitySummary*`) in a separate
+      destructive deploy. Before deploying to an org, copy any admin-edited label value
+      onto the matching field; DevGss values matched the repo on 2026-10-13. Users need no
+      permission on the type because only Apex reads it. The pre-commit Prettier hook
+      reformats `.cls` files to 2-space indentation, so check the three new classes keep 4
+      spaces after committing.
 
 ## Needs a person to test in Lightning
 

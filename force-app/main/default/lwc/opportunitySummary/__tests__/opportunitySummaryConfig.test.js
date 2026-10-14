@@ -2,28 +2,29 @@ import {
   resetLabels,
   setLabel
 } from "../../../../../../test/jest-mocks/opportunitySummaryLabels";
-import {
-  positiveNumber,
-  parseResearchGroups
-} from "../opportunitySummaryConfig";
+import { positiveNumber } from "../opportunitySummaryConfig";
 
-function configuredModule() {
+function configuredModule(settings) {
   let config;
   // Salesforce label imports are resolved once per module load.
   jest.isolateModules(() => {
     config = require("../opportunitySummaryConfig");
   });
+  config.applyClientSettings(settings);
   return config;
 }
 
-describe("Opportunity Summary label configuration", () => {
+describe("Opportunity Summary configuration", () => {
   beforeEach(resetLabels);
   afterEach(resetLabels);
 
   it("uses configured cache hours and storage size", () => {
-    setLabel("CacheHours", " 2.5 ");
-    setLabel("CacheMaxKB", "128");
-    expect(configuredModule().getCachePolicy()).toEqual({
+    expect(
+      configuredModule({
+        CacheHours: " 2.5 ",
+        CacheMaxKB: "128"
+      }).getCachePolicy()
+    ).toEqual({
       ttlMs: 9000000,
       maxBytes: 131072
     });
@@ -43,15 +44,17 @@ describe("Opportunity Summary label configuration", () => {
     null,
     true
   ])("falls back for invalid cache hours %p", (value) => {
-    setLabel("CacheHours", value);
-    expect(configuredModule().getCachePolicy().ttlMs).toBe(3600000);
+    expect(configuredModule({ CacheHours: value }).getCachePolicy().ttlMs).toBe(
+      3600000
+    );
   });
 
   it.each(["0", "-1", "513", "2.5", "unlimited"])(
     "keeps the cache bounded for invalid storage size %p",
     (value) => {
-      setLabel("CacheMaxKB", value);
-      expect(configuredModule().getCachePolicy().maxBytes).toBe(524288);
+      expect(
+        configuredModule({ CacheMaxKB: value }).getCachePolicy().maxBytes
+      ).toBe(524288);
     }
   );
 
@@ -86,39 +89,25 @@ describe("Opportunity Summary label configuration", () => {
     expect(configuredModule().getLoadingMessages()).toHaveLength(8);
   });
 
-  it("adds and orders configured research kinds and excludes disabled groups", () => {
-    setLabel(
-      "ResearchGroups",
-      JSON.stringify([
-        { kind: "PRIORITY", label: "Priorities", order: 3 },
-        { kind: "expansion", label: "Expansion", order: 1 },
-        { kind: "leadership", label: "Leadership", active: false }
-      ])
-    );
+  it("uses the deployed cache defaults when no settings arrived", () => {
+    expect(configuredModule(null).getCachePolicy()).toEqual({
+      ttlMs: 3600000,
+      maxBytes: 524288
+    });
+  });
+
+  it("shows leadership then priority research under the heading labels", () => {
+    setLabel("ResearchLeadership", "Leaders");
+    setLabel("ResearchPriority", "Priorities");
     expect(configuredModule().getResearchGroups()).toEqual([
-      { kind: "expansion", label: "Expansion" },
+      { kind: "leadership", label: "Leaders" },
       { kind: "priority", label: "Priorities" }
     ]);
   });
 
-  it.each([
-    "not-json",
-    "null",
-    "{}",
-    "[]",
-    "[null]",
-    '[{"kind":"priority","label":""}]',
-    '[{"kind":"priority","label":"Priorities","active":"false"}]',
-    '[{"kind":"priority","label":"Priorities","order":"1"}]',
-    '[{"kind":"priority","label":"A"},{"kind":"PRIORITY","label":"B"}]',
-    '[{"kind":"<script>","label":"Invalid"}]'
-  ])(
-    "uses the established research groups for malformed configuration %s",
-    (value) => {
-      expect(parseResearchGroups(value).map((group) => group.kind)).toEqual([
-        "leadership",
-        "priority"
-      ]);
-    }
-  );
+  it("returns copies so callers cannot change the research groups", () => {
+    const config = configuredModule();
+    config.getResearchGroups()[0].label = "Changed";
+    expect(config.getResearchGroups()[0].label).toBe("Current Leadership");
+  });
 });

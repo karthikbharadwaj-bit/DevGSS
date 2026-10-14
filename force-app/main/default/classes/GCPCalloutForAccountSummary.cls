@@ -15,11 +15,13 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final String HEADER_AUTHORIZATION = 'Authorization';
   private static final String CONTENT_TYPE_JSON = 'application/json';
   private static final String BEARER_PREFIX = 'Bearer ';
-  private static final String LABEL_NAMESPACE = '';
-  private static final String LABEL_PREFIX = 'AccountSummary';
-  private static final String LABEL_BASE_LANGUAGE = 'en_US';
-  private static final String TIMEOUT_LABEL_SUFFIX = 'TimeoutSeconds';
-  private static final String EXCLUDED_CREATORS_LABEL_SUFFIX = 'ExcludedActivityCreators';
+  private static final String SETTING_NAME = 'AccountSummary';
+  private static final List<Schema.SObjectField> CLIENT_SETTING_FIELDS = new List<Schema.SObjectField>{
+    Summary_Setting__mdt.CacheHours__c,
+    Summary_Setting__mdt.CacheMaxKB__c,
+    Summary_Setting__mdt.ListRowLimit__c,
+    Summary_Setting__mdt.ListRowsInitial__c
+  };
   private static final String LIST_VALUE_SEPARATOR = ',';
   private static final String LOG_SOURCE = 'GCPCalloutForAccountSummary';
   private static final String DIGITS_PATTERN = '[0-9]+';
@@ -315,9 +317,6 @@ public with sharing class GCPCalloutForAccountSummary {
     AccountHistory.CreatedDate => 'createdDate'
   };
 
-  @TestVisible
-  private static Map<String, String> labelSuffixToValue = new Map<String, String>();
-
   /*
    * Generates the summary for one Account. Technical failures are logged to PlatformLog and the
    * user only sees a label-backed message, so endpoints and status details never reach the UI.
@@ -348,6 +347,18 @@ public with sharing class GCPCalloutForAccountSummary {
   public static Boolean isAccountSummaryEnabled() {
     GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
     return setting != null && setting.Enable_Account_Summary__c == true;
+  }
+
+  /**
+   * Browser-cache and list-row settings for the aiAccountSummary LWC, keyed by field name without
+   * __c. The LWC validates each value and keeps its own default for a missing or invalid one.
+   */
+  @AuraEnabled(cacheable=true)
+  public static Map<String, String> getClientSettings() {
+    return SummarySettingHelper.toClientSettings(
+      SummarySettingHelper.getSetting(SETTING_NAME),
+      CLIENT_SETTING_FIELDS
+    );
   }
 
   @TestVisible
@@ -787,36 +798,25 @@ public with sharing class GCPCalloutForAccountSummary {
 
   // ---------------- Configuration ----------------
 
-  /* Technical labels are read in the base language so a translation can never change behavior. */
-  private static String technicalLabel(String suffix) {
-    if (Test.isRunningTest() && labelSuffixToValue.containsKey(suffix)) {
-      return labelSuffixToValue.get(suffix);
-    }
-    return System.Label.get(
-      LABEL_NAMESPACE,
-      LABEL_PREFIX + suffix,
-      LABEL_BASE_LANGUAGE
-    );
+  /* A missing record or blank field falls back to the coded default. */
+  private static Summary_Setting__mdt setting() {
+    return SummarySettingHelper.getSetting(SETTING_NAME);
   }
 
   @TestVisible
   private static Integer timeoutSeconds() {
-    String raw = technicalLabel(TIMEOUT_LABEL_SUFFIX);
-    if (String.isBlank(raw) || !Pattern.matches(DIGITS_PATTERN, raw.trim())) {
-      return DEFAULT_TIMEOUT_SECONDS;
-    }
-    Integer value = Integer.valueOf(raw.trim());
-    return value > 0 &&
-      value <= MAX_TIMEOUT_SECONDS
-      ? value
-      : DEFAULT_TIMEOUT_SECONDS;
+    return SummarySettingHelper.positiveInteger(
+      setting().TimeoutSeconds__c,
+      DEFAULT_TIMEOUT_SECONDS,
+      MAX_TIMEOUT_SECONDS
+    );
   }
 
   /* Integration users whose tasks are automated notices rather than customer contact. */
   @TestVisible
   private static List<String> excludedActivityCreators() {
     List<String> names = new List<String>();
-    String raw = technicalLabel(EXCLUDED_CREATORS_LABEL_SUFFIX);
+    String raw = setting().ExcludedActivityCreators__c;
     if (String.isBlank(raw)) {
       return names;
     }

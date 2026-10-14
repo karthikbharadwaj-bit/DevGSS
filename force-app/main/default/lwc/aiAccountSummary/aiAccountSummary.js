@@ -4,9 +4,11 @@ import USER_ID from "@salesforce/user/Id";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
+import getClientSettings from "@salesforce/apex/GCPCalloutForAccountSummary.getClientSettings";
 import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import {
   formatLabel,
+  applyClientSettings,
   getCachePolicy,
   getListRowLimits,
   getLoadingMessages,
@@ -118,8 +120,14 @@ export default class AiAccountSummary extends LightningElement {
 
   connectedCallback() {
     this._isConnected = true;
-    isAccountSummaryEnabled()
-      .then((enabled) => {
+    // Settings must be applied before a cached summary is read or rendered.
+    Promise.all([
+      isAccountSummaryEnabled(),
+      getClientSettings().catch(() => null)
+    ])
+      .then(([enabled, settings]) => {
+        applyClientSettings(settings);
+        this.listRowLimits = getListRowLimits();
         this.isFeatureEnabled = enabled === true;
         if (this.isFeatureEnabled && this._isConnected) {
           this.restoreCachedSummary();

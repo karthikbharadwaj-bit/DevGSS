@@ -4,6 +4,7 @@
  */
 @IsTest
 private class Test_GCPCalloutForAccountSummary {
+  private static final String ACCOUNT_SETTING_NAME = 'AccountSummary';
   private static final String SERVICE_HOST = 'https://service.example.invalid';
   private static final String EXPECTED_ENDPOINT =
     SERVICE_HOST + '/api/v1/account_summary';
@@ -229,7 +230,7 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldReturnSummaryWhenServiceCalloutSucceeds() {
     Account summaryAccount = testAccount();
-    GCPCalloutForAccountSummary.labelSuffixToValue.put('TimeoutSeconds', '45');
+    overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 45));
     Test.setMock(
       HttpCalloutMock.class,
       new AccountSummaryCalloutMock(200, SUCCESS_RESPONSE, summaryAccount.Id)
@@ -444,24 +445,62 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
-  static void shouldFallBackToDefaultTimeoutWhenLabelIsInvalid() {
+  static void shouldFallBackToDefaultTimeoutWhenSettingIsInvalid() {
     Test.startTest();
-    GCPCalloutForAccountSummary.labelSuffixToValue.put('TimeoutSeconds', '500');
+    overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 500));
     Integer tooLarge = GCPCalloutForAccountSummary.timeoutSeconds();
-    GCPCalloutForAccountSummary.labelSuffixToValue.put(
-      'TimeoutSeconds',
-      '2 minutes'
-    );
-    Integer notNumeric = GCPCalloutForAccountSummary.timeoutSeconds();
-    GCPCalloutForAccountSummary.labelSuffixToValue.put('TimeoutSeconds', '45');
+    overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 2.5));
+    Integer fractional = GCPCalloutForAccountSummary.timeoutSeconds();
+    overrideSettings(new Summary_Setting__mdt());
+    Integer blank = GCPCalloutForAccountSummary.timeoutSeconds();
+    overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 45));
     Integer configured = GCPCalloutForAccountSummary.timeoutSeconds();
     Test.stopTest();
 
-    String fallbackMessage = 'Out-of-range or non-numeric timeouts must fall back to 120 seconds.';
+    String fallbackMessage = 'Out-of-range, fractional or blank timeouts must fall back to 120 seconds.';
     Assert.areEqual(120, tooLarge, fallbackMessage);
-    Assert.areEqual(120, notNumeric, fallbackMessage);
-    String configuredMessage = 'A valid timeout label must be used.';
+    Assert.areEqual(120, fractional, fallbackMessage);
+    Assert.areEqual(120, blank, fallbackMessage);
+    String configuredMessage = 'A valid timeout setting must be used.';
     Assert.areEqual(45, configured, configuredMessage);
+  }
+
+  // ── timeoutSeconds / getClientSettings ───
+  @IsTest
+  static void shouldReadDeployedSettingsWhenNoOverrideIsSet() {
+    Test.startTest();
+    Integer timeout = GCPCalloutForAccountSummary.timeoutSeconds();
+    Map<String, String> settings = GCPCalloutForAccountSummary.getClientSettings();
+    Test.stopTest();
+
+    String timeoutMessage = 'The deployed AccountSummary record must be read.';
+    String keysMessage = 'The LWC needs exactly the cache and list-row settings.';
+    String valueMessage = 'Each client setting must carry its deployed value.';
+    Assert.areEqual(120, timeout, timeoutMessage);
+    Assert.areEqual(
+      new Set<String>{
+        'CacheHours',
+        'CacheMaxKB',
+        'ListRowLimit',
+        'ListRowsInitial'
+      },
+      settings.keySet(),
+      keysMessage
+    );
+    Assert.areEqual('512', settings.get('CacheMaxKB'), valueMessage);
+    Assert.areEqual('3', settings.get('ListRowsInitial'), valueMessage);
+  }
+
+  @IsTest
+  static void shouldReturnOverriddenClientSettingWhenConfigured() {
+    overrideSettings(new Summary_Setting__mdt(ListRowLimit__c = 7));
+
+    Test.startTest();
+    Map<String, String> settings = GCPCalloutForAccountSummary.getClientSettings();
+    Test.stopTest();
+
+    String overrideMessage = 'A configured list-row limit must reach the LWC unchanged.';
+    Assert.areEqual('7', settings.get('ListRowLimit'), overrideMessage);
   }
 
   @IsTest
@@ -898,10 +937,11 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
-  static void shouldReadAutomatedSendersFromLabelWhenFilteringTasks() {
-    GCPCalloutForAccountSummary.labelSuffixToValue.put(
-      'ExcludedActivityCreators',
-      ' Automation Service , ,RC Support Agent'
+  static void shouldReadAutomatedSendersFromSettingWhenFilteringTasks() {
+    overrideSettings(
+      new Summary_Setting__mdt(
+        ExcludedActivityCreators__c = ' Automation Service , ,RC Support Agent'
+      )
     );
 
     Test.startTest();
@@ -917,27 +957,31 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
-  static void shouldSkipCreatorFilterValuesWhenLabelIsBlank() {
-    GCPCalloutForAccountSummary.labelSuffixToValue.put(
-      'ExcludedActivityCreators',
-      ''
-    );
+  static void shouldSkipCreatorFilterValuesWhenSettingIsBlank() {
+    overrideSettings(new Summary_Setting__mdt());
 
     Test.startTest();
     List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
     Test.stopTest();
 
-    String blankMessage = 'A blank label must give an empty creator list, not null.';
+    String blankMessage = 'A blank setting must give an empty creator list, not null.';
     Assert.isTrue(creators.isEmpty(), blankMessage);
   }
 
   @IsTest
-  static void shouldShipDefaultAutomatedSendersWhenLabelIsDeployed() {
+  static void shouldShipDefaultAutomatedSendersWhenSettingIsDeployed() {
     Test.startTest();
     List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
     Test.stopTest();
 
-    String defaultMessage = 'The deployed label must list the automated senders.';
+    String defaultMessage = 'The deployed setting must list the automated senders.';
     Assert.isTrue(creators.contains('Automation Service'), defaultMessage);
+  }
+
+  private static void overrideSettings(Summary_Setting__mdt setting) {
+    SummarySettingHelper.settingNameToOverrideMap.put(
+      ACCOUNT_SETTING_NAME,
+      setting
+    );
   }
 }

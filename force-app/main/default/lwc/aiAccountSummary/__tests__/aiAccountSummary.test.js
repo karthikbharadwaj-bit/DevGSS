@@ -3,6 +3,7 @@ import { createElement } from "lwc";
 import AiAccountSummary from "c/aiAccountSummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForAccountSummary.makeGCPCallout";
 import isAccountSummaryEnabled from "@salesforce/apex/GCPCalloutForAccountSummary.isAccountSummaryEnabled";
+import getClientSettings from "@salesforce/apex/GCPCalloutForAccountSummary.getClientSettings";
 import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import * as pdfDownload from "c/lwcPdfRenderer";
 
@@ -17,12 +18,21 @@ jest.mock(
   { virtual: true }
 );
 jest.mock(
+  "@salesforce/apex/GCPCalloutForAccountSummary.getClientSettings",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
   "@salesforce/apex/AISummaryController.logAIHEvent",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
 jest.mock("@salesforce/user/Id", () => ({ default: "005000000000001AAA" }), {
   virtual: true
+});
+
+beforeEach(() => {
+  getClientSettings.mockResolvedValue({});
 });
 
 const RESPONSE = require("./data/accountSummaryResponse.json");
@@ -198,6 +208,26 @@ describe("c-ai-account-summary", () => {
 
     toggle.click();
     await flushPromises();
+    expect(opportunityRows(element)).toHaveLength(3);
+  });
+
+  it("uses the row counts from the summary settings", async () => {
+    getClientSettings.mockResolvedValue({
+      ListRowsInitial: "2",
+      ListRowLimit: "4"
+    });
+    const element = await openOpportunities(8);
+
+    expect(opportunityRows(element)).toHaveLength(2);
+    expect(
+      query(element, '[data-list-toggle="opportunities"]').textContent.trim()
+    ).toBe("View 2 more");
+  });
+
+  it("uses the default row counts when the settings cannot be loaded", async () => {
+    getClientSettings.mockRejectedValue(new Error("unavailable"));
+    const element = await openOpportunities(8);
+
     expect(opportunityRows(element)).toHaveLength(3);
   });
 

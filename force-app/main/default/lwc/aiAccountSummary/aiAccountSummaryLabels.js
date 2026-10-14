@@ -120,10 +120,6 @@ import evidenceButton from "@salesforce/label/c.AccountSummaryEvidenceButton";
 import researchCitedHeading from "@salesforce/label/c.AccountSummaryResearchCitedHeading";
 import researchAdditionalHeading from "@salesforce/label/c.AccountSummaryResearchAdditionalHeading";
 import fromCall from "@salesforce/label/c.SummaryFromCall";
-import cacheHours from "@salesforce/label/c.AccountSummaryCacheHours";
-import cacheMaxKB from "@salesforce/label/c.AccountSummaryCacheMaxKB";
-import listRowLimit from "@salesforce/label/c.AccountSummaryListRowLimit";
-import listRowsInitial from "@salesforce/label/c.AccountSummaryListRowsInitial";
 import pdfDownload from "@salesforce/label/c.SummaryPdfDownload";
 import pdfPreparing from "@salesforce/label/c.SummaryPdfPreparing";
 import pdfError from "@salesforce/label/c.SummaryPdfError";
@@ -274,10 +270,6 @@ export const labels = {
   researchAdditionalHeading:
     researchAdditionalHeading || "Additional findings · {0}",
   fromCall: fromCall || "From a recorded customer call (RingSense)",
-  cacheHours: cacheHours || "1",
-  cacheMaxKB: cacheMaxKB || "512",
-  listRowLimit: listRowLimit || "10",
-  listRowsInitial: listRowsInitial || "3",
   pdfDownload: pdfDownload || "Download PDF",
   pdfPreparing: pdfPreparing || "Preparing PDF…",
   pdfError:

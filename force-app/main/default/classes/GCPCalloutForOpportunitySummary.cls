@@ -7,7 +7,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final String CONTENT_TYPE_JSON = 'application/json';
   private static final String BEARER_PREFIX = 'Bearer ';
   private static final Integer HTTP_OK = 200;
-  private static final String TIMEOUT_LABEL_SUFFIX = 'TimeoutSeconds';
+  private static final String SETTING_NAME = 'OpportunitySummary';
+  private static final List<Schema.SObjectField> CLIENT_SETTING_FIELDS = new List<Schema.SObjectField>{
+    Summary_Setting__mdt.CacheHours__c,
+    Summary_Setting__mdt.CacheMaxKB__c
+  };
   private static final Integer DEFAULT_TIMEOUT_SECONDS = 120;
   private static final Integer MAX_TIMEOUT_SECONDS = 120;
   private static final Integer MILLISECONDS_PER_SECOND = 1000;
@@ -73,49 +77,49 @@ public with sharing class GCPCalloutForOpportunitySummary {
   // Cases closed within this window are sent to the model for trend context.
   private static Integer closedCaseMonths {
     get {
-      return configuredInteger('ClosedCaseMonths', 6, 24);
+      return configuredInteger(Summary_Setting__mdt.ClosedCaseMonths__c, 6, 24);
     }
   }
 
   // Caps keep heap and callout body size in check on busy accounts.
   private static Integer activityLookbackDays {
     get {
-      return configuredInteger('ActivityDays', 180, 365);
+      return configuredInteger(Summary_Setting__mdt.ActivityDays__c, 180, 365);
     }
   }
   private static Integer maxActivities {
     get {
-      return configuredInteger('MaxActivities', 50, 50);
+      return configuredInteger(Summary_Setting__mdt.MaxActivities__c, 50, 50);
     }
   }
   private static Integer maxHistoryRows {
     get {
-      return configuredInteger('MaxHistoryRows', 50, 50);
+      return configuredInteger(Summary_Setting__mdt.MaxHistoryRows__c, 50, 50);
     }
   }
   private static Integer maxOpenCases {
     get {
-      return configuredInteger('MaxOpenCases', 50, 50);
+      return configuredInteger(Summary_Setting__mdt.MaxOpenCases__c, 50, 50);
     }
   }
   private static Integer maxClosedCases {
     get {
-      return configuredInteger('MaxClosedCases', 50, 50);
+      return configuredInteger(Summary_Setting__mdt.MaxClosedCases__c, 50, 50);
     }
   }
   private static Integer maxRelatedOpps {
     get {
-      return configuredInteger('MaxRelatedOpps', 25, 25);
+      return configuredInteger(Summary_Setting__mdt.MaxRelatedOpps__c, 25, 25);
     }
   }
   private static Integer maxLineItems {
     get {
-      return configuredInteger('MaxLineItems', 50, 50);
+      return configuredInteger(Summary_Setting__mdt.MaxLineItems__c, 50, 50);
     }
   }
   private static Integer maxStakeholders {
     get {
-      return configuredInteger('MaxStakeholders', 25, 25);
+      return configuredInteger(Summary_Setting__mdt.MaxStakeholders__c, 25, 25);
     }
   }
   private static final Integer MAX_DESCRIPTION_LENGTH = 1000;
@@ -124,7 +128,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
   private static final Integer MAX_RECENT_EVIDENCE_DAYS = 365;
   private static Integer maxConversationItems {
     get {
-      return configuredInteger('MaxConversationItems', 10, 10);
+      return configuredInteger(
+        Summary_Setting__mdt.MaxConversationItems__c,
+        10,
+        10
+      );
     }
   }
   private static final Integer MAX_CONVERSATION_TEXT_LENGTH = 4000;
@@ -211,7 +219,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     req.setBody(requestBody);
     req.setTimeout(
       configuredInteger(
-        TIMEOUT_LABEL_SUFFIX,
+        Summary_Setting__mdt.TimeoutSeconds__c,
         DEFAULT_TIMEOUT_SECONDS,
         MAX_TIMEOUT_SECONDS
       ) * MILLISECONDS_PER_SECOND
@@ -490,7 +498,11 @@ public with sharing class GCPCalloutForOpportunitySummary {
       GCPSummaryUtil.readableField(relatedAccount, Account.Name)
     );
     return String.isBlank(accountName) ||
-      configuredList('UnresolvedNames', UNRESOLVED_ACCOUNT_NAMES, false)
+      configuredList(
+          Summary_Setting__mdt.UnresolvedNames__c,
+          UNRESOLVED_ACCOUNT_NAMES,
+          false
+        )
         .contains(accountName.toLowerCase())
       ? null
       : accountName;
@@ -505,7 +517,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
     }
     for (
       String domain : configuredList(
-        'GenericEmailDomains',
+        Summary_Setting__mdt.GenericEmailDomains__c,
         GENERIC_EMAIL_DOMAINS,
         true
       )
@@ -2619,55 +2631,30 @@ public with sharing class GCPCalloutForOpportunitySummary {
       setting.Opportunity_Summary_Call_Transcripts__c == true;
   }
 
-  @TestVisible
-  private static Map<String, String> configurationOverrides = new Map<String, String>();
-
-  /* Technical labels always use the base language so translations cannot change behavior. */
-  private static String configurationLabel(String suffix) {
-    if (Test.isRunningTest() && configurationOverrides.containsKey(suffix)) {
-      return configurationOverrides.get(suffix);
-    }
-    try {
-      return System.Label.get('', 'OpportunitySummary' + suffix, 'en_US');
-    } catch (Exception ignored) {
-      // A missing technical label falls back to the coded default.
-      return null;
-    }
+  /* A missing record or blank field falls back to the coded default. */
+  private static Object settingValue(Schema.SObjectField field) {
+    return SummarySettingHelper.getSetting(SETTING_NAME).get(field);
   }
 
   private static Integer configuredInteger(
-    String suffix,
+    Schema.SObjectField field,
     Integer fallback,
     Integer maximum
   ) {
-    return parsePositiveInteger(configurationLabel(suffix), fallback, maximum);
-  }
-
-  @TestVisible
-  private static Integer parsePositiveInteger(
-    String raw,
-    Integer fallback,
-    Integer maximum
-  ) {
-    if (String.isBlank(raw) || !Pattern.matches('[0-9]+', raw.trim())) {
-      return fallback;
-    }
-    try {
-      Integer value = Integer.valueOf(raw.trim());
-      return value > 0 && value <= maximum ? value : fallback;
-    } catch (Exception ignored) {
-      // Digits beyond the Integer range fall back to the coded default.
-      return fallback;
-    }
+    return SummarySettingHelper.positiveInteger(
+      (Decimal) settingValue(field),
+      fallback,
+      maximum
+    );
   }
 
   private static Set<String> configuredList(
-    String suffix,
+    Schema.SObjectField field,
     Set<String> fallback,
     Boolean isDomainList
   ) {
     return parseConfigurationList(
-      configurationLabel(suffix),
+      (String) settingValue(field),
       fallback,
       isDomainList
     );
@@ -2706,7 +2693,7 @@ public with sharing class GCPCalloutForOpportunitySummary {
   @TestVisible
   private static Integer getRecentEvidenceLookbackDays() {
     return configuredInteger(
-      'RecentDays',
+      Summary_Setting__mdt.RecentDays__c,
       DEFAULT_RECENT_EVIDENCE_DAYS,
       MAX_RECENT_EVIDENCE_DAYS
     );
@@ -2733,5 +2720,17 @@ public with sharing class GCPCalloutForOpportunitySummary {
   public static Boolean isOpportunitySummaryEnabled() {
     GCP_Feature_Toggle__c setting = GCP_Feature_Toggle__c.getInstance();
     return (setting != null && setting.Enable_Opportunity_Summary__c == true);
+  }
+
+  /**
+   * Browser-cache settings for the opportunitySummary LWC, keyed CacheHours and CacheMaxKB. The
+   * LWC validates each value and keeps its own default for a missing or invalid one.
+   */
+  @AuraEnabled(cacheable=true)
+  public static Map<String, String> getClientSettings() {
+    return SummarySettingHelper.toClientSettings(
+      SummarySettingHelper.getSetting(SETTING_NAME),
+      CLIENT_SETTING_FIELDS
+    );
   }
 }

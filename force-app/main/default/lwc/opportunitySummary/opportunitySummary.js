@@ -12,8 +12,10 @@ import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
 import logAIHEvent from "@salesforce/apex/AISummaryController.logAIHEvent";
 import isOpportunitySummaryEnabled from "@salesforce/apex/GCPCalloutForOpportunitySummary.isOpportunitySummaryEnabled";
+import getClientSettings from "@salesforce/apex/GCPCalloutForOpportunitySummary.getClientSettings";
 
 import {
+  applyClientSettings,
   getCachePolicy,
   getResearchGroups,
   getUiLabels,
@@ -1217,8 +1219,13 @@ export default class OpportunitySummary extends LightningElement {
 
   connectedCallback() {
     this._isConnected = true;
-    isOpportunitySummaryEnabled()
-      .then((enabled) => {
+    // Cache settings must be applied before a cached summary is read.
+    Promise.all([
+      isOpportunitySummaryEnabled(),
+      getClientSettings().catch(() => null)
+    ])
+      .then(([enabled, settings]) => {
+        applyClientSettings(settings);
         this.isFeatureEnabled = enabled === true;
         if (this.isFeatureEnabled && this._isConnected) {
           this.restoreCachedSummary();
