@@ -56,6 +56,7 @@ public with sharing class GCPCalloutForAccountSummary {
   private static final Integer CASE_TASK_LIMIT = 10;
   private static final Integer EVENT_LIMIT = 10;
   private static final Integer UPCOMING_EVENT_LIMIT = 5;
+  private static final Integer UPCOMING_EVENT_DAYS = 30;
   private static final Integer RETENTION_TASK_LIMIT = 5;
   private static final Integer ORDER_LIMIT = 5;
   private static final Integer CONTRACT_LIMIT = 5;
@@ -323,6 +324,9 @@ public with sharing class GCPCalloutForAccountSummary {
    */
   @AuraEnabled(cacheable=false)
   public static String makeGCPCallout(String recordId) {
+    if (!isAccountSummaryEnabled()) {
+      return errorJson(System.Label.AccountSummaryUnavailableError);
+    }
     try {
       Id accountId = toAccountId(recordId);
       GCPAuthUtil.GCPConfig config = GCPAuthUtil.loadConfig(AUTH_CONFIG_NAME);
@@ -470,6 +474,7 @@ public with sharing class GCPCalloutForAccountSummary {
   @TestVisible
   private static List<ListSpec> listSpecs(Id accountId) {
     List<String> excludedCreators = excludedActivityCreators();
+    Datetime asOf = Datetime.now();
     return new List<ListSpec>{
       new ListSpec(
           LIST_OPEN_OPPORTUNITIES,
@@ -550,13 +555,19 @@ public with sharing class GCPCalloutForAccountSummary {
         .withFields(TASK_FIELD_TO_KEY, TASK_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_EVENTS,
-          new EventSelector().selectPastEventsForAccountSummary(accountId),
+          new EventSelector()
+            .selectPastEventsForAccountSummary(accountId, asOf),
           EVENT_LIMIT
         )
         .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY),
       new ListSpec(
           LIST_UPCOMING_EVENTS,
-          new EventSelector().selectUpcomingEventsForAccountSummary(accountId),
+          new EventSelector()
+            .selectUpcomingEventsForAccountSummary(
+              accountId,
+              asOf,
+              asOf.addDays(UPCOMING_EVENT_DAYS)
+            ),
           UPCOMING_EVENT_LIMIT
         )
         .withFields(EVENT_FIELD_TO_KEY, EVENT_RELATED_FIELD_TO_KEY),

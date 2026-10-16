@@ -8,6 +8,8 @@ const OPEN_NOW_PERIOD = "open_now";
 const SAFE_URL_PATTERN = /^https?:\/\//i;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})(?:-(\d{2}))?/;
 const EVIDENCE_REFERENCE_PATTERN = /\s*\[(E\d+)\]/g;
+const CITED_ID_PREFIX = "E";
+const ADDITIONAL_ID_PREFIX = "S";
 /* The service writes this phrase for every null; those items carry no Salesforce signal. */
 const NOT_RECORDED_PATTERN = /not recorded in salesforce/i;
 /* The org mixes Critical/High, P0-P4 and "1 – Critical" schemes; all of these are top tier. */
@@ -182,6 +184,75 @@ export function extractEvidence(value, findingById) {
     }
   );
   return { text: cleaned.trim(), ids };
+}
+
+function rewriteReferences(value, oldToNewId) {
+  if (typeof value === "string") {
+    return value.replace(EVIDENCE_REFERENCE_PATTERN, (match, id) => {
+      return oldToNewId.has(id) ? match.replace(id, oldToNewId.get(id)) : "";
+    });
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => rewriteReferences(entry, oldToNewId));
+  }
+  if (isObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        rewriteReferences(entry, oldToNewId)
+      ])
+    );
+  }
+  return value;
+}
+
+/*
+ * The service numbers findings before it picks which to cite, so cited ids can start
+ * anywhere and skip numbers. Cited findings are renumbered E1, E2, … in list order and the
+ * summary's references are rewritten to match. A reference to anything else is dropped,
+ * because an old number could now name a different finding. Additional findings get ids
+ * outside the E range, as they are never cited and show no tag.
+ */
+export function renumberEvidence(response) {
+  const payload = asObject(response);
+  const enrichment = asObject(payload.account_enrichment);
+  const oldToNewId = new Map();
+  let citedCount = 0;
+  const findings = asArray(enrichment.findings).map((finding) => {
+    if (!isObject(finding) || !hasValue(finding.fact)) {
+      return finding;
+    }
+    citedCount += 1;
+    const newId = `${CITED_ID_PREFIX}${citedCount}`;
+    const oldId = text(finding.id);
+    if (oldId && !oldToNewId.has(oldId)) {
+      oldToNewId.set(oldId, newId);
+    }
+    return { ...finding, id: newId };
+  });
+  let additionalCount = 0;
+  const additional = asArray(enrichment.supplemental_findings).map(
+    (finding) => {
+      if (!isObject(finding)) {
+        return finding;
+      }
+      const oldId = text(finding.id);
+      if (oldToNewId.has(oldId)) {
+        return { ...finding, id: oldToNewId.get(oldId) };
+      }
+      additionalCount += 1;
+      return { ...finding, id: `${ADDITIONAL_ID_PREFIX}${additionalCount}` };
+    }
+  );
+  return {
+    ...payload,
+    account_summary: rewriteReferences(payload.account_summary, oldToNewId),
+    account_enrichment: {
+      ...enrichment,
+      findings,
+      supplemental_findings: additional
+    }
+  };
 }
 
 function withEvidence(item, findingById, keyPrefix, labels) {
@@ -775,7 +846,7 @@ export function buildAccountViewModel(
   locale,
   rowLimit = getListRowLimits().maxRows
 ) {
-  const payload = asObject(response);
+  const payload = renumberEvidence(response);
   const summary = asObject(payload.account_summary);
   const research = buildResearch(payload.account_enrichment, labels, locale);
   const findingById = new Map(

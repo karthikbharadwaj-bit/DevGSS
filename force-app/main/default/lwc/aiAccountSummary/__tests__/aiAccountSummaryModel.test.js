@@ -12,7 +12,8 @@ import {
   buildTiles,
   extractEvidence,
   formatDate,
-  formatMoney
+  formatMoney,
+  renumberEvidence
 } from "../aiAccountSummaryModel";
 
 const RESPONSE = require("./data/accountSummaryResponse.json");
@@ -240,7 +241,7 @@ describe("Account Summary view model", () => {
     const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
     expect(view.research.hasAdditional).toBe(true);
     expect(view.research.additional.map((finding) => finding.id)).toEqual([
-      "E3"
+      "S1"
     ]);
     expect(view.research.additionalHeading).toBe("Additional findings · 1");
   });
@@ -249,11 +250,55 @@ describe("Account Summary view model", () => {
     const view = buildAccountViewModel(RESPONSE, labels, LOCALE);
     expect(view.research.additional[0].sources).toEqual([
       {
-        key: "finding-E3-source-0",
+        key: "finding-S1-source-0",
         url: "https://vertexaisearch.cloud.google.com/grounding-api-redirect/abc",
         label: "Markets"
       }
     ]);
+  });
+
+  it("numbers cited findings from E1 without gaps and rewrites their references", () => {
+    const renumbered = renumberEvidence({
+      account_summary: {
+        account_flag: {
+          override_explanation: "Hiring freeze [E7] and a new CFO [E4]."
+        },
+        recommended_actions: [{ detail: "Meet the CFO [E4] [E9]." }]
+      },
+      account_enrichment: {
+        findings: [
+          { id: "E4", fact: "Named a new CFO." },
+          { id: "E5" },
+          { id: "E7", fact: "Paused hiring." }
+        ],
+        supplemental_findings: [
+          { id: "E1", fact: "Opened an office." },
+          { id: "E7", fact: "Paused hiring." }
+        ]
+      }
+    });
+
+    expect(
+      renumbered.account_enrichment.findings
+        .filter((finding) => finding.fact)
+        .map((finding) => finding.id)
+    ).toEqual(["E1", "E2"]);
+    expect(renumbered.account_summary.account_flag.override_explanation).toBe(
+      "Hiring freeze [E2] and a new CFO [E1]."
+    );
+    expect(renumbered.account_summary.recommended_actions[0].detail).toBe(
+      "Meet the CFO [E1]."
+    );
+    expect(
+      renumbered.account_enrichment.supplemental_findings.map(
+        (finding) => finding.id
+      )
+    ).toEqual(["S1", "E2"]);
+  });
+
+  it("keeps renumbered ids stable when a cached response is rebuilt", () => {
+    const once = renumberEvidence(RESPONSE);
+    expect(renumberEvidence(once)).toEqual(once);
   });
 
   it("shows the drawer when only additional findings exist", () => {

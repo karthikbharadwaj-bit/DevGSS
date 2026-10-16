@@ -529,8 +529,9 @@ describe("c-ai-account-summary", () => {
     const additional = query(element, '[data-research-group="additional"]');
     expect(additional.open).toBe(false);
     expect(
-      additional.querySelector('[data-research-finding="E3"]')
+      additional.querySelector('[data-research-finding="S1"]')
     ).not.toBeNull();
+    expect(additional.querySelector(".evidence-id")).toBeNull();
     expect(
       query(element, '[data-research-group="cited"]').querySelectorAll(
         "[data-research-finding]"

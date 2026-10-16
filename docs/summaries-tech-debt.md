@@ -16,6 +16,33 @@ to be done by hand in Setup.
 - [ ] Delete `GCP_Endpoint_Settings__c.AccountSummaryEndpoint__c`. It was the first,
       wrongly named version and has been unused since deploy 0AfTH00000IJDSE0A5.
       This one exists in DevGss only.
+- [ ] **Tests cannot create users in DevGss.** The managed `Dimelo__User_sync` process
+      fails every User insert, for every profile including System Administrator. The
+      existing `Test_AccountSelector` tests fail there the same way, while user-creating
+      tests pass in BisUAT and GCI. Until the Engage Digital user sync is configured or
+      turned off in DevGss, `Test_GCPSummaryUtil.shouldRemoveFieldWhenRunningUserCannotReadIt`
+      can only be checked in GCI or BisUAT.
+
+## Deferred from the MR !63735 review (2026-10-15)
+
+- [ ] **Look-back windows and row caps are class constants.** The 90-day account history,
+      183-day closed cases and 30-day upcoming events windows, and the 16 `*_LIMIT` caps in
+      `GCPCalloutForAccountSummary`, are not in `Summary_Setting__mdt`. They are sized to
+      the service's input budget, so changing them needs the GCP service team.
+- [ ] **Automated senders are matched by `CreatedBy.Name`.** The names come from
+      `ExcludedActivityCreators__c`, so a rename is a metadata edit. Usernames carry a
+      per-sandbox suffix and IDs differ per org, so neither works as a single value.
+- [ ] **`GCPCalloutForAccountSummary` holds payload building and the callout.** Splitting it
+      into a helper and a thin `@AuraEnabled` entry point should be done for both summary
+      callouts together.
+- [ ] **Underscores in `Summary_Setting__mdt` and the `Enable_Account_Summary*` toggles.** The
+      naming rule wants `SummarySetting__mdt` and `Is*` checkboxes. Neighbouring objects use
+      the same pattern; renaming means redeploying both repos.
+- [ ] **No server-side check of `AI_Reporting_Access`.** `AI_Reporting_Tool` is the only
+      permission set with class access, and the only one carrying the permission (checked in
+      DevGss and BisUAT on 2026-10-15). In DevGss the System Administrator profile also has
+      class access, so admins can call it without the permission. Add a check if another
+      permission set or profile is given access to `GCPCalloutForAccountSummary`.
 
 ## Needs a decision
 

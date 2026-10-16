@@ -2259,6 +2259,21 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
   }
 
+  @IsTest
+  static void shouldReadWholeMultiLineValueWhenOpportunitySettingIsDeployed() {
+    Test.startTest();
+    Summary_Setting__mdt setting = SummarySettingHelper.getSetting(
+      OPPORTUNITY_SETTING_NAME
+    );
+    Test.stopTest();
+
+    String domainMessage = 'A multi-line value must come back whole, not as its first line.';
+    String domains = setting.GenericEmailDomains__c;
+    Assert.isNotNull(domains, domainMessage);
+    Assert.isTrue(domains.contains('gmail.com'), domainMessage);
+    Assert.isTrue(domains.split('\n').size() > 1, domainMessage);
+  }
+
   private static void overrideSettings(Summary_Setting__mdt setting) {
     SummarySettingHelper.settingNameToOverrideMap.put(
       OPPORTUNITY_SETTING_NAME,

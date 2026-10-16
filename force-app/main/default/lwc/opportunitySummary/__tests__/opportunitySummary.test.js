@@ -16,6 +16,7 @@ import OpportunitySummary, {
   indexFindings,
   indexSources,
   parseInlineEvidence,
+  renumberEvidence,
   splitLabel
 } from "c/opportunitySummary";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
@@ -1117,8 +1118,8 @@ describe("opportunitySummary public research", () => {
       [...executive.querySelectorAll(".evidence-badge")].map((badge) =>
         badge.textContent.trim()
       )
-    ).toEqual(["Public evidence E1", "Public evidence E3"]);
-    expect(formattedValues(executive).join(" ")).toContain("[E99]");
+    ).toEqual(["Public evidence E1", "Public evidence E2"]);
+    expect(formattedValues(executive).join(" ")).not.toContain("[E99]");
     expect(formattedValues(executive).join(" ")).toContain(
       "<strong>Operational alignment</strong>"
     );
@@ -1128,10 +1129,10 @@ describe("opportunitySummary public research", () => {
     const element = await createComponent();
     const research = element.shadowRoot.querySelector("[data-public-research]");
     const target = element.shadowRoot.querySelector(
-      '[data-research-finding="E3"]'
+      '[data-research-finding="E2"]'
     );
     const badge = element.shadowRoot.querySelector(
-      '[data-summary-section="executive"] .evidence-badge[data-evidence-id="E3"]'
+      '[data-summary-section="executive"] .evidence-badge[data-evidence-id="E2"]'
     );
     const scrollIntoView = jest.fn();
     target.scrollIntoView = scrollIntoView;
@@ -1148,7 +1149,7 @@ describe("opportunitySummary public research", () => {
     expect(focus).toHaveBeenCalledTimes(1);
     expect(target.classList).toContain("is-highlighted");
     expect(badge.getAttribute("aria-label")).toBe(
-      "View public research evidence E3"
+      "View public research evidence E2"
     );
   });
 
@@ -1177,7 +1178,7 @@ describe("opportunitySummary public research", () => {
     ).not.toBeNull();
 
     const prioritySource = element.shadowRoot.querySelector(
-      '[data-research-finding="E3"] [data-source-index="4"]'
+      '[data-research-finding="E2"] [data-source-index="4"]'
     );
     expect(prioritySource.textContent.trim()).toBe("Source 5");
     expect(element.shadowRoot.textContent).not.toContain(GOOGLE_REDIRECT_URL);
@@ -1230,7 +1231,7 @@ describe("opportunitySummary public research", () => {
 
     expect(element.shadowRoot.querySelector(".status-error")).toBeNull();
     expect(
-      element.shadowRoot.querySelector('[data-research-finding="E3"]')
+      element.shadowRoot.querySelector('[data-research-finding="E1"]')
     ).not.toBeNull();
     expect(
       element.shadowRoot.querySelector('[data-research-finding="E2"]')
@@ -1264,7 +1265,7 @@ describe("opportunitySummary public research", () => {
     expect(score.querySelector(".evidence-badge")).toBeNull();
     expect(history.querySelector(".evidence-badge")).toBeNull();
     expect(formattedValues(score).join(" ")).toContain("[E1]");
-    expect(formattedValues(history).join(" ")).toContain("[E3]");
+    expect(formattedValues(history).join(" ")).toContain("[E2]");
   });
 
   it("renders supported strong markup in Deal Score and Opportunity History", async () => {
@@ -1731,6 +1732,44 @@ describe("opportunitySummary evidence citations and plan labels", () => {
     );
   });
 
+  it("numbers shown findings from E1 in display order and rewrites every citation form", () => {
+    const renumbered = renumberEvidence(
+      [
+        {
+          title: "Executive Summary",
+          items: ["Program [<strong>E7</strong>], COO <b>[E4]</b> and [E99]."]
+        }
+      ],
+      {
+        findings: [
+          { id: "E7", kind: "priority", fact: "Announced a program." },
+          { id: "E4", kind: "leadership", fact: "Named a COO." },
+          { id: "E5", kind: "unknown", fact: "Hidden kind." }
+        ],
+        supplemental_company_updates: {
+          items: [
+            { id: "E2", kind: "priority", fact: "Opened an office." },
+            { id: "E9", kind: "priority", fact: "Cited but filed late." }
+          ]
+        }
+      },
+      new Set(["E7", "E4", "E9"])
+    );
+
+    expect(renumbered.cards[0].items[0]).toBe(
+      "Program [<strong>E2</strong>], COO <b>[E1]</b> and."
+    );
+    expect(renumbered.enrichment.findings.map((finding) => finding.id)).toEqual(
+      ["E2", "E1", ""]
+    );
+    expect(
+      renumbered.enrichment.supplemental_company_updates.items.map(
+        (item) => item.id
+      )
+    ).toEqual(["S1", "E3"]);
+    expect(renumbered.citedIds).toEqual(new Set(["E2", "E1", "E3"]));
+  });
+
   it("shows cited findings the service filed as supplemental as used research", async () => {
     const research = publicResearch();
     const element = await createComponent(
@@ -1758,7 +1797,7 @@ describe("opportunitySummary evidence citations and plan labels", () => {
     const badges = [
       ...element.shadowRoot.querySelectorAll(".evidence-badge")
     ].map((badge) => badge.dataset.evidenceId);
-    expect(badges).toEqual(["E1", "E3", "E3"]);
+    expect(badges).toEqual(["E1", "E2", "E2"]);
     const research_ = element.shadowRoot.querySelector(
       "[data-public-research]"
     );
@@ -1766,7 +1805,7 @@ describe("opportunitySummary evidence citations and plan labels", () => {
       [...research_.querySelectorAll("[data-research-finding]")].map(
         (card) => card.dataset.researchFinding
       )
-    ).toEqual(["E1", "E3"]);
+    ).toEqual(["E1", "E2"]);
     const supplemental = element.shadowRoot.querySelector(
       "[data-supplemental-updates]"
     );

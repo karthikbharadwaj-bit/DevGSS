@@ -1,10 +1,9 @@
-/* Covers the Summary_Setting__mdt reader shared by the Account and Opportunity Summary callouts. */
+/* Covers the Summary_Setting__mdt reader. Only the AccountSummary record is assumed to be deployed. */
 @IsTest
 private class Test_SummarySettingHelper {
   private static final String ACCOUNT_SETTING = 'AccountSummary';
-  private static final String OPPORTUNITY_SETTING = 'OpportunitySummary';
   private static final String MISSING_SETTING = 'SummarySettingThatDoesNotExist';
-  private static final String GMAIL_DOMAIN = 'gmail.com';
+  private static final String LAST_EXCLUDED_CREATOR = 'Comm ODS Integration';
 
   // ── getSetting ───
   @IsTest
@@ -13,22 +12,19 @@ private class Test_SummarySettingHelper {
     Summary_Setting__mdt accountSetting = SummarySettingHelper.getSetting(
       ACCOUNT_SETTING
     );
-    Summary_Setting__mdt opportunitySetting = SummarySettingHelper.getSetting(
-      OPPORTUNITY_SETTING
-    );
     Test.stopTest();
 
-    String accountMessage = 'The deployed AccountSummary record is readable without seeAllData.';
-    String domainMessage = 'A multi-line value must come back whole, not as its first line.';
-    Assert.areEqual(
-      ACCOUNT_SETTING,
-      accountSetting.DeveloperName,
-      accountMessage
+    String nameMessage = 'The deployed AccountSummary record is readable without seeAllData.';
+    String timeoutMessage = 'The deployed AccountSummary record must carry its callout timeout.';
+    String longTextMessage = 'A long text value must come back whole, up to its last entry.';
+    Assert.areEqual(ACCOUNT_SETTING, accountSetting.DeveloperName, nameMessage);
+    Assert.isNotNull(accountSetting.TimeoutSeconds__c, timeoutMessage);
+    Assert.isTrue(
+      accountSetting.ExcludedActivityCreators__c.endsWith(
+        LAST_EXCLUDED_CREATOR
+      ),
+      longTextMessage
     );
-    Assert.isNotNull(accountSetting.TimeoutSeconds__c, accountMessage);
-    String domains = opportunitySetting.GenericEmailDomains__c;
-    Assert.isTrue(domains.contains(GMAIL_DOMAIN), domainMessage);
-    Assert.isTrue(domains.split('\n').size() > 1, domainMessage);
   }
 
   @IsTest
@@ -41,28 +37,30 @@ private class Test_SummarySettingHelper {
     Test.stopTest();
 
     String missingMessage = 'An unknown setting must read as blank fields so callers use their defaults.';
+    String blankMessage = 'A blank setting name must read as blank fields so callers use their defaults.';
     Assert.isNotNull(missing, missingMessage);
     Assert.isNull(missing.TimeoutSeconds__c, missingMessage);
-    Assert.isNotNull(blank, missingMessage);
-    Assert.isNull(blank.CacheHours__c, missingMessage);
+    Assert.isNotNull(blank, blankMessage);
+    Assert.isNull(blank.CacheHours__c, blankMessage);
   }
 
   @IsTest
   static void shouldReturnOverrideWhenTestSetsOne() {
     SummarySettingHelper.settingNameToOverrideMap.put(
-      OPPORTUNITY_SETTING,
-      new Summary_Setting__mdt(MaxActivities__c = 4)
+      ACCOUNT_SETTING,
+      new Summary_Setting__mdt(TimeoutSeconds__c = 4)
     );
 
     Test.startTest();
     Summary_Setting__mdt setting = SummarySettingHelper.getSetting(
-      OPPORTUNITY_SETTING
+      ACCOUNT_SETTING
     );
     Test.stopTest();
 
-    String overrideMessage = 'A test override must replace the deployed record.';
-    Assert.areEqual(4, setting.MaxActivities__c.intValue(), overrideMessage);
-    Assert.isNull(setting.MaxOpenCases__c, overrideMessage);
+    String overrideMessage = 'A test override must replace the deployed value.';
+    String unsetMessage = 'A field the override leaves unset must read as blank, not the deployed value.';
+    Assert.areEqual(4, setting.TimeoutSeconds__c.intValue(), overrideMessage);
+    Assert.isNull(setting.ExcludedActivityCreators__c, unsetMessage);
   }
 
   // ── positiveInteger ───

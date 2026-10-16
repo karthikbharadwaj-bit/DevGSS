@@ -34,6 +34,8 @@ const CLOCK_INTERVAL_MS = 60000;
 // enough to read as one; longer prefixes are almost always prose.
 const LABEL_MAX_LENGTH = 42;
 const EVIDENCE_ID_PATTERN = /^E\d+$/;
+const EVIDENCE_ID_PREFIX = "E";
+const SUPPLEMENTAL_ID_PREFIX = "S";
 // The model sometimes bolds a citation: "[<strong>E3</strong>]" or "<strong>[E3]</strong>".
 // Each form is matched whole so no tag is left dangling around the badge.
 const EVIDENCE_REFERENCE_PATTERN =
@@ -439,6 +441,130 @@ export function citedEvidenceIds(texts) {
     }
   });
   return ids;
+}
+
+function rewriteEvidenceReferences(value, oldToNewId) {
+  if (typeof value === "string") {
+    const pattern = new RegExp(
+      `\\s*(?:${EVIDENCE_REFERENCE_PATTERN.source})`,
+      "gi"
+    );
+    return value.replace(pattern, (match, ...groups) => {
+      const id = (groups[1] || groups[3] || groups[4]).toUpperCase();
+      return oldToNewId.has(id)
+        ? match.replace(/E\d+/i, oldToNewId.get(id))
+        : "";
+    });
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => rewriteEvidenceReferences(entry, oldToNewId));
+  }
+  if (isObject(value)) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        rewriteEvidenceReferences(entry, oldToNewId)
+      ])
+    );
+  }
+  return value;
+}
+
+/*
+ * The service numbers findings before it picks which to use, so the ids shown under Public
+ * Research Used can start anywhere and skip numbers. Shown findings are renumbered E1, E2, …
+ * in display order (research group, then list order) and every citation in the cards and the
+ * research text is rewritten to match. A citation of anything else is dropped, because an old
+ * number could now name a different finding. Supplemental updates that are not shown as used
+ * research get ids outside the E range, so a new number cannot promote one by accident.
+ */
+export function renumberEvidence(
+  cards,
+  enrichment,
+  citedIds = new Set(),
+  researchGroups = getResearchGroups()
+) {
+  const safeEnrichment = isObject(enrichment) ? enrichment : {};
+  const findings = Array.isArray(safeEnrichment.findings)
+    ? safeEnrichment.findings
+    : [];
+  const supplemental = isObject(safeEnrichment.supplemental_company_updates)
+    ? safeEnrichment.supplemental_company_updates
+    : {};
+  const supplementalItems = Array.isArray(supplemental.items)
+    ? supplemental.items
+    : [];
+  const listedIds = new Set(
+    findings.filter(isObject).map((finding) => stringValue(finding.id))
+  );
+  const promotedItems = supplementalItems.filter(
+    (item) =>
+      isObject(item) &&
+      citedIds.has(stringValue(item.id)) &&
+      !listedIds.has(stringValue(item.id))
+  );
+  const shownFindings = [
+    ...indexFindings([...findings, ...promotedItems], researchGroups)
+  ];
+  const oldToNewId = new Map();
+  researchGroups.forEach((group) => {
+    shownFindings.forEach(([id, finding]) => {
+      if (stringValue(finding.kind).toLowerCase() === group.kind) {
+        oldToNewId.set(id, `${EVIDENCE_ID_PREFIX}${oldToNewId.size + 1}`);
+      }
+    });
+  });
+
+  const rewritten = rewriteEvidenceReferences(safeEnrichment, oldToNewId);
+  const renamedFindings = (
+    Array.isArray(rewritten.findings) ? rewritten.findings : []
+  ).map((finding) => {
+    if (!isObject(finding)) {
+      return finding;
+    }
+    return { ...finding, id: oldToNewId.get(stringValue(finding.id)) || "" };
+  });
+  let supplementalCount = 0;
+  const renamedItems = (
+    Array.isArray(rewritten.supplemental_company_updates?.items)
+      ? rewritten.supplemental_company_updates.items
+      : []
+  ).map((item) => {
+    if (!isObject(item)) {
+      return item;
+    }
+    const oldId = stringValue(item.id);
+    if (oldToNewId.has(oldId) && !listedIds.has(oldId)) {
+      return { ...item, id: oldToNewId.get(oldId) };
+    }
+    supplementalCount += 1;
+    return { ...item, id: `${SUPPLEMENTAL_ID_PREFIX}${supplementalCount}` };
+  });
+
+  return {
+    cards: rewriteEvidenceReferences(cards, oldToNewId),
+    enrichment: isObject(enrichment)
+      ? {
+          ...rewritten,
+          ...(Array.isArray(rewritten.findings)
+            ? { findings: renamedFindings }
+            : {}),
+          ...(isObject(rewritten.supplemental_company_updates)
+            ? {
+                supplemental_company_updates: {
+                  ...rewritten.supplemental_company_updates,
+                  items: renamedItems
+                }
+              }
+            : {})
+        }
+      : enrichment,
+    citedIds: new Set(
+      [...citedIds]
+        .filter((id) => oldToNewId.has(id))
+        .map((id) => oldToNewId.get(id))
+    )
+  };
 }
 
 export function buildResearchViewModel(enrichment, citedIds = new Set()) {
@@ -1756,19 +1882,27 @@ export default class OpportunitySummary extends LightningElement {
 
     this.hasEnrichment = isObject(enrichment);
     // Score and history never render evidence badges, so their citations don't count.
-    const cards = Array.isArray(rawCards) ? rawCards : [];
-    const citedIds = citedEvidenceIds(
-      cards
-        .filter(
-          (raw) =>
-            isObject(raw) &&
-            !["score", "history"].includes(
-              bucketFor(raw.title || raw.heading || raw.name || "")
-            )
-        )
-        .flatMap((raw) => toStrings(raw.items || raw.points || raw.bullets))
+    const serviceCards = Array.isArray(rawCards) ? rawCards : [];
+    const renumbered = renumberEvidence(
+      serviceCards,
+      enrichment,
+      citedEvidenceIds(
+        serviceCards
+          .filter(
+            (raw) =>
+              isObject(raw) &&
+              !["score", "history"].includes(
+                bucketFor(raw.title || raw.heading || raw.name || "")
+              )
+          )
+          .flatMap((raw) => toStrings(raw.items || raw.points || raw.bullets))
+      )
     );
-    const research = buildResearchViewModel(enrichment, citedIds);
+    const cards = renumbered.cards;
+    const research = buildResearchViewModel(
+      renumbered.enrichment,
+      renumbered.citedIds
+    );
     this.researchGroups = research.researchGroups;
     this.referencedResearchSources = research.referencedSources;
     this.otherResearchSources = research.otherSources;
@@ -1783,7 +1917,7 @@ export default class OpportunitySummary extends LightningElement {
     this._findingById = research.findingById;
     const callKeys = callInsightKeys(extras.call_insights);
 
-    rawCards.forEach((raw, index) => {
+    cards.forEach((raw, index) => {
       if (!raw || typeof raw !== "object") {
         return;
       }

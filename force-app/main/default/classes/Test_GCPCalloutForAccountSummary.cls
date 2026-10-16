@@ -399,6 +399,30 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
+  static void shouldReturnUnavailableWithoutCalloutWhenFeatureIsOff() {
+    GCP_Feature_Toggle__c toggle = GCP_Feature_Toggle__c.getOrgDefaults();
+    toggle.Enable_Account_Summary__c = false;
+    update toggle;
+    Id accountId = testAccount().Id;
+
+    Test.startTest();
+    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
+      GCPCalloutForAccountSummary.makeGCPCallout(accountId)
+    );
+    Integer calloutCount = Limits.getCallouts();
+    Test.stopTest();
+
+    String messageText = 'A disabled feature must not send Account data to the service.';
+    Assert.areEqual(false, result.get('success'), messageText);
+    Assert.areEqual(
+      System.Label.AccountSummaryUnavailableError,
+      result.get('message'),
+      messageText
+    );
+    Assert.areEqual(0, calloutCount, messageText);
+  }
+
+  @IsTest
   static void shouldSendActivationDateWhenOrgStoresDatetime() {
     Account summaryAccount = new Account(
       RC_Activation_Date__c = Datetime.newInstance(2018, 3, 12, 10, 0, 0)
@@ -894,6 +918,38 @@ private class Test_GCPCalloutForAccountSummary {
       rowWithId((List<Object>) payload.get('events'), upcoming.Id),
       upcomingMessage
     );
+  }
+
+  @IsTest
+  static void shouldSplitSameDayMeetingsOnStartTimeWhenBuildingEvents() {
+    Account summaryAccount = testAccount();
+    Event laterToday = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, summaryAccount.Id)
+      .setField(Event.Subject, 'Later today')
+      .setField(Event.ActivityDateTime, Datetime.now().addMinutes(30))
+      .setField(Event.DurationInMinutes, 30)
+      .create()
+      .getRecord();
+    Event earlierToday = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, summaryAccount.Id)
+      .setField(Event.Subject, 'Earlier today')
+      .setField(Event.ActivityDateTime, Datetime.now().addMinutes(-90))
+      .setField(Event.DurationInMinutes, 30)
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    Map<String, Object> payload = payloadFor(summaryAccount.Id);
+    Test.stopTest();
+
+    List<Object> events = (List<Object>) payload.get('events');
+    List<Object> upcomingEvents = (List<Object>) payload.get('upcomingEvents');
+    String laterMessage = 'A meeting that has not started yet must be upcoming, even if it is today.';
+    String earlierMessage = 'A meeting that has already started must be past, even if it is today.';
+    Assert.isNotNull(rowWithId(upcomingEvents, laterToday.Id), laterMessage);
+    Assert.isNull(rowWithId(events, laterToday.Id), laterMessage);
+    Assert.isNotNull(rowWithId(events, earlierToday.Id), earlierMessage);
+    Assert.isNull(rowWithId(upcomingEvents, earlierToday.Id), earlierMessage);
   }
 
   @IsTest

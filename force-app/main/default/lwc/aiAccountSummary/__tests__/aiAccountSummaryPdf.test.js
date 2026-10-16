@@ -107,6 +107,20 @@ describe("Account Summary PDF document", () => {
     expect(new Set(anchors).size).toBe(anchors.length);
   });
 
+  it("tags cited findings from E1 and leaves additional findings untagged", () => {
+    const view = snapshot().view;
+    const doc = buildPdfDocument(snapshot(), labels);
+    const tags = nodes(
+      doc,
+      (node) => node.width === 22 && typeof node.text === "string"
+    ).map((node) => node.text);
+
+    expect(tags).toEqual(
+      view.research.findings.map((finding, index) => `E${index + 1}`)
+    );
+    expect(textOf(doc)).not.toContain(view.research.additional[0].id);
+  });
+
   it("resolves relative record links against the org", () => {
     const doc = buildPdfDocument(snapshot(), labels);
     const links = nodes(doc, (node) => typeof node.link === "string").map(

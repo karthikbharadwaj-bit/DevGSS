@@ -2,6 +2,7 @@
 @IsTest
 private class Test_GCPSummaryUtil {
   private static final String ACCOUNT_NAME = 'Summary Util Account';
+  private static final String ACCOUNT_DESCRIPTION = 'Notes only an Account reader may see';
 
   // ── stripReadable ───
   @IsTest
@@ -31,6 +32,56 @@ private class Test_GCPSummaryUtil {
     String nameMessage = 'The admin running the test can read Account.Name.';
     Assert.areEqual(1, stripped.size(), sizeMessage);
     Assert.areEqual(ACCOUNT_NAME, stripped[0].get(Account.Name), nameMessage);
+  }
+
+  @IsTest
+  static void shouldRemoveFieldWhenRunningUserCannotReadIt() {
+    Id minimumAccessProfileId = [
+      SELECT Id
+      FROM Profile
+      WHERE Name = :ProfileHelper.PROFILE_NAME_MINIMUM_ACCESS_SALESFORCE
+      LIMIT 1
+    ]
+    .Id;
+    User restrictedUser = (User) new SObjectBuilder(User.SObjectType)
+      .setFields(
+        new Map<SObjectField, Object>{
+          User.ProfileId => minimumAccessProfileId,
+          User.Email => new ValueProvider.UniqueStringProvider(
+            'summary-util@example.com'
+          ),
+          User.Username => new ValueProvider.UniqueStringProvider(
+            'summary-util@example.com'
+          ),
+          User.CommunityNickname => new ValueProvider.UniqueStringProvider(
+            'summaryUtil'
+          )
+        }
+      )
+      .create()
+      .getRecord();
+    List<SObject> records = new List<SObject>{
+      new Account(Name = ACCOUNT_NAME, Description = ACCOUNT_DESCRIPTION)
+    };
+
+    Boolean canReadDescription;
+    List<SObject> stripped;
+    Test.startTest();
+    System.runAs(restrictedUser) {
+      canReadDescription = Schema.SObjectType.Account.fields.Description.isAccessible();
+      stripped = GCPSummaryUtil.stripReadable(records);
+    }
+    Test.stopTest();
+
+    String precondition = 'A Minimum Access user must not be able to read Account.Description.';
+    String sizeMessage = 'Stripping must keep the record even when fields are removed.';
+    String strippedMessage = 'A field the running user cannot read must not reach the payload.';
+    Assert.isFalse(canReadDescription, precondition);
+    Assert.areEqual(1, stripped.size(), sizeMessage);
+    Assert.isNull(
+      GCPSummaryUtil.readableField(stripped[0], Account.Description),
+      strippedMessage
+    );
   }
 
   // ── readableField ───

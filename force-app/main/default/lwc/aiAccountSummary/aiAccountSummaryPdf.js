@@ -462,20 +462,26 @@ export function buildPdfDocument(snapshot, labels) {
       : note(emptyText)
   ];
 
+  // Only cited findings carry an E tag; additional ones are never referenced.
   const finding = (item) => {
-    const canAnchor = EVIDENCE_ID.test(item.id) && !anchoredIds.has(item.id);
+    const isCited = EVIDENCE_ID.test(item.id);
+    const canAnchor = isCited && !anchoredIds.has(item.id);
     if (canAnchor) anchoredIds.add(item.id);
     const meta = [item.kind, item.meta].filter(Boolean).map(plain);
     const links = sourceRuns(item.sources);
     return {
       columns: [
-        {
-          width: 22,
-          text: plain(item.id),
-          bold: true,
-          color: BLUE,
-          ...(canAnchor ? { id: `research-${item.id}` } : {})
-        },
+        ...(isCited
+          ? [
+              {
+                width: 22,
+                text: plain(item.id),
+                bold: true,
+                color: BLUE,
+                ...(canAnchor ? { id: `research-${item.id}` } : {})
+              }
+            ]
+          : []),
         {
           width: "*",
           text: [
