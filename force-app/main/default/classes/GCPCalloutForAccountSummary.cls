@@ -35,6 +35,8 @@ public with sharing class GCPCalloutForAccountSummary {
 
   private static final Integer DEFAULT_TIMEOUT_SECONDS = 120;
   private static final Integer MAX_TIMEOUT_SECONDS = 120;
+  private static final Integer DEFAULT_CLOSED_CASE_MONTHS = 6;
+  private static final Integer MAX_CLOSED_CASE_MONTHS = 24;
   private static final Integer MILLISECONDS_PER_SECOND = 1000;
   private static final Integer MAX_REQUEST_BYTES = 2 * 1024 * 1024;
   @TestVisible
@@ -505,7 +507,10 @@ public with sharing class GCPCalloutForAccountSummary {
       new ListSpec(
           LIST_RECENTLY_CLOSED_CASES,
           new CaseSelector()
-            .selectRecentlyClosedCasesForAccountSummary(accountId),
+            .selectRecentlyClosedCasesForAccountSummary(
+              accountId,
+              asOf.addMonths(-closedCaseMonths())
+            ),
           RECENTLY_CLOSED_CASE_LIMIT
         )
         .withFields(CLOSED_CASE_FIELD_TO_KEY, CLOSED_CASE_RELATED_FIELD_TO_KEY),
@@ -820,6 +825,15 @@ public with sharing class GCPCalloutForAccountSummary {
       setting().TimeoutSeconds__c,
       DEFAULT_TIMEOUT_SECONDS,
       MAX_TIMEOUT_SECONDS
+    );
+  }
+
+  @TestVisible
+  private static Integer closedCaseMonths() {
+    return SummarySettingHelper.positiveInteger(
+      setting().ClosedCaseMonths__c,
+      DEFAULT_CLOSED_CASE_MONTHS,
+      MAX_CLOSED_CASE_MONTHS
     );
   }
 

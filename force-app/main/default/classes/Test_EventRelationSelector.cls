@@ -18,14 +18,14 @@ private class Test_EventRelationSelector {
     Test.stopTest();
 
     String objectMessage = 'The selector must query EventRelation.';
-    String conditionMessage = 'Relations must be limited to the requested parents.';
+    String conditionMessage = 'Relations must be limited to the requested parents, without What links.';
     String limitMessage = 'The caller row cap must be applied.';
     Assert.isTrue(
       factory.getQuery().contains('FROM EventRelation'),
       objectMessage
     );
     Assert.areEqual(
-      'EventId IN :bind0',
+      'EventId IN :bind0 AND IsWhat = false',
       factory.getCondition(),
       conditionMessage
     );

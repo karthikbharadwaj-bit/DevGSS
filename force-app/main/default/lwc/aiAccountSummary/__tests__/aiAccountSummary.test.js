@@ -551,6 +551,54 @@ describe("c-ai-account-summary", () => {
     expect(query(element, "[role=dialog]")).toBeNull();
   });
 
+  describe("keyboard focus", () => {
+    async function openSummary() {
+      const element = await mount();
+      await generate(element);
+      query(element, "[data-view-summary]").click();
+      await flushPromises();
+      return element;
+    }
+
+    it("moves focus to the first modal control when the modal opens", async () => {
+      const element = await openSummary();
+
+      expect(element.shadowRoot.activeElement).toBe(
+        query(element, "[data-download-pdf]")
+      );
+    });
+
+    it("wraps Tab and Shift+Tab inside the modal", async () => {
+      const element = await openSummary();
+      const dialog = query(element, "[data-modal-dialog]");
+      const [startFence, endFence] =
+        element.shadowRoot.querySelectorAll("[data-focus-fence]");
+
+      endFence.focus();
+      expect(element.shadowRoot.activeElement).toBe(
+        query(element, "[data-download-pdf]")
+      );
+
+      startFence.focus();
+      const active = element.shadowRoot.activeElement;
+      expect(dialog.contains(active)).toBe(true);
+      expect(active.hasAttribute("data-focus-fence")).toBe(false);
+      expect(active).not.toBe(query(element, "[data-download-pdf]"));
+    });
+
+    it("returns focus to View summary when the modal closes", async () => {
+      const element = await openSummary();
+
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await flushPromises();
+
+      expect(query(element, "[data-modal-dialog]")).toBeNull();
+      expect(element.shadowRoot.activeElement).toBe(
+        query(element, "[data-view-summary]")
+      );
+    });
+  });
+
   describe("PDF download", () => {
     async function openSummary() {
       const element = await mount();

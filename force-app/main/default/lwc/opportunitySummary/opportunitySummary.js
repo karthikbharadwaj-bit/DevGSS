@@ -7,6 +7,7 @@ import STAGE_NAME_FIELD from "@salesforce/schema/Opportunity.StageName";
 import NAME_FIELD from "@salesforce/schema/Opportunity.Name";
 import { buildPdfDocument, pdfFilename } from "./opportunitySummaryPdf";
 import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
+import { focusFirstIn, focusLastIn } from "c/lwcModalFocus";
 import aiInsightsLogo from "@salesforce/resourceUrl/AI_Insights";
 import USER_ID from "@salesforce/user/Id";
 import makeGCPCallout from "@salesforce/apex/GCPCalloutForOpportunitySummary.makeGCPCallout";
@@ -1308,6 +1309,7 @@ export default class OpportunitySummary extends LightningElement {
   _generationStartedAt = null;
   _loadingMessageId = null;
   _escapeHandler = null;
+  _isModalFocusPending = false;
   _findingById = new Map();
   _highlightTimeoutId = null;
   _highlightedTarget = null;
@@ -1512,11 +1514,16 @@ export default class OpportunitySummary extends LightningElement {
     this._clearEvidenceHighlight();
   }
 
+  renderedCallback() {
+    this._focusOpenedModal();
+  }
+
   openModal() {
     if (!this.hasFetched || this.isLoading || this.isError) {
       return;
     }
     this.isModalOpen = true;
+    this._isModalFocusPending = true;
     this._logView();
     this._bindEscape();
   }
@@ -1525,6 +1532,31 @@ export default class OpportunitySummary extends LightningElement {
     this._cancelPdfExport();
     this.isModalOpen = false;
     this._unbindEscape();
+    this._returnFocusToLauncher();
+  }
+
+  handleFocusFenceStart() {
+    focusLastIn(this.template.querySelector("[data-modal-dialog]"));
+  }
+
+  handleFocusFenceEnd() {
+    focusFirstIn(this.template.querySelector("[data-modal-dialog]"));
+  }
+
+  _focusOpenedModal() {
+    const dialog = this.template.querySelector("[data-modal-dialog]");
+    if (!this._isModalFocusPending || !dialog) {
+      return;
+    }
+    this._isModalFocusPending = false;
+    focusFirstIn(dialog);
+  }
+
+  _returnFocusToLauncher() {
+    const launcher = this.template.querySelector("[data-view-summary]");
+    if (launcher) {
+      launcher.focus();
+    }
   }
 
   startGeneration() {

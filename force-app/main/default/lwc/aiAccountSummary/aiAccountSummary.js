@@ -21,6 +21,7 @@ import {
 } from "./aiAccountSummaryModel";
 import { buildPdfDocument, pdfFilename } from "./aiAccountSummaryPdf";
 import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
+import { focusFirstIn, focusLastIn } from "c/lwcModalFocus";
 
 const SUBFEATURE = "Account Summary";
 const LOADING_INTERVAL_MS = 3900;
@@ -86,6 +87,7 @@ export default class AiAccountSummary extends LightningElement {
   _generationStartedAt = null;
   _loadingMessageId = null;
   _escapeHandler = null;
+  _isModalFocusPending = false;
   _requestToken = 0;
   _highlightTimeoutId = null;
   _highlightedTarget = null;
@@ -353,6 +355,7 @@ export default class AiAccountSummary extends LightningElement {
 
   renderedCallback() {
     this._fitHistoryHeight();
+    this._focusOpenedModal();
   }
 
   /*
@@ -385,6 +388,7 @@ export default class AiAccountSummary extends LightningElement {
     this.isHistoryScrolledToEnd = false;
     this.isHistoryScrolledFromTop = false;
     this.isModalOpen = true;
+    this._isModalFocusPending = true;
     this._logView();
     this._bindEscape();
   }
@@ -394,6 +398,31 @@ export default class AiAccountSummary extends LightningElement {
     this._cancelPdfExport();
     this._unbindEscape();
     this._clearEvidenceHighlight();
+    this._returnFocusToLauncher();
+  }
+
+  handleFocusFenceStart() {
+    focusLastIn(this.template.querySelector("[data-modal-dialog]"));
+  }
+
+  handleFocusFenceEnd() {
+    focusFirstIn(this.template.querySelector("[data-modal-dialog]"));
+  }
+
+  _focusOpenedModal() {
+    const dialog = this.template.querySelector("[data-modal-dialog]");
+    if (!this._isModalFocusPending || !dialog) {
+      return;
+    }
+    this._isModalFocusPending = false;
+    focusFirstIn(dialog);
+  }
+
+  _returnFocusToLauncher() {
+    const launcher = this.template.querySelector("[data-view-summary]");
+    if (launcher) {
+      launcher.focus();
+    }
   }
 
   get canExportPdf() {

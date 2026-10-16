@@ -1020,28 +1020,41 @@ public with sharing class GCPCalloutForOpportunitySummary {
   }
 
   private static Map<String, Object> getCases(Id accountId) {
-    List<Map<String, Object>> openCases = new List<Map<String, Object>>();
-    List<Map<String, Object>> recentlyClosed = new List<Map<String, Object>>();
-
     if (accountId == null) {
       return new Map<String, Object>{
-        'open' => openCases,
-        'recentlyClosed' => recentlyClosed
+        'open' => new List<Map<String, Object>>(),
+        'recentlyClosed' => new List<Map<String, Object>>()
       };
     }
 
-    Date closedSince = Date.today().addMonths(-closedCaseMonths);
-    List<SObject> cases = GCPSummaryUtil.stripReadable(
-      new CaseSelector()
-        .selectCasesForOpportunitySummary(
-          accountId,
-          closedSince,
-          maxOpenCases + maxClosedCases
-        )
-        .executeQuery()
-    );
+    return new Map<String, Object>{
+      'open' => mapCaseRows(buildOpenCaseQuery(accountId).executeQuery()),
+      'recentlyClosed' => mapCaseRows(
+        buildRecentlyClosedCaseQuery(accountId).executeQuery()
+      )
+    };
+  }
 
-    for (SObject sobj : cases) {
+  /* Open and closed cases are queried separately so neither bucket can crowd out the other. */
+  @TestVisible
+  private static QueryFactory buildOpenCaseQuery(Id accountId) {
+    return new CaseSelector()
+      .selectOpenCasesForOpportunitySummary(accountId, maxOpenCases);
+  }
+
+  @TestVisible
+  private static QueryFactory buildRecentlyClosedCaseQuery(Id accountId) {
+    return new CaseSelector()
+      .selectRecentlyClosedCasesForOpportunitySummary(
+        accountId,
+        Date.today().addMonths(-closedCaseMonths),
+        maxClosedCases
+      );
+  }
+
+  private static List<Map<String, Object>> mapCaseRows(List<SObject> records) {
+    List<Map<String, Object>> rows = new List<Map<String, Object>>();
+    for (SObject sobj : GCPSummaryUtil.stripReadable(records)) {
       Case c = (Case) sobj;
       SObject owner = readableRelated(c, RELATIONSHIP_OWNER);
       Map<String, Object> row = new Map<String, Object>{
@@ -1058,24 +1071,9 @@ public with sharing class GCPCalloutForOpportunitySummary {
           (String) GCPSummaryUtil.readableField(c, Case.Description)
         )
       };
-      // IsClosed may be stripped; treat missing as open so we do not drop the row.
-      Boolean isClosed = (Boolean) GCPSummaryUtil.readableField(
-        c,
-        Case.IsClosed
-      );
-      if (isClosed == true) {
-        if (recentlyClosed.size() < maxClosedCases) {
-          recentlyClosed.add(row);
-        }
-      } else if (openCases.size() < maxOpenCases) {
-        openCases.add(row);
-      }
+      rows.add(row);
     }
-
-    return new Map<String, Object>{
-      'open' => openCases,
-      'recentlyClosed' => recentlyClosed
-    };
+    return rows;
   }
 
   private static CollectionData getLineItemData(

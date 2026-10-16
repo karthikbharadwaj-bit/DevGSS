@@ -1229,6 +1229,52 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  private static void shouldQueryOpenAndClosedCasesSeparatelyWhenBuildingCaseQueries() {
+    overrideSettings(
+      new Summary_Setting__mdt(
+        MaxOpenCases__c = 3,
+        MaxClosedCases__c = 2,
+        ClosedCaseMonths__c = 6
+      )
+    );
+
+    Test.startTest();
+    QueryFactory openQuery = GCPCalloutForOpportunitySummary.buildOpenCaseQuery(
+        ACCOUNT_ID
+      )
+      .setQuery();
+    QueryFactory closedQuery = GCPCalloutForOpportunitySummary.buildRecentlyClosedCaseQuery(
+        ACCOUNT_ID
+      )
+      .setQuery();
+    Test.stopTest();
+    resetTestHooks();
+
+    String openMessage = 'Open cases must have their own query, newest first, capped at MaxOpenCases.';
+    String closedMessage = 'Closed cases must have their own query, most recently closed first, capped at MaxClosedCases.';
+    Assert.areEqual(
+      'AccountId = :bind0 AND IsClosed = false',
+      openQuery.getCondition(),
+      openMessage
+    );
+    Assert.isTrue(
+      openQuery.getQuery().contains('ORDER BY CreatedDate DESC'),
+      openMessage
+    );
+    Assert.isTrue(openQuery.getQuery().contains('LIMIT 3'), openMessage);
+    Assert.areEqual(
+      'AccountId = :bind0 AND IsClosed = true AND ClosedDate >= :bind1',
+      closedQuery.getCondition(),
+      closedMessage
+    );
+    Assert.isTrue(
+      closedQuery.getQuery().contains('ORDER BY ClosedDate DESC'),
+      closedMessage
+    );
+    Assert.isTrue(closedQuery.getQuery().contains('LIMIT 2'), closedMessage);
+  }
+
+  @IsTest
   static void shouldSendEnrichmentFlagAsBooleanWhenBuildingRequest() {
     Map<String, Object> payload = new Map<String, Object>();
 

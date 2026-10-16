@@ -489,6 +489,28 @@ private class Test_GCPCalloutForAccountSummary {
     Assert.areEqual(45, configured, configuredMessage);
   }
 
+  // ── closedCaseMonths ───
+  @IsTest
+  static void shouldUseClosedCaseMonthsWhenSettingIsValidAndSixOtherwise() {
+    Test.startTest();
+    overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 25));
+    Integer tooLarge = GCPCalloutForAccountSummary.closedCaseMonths();
+    overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 1.5));
+    Integer fractional = GCPCalloutForAccountSummary.closedCaseMonths();
+    overrideSettings(new Summary_Setting__mdt());
+    Integer blank = GCPCalloutForAccountSummary.closedCaseMonths();
+    overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 12));
+    Integer configured = GCPCalloutForAccountSummary.closedCaseMonths();
+    Test.stopTest();
+
+    String fallbackMessage = 'Out-of-range, fractional or blank closed case months must fall back to 6.';
+    Assert.areEqual(6, tooLarge, fallbackMessage);
+    Assert.areEqual(6, fractional, fallbackMessage);
+    Assert.areEqual(6, blank, fallbackMessage);
+    String configuredMessage = 'A valid closed case months setting must be used.';
+    Assert.areEqual(12, configured, configuredMessage);
+  }
+
   // ── timeoutSeconds / getClientSettings ───
   @IsTest
   static void shouldReadDeployedSettingsWhenNoOverrideIsSet() {
@@ -600,13 +622,11 @@ private class Test_GCPCalloutForAccountSummary {
   private static Map<String, Object> serializedPayload() {
     Account summaryAccount = testAccount();
 
-    Test.startTest();
     Map<String, Object> payload = GCPCalloutForAccountSummary.buildPayload(
       TEST_USERNAME,
       summaryAccount.Id,
       true
     );
-    Test.stopTest();
     return (Map<String, Object>) JSON.deserializeUntyped(
       JSON.serialize(payload)
     );
@@ -616,7 +636,9 @@ private class Test_GCPCalloutForAccountSummary {
   static void shouldSendCallTranscriptsTrueAsJsonBooleanWhenSettingOn() {
     setCallTranscriptsSetting(true);
 
+    Test.startTest();
     Map<String, Object> payload = serializedPayload();
+    Test.stopTest();
 
     String messageText = 'The switch must serialize as a JSON boolean that matches the setting.';
     Assert.isTrue(
@@ -634,7 +656,9 @@ private class Test_GCPCalloutForAccountSummary {
   static void shouldSendCallTranscriptsFalseAsJsonBooleanWhenSettingOff() {
     setCallTranscriptsSetting(false);
 
+    Test.startTest();
     Map<String, Object> payload = serializedPayload();
+    Test.stopTest();
 
     String messageText = 'The switch must serialize as a JSON boolean that matches the setting.';
     Assert.isTrue(
@@ -652,7 +676,9 @@ private class Test_GCPCalloutForAccountSummary {
   static void shouldSendCallTranscriptsFalseWhenNoSettingRecordExists() {
     delete [SELECT Id FROM GCP_Feature_Toggle__c];
 
+    Test.startTest();
     Map<String, Object> payload = serializedPayload();
+    Test.stopTest();
 
     String messageText = 'With no setting record the field must still be sent, as false.';
     Assert.isTrue(
@@ -676,10 +702,12 @@ private class Test_GCPCalloutForAccountSummary {
       ',"call_transcripts":{"status":"no_calls",' +
       '"counts":{"calls":0,"ace":0,"salesforce":0,"none":0},"calls":[]}}}';
 
+    Test.startTest();
     String resultWithout = GCPCalloutForAccountSummary.buildResult(
       withoutBlock
     );
     String resultWith = GCPCalloutForAccountSummary.buildResult(withBlock);
+    Test.stopTest();
 
     String messageText = 'The optional call_transcripts block must not change what the UI receives.';
     Assert.areEqual(

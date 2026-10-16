@@ -2395,3 +2395,62 @@ describe("opportunitySummary call insights", () => {
     expect(callInsightKeys("Executive Summary").size).toBe(0);
   });
 });
+
+describe("opportunitySummary modal keyboard focus", () => {
+  beforeEach(() => {
+    resetLabels();
+    localStorage.clear();
+    isOpportunitySummaryEnabled.mockResolvedValue(true);
+    logAIHEvent.mockResolvedValue();
+  });
+
+  afterEach(() => {
+    while (document.body.firstChild) {
+      document.body.removeChild(document.body.firstChild);
+    }
+    jest.clearAllMocks();
+  });
+
+  function fences(element) {
+    return element.shadowRoot.querySelectorAll("[data-focus-fence]");
+  }
+
+  it("moves focus to the first modal control when the modal opens", async () => {
+    const element = await createComponent();
+
+    expect(element.shadowRoot.activeElement).toBe(
+      element.shadowRoot.querySelector("[data-download-pdf]")
+    );
+  });
+
+  it("wraps Tab and Shift+Tab inside the modal", async () => {
+    const element = await createComponent();
+    const dialog = element.shadowRoot.querySelector("[data-modal-dialog]");
+    const [startFence, endFence] = fences(element);
+
+    endFence.focus();
+    expect(element.shadowRoot.activeElement).toBe(
+      element.shadowRoot.querySelector("[data-download-pdf]")
+    );
+
+    startFence.focus();
+    const active = element.shadowRoot.activeElement;
+    expect(dialog.contains(active)).toBe(true);
+    expect(active.hasAttribute("data-focus-fence")).toBe(false);
+    expect(active).not.toBe(
+      element.shadowRoot.querySelector("[data-download-pdf]")
+    );
+  });
+
+  it("returns focus to View summary when the modal closes", async () => {
+    const element = await createComponent();
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await flushPromises();
+
+    expect(element.shadowRoot.querySelector("[data-modal-dialog]")).toBeNull();
+    expect(element.shadowRoot.activeElement).toBe(
+      element.shadowRoot.querySelector("[data-view-summary]")
+    );
+  });
+});

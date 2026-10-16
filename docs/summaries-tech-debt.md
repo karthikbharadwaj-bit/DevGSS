@@ -25,10 +25,17 @@ to be done by hand in Setup.
 
 ## Deferred from the MR !63735 review (2026-10-15)
 
-- [ ] **Look-back windows and row caps are class constants.** The 90-day account history,
-      183-day closed cases and 30-day upcoming events windows, and the 16 `*_LIMIT` caps in
+- [ ] **Look-back windows and row caps are class constants.** The 90-day account history
+      and 30-day upcoming events windows, and the 16 `*_LIMIT` caps in
       `GCPCalloutForAccountSummary`, are not in `Summary_Setting__mdt`. They are sized to
-      the service's input budget, so changing them needs the GCP service team.
+      the service's input budget, so changing them needs the GCP service team. The
+      closed-case window now reads `ClosedCaseMonths__c` (default 6, capped at 24), the
+      same setting Opportunity Summary uses.
+- [ ] **Screen readers can still browse behind the summary modals.** Both modals now move
+      focus in on open, keep Tab inside, and return focus to View summary on close
+      (`c/lwcModalFocus`). A component cannot hide the rest of the Lightning page, so a
+      screen reader's browse mode can still read it. Moving both modals to
+      `LightningModal` fixes that; it was judged too large a change for this MR.
 - [ ] **Automated senders are matched by `CreatedBy.Name`.** The names come from
       `ExcludedActivityCreators__c`, so a rename is a metadata edit. Usernames carry a
       per-sandbox suffix and IDs differ per org, so neither works as a single value.
@@ -136,6 +143,9 @@ to be done by hand in Setup.
       data, and only a real browser exercises Lightning Web Security.
 - [ ] Same check on a closed-won and a closed-lost Opportunity, to confirm Post-Close
       Actions prints and Win Factors, Risk Flags and Close Plan do not.
+- [ ] Open both summaries with the keyboard only: focus should land on Download PDF, Tab
+      and Shift+Tab should stay inside the modal, and Escape should return focus to View
+      summary. Jest covers this, but not focus inside Lightning base components.
 
 ## Deferred from the 2026-10-12 standards review
 
