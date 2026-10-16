@@ -1,30 +1,66 @@
 #!/usr/bin/env bash
 # End-of-day JIRA draft generator (headless / launchd).
-# Pre-fetches JIRA via REST + local git evidence, then asks `claude -p` to draft
+# Pre-fetches JIRA via REST + read-only remote Git evidence, then asks `claude -p` to draft
 # per-ticket comments + a status digest. DRAFT-ONLY: never writes to JIRA.
 #
 # Secrets are read from an env file (default ~/.config/jira-eod/jira-eod.env):
 #   JIRA_PAT=...                  # Jira Personal Access Token
 #   CLAUDE_CODE_OAUTH_TOKEN=...   # from `claude setup-token`
 #   JIRA_BASE_URL=https://jira.ringcentral.com   # optional
-#   REPO_DIR=/Users/Karthik.Bharadwaj/SandBox/DevGSS  # optional
+#   JIRA_EOD_AUTHOR_EMAIL=karthik.bharadwaj@ringcentral.com
+# Repository URLs are read from ~/.config/jira-eod/repos.txt, one per line.
 set -euo pipefail
 
+SCRIPT_SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT_SOURCE" ]; do
+  SOURCE_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+  SCRIPT_SOURCE="$(readlink "$SCRIPT_SOURCE")"
+  case "$SCRIPT_SOURCE" in
+    /*) ;;
+    *) SCRIPT_SOURCE="$SOURCE_DIR/$SCRIPT_SOURCE" ;;
+  esac
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" && pwd)"
 ENV_FILE="${JIRA_EOD_ENV:-$HOME/.config/jira-eod/jira-eod.env}"
+SETTINGS_FILE="${JIRA_EOD_SETTINGS:-$HOME/.config/jira-eod/jira-eod.settings}"
 if [ -f "$ENV_FILE" ]; then set -a; . "$ENV_FILE"; set +a; fi
+if [ -f "$SETTINGS_FILE" ]; then set -a; . "$SETTINGS_FILE"; set +a; fi
 
 : "${JIRA_BASE_URL:=https://jira.ringcentral.com}"
-: "${REPO_DIR:=$HOME/SandBox/DevGSS}"
 : "${CLAUDE_BIN:=$HOME/.local/bin/claude}"
-: "${OUT_DIR:=$REPO_DIR/drafts}"
+: "${JIRA_EOD_REPOS_FILE:=$HOME/.config/jira-eod/repos.txt}"
+: "${JIRA_EOD_CACHE_DIR:=$HOME/.cache/jira-eod/repositories}"
+: "${JIRA_EOD_OUT_DIR:=$HOME/.local/state/jira-eod/drafts}"
+: "${JIRA_EOD_PROCESS_FILE:=$HOME/.config/jira-eod/jira-process.md}"
+: "${JIRA_EOD_REMOTE_EVIDENCE_BIN:=$SCRIPT_DIR/jira-eod-remote-evidence.sh}"
 : "${JIRA_PAT:?JIRA_PAT not set — add it to $ENV_FILE}"
 : "${CLAUDE_CODE_OAUTH_TOKEN:?CLAUDE_CODE_OAUTH_TOKEN not set — run 'claude setup-token' and add it to $ENV_FILE}"
+: "${JIRA_EOD_AUTHOR_EMAIL:?JIRA_EOD_AUTHOR_EMAIL not set — add it to $ENV_FILE}"
+
+for required_command in curl git jq shasum; do
+  command -v "$required_command" >/dev/null 2>&1 || {
+    printf 'Required command not found: %s\n' "$required_command" >&2
+    exit 2
+  }
+done
+[ -x "$CLAUDE_BIN" ] || {
+  printf 'Claude Code executable not found: %s\n' "$CLAUDE_BIN" >&2
+  exit 2
+}
+[ -x "$JIRA_EOD_REMOTE_EVIDENCE_BIN" ] || {
+  printf 'Remote evidence collector not found: %s\n' "$JIRA_EOD_REMOTE_EVIDENCE_BIN" >&2
+  exit 2
+}
+[ -f "$JIRA_EOD_REPOS_FILE" ] || {
+  printf 'Repository list not found: %s\n' "$JIRA_EOD_REPOS_FILE" >&2
+  exit 2
+}
 
 TODAY="$(date +%F)"            # local date == IST for this machine
-mkdir -p "$OUT_DIR"
-OUT_FILE="$OUT_DIR/jira-eod-$TODAY.md"
-LOG="$OUT_DIR/jira-eod.log"
-CTX="$(mktemp)"; trap 'rm -f "$CTX" "$CTX.body"' EXIT
+mkdir -p "$JIRA_EOD_OUT_DIR"
+OUT_FILE="$JIRA_EOD_OUT_DIR/jira-eod-$TODAY.md"
+LOG="$JIRA_EOD_OUT_DIR/jira-eod.log"
+CTX="$(mktemp)"; trap 'rm -f "$CTX" "$CTX.body" "$CTX.keys" "$CTX.remote"' EXIT
 log() { echo "[$(date '+%F %T')] $*" >> "$LOG"; }
 
 AUTH=(-H "Authorization: Bearer $JIRA_PAT" -H "Content-Type: application/json")
@@ -51,7 +87,29 @@ keys=$(echo "$search" | jq -r '.issues[].key')
   echo
 } > "$CTX"
 
-# 2) Per-ticket: relationships + comments (author/date) + local git evidence.
+# 2) Remote Git evidence. Only ls-remote/fetch operations are permitted by the
+# collector; commits are filtered by exact author email and active ticket key.
+printf '%s\n' $keys > "$CTX.keys"
+log "fetching read-only remote evidence from $JIRA_EOD_REPOS_FILE"
+if ! "$JIRA_EOD_REMOTE_EVIDENCE_BIN" \
+    --repos-file "$JIRA_EOD_REPOS_FILE" \
+    --author-email "$JIRA_EOD_AUTHOR_EMAIL" \
+    --keys-file "$CTX.keys" \
+    --cache-dir "$JIRA_EOD_CACHE_DIR" > "$CTX.remote" 2>> "$LOG"; then
+  {
+    echo "# JIRA EOD — $TODAY — BLOCKED"
+    echo
+    echo "Remote Git evidence could not be read from every configured repository."
+    echo "No Jira draft was generated because the commit context would be incomplete."
+    echo
+    cat "$CTX.remote"
+  } > "$OUT_FILE"
+  log "BLOCKED: remote Git evidence incomplete"
+  exit 1
+fi
+cat "$CTX.remote" >> "$CTX"
+
+# 3) Per-ticket relationships + comments (author/date).
 PARENTS=""
 for k in $keys; do
   issue=$(curl -sS "${AUTH[@]}" "$JIRA_BASE_URL/rest/api/2/issue/$k?fields=summary,status,issuetype,issuelinks,comment,description") || continue
@@ -66,8 +124,6 @@ for k in $keys; do
       else "- \(.type.outward) \(.outwardIssue.key) [\(.outwardIssue.fields.issuetype.name)] \(.outwardIssue.fields.status.name)" end'
     echo "### Comments (author | created | body excerpt)"
     echo "$issue" | jq -r '(.fields.comment.comments // [])[]? | "- \(.author.displayName) | \(.created) | \((.body // "") | gsub("\r?\n";" ") | .[0:1000])"'
-    echo "### Committed work referencing $k"
-    ( cd "$REPO_DIR" 2>/dev/null && { git log --all --oneline --grep="$k" | head -20; git branch -a --list "*$k*"; } ) || echo "(no repo/match)"
     echo
   } >> "$CTX"
 done
@@ -87,30 +143,14 @@ for pk in $PARENTS; do
   } >> "$CTX"
 done
 
-# Global working-tree snapshot (committed/recent + staged + uncommitted) so Claude can relate
-# in-progress changes to tickets by file path / content (working-tree changes aren't tagged with a key).
-{
-  echo "## Local working tree (relate to the tickets above by file/path/content; NOT all changes are ticket-related)"
-  ( cd "$REPO_DIR" 2>/dev/null && {
-      echo "### Current branch"; git rev-parse --abbrev-ref HEAD
-      echo "### git status (short)"; git status -s
-      echo "### Recent commits (last 15, any ticket)"; git log --oneline -15
-      echo "### Unstaged changes (stat)"; git diff --stat
-      echo "### Staged changes (stat)"; git diff --staged --stat
-      echo "### Unstaged diff (capped)"; git diff | head -200
-      echo "### Staged diff (capped)"; git diff --staged | head -200
-  } ) || echo "(no repo)"
-  echo
-} >> "$CTX"
-
 # Append the team process reference so Claude can derive next steps.
-PROC="$REPO_DIR/docs/jira-process.md"
+PROC="$JIRA_EOD_PROCESS_FILE"
 if [ -f "$PROC" ]; then { echo "## RingCentral GCI process reference (use to derive Next steps)"; echo; cat "$PROC"; } >> "$CTX"; fi
 
-# 3) Hand the context to Claude to draft (pure reasoning — no tools, no JIRA writes).
+# 4) Hand the context to Claude to draft (pure reasoning — no tools, no JIRA writes).
 read -r -d '' PROMPT <<'EOF' || true
 You are Karthik Bharadwaj's end-of-day JIRA assistant (RingCentral GCI team). Below is today's
-pre-fetched JIRA context (active tickets, relationships, comments with author+date, and local git
+pre-fetched JIRA context (active tickets, relationships, comments with author+date, and read-only remote Git
 evidence). Using ONLY that context, produce DRAFT comments for Karthik to review and post manually.
 NEVER suggest auto-posting; this is draft-only.
 
@@ -128,13 +168,13 @@ Rules:
   have NOTHING to do — do not draft GCI/BisUAT/Prod actions. Read the PARENT DEV TICKET's comments: if a
   QA/testing-team sign-off is present and the parent is only Resolved, recommend moving the parent to
   Closed and starting the GCI deploy; if no sign-off, the parent is waiting on QA sign-off in the dev sandbox.
-- RELATE CODE TO TICKETS: the context has per-ticket commit matches AND a "Local working tree" snapshot
-  (recent commits, staged, and uncommitted changes). Working-tree changes are NOT tagged with a key --
-  decide by file path / content whether they relate to an active ticket. If related, ground the PARENT
-  ticket's draft in the actual changes (which files / what logic changed, committed or still uncommitted).
-  If a change is unrelated to any active ticket (e.g. tooling/config), do NOT force a connection.
+- RELATE CODE TO TICKETS: the "Remote Git evidence" section contains commits authored with Karthik's
+  exact configured email and branches whose names match active ticket keys. Ground PARENT-ticket updates
+  only in that evidence. A branch match without a matching authored commit is weak evidence: do not claim
+  implementation progress from the branch alone. Do not infer file changes, review status, tests, PR/MR
+  state, or uncommitted work unless the JIRA comments explicitly provide it.
 - PARENT ticket -> substantive update (progress, changes, doc/MR links, review+test status), grounded
-  in the related commits/diffs above.
+  in the related remote commits and JIRA comments above.
 - CHILD deployment tickets -> short STATUS-ONLY notes (e.g. "Deployed to GCI, awaiting QA acceptance").
   Do NOT write "Dev in progress" on a deployment ticket.
 - Promotion gates: Dev -> review (1 dev + 1 scrum master) -> mark parent Resolved -> GCI deploy ->
