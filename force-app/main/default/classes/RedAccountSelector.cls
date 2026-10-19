@@ -30,6 +30,7 @@ public inherited sharing class RedAccountSelector extends SObjectSelector {
       .setFactoryName(ESCALATIONS_FACTORY_NAME)
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded()
+      .selectFields(getAccountSummaryFieldList())
       .setCondition('EscalatedAccount__c = :bind0')
       .setQueryBindings(new List<Object>{ accountId })
       .addOrdering(
@@ -37,5 +38,21 @@ public inherited sharing class RedAccountSelector extends SObjectSelector {
         QueryFactory.SortOrder.DESCENDING,
         true
       );
+  }
+
+  /** Fields the Account Summary sends for this list, in payload order. */
+  public List<Schema.SObjectField> getAccountSummaryFieldList() {
+    return new List<Schema.SObjectField>{
+      Red_Account__c.Status__c,
+      Red_Account__c.Risk_Type__c,
+      Red_Account__c.Risk_Reason__c,
+      Red_Account__c.Revenue_at_Risk__c,
+      Red_Account__c.CurrencyIsoCode,
+      Red_Account__c.Escalation_Category__c,
+      Red_Account__c.Escalation_Trend__c,
+      Red_Account__c.Red_Start_Date__c,
+      Red_Account__c.Red_End_Date__c,
+      Red_Account__c.Yellow_Start_Date__c
+    };
   }
 }

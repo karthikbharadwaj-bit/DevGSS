@@ -22,6 +22,8 @@ import {
 import { buildPdfDocument, pdfFilename } from "./aiAccountSummaryPdf";
 import { renderPdf, downloadPdf } from "c/lwcPdfRenderer";
 import { focusFirstIn, focusLastIn } from "c/lwcModalFocus";
+// Prefix GCPSummaryUtil.errorReply puts on a failure the user should see.
+const ERROR_PREFIX = "Error: ";
 
 const SUBFEATURE = "Account Summary";
 const LOADING_INTERVAL_MS = 3900;
@@ -587,6 +589,13 @@ export default class AiAccountSummary extends LightningElement {
         return;
       }
 
+      if (typeof result === "string" && result.startsWith(ERROR_PREFIX)) {
+        this._showError(
+          result.slice(ERROR_PREFIX.length) || this.labels.genericError
+        );
+        return;
+      }
+
       let parsed;
       try {
         parsed = JSON.parse(result);
@@ -598,8 +607,6 @@ export default class AiAccountSummary extends LightningElement {
       if (parsed && parsed.success === true && isSummaryResponse(parsed)) {
         this._applySummary(parsed, Date.now());
         this.cacheSummary(parsed, this.generatedAt);
-      } else if (parsed && parsed.success === false && parsed.message) {
-        this._showError(parsed.message);
       } else {
         this._showError(this.labels.genericError);
       }

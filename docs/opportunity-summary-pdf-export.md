@@ -60,7 +60,7 @@ deleted:
   missing. With it, the unmodified renderer loaded in under 100 ms and rendered
   the summary in about 180 ms in DevGss.
 
-`test/opportunitySummaryPdf.lws.test.mjs` evaluates the real vendored files under
+`test/pdfRenderer.lws.test.mjs` evaluates the real vendored files under
 these rules. It reproduces the DevGss error without the shim and renders a PDF
 with it. The loader tests use a `loadScript` mock with the observed LWS
 behavior (rejecting with `undefined`, and failed URLs never settling again).
@@ -97,7 +97,7 @@ admin-configured values of previously deployed labels.
 
 ```sh
 npm run test:unit -- -- --runInBand --runTestsByPath force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummary.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryConfig.test.js force-app/main/default/lwc/opportunitySummary/__tests__/opportunitySummaryPdf.test.js force-app/main/default/lwc/lwcPdfRenderer/__tests__/lwcPdfRenderer.test.js
-node --test test/opportunitySummaryPdf.engine.test.mjs test/opportunitySummaryPdf.lws.test.mjs
+node --test test/pdfRenderer.engine.test.mjs test/pdfRenderer.lws.test.mjs
 npx eslint force-app/main/default/lwc/opportunitySummary/*.js force-app/main/default/lwc/opportunitySummary/__tests__/*.js
 ```
 

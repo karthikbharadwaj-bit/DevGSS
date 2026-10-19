@@ -24,6 +24,9 @@ import {
   formatLabel
 } from "./opportunitySummaryConfig";
 
+// Prefix GCPSummaryUtil.errorReply puts on a failure the user should see.
+const ERROR_PREFIX = "Error: ";
+
 const SUBFEATURE = "Opportunity Summary";
 const LOADING_INTERVAL_MS = 3900;
 
@@ -1631,7 +1634,8 @@ export default class OpportunitySummary extends LightningElement {
           researchGroups: this.researchGroups,
           supplementalUpdates: this.supplementalUpdates,
           otherResearchSources: this.otherResearchSources,
-          searchQueries: this.searchQueries
+          searchQueries: this.searchQueries,
+          hasSearchSuggestions: this.hasSearchSuggestionsMarkup
         })
       );
       const blob = await renderPdf(
@@ -1683,6 +1687,13 @@ export default class OpportunitySummary extends LightningElement {
         return;
       }
 
+      if (typeof result === "string" && result.startsWith(ERROR_PREFIX)) {
+        this.isError = true;
+        this.errorMessage =
+          result.slice(ERROR_PREFIX.length) || this.labels.genericError;
+        return;
+      }
+
       let parsed;
       try {
         parsed = JSON.parse(result);
@@ -1703,9 +1714,6 @@ export default class OpportunitySummary extends LightningElement {
         this._updateGeneratedLabel();
         this._startClock();
         this.cacheSummary(parsed, this.generatedAt);
-      } else if (parsed && parsed.success === false && parsed.message) {
-        this.isError = true;
-        this.errorMessage = parsed.message;
       } else {
         this.isError = true;
         this.errorMessage = this.labels.genericError;

@@ -74,6 +74,8 @@ export function getUiLabels() {
     pdfSupplemental: labels.pdfSupplemental,
     pdfSources: labels.pdfSources,
     pdfSearches: labels.pdfSearches,
+    searchSuggestions: labels.searchSuggestions,
+    pdfSearchSuggestionsNote: labels.pdfSearchSuggestionsNote,
     pdfRelevance: labels.pdfRelevance,
     pdfAction: labels.pdfAction,
     researchDisclaimer: labels.researchDisclaimer,

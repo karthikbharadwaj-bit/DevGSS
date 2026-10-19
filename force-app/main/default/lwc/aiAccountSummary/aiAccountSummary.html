@@ -883,7 +883,7 @@
                   </article>
                 </div>
 
-                <template lwc:if={view.research.hasResearch}>
+                <template lwc:if={view.research.showResearch}>
                   <details
                     class="panel research-drawer"
                     data-summary-section="research"
@@ -1003,6 +1003,33 @@
                             </template>
                           </ul>
                         </details>
+                      </template>
+                      <template lwc:if={view.research.hasSearchQueries}>
+                        <details
+                          class="research-additional"
+                          data-research-searches
+                        >
+                          <summary class="research-additional__summary">
+                            {view.research.searchesHeading}
+                          </summary>
+                          <ul class="search-query-list">
+                            <template
+                              for:each={view.research.searchQueries}
+                              for:item="query"
+                            >
+                              <li key={query.key}>{query.text}</li>
+                            </template>
+                          </ul>
+                        </details>
+                      </template>
+                      <template lwc:if={view.research.hasSearchSuggestions}>
+                        <section
+                          class="search-suggestions"
+                          data-search-suggestions
+                        >
+                          <h3>{labels.searchSuggestions}</h3>
+                          <p>{labels.searchLimitation}</p>
+                        </section>
                       </template>
                     </div>
                   </details>

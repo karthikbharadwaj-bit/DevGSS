@@ -101,7 +101,7 @@ private class Test_GCPCalloutForAccountSummary {
     Account summaryAccount = testAccount();
 
     Test.startTest();
-    Map<String, Object> payload = GCPCalloutForAccountSummary.buildPayload(
+    Map<String, Object> payload = AccountSummaryHelper.buildPayload(
       TEST_USERNAME,
       summaryAccount.Id,
       true
@@ -166,9 +166,9 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldKeepOnlyNamedStatusAndOwnerChangesWhenQueryingAccountHistory() {
     Account summaryAccount = testAccount();
-    GCPCalloutForAccountSummary.ListSpec historySpec;
+    AccountSummaryHelper.ListSpec historySpec;
     for (
-      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs(
+      AccountSummaryHelper.ListSpec spec : AccountSummaryHelper.listSpecs(
         summaryAccount.Id
       )
     ) {
@@ -178,7 +178,7 @@ private class Test_GCPCalloutForAccountSummary {
     }
 
     Test.startTest();
-    String condition = GCPCalloutForAccountSummary.buildListQuery(historySpec)
+    String condition = AccountSummaryHelper.buildListQuery(historySpec)
       .getCondition();
     Test.stopTest();
 
@@ -198,7 +198,7 @@ private class Test_GCPCalloutForAccountSummary {
     Account summaryAccount = testAccount();
 
     Test.startTest();
-    Map<String, Object> payload = GCPCalloutForAccountSummary.buildPayload(
+    Map<String, Object> payload = AccountSummaryHelper.buildPayload(
       TEST_USERNAME,
       summaryAccount.Id,
       false
@@ -237,7 +237,7 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    String rawResult = GCPCalloutForAccountSummary.callCloudRun(
+    String rawResult = AccountSummaryHelper.callCloudRun(
       TEST_USERNAME,
       summaryAccount.Id,
       TEST_TOKEN,
@@ -249,14 +249,15 @@ private class Test_GCPCalloutForAccountSummary {
       rawResult
     );
     String successMessage = 'A 200 object body with account_summary must be returned as success.';
-    String passthroughMessage = 'Derived metrics and enrichment must be passed through unchanged.';
+    String passthroughMessage = 'Enrichment must be passed through unchanged.';
+    String droppedMessage = 'Derived metrics are not shown, so they must not reach the component.';
     Assert.areEqual(true, result.get('success'), successMessage);
     Assert.isTrue(
       result.get('account_summary') instanceof Map<String, Object>,
       successMessage
     );
     Assert.areEqual('2026-06-29', result.get('as_of_date'), successMessage);
-    Assert.isTrue(result.containsKey('derived_metrics'), passthroughMessage);
+    Assert.isFalse(result.containsKey('derived_metrics'), droppedMessage);
     Assert.isTrue(result.containsKey('account_enrichment'), passthroughMessage);
   }
 
@@ -271,7 +272,7 @@ private class Test_GCPCalloutForAccountSummary {
 
     Test.startTest();
     try {
-      GCPCalloutForAccountSummary.callCloudRun(
+      AccountSummaryHelper.callCloudRun(
         TEST_USERNAME,
         summaryAccount.Id,
         TEST_TOKEN,
@@ -293,16 +294,13 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.buildResult(response)
-    );
+    String result = AccountSummaryHelper.buildResult(response);
     Test.stopTest();
 
     String messageText = 'A 429 must show the rate-limit label.';
-    Assert.areEqual(false, result.get('success'), messageText);
     Assert.areEqual(
-      System.Label.AccountSummaryRateLimitError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.AccountSummaryRateLimitError),
+      result,
       messageText
     );
   }
@@ -314,15 +312,13 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.buildResult(response)
-    );
+    String result = AccountSummaryHelper.buildResult(response);
     Test.stopTest();
 
     String messageText = 'A 422 must show the unavailable label.';
     Assert.areEqual(
-      System.Label.AccountSummaryUnavailableError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.AccountSummaryUnavailableError),
+      result,
       messageText
     );
   }
@@ -337,16 +333,13 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.buildResult(response)
-    );
+    String result = AccountSummaryHelper.buildResult(response);
     Test.stopTest();
 
     String messageText = 'A 200 with a string body is a platform error, not a summary.';
-    Assert.areEqual(false, result.get('success'), messageText);
     Assert.areEqual(
-      System.Label.SummaryServerError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.SummaryServerError),
+      result,
       messageText
     );
   }
@@ -354,25 +347,16 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldReturnServerErrorWhenResponseIsNotJson() {
     Test.startTest();
-    Map<String, Object> invalid = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.buildResult('<html>gateway</html>')
-    );
-    Map<String, Object> blank = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.buildResult('')
-    );
+    String invalid = AccountSummaryHelper.buildResult('<html>gateway</html>');
+    String blank = AccountSummaryHelper.buildResult('');
     Test.stopTest();
 
     String messageText = 'Unreadable responses must return the generic server error.';
-    Assert.areEqual(
-      System.Label.SummaryServerError,
-      invalid.get('message'),
-      messageText
+    String serverError = GCPSummaryUtil.errorReply(
+      System.Label.SummaryServerError
     );
-    Assert.areEqual(
-      System.Label.SummaryServerError,
-      blank.get('message'),
-      messageText
-    );
+    Assert.areEqual(serverError, invalid, messageText);
+    Assert.areEqual(serverError, blank, messageText);
   }
 
   @IsTest
@@ -380,22 +364,18 @@ private class Test_GCPCalloutForAccountSummary {
     Id opportunityId = [SELECT Id FROM Opportunity LIMIT 1].Id;
 
     Test.startTest();
-    Map<String, Object> wrongType = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.makeGCPCallout(opportunityId)
+    String wrongType = GCPCalloutForAccountSummary.makeGCPCallout(
+      opportunityId
     );
-    Map<String, Object> blankId = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.makeGCPCallout(null)
-    );
+    String blankId = GCPCalloutForAccountSummary.makeGCPCallout(null);
     Test.stopTest();
 
     String messageText = 'Only Account record Ids may generate a summary.';
-    Assert.areEqual(false, wrongType.get('success'), messageText);
-    Assert.areEqual(
-      System.Label.SummaryServerError,
-      wrongType.get('message'),
-      messageText
+    String serverError = GCPSummaryUtil.errorReply(
+      System.Label.SummaryServerError
     );
-    Assert.areEqual(false, blankId.get('success'), messageText);
+    Assert.areEqual(serverError, wrongType, messageText);
+    Assert.areEqual(serverError, blankId, messageText);
   }
 
   @IsTest
@@ -406,17 +386,14 @@ private class Test_GCPCalloutForAccountSummary {
     Id accountId = testAccount().Id;
 
     Test.startTest();
-    Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForAccountSummary.makeGCPCallout(accountId)
-    );
+    String result = GCPCalloutForAccountSummary.makeGCPCallout(accountId);
     Integer calloutCount = Limits.getCallouts();
     Test.stopTest();
 
     String messageText = 'A disabled feature must not send Account data to the service.';
-    Assert.areEqual(false, result.get('success'), messageText);
     Assert.areEqual(
-      System.Label.AccountSummaryUnavailableError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.AccountSummaryUnavailableError),
+      result,
       messageText
     );
     Assert.areEqual(0, calloutCount, messageText);
@@ -429,12 +406,10 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    Map<String, Object> row = GCPCalloutForAccountSummary.mapRow(
+    Map<String, Object> row = AccountSummaryHelper.mapRow(
       summaryAccount,
-      new Map<Schema.SObjectField, String>{
-        Account.RC_Activation_Date__c => 'rcActivationDate'
-      },
-      new Map<String, String>{ 'Owner.Name' => 'ownerName' }
+      new List<Schema.SObjectField>{ Account.RC_Activation_Date__c },
+      new List<String>{ 'Owner.Name' }
     );
     Test.stopTest();
 
@@ -450,35 +425,46 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
-  static void shouldReplaceConfiguredPathWhenBuildingEndpoint() {
+  static void shouldNameEveryFieldWhenSelectorsChooseListFields() {
+    Account summaryAccount = testAccount();
+    AccountSelector accountSelector = new AccountSelector();
+    Integer mappedLists = 0;
+
     Test.startTest();
-    String fromPath = GCPCalloutForAccountSummary.buildServiceEndpoint(
-      SERVICE_HOST + '/api/v1/other_endpoint'
+    AccountSummaryHelper.mapRow(
+      new Account(),
+      accountSelector.getAccountSummaryFieldList(),
+      accountSelector.getAccountSummaryRelatedFieldList()
     );
-    String fromHost = GCPCalloutForAccountSummary.buildServiceEndpoint(
-      SERVICE_HOST + '/'
-    );
-    String fromBlank = GCPCalloutForAccountSummary.buildServiceEndpoint(null);
+    for (
+      AccountSummaryHelper.ListSpec spec : AccountSummaryHelper.listSpecs(
+        summaryAccount.Id
+      )
+    ) {
+      AccountSummaryHelper.mapRow(
+        new Account(),
+        spec.fields,
+        spec.relatedFields
+      );
+      mappedLists++;
+    }
     Test.stopTest();
 
-    String endpointMessage = 'The Account Summary path must replace any configured path.';
-    Assert.areEqual(EXPECTED_ENDPOINT, fromPath, endpointMessage);
-    Assert.areEqual(EXPECTED_ENDPOINT, fromHost, endpointMessage);
-    String blankMessage = 'A blank endpoint must stay blank.';
-    Assert.isNull(fromBlank, blankMessage);
+    String listMessage = 'Every list a selector supplies must map to payload keys.';
+    Assert.areEqual(16, mappedLists, listMessage);
   }
 
   @IsTest
   static void shouldFallBackToDefaultTimeoutWhenSettingIsInvalid() {
     Test.startTest();
     overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 500));
-    Integer tooLarge = GCPCalloutForAccountSummary.timeoutSeconds();
+    Integer tooLarge = AccountSummaryHelper.timeoutSeconds();
     overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 2.5));
-    Integer fractional = GCPCalloutForAccountSummary.timeoutSeconds();
+    Integer fractional = AccountSummaryHelper.timeoutSeconds();
     overrideSettings(new Summary_Setting__mdt());
-    Integer blank = GCPCalloutForAccountSummary.timeoutSeconds();
+    Integer blank = AccountSummaryHelper.timeoutSeconds();
     overrideSettings(new Summary_Setting__mdt(TimeoutSeconds__c = 45));
-    Integer configured = GCPCalloutForAccountSummary.timeoutSeconds();
+    Integer configured = AccountSummaryHelper.timeoutSeconds();
     Test.stopTest();
 
     String fallbackMessage = 'Out-of-range, fractional or blank timeouts must fall back to 120 seconds.';
@@ -494,13 +480,13 @@ private class Test_GCPCalloutForAccountSummary {
   static void shouldUseClosedCaseMonthsWhenSettingIsValidAndSixOtherwise() {
     Test.startTest();
     overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 25));
-    Integer tooLarge = GCPCalloutForAccountSummary.closedCaseMonths();
+    Integer tooLarge = AccountSummaryHelper.closedCaseMonths();
     overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 1.5));
-    Integer fractional = GCPCalloutForAccountSummary.closedCaseMonths();
+    Integer fractional = AccountSummaryHelper.closedCaseMonths();
     overrideSettings(new Summary_Setting__mdt());
-    Integer blank = GCPCalloutForAccountSummary.closedCaseMonths();
+    Integer blank = AccountSummaryHelper.closedCaseMonths();
     overrideSettings(new Summary_Setting__mdt(ClosedCaseMonths__c = 12));
-    Integer configured = GCPCalloutForAccountSummary.closedCaseMonths();
+    Integer configured = AccountSummaryHelper.closedCaseMonths();
     Test.stopTest();
 
     String fallbackMessage = 'Out-of-range, fractional or blank closed case months must fall back to 6.';
@@ -515,7 +501,7 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldReadDeployedSettingsWhenNoOverrideIsSet() {
     Test.startTest();
-    Integer timeout = GCPCalloutForAccountSummary.timeoutSeconds();
+    Integer timeout = AccountSummaryHelper.timeoutSeconds();
     Map<String, String> settings = GCPCalloutForAccountSummary.getClientSettings();
     Test.stopTest();
 
@@ -553,7 +539,7 @@ private class Test_GCPCalloutForAccountSummary {
   static void shouldReportFeatureTogglesWhenOrgDefaultsAreSet() {
     Test.startTest();
     Boolean isEnabled = GCPCalloutForAccountSummary.isAccountSummaryEnabled();
-    Boolean isEnrichmentEnabled = GCPCalloutForAccountSummary.isAccountSummaryEnrichmentEnabled();
+    Boolean isEnrichmentEnabled = AccountSummaryHelper.isAccountSummaryEnrichmentEnabled();
     Test.stopTest();
 
     String enabledMessage = 'The feature toggle must read the org default.';
@@ -622,7 +608,7 @@ private class Test_GCPCalloutForAccountSummary {
   private static Map<String, Object> serializedPayload() {
     Account summaryAccount = testAccount();
 
-    Map<String, Object> payload = GCPCalloutForAccountSummary.buildPayload(
+    Map<String, Object> payload = AccountSummaryHelper.buildPayload(
       TEST_USERNAME,
       summaryAccount.Id,
       true
@@ -703,10 +689,8 @@ private class Test_GCPCalloutForAccountSummary {
       '"counts":{"calls":0,"ace":0,"salesforce":0,"none":0},"calls":[]}}}';
 
     Test.startTest();
-    String resultWithout = GCPCalloutForAccountSummary.buildResult(
-      withoutBlock
-    );
-    String resultWith = GCPCalloutForAccountSummary.buildResult(withBlock);
+    String resultWithout = AccountSummaryHelper.buildResult(withoutBlock);
+    String resultWith = AccountSummaryHelper.buildResult(withBlock);
     Test.stopTest();
 
     String messageText = 'The optional call_transcripts block must not change what the UI receives.';
@@ -749,7 +733,7 @@ private class Test_GCPCalloutForAccountSummary {
     );
     String description = (String) row.get('description');
     Assert.areEqual(
-      GCPCalloutForAccountSummary.MAX_DESCRIPTION_LENGTH,
+      AccountSummaryHelper.MAX_DESCRIPTION_LENGTH,
       description.length(),
       descriptionMessage
     );
@@ -791,7 +775,7 @@ private class Test_GCPCalloutForAccountSummary {
     Test.startTest();
     Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
       JSON.serialize(
-        GCPCalloutForAccountSummary.buildPayload(
+        AccountSummaryHelper.buildPayload(
           TEST_USERNAME,
           summaryAccount.Id,
           true
@@ -826,7 +810,7 @@ private class Test_GCPCalloutForAccountSummary {
     Test.startTest();
     Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
       JSON.serialize(
-        GCPCalloutForAccountSummary.buildPayload(
+        AccountSummaryHelper.buildPayload(
           TEST_USERNAME,
           summaryAccount.Id,
           true
@@ -852,7 +836,7 @@ private class Test_GCPCalloutForAccountSummary {
   private static Map<String, Object> payloadFor(Id accountId) {
     return (Map<String, Object>) JSON.deserializeUntyped(
       JSON.serialize(
-        GCPCalloutForAccountSummary.buildPayload(TEST_USERNAME, accountId, true)
+        AccountSummaryHelper.buildPayload(TEST_USERNAME, accountId, true)
       )
     );
   }
@@ -987,13 +971,13 @@ private class Test_GCPCalloutForAccountSummary {
 
     Test.startTest();
     for (
-      GCPCalloutForAccountSummary.ListSpec spec : GCPCalloutForAccountSummary.listSpecs(
+      AccountSummaryHelper.ListSpec spec : AccountSummaryHelper.listSpecs(
         summaryAccount.Id
       )
     ) {
       keyToCondition.put(
         spec.key,
-        GCPCalloutForAccountSummary.buildListQuery(spec).getCondition()
+        AccountSummaryHelper.buildListQuery(spec).getCondition()
       );
     }
     Test.stopTest();
@@ -1029,7 +1013,7 @@ private class Test_GCPCalloutForAccountSummary {
     );
 
     Test.startTest();
-    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    List<String> creators = AccountSummaryHelper.excludedActivityCreators();
     Test.stopTest();
 
     String parseMessage = 'Creator names must be trimmed and blank entries dropped.';
@@ -1045,7 +1029,7 @@ private class Test_GCPCalloutForAccountSummary {
     overrideSettings(new Summary_Setting__mdt());
 
     Test.startTest();
-    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    List<String> creators = AccountSummaryHelper.excludedActivityCreators();
     Test.stopTest();
 
     String blankMessage = 'A blank setting must give an empty creator list, not null.';
@@ -1055,7 +1039,7 @@ private class Test_GCPCalloutForAccountSummary {
   @IsTest
   static void shouldShipDefaultAutomatedSendersWhenSettingIsDeployed() {
     Test.startTest();
-    List<String> creators = GCPCalloutForAccountSummary.excludedActivityCreators();
+    List<String> creators = AccountSummaryHelper.excludedActivityCreators();
     Test.stopTest();
 
     String defaultMessage = 'The deployed setting must list the automated senders.';

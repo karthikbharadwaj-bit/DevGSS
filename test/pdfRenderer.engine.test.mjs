@@ -2,8 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { buildPdfDocument } from "../force-app/main/default/lwc/opportunitySummary/opportunitySummaryPdf.js";
+import "./support/lwcModules.mjs";
 import { toPdfDefinition } from "../force-app/main/default/lwc/lwcPdfRenderer/pdfText.js";
+
+// Loaded after lwcModules.mjs registers the resolver for its "c/" imports.
+const { buildPdfDocument } =
+  await import("../force-app/main/default/lwc/opportunitySummary/opportunitySummaryPdf.js");
 
 const require = createRequire(import.meta.url);
 const pdfMake = require("../force-app/main/default/staticresources/PdfRenderer/build/pdfmake.min.js");
@@ -139,7 +143,11 @@ test("long content paginates with the real bundled renderer", async () => {
 
 test("text clean-up does not push every section heading onto a new page", async () => {
   const pageCount = (buffer) =>
-    Number(Buffer.from(buffer).toString("latin1").match(/\/Count (\d+)/)[1]);
+    Number(
+      Buffer.from(buffer)
+        .toString("latin1")
+        .match(/\/Count (\d+)/)[1]
+    );
   const built = await renderBuffer(buildPdfDocument(snapshot, labels));
   const cleaned = await renderBuffer(
     toPdfDefinition(buildPdfDocument(snapshot, labels))

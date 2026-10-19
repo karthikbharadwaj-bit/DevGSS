@@ -1,46 +1,65 @@
 public inherited sharing class AccountHistorySelector extends SObjectSelector {
-    public AccountHistorySelector() {
-        super();
-    }
+  public AccountHistorySelector() {
+    super();
+  }
 
-    public AccountHistorySelector(Boolean enforceCRUD, Boolean enforceFLS) {
-        super(enforceCRUD, enforceFLS);
-    }
+  public AccountHistorySelector(Boolean enforceCRUD, Boolean enforceFLS) {
+    super(enforceCRUD, enforceFLS);
+  }
 
-    public override Schema.SObjectType getSObjectType() {
-        return AccountHistory.SObjectType;
-    }
+  public override Schema.SObjectType getSObjectType() {
+    return AccountHistory.SObjectType;
+  }
 
-    public override List<Schema.SObjectField> getDefaultFieldList() {
-        return new List<Schema.SObjectField> {
-            AccountHistory.Id,
-            AccountHistory.AccountId,
-            AccountHistory.Field,
-            AccountHistory.NewValue,
-            AccountHistory.OldValue
-        };
-    }
+  public override List<Schema.SObjectField> getDefaultFieldList() {
+    return new List<Schema.SObjectField>{
+      AccountHistory.Id,
+      AccountHistory.AccountId,
+      AccountHistory.Field,
+      AccountHistory.NewValue,
+      AccountHistory.OldValue
+    };
+  }
 
-    public QueryFactory selectRCAccountStatusHistory(List<Object> bindings) {
-        return newQueryFactory()
-            .setFactoryName('selectRCAccountStatusHistory')
-            .selectFields(getDefaultFieldList())
-            .setCondition('AccountId = :bind0 AND Field = \'RC_Account_Status__c\'')
-            .withSelectorOrderByIncluded()
-            .addOrdering('CreatedDate', QueryFactory.SortOrder.ASCENDING)
-            .setQueryBindings(bindings);
-    }
+  public QueryFactory selectRCAccountStatusHistory(List<Object> bindings) {
+    return newQueryFactory()
+      .setFactoryName('selectRCAccountStatusHistory')
+      .selectFields(getDefaultFieldList())
+      .setCondition('AccountId = :bind0 AND Field = \'RC_Account_Status__c\'')
+      .withSelectorOrderByIncluded()
+      .addOrdering('CreatedDate', QueryFactory.SortOrder.ASCENDING)
+      .setQueryBindings(bindings);
+  }
 
-    /**
-     * Status and Owner are the only tracked Account fields that change in production. An Owner change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
-     */
-    public QueryFactory selectStatusAndOwnerChangesForAccountSummary(Id accountId) {
-        return newQueryFactory()
-            .setFactoryName('selectStatusAndOwnerChangesForAccountSummary')
-            .withoutSelectorFieldsIncluded()
-            .withoutSelectorOrderByIncluded()
-            .setCondition('AccountId = :bind0 AND Field IN (\'RC_Account_Status__c\', \'Owner\') AND DataType = \'Text\' AND CreatedDate = LAST_N_DAYS:90')
-            .setQueryBindings(new List<Object> { accountId })
-            .addOrdering(AccountHistory.CreatedDate, QueryFactory.SortOrder.DESCENDING, true);
-    }
+  /**
+   * Status and Owner are the only tracked Account fields that change in production. An Owner change writes one row of user Ids and one of names; DataType = 'Text' keeps only the names.
+   */
+  public QueryFactory selectStatusAndOwnerChangesForAccountSummary(
+    Id accountId
+  ) {
+    return newQueryFactory()
+      .setFactoryName('selectStatusAndOwnerChangesForAccountSummary')
+      .withoutSelectorFieldsIncluded()
+      .withoutSelectorOrderByIncluded()
+      .selectFields(getAccountSummaryFieldList())
+      .setCondition(
+        'AccountId = :bind0 AND Field IN (\'RC_Account_Status__c\', \'Owner\') AND DataType = \'Text\' AND CreatedDate = LAST_N_DAYS:90'
+      )
+      .setQueryBindings(new List<Object>{ accountId })
+      .addOrdering(
+        AccountHistory.CreatedDate,
+        QueryFactory.SortOrder.DESCENDING,
+        true
+      );
+  }
+
+  /** Fields the Account Summary sends for this list, in payload order. */
+  public List<Schema.SObjectField> getAccountSummaryFieldList() {
+    return new List<Schema.SObjectField>{
+      AccountHistory.Field,
+      AccountHistory.OldValue,
+      AccountHistory.NewValue,
+      AccountHistory.CreatedDate
+    };
+  }
 }

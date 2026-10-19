@@ -710,6 +710,20 @@ describe("opportunitySummary public research", () => {
     );
   });
 
+  it("shows the Apex message without caching when generation fails", async () => {
+    localStorage.removeItem(CACHE_KEY);
+    makeGCPCallout.mockResolvedValue("Error: Service is busy.");
+    const element = await mountComponent();
+
+    element.shadowRoot.querySelector("[data-generate-summary]").click();
+    await flushPromises();
+
+    expect(
+      element.shadowRoot.querySelector(".launcher-message").textContent
+    ).toBe("Service is busy.");
+    expect(localStorage.getItem(CACHE_KEY)).toBeNull();
+  });
+
   it("discards expired cache entries and waits for an on-demand request", async () => {
     localStorage.setItem(
       CACHE_KEY,

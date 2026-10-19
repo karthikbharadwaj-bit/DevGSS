@@ -164,6 +164,18 @@ describe("Opportunity Summary PDF document", () => {
     expect(textOf(emptyEnrichment)).not.toContain(labels.pdfSupplemental);
   });
 
+  it("notes Google Search Suggestions only when the service returned them", () => {
+    const withSuggestions = textOf(
+      buildPdfDocument(fixture({ hasSearchSuggestions: true }), labels)
+    );
+    const withoutSuggestions = textOf(buildPdfDocument(fixture(), labels));
+
+    expect(withSuggestions).toContain(labels.searchSuggestions);
+    expect(withSuggestions).toContain(labels.pdfSearchSuggestionsNote);
+    expect(withoutSuggestions).not.toContain(labels.searchSuggestions);
+    expect(withoutSuggestions).not.toContain(labels.pdfSearchSuggestionsNote);
+  });
+
   it("omits research disclaimers and empty sections for legacy responses", () => {
     const doc = buildPdfDocument(
       {

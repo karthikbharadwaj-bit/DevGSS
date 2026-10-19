@@ -111,6 +111,10 @@ import accountTeamHeading from "@salesforce/label/c.AccountSummaryAccountTeamHea
 import openNow from "@salesforce/label/c.AccountSummaryOpenNow";
 import noHistory from "@salesforce/label/c.AccountSummaryNoHistory";
 import researchDisclaimer from "@salesforce/label/c.AccountSummaryResearchDisclaimer";
+import searchSuggestions from "@salesforce/label/c.AccountSummarySearchSuggestions";
+import pdfSearchSuggestionsNote from "@salesforce/label/c.AccountSummaryPdfSearchSuggestionsNote";
+import searchLimitation from "@salesforce/label/c.AccountSummarySearchLimitation";
+import searchesHeading from "@salesforce/label/c.AccountSummarySearchesHeading";
 import researchSources from "@salesforce/label/c.AccountSummaryResearchSources";
 import researchSummary from "@salesforce/label/c.AccountSummaryResearchSummary";
 import researchKindBusinessEvent from "@salesforce/label/c.AccountSummaryResearchKindBusinessEvent";
@@ -259,6 +263,14 @@ export const labels = {
     researchDisclaimer ||
     "AI-generated company research — This information was found and summarized using AI and public web search. It may be incomplete or inaccurate. Verify important details before using it in customer decisions.",
   researchSources: researchSources || "Sources",
+  searchSuggestions: searchSuggestions || "Google Search Suggestions",
+  searchLimitation:
+    searchLimitation ||
+    "Google Search Suggestions aren’t shown because Lightning Web Security sanitizes HTML and SVG strings inserted into the DOM. Showing the supplied markup would change it.",
+  searchesHeading: searchesHeading || "Searches performed ({0})",
+  pdfSearchSuggestionsNote:
+    pdfSearchSuggestionsNote ||
+    "Google returned Search Suggestions for this research. They may only be shown exactly as Google supplies them, so this PDF does not reproduce them. Open the summary in Salesforce to see the searches.",
   researchSummary:
     researchSummary || "Public web research · {0} cited · {1} additional",
   researchKindBusinessEvent: researchKindBusinessEvent || "Business event",

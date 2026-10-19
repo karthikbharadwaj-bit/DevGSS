@@ -55,6 +55,8 @@ import pdfResearch from "@salesforce/label/c.OpportunitySummaryPdfResearch";
 import pdfSupplemental from "@salesforce/label/c.OpportunitySummaryPdfSupplemental";
 import pdfSources from "@salesforce/label/c.OpportunitySummaryPdfSources";
 import pdfSearches from "@salesforce/label/c.OpportunitySummaryPdfSearches";
+import searchSuggestions from "@salesforce/label/c.OpportunitySummarySearchSuggestions";
+import pdfSearchSuggestionsNote from "@salesforce/label/c.OpportunitySummaryPdfSearchSuggestionsNote";
 import pdfRelevance from "@salesforce/label/c.OpportunitySummaryPdfRelevance";
 import pdfAction from "@salesforce/label/c.OpportunitySummaryPdfAction";
 import fromCall from "@salesforce/label/c.SummaryFromCall";
@@ -142,6 +144,10 @@ export const labels = {
   pdfSupplemental: pdfSupplemental || "Additional Company Updates",
   pdfSources: pdfSources || "Other Research Sources",
   pdfSearches: pdfSearches || "Searches Performed",
+  searchSuggestions: searchSuggestions || "Google Search Suggestions",
+  pdfSearchSuggestionsNote:
+    pdfSearchSuggestionsNote ||
+    "Google returned Search Suggestions for this research. They may only be shown exactly as Google supplies them, so this PDF does not reproduce them. Open the summary in Salesforce to see the searches.",
   pdfRelevance: pdfRelevance || "Relevance",
   pdfAction: pdfAction || "Suggested Action",
   fromCall: fromCall || "From a recorded customer call (RingSense)"

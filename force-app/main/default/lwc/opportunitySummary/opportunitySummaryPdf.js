@@ -1,3 +1,13 @@
+import {
+  HEADING_PART,
+  keepHeadingWithContent,
+  pdfText,
+  plainText,
+  safeLink
+} from "c/lwcPdfBlocks";
+
+export { pdfText };
+
 // Design tokens: one accent, neutrals, and two semantic tints for win/risk.
 const INK = "#16325c";
 const TEXT = "#2b3a4f";
@@ -10,11 +20,6 @@ const RISK = "#a35200";
 const PAGE_X = 48;
 const CONTENT_WIDTH = 499; // A4 width (595) minus margins (48 * 2)
 const EVIDENCE_ID = /^E\d+$/;
-// Room for a heading plus its first couple of lines.
-const MIN_SPACE_AFTER_HEADING = 90;
-// Marks the title and rule inside a heading, and the stage rail under it, which never
-// count as content following the heading.
-const HEADING_PART = 2;
 const STAGES_PER_ROW = 5;
 const STAGE_GAP = 4;
 const STAGE_CHIP_COLORS = {
@@ -22,118 +27,6 @@ const STAGE_CHIP_COLORS = {
   current: { fill: BLUE, color: "#ffffff" },
   upcoming: { fill: "#f7f8fa", color: "#7a7a7a" }
 };
-
-const ENTITIES = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "–",
-  mdash: "—",
-  lsquo: "‘",
-  rsquo: "’",
-  ldquo: "“",
-  rdquo: "”",
-  hellip: "…",
-  bull: "•",
-  euro: "€",
-  pound: "£",
-  copy: "©",
-  reg: "®"
-};
-
-function decodeEntities(value) {
-  return value.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
-    if (entity[0] !== "#") return ENTITIES[entity.toLowerCase()] ?? match;
-    const hex = entity[1].toLowerCase() === "x";
-    const code = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
-    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff)
-      ? String.fromCodePoint(code)
-      : "";
-  });
-}
-
-export function pdfText(value, evidenceIds = new Set()) {
-  const source = String(value ?? "")
-    .replace(/<(script|style|iframe|object|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
-  const runs = [];
-  let bold = 0;
-  let italics = 0;
-
-  const append = (text) => {
-    decodeEntities(text)
-      .split(/(\[E\d+\])/g)
-      .filter(Boolean)
-      .forEach((part) => {
-        const id = part.slice(1, -1);
-        runs.push({
-          text: part,
-          bold: bold > 0,
-          italics: italics > 0,
-          ...(/^\[E\d+\]$/.test(part) && evidenceIds.has(id)
-            ? { linkToDestination: `research-${id}`, color: BLUE, bold: true }
-            : {})
-        });
-      });
-  };
-
-  source.split(/(<[^>]*>)/g).forEach((part) => {
-    if (!part.startsWith("<") || !part.endsWith(">")) {
-      append(part);
-      return;
-    }
-    const tag = /^<\s*(\/?)\s*([a-z][\w-]*)\b/i.exec(part);
-    if (!tag) {
-      append(part);
-      return;
-    }
-    const closing = Boolean(tag[1]);
-    switch (tag[2].toLowerCase()) {
-      case "b":
-      case "strong":
-        bold = Math.max(0, bold + (closing ? -1 : 1));
-        break;
-      case "i":
-      case "em":
-        italics = Math.max(0, italics + (closing ? -1 : 1));
-        break;
-      case "br":
-        append("\n");
-        break;
-      case "p":
-      case "div":
-      case "li":
-        if (closing) append("\n");
-        break;
-      default:
-        break;
-    }
-  });
-  return runs.length ? runs : [{ text: "" }];
-}
-
-function plain(value) {
-  return pdfText(value)
-    .map((run) => run.text)
-    .join("")
-    .trim();
-}
-
-function safeLink(value) {
-  try {
-    const url = new URL(value);
-    return ["https:", "http:"].includes(url.protocol) &&
-      !url.username &&
-      !url.password
-      ? url.href
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 function timestamp(value) {
   const date = new Date(value);
@@ -146,6 +39,8 @@ function timestamp(value) {
         .replace(/\.\d{3}Z$/, " UTC")
     : "—";
 }
+
+const plain = (value) => plainText(value);
 
 export function pdfFilename(recordName, recordId, exportedAt) {
   const name =
@@ -240,34 +135,6 @@ function stageRail(stages) {
     },
     margin: [0, 0, 0, 14]
   };
-}
-
-// Keep a heading on the same page as the content that follows it.
-function keepHeadingWithContent(node, followingNodesOrContainer) {
-  const followingNodes = Array.isArray(followingNodesOrContainer)
-    ? followingNodesOrContainer
-    : followingNodesOrContainer?.getFollowingNodesOnPage?.() || [];
-  if (node.headlineLevel !== 1) {
-    return false;
-  }
-  // Rows moved by dontBreakRows still report their old position on this page, so a
-  // heading near the bottom moves on regardless of what appears to follow it.
-  const position = node.startPosition || {};
-  const spaceLeft =
-    (1 - (position.verticalRatio ?? 0)) * (position.pageInnerHeight ?? 0);
-  if (position.pageInnerHeight && spaceLeft < MIN_SPACE_AFTER_HEADING) {
-    return true;
-  }
-  // Page header/footer nodes are reported as following nodes too, but sit above the heading.
-  // Only drawn content counts: a table or list wrapper can start on this page while
-  // its rows have already moved to the next.
-  const top = position.top ?? 0;
-  return followingNodes.every(
-    (next) =>
-      next.headlineLevel === HEADING_PART ||
-      (next.text === undefined && !next.canvas && !next.image) ||
-      (next.startPosition?.top ?? Infinity) <= top
-  );
 }
 
 export function buildPdfDocument(snapshot, labels) {
@@ -570,6 +437,11 @@ export function buildPdfDocument(snapshot, labels) {
       fontSize: 9.5,
       color: MUTED
     });
+  }
+
+  if (snapshot.hasSearchSuggestions) {
+    heading(labels.searchSuggestions);
+    helper(labels.pdfSearchSuggestionsNote);
   }
 
   return {

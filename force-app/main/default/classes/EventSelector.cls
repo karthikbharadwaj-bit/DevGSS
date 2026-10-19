@@ -65,6 +65,8 @@ public class EventSelector extends SObjectSelector {
       .setFactoryName('selectPastEventsForAccountSummary')
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded()
+      .selectFields(getAccountSummaryFieldList())
+      .selectFields(getAccountSummaryRelatedFieldList())
       .setCondition(
         'AccountId = :bind0 AND StartDateTime <= :bind1 AND Type != \'System Use\''
       )
@@ -76,6 +78,26 @@ public class EventSelector extends SObjectSelector {
       );
   }
 
+  /** Fields the Account Summary sends for this list, in payload order. */
+  public List<Schema.SObjectField> getAccountSummaryFieldList() {
+    return new List<Schema.SObjectField>{
+      Event.Id,
+      Event.Subject,
+      Event.CreatedDate,
+      Event.Description,
+      Event.ActivityDate,
+      Event.StartDateTime,
+      Event.DurationInMinutes,
+      Event.Type,
+      Event.WhatId
+    };
+  }
+
+  /** Relationship fields the Account Summary sends with this list. */
+  public List<String> getAccountSummaryRelatedFieldList() {
+    return new List<String>{ 'What.Name', 'Who.Name', 'CreatedBy.Name' };
+  }
+
   public QueryFactory selectUpcomingEventsForAccountSummary(
     Id accountId,
     Datetime asOf,
@@ -85,6 +107,8 @@ public class EventSelector extends SObjectSelector {
       .setFactoryName('selectUpcomingEventsForAccountSummary')
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded()
+      .selectFields(getAccountSummaryFieldList())
+      .selectFields(getAccountSummaryRelatedFieldList())
       .setCondition(
         'AccountId = :bind0 AND StartDateTime > :bind1 AND StartDateTime <= :bind2 AND Type != \'System Use\''
       )

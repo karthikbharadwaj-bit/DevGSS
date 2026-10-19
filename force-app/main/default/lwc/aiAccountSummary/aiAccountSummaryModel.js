@@ -822,12 +822,26 @@ export function buildResearch(enrichment, labels, locale) {
     locale,
     indexToSource
   ).filter((finding) => !citedIds.has(finding.id));
+  const searchQueries = asArray(source.web_search_queries)
+    .map((query) => text(query).trim())
+    .filter(Boolean)
+    .map((query, index) => ({ key: `research-query-${index}`, text: query }));
+  const hasResearch = cited.length > 0 || additional.length > 0;
+  const hasSearchSuggestions = Boolean(
+    text(asObject(source.search_entry_point).rendered_content).trim()
+  );
   return {
     findings: cited,
     additional,
     hasCited: cited.length > 0,
     hasAdditional: additional.length > 0,
-    hasResearch: cited.length > 0 || additional.length > 0,
+    hasResearch,
+    searchQueries,
+    hasSearchQueries: searchQueries.length > 0,
+    searchesHeading: formatLabel(labels.searchesHeading, searchQueries.length),
+    hasSearchSuggestions,
+    showResearch:
+      hasResearch || searchQueries.length > 0 || hasSearchSuggestions,
     summary: formatLabel(
       labels.researchSummary,
       cited.length,

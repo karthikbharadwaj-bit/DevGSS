@@ -1,3 +1,10 @@
+import {
+  HEADING_PART,
+  keepHeadingWithContent,
+  pdfText as sharedPdfText,
+  plainText,
+  safeLink
+} from "c/lwcPdfBlocks";
 import { formatLabel } from "./aiAccountSummaryConfig";
 
 // Design tokens: one accent, neutrals, and semantic tints for growth, risk and red flags.
@@ -16,12 +23,8 @@ const TILES_PER_ROW = 3;
 const HEADER_FIELDS_PER_ROW = 3;
 const EVIDENCE_ID = /^E\d+$/;
 const HISTORY_EVENT_LIMIT = 20;
-// Room for a heading plus its first couple of rows.
-const MIN_SPACE_AFTER_HEADING = 90;
 // Stage names such as "5. Agreement" read as a sentence end when a line wraps after the number.
 const NUMBERED_STAGE = /(^|[^\d.])(\d{1,2}\.) (?=[A-Z])/g;
-// Marks the title and rule inside a heading, which never count as content following it.
-const HEADING_PART = 2;
 const BAND_COLORS = { green: WIN, amber: RISK, red: ALERT };
 const BAND_TINTS = { green: "#ebf7e6", amber: "#fef1e6", red: "#feded8" };
 const FLAG_PADDING = 14;
@@ -34,119 +37,6 @@ const BAR_FILL_COLORS = {
   "bar-fill bar-fill_bad": ALERT
 };
 
-const ENTITIES = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-  nbsp: " ",
-  ndash: "–",
-  mdash: "—",
-  lsquo: "‘",
-  rsquo: "’",
-  ldquo: "“",
-  rdquo: "”",
-  hellip: "…",
-  bull: "•",
-  euro: "€",
-  pound: "£",
-  copy: "©",
-  reg: "®"
-};
-
-function decodeEntities(value) {
-  return value.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
-    if (entity[0] !== "#") return ENTITIES[entity.toLowerCase()] ?? match;
-    const hex = entity[1].toLowerCase() === "x";
-    const code = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
-    return code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff)
-      ? String.fromCodePoint(code)
-      : "";
-  });
-}
-
-export function pdfText(value, evidenceIds = new Set()) {
-  const source = String(value ?? "")
-    .replace(/<(script|style|iframe|object|svg)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
-    .replace(/<!--[\s\S]*?-->/g, "");
-  const runs = [];
-  let bold = 0;
-  let italics = 0;
-
-  const append = (text) => {
-    decodeEntities(text)
-      .replace(NUMBERED_STAGE, "$1$2\u00a0")
-      .split(/(\[E\d+\])/g)
-      .filter(Boolean)
-      .forEach((part) => {
-        const id = part.slice(1, -1);
-        runs.push({
-          text: part,
-          bold: bold > 0,
-          italics: italics > 0,
-          ...(/^\[E\d+\]$/.test(part) && evidenceIds.has(id)
-            ? { linkToDestination: `research-${id}`, color: BLUE, bold: true }
-            : {})
-        });
-      });
-  };
-
-  source.split(/(<[^>]*>)/g).forEach((part) => {
-    if (!part.startsWith("<") || !part.endsWith(">")) {
-      append(part);
-      return;
-    }
-    const tag = /^<\s*(\/?)\s*([a-z][\w-]*)\b/i.exec(part);
-    if (!tag) {
-      append(part);
-      return;
-    }
-    const closing = Boolean(tag[1]);
-    switch (tag[2].toLowerCase()) {
-      case "b":
-      case "strong":
-        bold = Math.max(0, bold + (closing ? -1 : 1));
-        break;
-      case "i":
-      case "em":
-        italics = Math.max(0, italics + (closing ? -1 : 1));
-        break;
-      case "br":
-        append("\n");
-        break;
-      case "p":
-      case "div":
-      case "li":
-        if (closing) append("\n");
-        break;
-      default:
-        break;
-    }
-  });
-  return runs.length ? runs : [{ text: "" }];
-}
-
-function plain(value) {
-  return pdfText(value)
-    .map((run) => run.text)
-    .join("")
-    .trim();
-}
-
-function safeLink(value, base) {
-  try {
-    const url = base ? new URL(value, base) : new URL(value);
-    return ["https:", "http:"].includes(url.protocol) &&
-      !url.username &&
-      !url.password
-      ? url.href
-      : null;
-  } catch {
-    return null;
-  }
-}
-
 function timestamp(value) {
   const date = new Date(value);
   return value !== null &&
@@ -158,6 +48,14 @@ function timestamp(value) {
         .replace(/\.\d{3}Z$/, " UTC")
     : "—";
 }
+
+const keepStageNumbers = (text) => text.replace(NUMBERED_STAGE, "$1$2\u00a0");
+
+export function pdfText(value, evidenceIds = new Set()) {
+  return sharedPdfText(value, evidenceIds, keepStageNumbers);
+}
+
+const plain = (value) => plainText(value, keepStageNumbers);
 
 export function pdfFilename(recordName, recordId, exportedAt) {
   const name =
@@ -264,16 +162,6 @@ function bandChip(band, color) {
       paddingBottom: () => 1
     }
   };
-}
-
-// The routing kind as a tag, unless the step already opens with that word ("Notify …").
-function routeTag(step) {
-  const kind = plain(step.kind);
-  if (!kind) return "";
-  const opensWithKind = plain(step.text)
-    .toLowerCase()
-    .startsWith(kind.toLowerCase());
-  return opensWithKind ? "" : kind.toUpperCase();
 }
 
 function chunk(items, size) {
@@ -650,20 +538,9 @@ export function buildPdfDocument(snapshot, labels) {
   if (flag.routing?.length) {
     flagStack.push(eyebrow(labels.routingHeading, MUTED, [0, 14, 0, 6]));
     flagStack.push({
+      // The step text already says what to do, so the routing kind is not repeated as a tag.
       ol: flag.routing.map((step) => ({
-        text: [
-          ...(routeTag(step)
-            ? [
-                {
-                  text: `${routeTag(step)}  `,
-                  fontSize: 7.5,
-                  bold: true,
-                  color: BLUE
-                }
-              ]
-            : []),
-          ...pdfText(step.text, evidenceIds)
-        ],
+        text: pdfText(step.text, evidenceIds),
         margin: [0, 0, 0, 6]
       })),
       margin: [6, 0, 0, 0]
@@ -910,6 +787,10 @@ export function buildPdfDocument(snapshot, labels) {
       research.additional.forEach((item) => content.push(finding(item)));
     }
   }
+  if (research.hasSearchSuggestions) {
+    content.push(heading(labels.searchSuggestions));
+    content.push(note(labels.pdfSearchSuggestionsNote));
+  }
 
   // History reads as a ledger: one event per row, its period shown once per group.
   // It is reference material, so it comes last and keeps only the latest events.
@@ -1016,33 +897,7 @@ export function buildPdfDocument(snapshot, labels) {
       color: MUTED,
       margin: [PAGE_X, 22, PAGE_X, 0]
     }),
-    // Keep a heading on the same page as the content that follows it.
-    pageBreakBefore: (node, followingNodesOrContainer) => {
-      const followingNodes = Array.isArray(followingNodesOrContainer)
-        ? followingNodesOrContainer
-        : followingNodesOrContainer?.getFollowingNodesOnPage?.() || [];
-      if (node.headlineLevel !== 1) {
-        return false;
-      }
-      // Rows moved by dontBreakRows still report their old position on this page, so a
-      // heading near the bottom moves on regardless of what appears to follow it.
-      const position = node.startPosition || {};
-      const spaceLeft =
-        (1 - (position.verticalRatio ?? 0)) * (position.pageInnerHeight ?? 0);
-      if (position.pageInnerHeight && spaceLeft < MIN_SPACE_AFTER_HEADING) {
-        return true;
-      }
-      // Page header/footer nodes are reported as following nodes too, but sit above the heading.
-      // Only drawn content counts: a table or list wrapper can start on this page while
-      // its rows have already moved to the next.
-      const top = position.top ?? 0;
-      return followingNodes.every(
-        (next) =>
-          next.headlineLevel === HEADING_PART ||
-          (next.text === undefined && !next.canvas && !next.image) ||
-          (next.startPosition?.top ?? Infinity) <= top
-      );
-    },
+    pageBreakBefore: keepHeadingWithContent,
     content
   };
 }

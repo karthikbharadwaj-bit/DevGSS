@@ -1,4 +1,4 @@
-/* Covers the FLS helpers shared by the Opportunity and Account Summary callouts. */
+/* Covers the helpers shared by the Opportunity and Account Summary callouts. */
 @IsTest
 private class Test_GCPSummaryUtil {
   private static final String ACCOUNT_NAME = 'Summary Util Account';
@@ -120,5 +120,42 @@ private class Test_GCPSummaryUtil {
     Assert.isNull(nullRecord, nullRecordMessage);
     Assert.isNull(blankName, blankNameMessage);
     Assert.isNull(nullToken, nullTokenMessage);
+  }
+
+  // ── buildServiceEndpoint ───
+  @IsTest
+  static void shouldReplaceConfiguredPathWhenBuildingEndpoint() {
+    String host = 'https://service.example.invalid';
+    String path = '/api/v1/account_summary';
+
+    Test.startTest();
+    String fromPath = GCPSummaryUtil.buildServiceEndpoint(
+      host + '/api/v1/other_route',
+      path
+    );
+    String fromSlashes = GCPSummaryUtil.buildServiceEndpoint(
+      ' ' + host + '// ',
+      path
+    );
+    String fromBlank = GCPSummaryUtil.buildServiceEndpoint(null, path);
+    Test.stopTest();
+
+    String pathMessage = 'The summary path must replace any configured path.';
+    String slashMessage = 'Every trailing slash and surrounding space must be removed.';
+    String blankMessage = 'A blank endpoint must stay blank.';
+    Assert.areEqual(host + path, fromPath, pathMessage);
+    Assert.areEqual(host + path, fromSlashes, slashMessage);
+    Assert.isNull(fromBlank, blankMessage);
+  }
+
+  // ── errorReply ───
+  @IsTest
+  static void shouldPrefixMessageWhenBuildingErrorReply() {
+    Test.startTest();
+    String reply = GCPSummaryUtil.errorReply('Try again later.');
+    Test.stopTest();
+
+    String replyMessage = 'An error reply must be the Error: prefix followed by the message.';
+    Assert.areEqual('Error: Try again later.', reply, replyMessage);
   }
 }

@@ -363,9 +363,7 @@ describe("c-ai-account-summary", () => {
   });
 
   it("shows the Apex message when generation fails", async () => {
-    makeGCPCallout.mockResolvedValue(
-      JSON.stringify({ success: false, message: "Service is busy." })
-    );
+    makeGCPCallout.mockResolvedValue("Error: Service is busy.");
     const element = await mount();
     await generate(element);
 
@@ -495,6 +493,34 @@ describe("c-ai-account-summary", () => {
     await flushPromises();
 
     expect(makeGCPCallout).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists the searches and explains why Search Suggestions are not shown", async () => {
+    makeGCPCallout.mockResolvedValue(
+      JSON.stringify({
+        ...RESPONSE,
+        account_enrichment: {
+          ...RESPONSE.account_enrichment,
+          web_search_queries: ["acme layoffs 2026", " ", "acme new CFO"],
+          search_entry_point: { rendered_content: "<div>chips</div>" }
+        }
+      })
+    );
+    const element = await mount();
+    await generate(element);
+    query(element, "[data-view-summary]").click();
+    await flushPromises();
+
+    const searches = query(element, "[data-research-searches]");
+    expect(
+      [...searches.querySelectorAll("li")].map((item) => item.textContent)
+    ).toEqual(["acme layoffs 2026", "acme new CFO"]);
+    expect(searches.querySelector("summary").textContent.trim()).toBe(
+      "Searches performed (2)"
+    );
+    const suggestions = query(element, "[data-search-suggestions]");
+    expect(suggestions.textContent).toContain("Google Search Suggestions");
+    expect(suggestions.textContent).not.toContain("chips");
   });
 
   it("keeps research collapsed and opens it on an evidence click", async () => {

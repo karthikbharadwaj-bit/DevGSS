@@ -34,7 +34,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldKeepCompletionFieldOutOfTaskQueryWhenBuildingActivityQuery() {
-    QueryFactory taskQuery = GCPCalloutForOpportunitySummary.buildTaskQuery(
+    QueryFactory taskQuery = OpportunitySummaryActivityHelper.buildTaskQuery(
       OPPORTUNITY_ID,
       Datetime.now().addDays(-180)
     );
@@ -53,7 +53,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldOrderRelatedOpportunitiesByCloseDateWhenLimiting() {
     Test.startTest();
-    String soql = GCPCalloutForOpportunitySummary.buildRelatedOpportunitiesQuery(
+    String soql = OpportunitySummaryPayloadHelper.buildRelatedOpportunitiesQuery(
         ACCOUNT_ID,
         OPPORTUNITY_ID
       )
@@ -75,7 +75,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldPreserveExistingShapesWhenEnrichmentDisabled() {
     Opportunity opportunityRecord = opportunityWithAccount(true);
-    Map<String, Object> opportunityPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> opportunityPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityRecord,
       false
     );
@@ -99,7 +99,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Expected false: opportunityPayload.containsKey(\'accountState\')'
     );
 
-    List<Map<String, Object>> lineItems = GCPCalloutForOpportunitySummary.buildLineItemRows(
+    List<Map<String, Object>> lineItems = OpportunitySummaryPayloadHelper.buildLineItemRows(
       new List<SObject>{ lineItemWithProduct(true) },
       false
     );
@@ -154,9 +154,9 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Expected false: lineItems[0].containsKey(\'productCapabilities\')'
     );
 
-    GCPCalloutForOpportunitySummary.activityParticipantProvider = new FailingParticipantProvider();
+    OpportunitySummaryActivityHelper.activityParticipantProvider = new FailingParticipantProvider();
     try {
-      GCPCalloutForOpportunitySummary.ActivityData activityData = GCPCalloutForOpportunitySummary.assembleActivityData(
+      OpportunitySummaryActivityHelper.ActivityData activityData = OpportunitySummaryActivityHelper.assembleActivityData(
         new List<SObject>{
           taskRecord(
             TASK_ID,
@@ -201,7 +201,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldMapCompanyIdentityWhenOptionalFieldsUnreadable() {
-    Map<String, Object> populated = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> populated = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithAccount(true),
       true
     );
@@ -226,7 +226,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Unexpected value for populated.get(\'accountState\')'
     );
 
-    Map<String, Object> inaccessible = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> inaccessible = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithAccount(false),
       true
     );
@@ -248,7 +248,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'https://research.example.com/company?tracking=1#overview',
       ' RingCX '
     );
-    Map<String, Object> fallback = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> fallback = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       fallbackOpportunity,
       true
     );
@@ -275,7 +275,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'https://fallback.example.com',
       null
     );
-    Map<String, Object> preferred = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> preferred = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       accountWebsitePreferred,
       true
     );
@@ -295,7 +295,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'https://fallback.example.com',
       null
     );
-    Map<String, Object> invalid = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> invalid = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       invalidAccountWebsite,
       true
     );
@@ -314,13 +314,13 @@ private class GCPCalloutForOpportunitySummaryTest {
       null
     );
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         placeholder
       ),
-      'Expected false: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, placeholder )'
+      'Expected false: OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled( true, placeholder )'
     );
-    Map<String, Object> placeholderPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> placeholderPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       placeholder,
       false
     );
@@ -341,11 +341,11 @@ private class GCPCalloutForOpportunitySummaryTest {
       null
     );
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         genericDomainWithoutWebsite
       ),
-      'Expected false: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, genericDomainWithoutW...'
+      'Expected false: OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled( true, genericDomainWithoutW...'
     );
 
     Opportunity genericDomainWithWebsite = opportunityWithIdentity(
@@ -355,14 +355,14 @@ private class GCPCalloutForOpportunitySummaryTest {
       null
     );
     Assert.isTrue(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         genericDomainWithWebsite
       ),
-      'Expected true: GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled( true, genericDomainWithWebs...'
+      'Expected true: OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled( true, genericDomainWithWebs...'
     );
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         false,
         genericDomainWithWebsite
       ),
@@ -373,35 +373,35 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldRejectWebsiteWhenPrivateCredentialedOrNonHttp() {
     Assert.isNull(
-      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+      OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(
         'https://user:secret@example.com'
       ),
-      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'https://user:secret@example.co...'
+      'Expected null: OpportunitySummaryPayloadHelper.sanitizedPublicWebsite( \'https://user:secret@example.co...'
     );
     Assert.isNull(
-      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+      OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(
         'http://192.168.1.10/internal'
       ),
-      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'http://192.168.1.10/internal\' )'
+      'Expected null: OpportunitySummaryPayloadHelper.sanitizedPublicWebsite( \'http://192.168.1.10/internal\' )'
     );
     Assert.isNull(
-      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+      OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(
         'ftp://example.com/file'
       ),
-      'Expected null: GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \'ftp://example.com/file\' )'
+      'Expected null: OpportunitySummaryPayloadHelper.sanitizedPublicWebsite( \'ftp://example.com/file\' )'
     );
     Assert.areEqual(
       'https://www.example.com/public',
-      GCPCalloutForOpportunitySummary.sanitizedPublicWebsite(
+      OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(
         ' https://www.example.com/public?token=removed#section '
       ),
-      'Unexpected value for GCPCalloutForOpportunitySummary.sanitizedPublicWebsite( \' https://www.example.com/publi...'
+      'Unexpected value for OpportunitySummaryPayloadHelper.sanitizedPublicWebsite( \' https://www.example.com/publi...'
     );
   }
 
   @IsTest
   static void shouldMapProductCatalogContextWhenLineItemsLoaded() {
-    List<Map<String, Object>> populated = GCPCalloutForOpportunitySummary.buildLineItemRows(
+    List<Map<String, Object>> populated = OpportunitySummaryPayloadHelper.buildLineItemRows(
       new List<SObject>{ lineItemWithProductContext() },
       true
     );
@@ -455,7 +455,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Expected false: populated[0].containsKey(\'productCapabilities\')'
     );
 
-    List<Map<String, Object>> unavailable = GCPCalloutForOpportunitySummary.buildLineItemRows(
+    List<Map<String, Object>> unavailable = OpportunitySummaryPayloadHelper.buildLineItemRows(
       new List<SObject>{ lineItemWithProduct(false) },
       true
     );
@@ -501,7 +501,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'Unexpected value for unavailable[0].get(\'productName\')'
     );
 
-    List<Map<String, Object>> inactiveFamily = GCPCalloutForOpportunitySummary.buildLineItemRows(
+    List<Map<String, Object>> inactiveFamily = OpportunitySummaryPayloadHelper.buildLineItemRows(
       new List<SObject>{ lineItemWithProductValues('Overage', ' Main ') },
       true
     );
@@ -519,7 +519,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldMapAllLineItemsWhenOpportunityHasSeveral() {
     Integer queriesBefore = Limits.getQueries();
-    List<Map<String, Object>> rows = GCPCalloutForOpportunitySummary.buildLineItemRows(
+    List<Map<String, Object>> rows = OpportunitySummaryPayloadHelper.buildLineItemRows(
       new List<SObject>{
         lineItemWithProductContext(),
         lineItemWithProductValues('Service', 'Main')
@@ -566,13 +566,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     TaskRelation taskRelation = taskRelation(TASK_ID, CONTACT_ID);
     EventRelation eventRelation = eventRelation(EVENT_ID, CONTACT_ID, true);
 
-    List<GCPCalloutForOpportunitySummary.ParticipantEvidence> evidence = GCPCalloutForOpportunitySummary.collectParticipantEvidence(
+    List<OpportunitySummaryActivityHelper.ParticipantEvidence> evidence = OpportunitySummaryActivityHelper.collectParticipantEvidence(
       new List<SObject>{ taskRecord },
       new List<SObject>{ eventRecord },
       new List<SObject>{ taskRelation },
       new List<SObject>{ eventRelation }
     );
-    Map<Id, List<Map<String, Object>>> participants = GCPCalloutForOpportunitySummary.materializeParticipants(
+    Map<Id, List<Map<String, Object>>> participants = OpportunitySummaryActivityHelper.materializeParticipants(
       evidence,
       new List<SObject>{
         contactRecord(CONTACT_ID, 'Avery Customer', 'CIO'),
@@ -628,7 +628,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldOmitContactFieldsWhenInaccessible() {
-    List<GCPCalloutForOpportunitySummary.ParticipantEvidence> evidence = GCPCalloutForOpportunitySummary.collectParticipantEvidence(
+    List<OpportunitySummaryActivityHelper.ParticipantEvidence> evidence = OpportunitySummaryActivityHelper.collectParticipantEvidence(
       new List<SObject>{
         taskRecord(TASK_ID, CONTACT_ID, USER_ID, true, Datetime.now(), 'Notes')
       },
@@ -636,7 +636,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       new List<SObject>(),
       new List<SObject>()
     );
-    Map<Id, List<Map<String, Object>>> participants = GCPCalloutForOpportunitySummary.materializeParticipants(
+    Map<Id, List<Map<String, Object>>> participants = OpportunitySummaryActivityHelper.materializeParticipants(
       evidence,
       new List<SObject>{ contactRecord(CONTACT_ID, null, null) }
     );
@@ -660,15 +660,15 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldReportCoverageStatusWhenDataEmptyOrInaccessible() {
     Datetime windowEnd = Datetime.now();
-    GCPCalloutForOpportunitySummary.ActivityData activityData = new GCPCalloutForOpportunitySummary.ActivityData();
+    OpportunitySummaryActivityHelper.ActivityData activityData = new OpportunitySummaryActivityHelper.ActivityData();
     activityData.activityWindowStart = windowEnd.addDays(-180);
     activityData.activityWindowEnd = windowEnd;
     activityData.conversationWindowStart = windowEnd.addDays(-90);
     activityData.conversationReasonCode = 'transcripts_not_supported_no_recent_notes';
 
-    GCPCalloutForOpportunitySummary.CollectionData stakeholders = new GCPCalloutForOpportunitySummary.CollectionData();
-    GCPCalloutForOpportunitySummary.CollectionData lineItems = new GCPCalloutForOpportunitySummary.CollectionData();
-    Map<String, Object> emptyCoverage = GCPCalloutForOpportunitySummary.buildDataCoverage(
+    OpportunitySummaryPayloadHelper.CollectionData stakeholders = new OpportunitySummaryPayloadHelper.CollectionData();
+    OpportunitySummaryPayloadHelper.CollectionData lineItems = new OpportunitySummaryPayloadHelper.CollectionData();
+    Map<String, Object> emptyCoverage = OpportunitySummaryPayloadHelper.buildDataCoverage(
       activityData,
       stakeholders,
       lineItems
@@ -681,7 +681,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
     lineItems.isAccessible = false;
 
-    Map<String, Object> coverage = GCPCalloutForOpportunitySummary.buildDataCoverage(
+    Map<String, Object> coverage = OpportunitySummaryPayloadHelper.buildDataCoverage(
       activityData,
       stakeholders,
       lineItems
@@ -730,7 +730,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       'unknown'
     );
 
-    GCPCalloutForOpportunitySummary.ConversationResult result = GCPCalloutForOpportunitySummary.buildConversationEvidence(
+    OpportunitySummaryActivityHelper.ConversationResult result = OpportunitySummaryActivityHelper.buildConversationEvidence(
       new List<SObject>(),
       new List<SObject>{ meeting, meeting },
       participants,
@@ -820,7 +820,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       participantMap(openTaskId, CONTACT_ID, 'unknown').get(openTaskId)
     );
 
-    GCPCalloutForOpportunitySummary.ConversationResult result = GCPCalloutForOpportunitySummary.buildConversationEvidence(
+    OpportunitySummaryActivityHelper.ConversationResult result = OpportunitySummaryActivityHelper.buildConversationEvidence(
       tasks,
       new List<SObject>(),
       participants,
@@ -844,9 +844,9 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldPreserveCoreActivitiesWhenParticipantLookupFails() {
     Datetime windowEnd = Datetime.now();
-    GCPCalloutForOpportunitySummary.activityParticipantProvider = new FailingParticipantProvider();
+    OpportunitySummaryActivityHelper.activityParticipantProvider = new FailingParticipantProvider();
     try {
-      GCPCalloutForOpportunitySummary.ActivityData data = GCPCalloutForOpportunitySummary.assembleActivityData(
+      OpportunitySummaryActivityHelper.ActivityData data = OpportunitySummaryActivityHelper.assembleActivityData(
         new List<SObject>{
           taskRecord(
             TASK_ID,
@@ -898,10 +898,10 @@ private class GCPCalloutForOpportunitySummaryTest {
         'Unexpected value for data.conversations.size()'
       );
 
-      Map<String, Object> coverage = GCPCalloutForOpportunitySummary.buildDataCoverage(
+      Map<String, Object> coverage = OpportunitySummaryPayloadHelper.buildDataCoverage(
         data,
-        new GCPCalloutForOpportunitySummary.CollectionData(),
-        new GCPCalloutForOpportunitySummary.CollectionData()
+        new OpportunitySummaryPayloadHelper.CollectionData(),
+        new OpportunitySummaryPayloadHelper.CollectionData()
       );
       Assert.areEqual(
         'error',
@@ -915,7 +915,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   @IsTest
   static void shouldTrimConversationEvidenceWhenPayloadOversized() {
-    GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 600;
+    OpportunitySummaryPayloadHelper.requestSizeLimitBytes = 600;
     try {
       Map<String, Object> payload = new Map<String, Object>{
         'username' => 'fictional@example.invalid',
@@ -935,7 +935,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         }
       };
 
-      String serialized = GCPCalloutForOpportunitySummary.serializePayloadWithinLimit(
+      String serialized = OpportunitySummaryPayloadHelper.serializePayloadWithinLimit(
         payload
       );
       Assert.isTrue(
@@ -991,7 +991,7 @@ private class GCPCalloutForOpportunitySummaryTest {
           }
         }
       };
-      String participantTrimmed = GCPCalloutForOpportunitySummary.serializePayloadWithinLimit(
+      String participantTrimmed = OpportunitySummaryPayloadHelper.serializePayloadWithinLimit(
         participantPayload
       );
       Map<String, Object> participantParsed = (Map<String, Object>) JSON.deserializeUntyped(
@@ -1023,7 +1023,7 @@ private class GCPCalloutForOpportunitySummaryTest {
         new Map<String, Object>{ 'items' => new List<Map<String, Object>>() }
       );
       try {
-        GCPCalloutForOpportunitySummary.serializePayloadWithinLimit(payload);
+        OpportunitySummaryPayloadHelper.serializePayloadWithinLimit(payload);
         Assert.isTrue(false, 'An oversized core payload must fail explicitly.');
       } catch (Exception expected) {
         Assert.isTrue(
@@ -1037,37 +1037,36 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
-  private static void shouldUseConfiguredWindowWhenLegacySettingDiffers() {
+  private static void shouldUseConfiguredWindowWhenRecentDaysIsSet() {
     GCP_Feature_Toggle__c setting = new GCP_Feature_Toggle__c(
       SetupOwnerId = UserInfo.getOrganizationId()
     );
     setting.put('Enable_Opportunity_Summary_Enrichment__c', false);
-    setting.put('Opportunity_Summary_Recent_Days__c', 45);
     insert setting;
     overrideSettings(new Summary_Setting__mdt(RecentDays__c = 30));
-    String windowMessage = 'The RecentDays setting must supersede the legacy custom setting.';
+    String windowMessage = 'The look-back window must come from the RecentDays setting.';
     String toggleMessage = 'Enrichment enablement must still honor the existing feature setting.';
 
     Test.startTest();
     Assert.areEqual(
       30,
-      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
+      OpportunitySummaryHelper.getRecentEvidenceLookbackDays(),
       windowMessage
     );
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
+      OpportunitySummaryHelper.isOpportunitySummaryEnrichmentEnabled(),
       toggleMessage
     );
     setting.put('Enable_Opportunity_Summary_Enrichment__c', true);
     update setting;
     Assert.isTrue(
-      GCPCalloutForOpportunitySummary.isOpportunitySummaryEnrichmentEnabled(),
+      OpportunitySummaryHelper.isOpportunitySummaryEnrichmentEnabled(),
       toggleMessage
     );
     overrideSettings(new Summary_Setting__mdt(RecentDays__c = 366));
     Assert.areEqual(
       90,
-      GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays(),
+      OpportunitySummaryHelper.getRecentEvidenceLookbackDays(),
       'Invalid lookback must use the default.'
     );
     Test.stopTest();
@@ -1079,13 +1078,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     String fallbackMessage = 'Blank, fractional or out-of-range values must use the default.';
     Test.startTest();
     overrideSettings(new Summary_Setting__mdt(RecentDays__c = 1.5));
-    Integer fractional = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    Integer fractional = OpportunitySummaryHelper.getRecentEvidenceLookbackDays();
     overrideSettings(new Summary_Setting__mdt(RecentDays__c = 0));
-    Integer zero = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    Integer zero = OpportunitySummaryHelper.getRecentEvidenceLookbackDays();
     overrideSettings(new Summary_Setting__mdt());
-    Integer blank = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    Integer blank = OpportunitySummaryHelper.getRecentEvidenceLookbackDays();
     overrideSettings(new Summary_Setting__mdt(RecentDays__c = 15));
-    Integer configured = GCPCalloutForOpportunitySummary.getRecentEvidenceLookbackDays();
+    Integer configured = OpportunitySummaryHelper.getRecentEvidenceLookbackDays();
     Test.stopTest();
     resetTestHooks();
 
@@ -1102,7 +1101,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     Test.startTest();
     Assert.areEqual(
       new Set<String>{ 'example.com', 'mail.example.org' },
-      GCPCalloutForOpportunitySummary.parseConfigurationList(
+      OpportunitySummaryHelper.parseConfigurationList(
         ' Example.com\n\nMAIL.EXAMPLE.ORG\r\nexample.com ',
         fallback,
         true
@@ -1111,16 +1110,12 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Assert.areEqual(
       new Set<String>{ 'gmail.com' },
-      GCPCalloutForOpportunitySummary.parseConfigurationList(
-        '  ',
-        fallback,
-        true
-      ),
+      OpportunitySummaryHelper.parseConfigurationList('  ', fallback, true),
       fallbackMessage
     );
     Assert.areEqual(
       new Set<String>{ 'gmail.com' },
-      GCPCalloutForOpportunitySummary.parseConfigurationList(
+      OpportunitySummaryHelper.parseConfigurationList(
         'example.com\nhttps://unsafe.example.com',
         fallback,
         true
@@ -1140,21 +1135,21 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
     Test.startTest();
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity('placeholder customer', null, null, null)
       ),
       'Configured placeholder names must disable enrichment.'
     );
     Assert.isFalse(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity('personal.example', null, null, null)
       ),
       'Configured generic domains must require a company website.'
     );
     Assert.isTrue(
-      GCPCalloutForOpportunitySummary.effectiveEnrichmentEnabled(
+      OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
         true,
         opportunityWithIdentity(
           'personal.example',
@@ -1198,13 +1193,13 @@ private class GCPCalloutForOpportunitySummaryTest {
       );
     }
     Test.startTest();
-    String query = GCPCalloutForOpportunitySummary.buildTaskQuery(
+    String query = OpportunitySummaryActivityHelper.buildTaskQuery(
         OPPORTUNITY_ID,
         windowEnd.addDays(-30)
       )
       .setQuery()
       .getQuery();
-    GCPCalloutForOpportunitySummary.ConversationResult result = GCPCalloutForOpportunitySummary.buildConversationEvidence(
+    OpportunitySummaryActivityHelper.ConversationResult result = OpportunitySummaryActivityHelper.buildConversationEvidence(
       tasks,
       new List<SObject>(),
       participants,
@@ -1239,11 +1234,11 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    QueryFactory openQuery = GCPCalloutForOpportunitySummary.buildOpenCaseQuery(
+    QueryFactory openQuery = OpportunitySummaryPayloadHelper.buildOpenCaseQuery(
         ACCOUNT_ID
       )
       .setQuery();
-    QueryFactory closedQuery = GCPCalloutForOpportunitySummary.buildRecentlyClosedCaseQuery(
+    QueryFactory closedQuery = OpportunitySummaryPayloadHelper.buildRecentlyClosedCaseQuery(
         ACCOUNT_ID
       )
       .setQuery();
@@ -1278,29 +1273,18 @@ private class GCPCalloutForOpportunitySummaryTest {
   static void shouldSendEnrichmentFlagAsBooleanWhenBuildingRequest() {
     Map<String, Object> payload = new Map<String, Object>();
 
-    GCPCalloutForOpportunitySummary.addEnrichmentRequestControl(payload, false);
+    OpportunitySummaryPayloadHelper.addEnrichmentRequestControl(payload, false);
     Assert.areEqual(
       false,
       payload.get('enableOpportunitySummaryEnrichment'),
       'Expected false: payload.get(\'enableOpportunitySummaryEnrichment\')'
     );
 
-    GCPCalloutForOpportunitySummary.addEnrichmentRequestControl(payload, true);
+    OpportunitySummaryPayloadHelper.addEnrichmentRequestControl(payload, true);
     Assert.areEqual(
       true,
       payload.get('enableOpportunitySummaryEnrichment'),
       'Expected true: payload.get(\'enableOpportunitySummaryEnrichment\')'
-    );
-  }
-
-  @IsTest
-  static void shouldUseExactEndpointWhenBaseUrlConfigured() {
-    Assert.areEqual(
-      'https://service.example.invalid/api/v1/opportunity_summary',
-      GCPCalloutForOpportunitySummary.buildServiceEndpoint(
-        'https://service.example.invalid/api/v1/another_route'
-      ),
-      'Unexpected value for GCPCalloutForOpportunitySummary.buildServiceEndpoint( \'https://service.example.invalid/...'
     );
   }
 
@@ -1311,7 +1295,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(raw)
+      OpportunitySummaryHelper.buildResult(raw)
     );
 
     Assert.areEqual(
@@ -1348,7 +1332,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(raw)
+      OpportunitySummaryHelper.buildResult(raw)
     );
     Map<String, Object> enrichment = (Map<String, Object>) result.get(
       'opportunity_enrichment'
@@ -1405,7 +1389,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(raw)
+      OpportunitySummaryHelper.buildResult(raw)
     );
 
     Assert.areEqual(
@@ -1429,7 +1413,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     Map<String, Object> payload = new Map<String, Object>();
 
     Test.startTest();
-    GCPCalloutForOpportunitySummary.addViewerContext(payload);
+    OpportunitySummaryPayloadHelper.addViewerContext(payload);
     Test.stopTest();
 
     Assert.areEqual(
@@ -1457,11 +1441,11 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    Map<String, Object> closedPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> closedPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       closedOpportunity,
       false
     );
-    Map<String, Object> unreadablePayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> unreadablePayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithAccount(false),
       false
     );
@@ -1505,11 +1489,11 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    Map<String, Object> classifiedPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> classifiedPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       classifiedOpportunity,
       false
     );
-    Map<String, Object> blankPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> blankPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithAccount(false),
       false
     );
@@ -1542,12 +1526,12 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldBuildConversationEvidenceWhenEnrichmentDisabled() {
     Datetime windowEnd = Datetime.now();
-    GCPCalloutForOpportunitySummary.activityParticipantProvider = new StubParticipantProvider(
+    OpportunitySummaryActivityHelper.activityParticipantProvider = new StubParticipantProvider(
       participantMap(TASK_ID, CONTACT_ID, 'unknown')
     );
     try {
       Test.startTest();
-      GCPCalloutForOpportunitySummary.ActivityData activityData = GCPCalloutForOpportunitySummary.assembleActivityData(
+      OpportunitySummaryActivityHelper.ActivityData activityData = OpportunitySummaryActivityHelper.assembleActivityData(
         new List<SObject>{
           taskRecord(
             TASK_ID,
@@ -1606,11 +1590,11 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    Map<String, Object> lostPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> lostPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       lostOpportunity,
       false
     );
-    Map<String, Object> blankPayload = GCPCalloutForOpportunitySummary.buildOpportunityMap(
+    Map<String, Object> blankPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithAccount(false),
       false
     );
@@ -1659,7 +1643,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    GCPCalloutForOpportunitySummary.ActivityData activityData = GCPCalloutForOpportunitySummary.assembleActivityData(
+    OpportunitySummaryActivityHelper.ActivityData activityData = OpportunitySummaryActivityHelper.assembleActivityData(
       new List<SObject>{
         callTask,
         taskRecord(
@@ -1775,10 +1759,10 @@ private class GCPCalloutForOpportunitySummaryTest {
     };
 
     Test.startTest();
-    List<Map<String, Object>> named = GCPCalloutForOpportunitySummary.namedRecordReferences(
+    List<Map<String, Object>> named = OpportunitySummaryHelper.namedRecordReferences(
       payload
     );
-    Set<Id> referenceableIds = GCPCalloutForOpportunitySummary.referenceableRecordIds(
+    Set<Id> referenceableIds = OpportunitySummaryHelper.referenceableRecordIds(
       payload
     );
     Test.stopTest();
@@ -1847,7 +1831,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
     Test.startTest();
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(
+      OpportunitySummaryHelper.buildResult(
         JSON.deserializeUntyped(body),
         new Set<Id>{ ACCOUNT_ID, CONTACT_ID },
         named
@@ -1901,9 +1885,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     };
 
     Test.startTest();
-    Set<Id> ids = GCPCalloutForOpportunitySummary.referenceableRecordIds(
-      payload
-    );
+    Set<Id> ids = OpportunitySummaryHelper.referenceableRecordIds(payload);
     Test.stopTest();
 
     Assert.areEqual(
@@ -1944,7 +1926,7 @@ private class GCPCalloutForOpportunitySummaryTest {
 
     Test.startTest();
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(
+      OpportunitySummaryHelper.buildResult(
         JSON.deserializeUntyped(body),
         sentIds,
         new List<Map<String, Object>>()
@@ -2329,11 +2311,11 @@ private class GCPCalloutForOpportunitySummaryTest {
 
   private static void resetTestHooks() {
     SummarySettingHelper.settingNameToOverrideMap.clear();
-    GCPCalloutForOpportunitySummary.activityParticipantProvider = new GCPCalloutForOpportunitySummary.ActivityParticipantProvider();
-    GCPCalloutForOpportunitySummary.requestSizeLimitBytes = 2 * 1024 * 1024;
+    OpportunitySummaryActivityHelper.activityParticipantProvider = new OpportunitySummaryActivityHelper.ActivityParticipantProvider();
+    OpportunitySummaryPayloadHelper.requestSizeLimitBytes = 2 * 1024 * 1024;
   }
 
-  private class StubParticipantProvider extends GCPCalloutForOpportunitySummary.ActivityParticipantProvider {
+  private class StubParticipantProvider extends OpportunitySummaryActivityHelper.ActivityParticipantProvider {
     private Map<Id, List<Map<String, Object>>> participantsByActivityId;
 
     private StubParticipantProvider(
@@ -2342,18 +2324,18 @@ private class GCPCalloutForOpportunitySummaryTest {
       this.participantsByActivityId = participantsByActivityId;
     }
 
-    public override GCPCalloutForOpportunitySummary.ActivityParticipantResult load(
+    public override OpportunitySummaryActivityHelper.ActivityParticipantResult load(
       List<SObject> tasks,
       List<SObject> events
     ) {
-      GCPCalloutForOpportunitySummary.ActivityParticipantResult result = new GCPCalloutForOpportunitySummary.ActivityParticipantResult();
+      OpportunitySummaryActivityHelper.ActivityParticipantResult result = new OpportunitySummaryActivityHelper.ActivityParticipantResult();
       result.participantsByActivityId = participantsByActivityId;
       return result;
     }
   }
 
-  private class FailingParticipantProvider extends GCPCalloutForOpportunitySummary.ActivityParticipantProvider {
-    public override GCPCalloutForOpportunitySummary.ActivityParticipantResult load(
+  private class FailingParticipantProvider extends OpportunitySummaryActivityHelper.ActivityParticipantProvider {
+    public override OpportunitySummaryActivityHelper.ActivityParticipantResult load(
       List<SObject> tasks,
       List<SObject> events
     ) {
@@ -2402,7 +2384,7 @@ private class GCPCalloutForOpportunitySummaryTest {
       .getRecord();
 
     Test.startTest();
-    Map<String, Object> payload = GCPCalloutForOpportunitySummary.buildPayload(
+    Map<String, Object> payload = OpportunitySummaryPayloadHelper.buildPayload(
       'summary-test@example.com',
       opportunity.Id
     );
@@ -2467,7 +2449,7 @@ private class GCPCalloutForOpportunitySummaryTest {
   static void shouldAlwaysSendRequestControlWhenBuildingRequest() {
     Map<String, Object> payload = new Map<String, Object>();
 
-    GCPCalloutForOpportunitySummary.addCallTranscriptsRequestControl(
+    OpportunitySummaryPayloadHelper.addCallTranscriptsRequestControl(
       payload,
       null
     );
@@ -2493,10 +2475,8 @@ private class GCPCalloutForOpportunitySummaryTest {
         '"calls":[{"task_id":"00T000000000001AAA","source":"ace","in_request":true}]}}}'
     );
 
-    String resultWithout = GCPCalloutForOpportunitySummary.buildResult(
-      withoutBlock
-    );
-    String resultWith = GCPCalloutForOpportunitySummary.buildResult(withBlock);
+    String resultWithout = OpportunitySummaryHelper.buildResult(withoutBlock);
+    String resultWith = OpportunitySummaryHelper.buildResult(withBlock);
 
     Assert.areEqual(
       true,
@@ -2520,7 +2500,7 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Map<String, Object> result = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(raw)
+      OpportunitySummaryHelper.buildResult(raw)
     );
 
     List<Object> insights = (List<Object>) result.get('call_insights');
@@ -2550,12 +2530,12 @@ private class GCPCalloutForOpportunitySummaryTest {
   static void shouldOmitCallInsightsWhenAbsentOrMalformed() {
     String summary = '"opportunity_summary":{"Executive Summary":["CRM summary"]}';
     Map<String, Object> absent = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(
+      OpportunitySummaryHelper.buildResult(
         JSON.deserializeUntyped('{"statusCode":200,"body":{' + summary + '}}')
       )
     );
     Map<String, Object> malformed = (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.buildResult(
+      OpportunitySummaryHelper.buildResult(
         JSON.deserializeUntyped(
           '{"statusCode":200,"body":{' +
             summary +
@@ -2624,12 +2604,16 @@ private class GCPCalloutForOpportunitySummaryTest {
       .Id;
   }
 
+  private static String calloutReply(Id opportunityId) {
+    return GCPCalloutForOpportunitySummary.makeGCPCallout(
+      UserInfo.getUserId(),
+      opportunityId
+    );
+  }
+
   private static Map<String, Object> calloutResult(Id opportunityId) {
     return (Map<String, Object>) JSON.deserializeUntyped(
-      GCPCalloutForOpportunitySummary.makeGCPCallout(
-        UserInfo.getUserId(),
-        opportunityId
-      )
+      calloutReply(opportunityId)
     );
   }
 
@@ -2666,14 +2650,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     );
 
     Test.startTest();
-    Map<String, Object> result = calloutResult(opportunityId);
+    String result = calloutReply(opportunityId);
     Test.stopTest();
 
     String failureMessage = 'A failed Cloud Run call must return the generic error only.';
-    Assert.areEqual(false, result.get('success'), failureMessage);
     Assert.areEqual(
-      System.Label.SummaryServerError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.SummaryServerError),
+      result,
       failureMessage
     );
   }
@@ -2684,14 +2667,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     Test.setMock(HttpCalloutMock.class, new SummaryServiceMock(200, ''));
 
     Test.startTest();
-    Map<String, Object> result = calloutResult(opportunityId);
+    String result = calloutReply(opportunityId);
     Test.stopTest();
 
     String blankMessage = 'An empty Cloud Run response must return the generic error.';
-    Assert.areEqual(false, result.get('success'), blankMessage);
     Assert.areEqual(
-      System.Label.SummaryServerError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.SummaryServerError),
+      result,
       blankMessage
     );
   }
@@ -2701,14 +2683,13 @@ private class GCPCalloutForOpportunitySummaryTest {
     Id opportunityId = summaryOpportunityId(false);
 
     Test.startTest();
-    Map<String, Object> result = calloutResult(opportunityId);
+    String result = calloutReply(opportunityId);
     Test.stopTest();
 
     String configMessage = 'Missing endpoint settings must return the generic error.';
-    Assert.areEqual(false, result.get('success'), configMessage);
     Assert.areEqual(
-      System.Label.SummaryServerError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.SummaryServerError),
+      result,
       configMessage
     );
   }
@@ -2716,14 +2697,13 @@ private class GCPCalloutForOpportunitySummaryTest {
   @IsTest
   static void shouldReturnGenericErrorWhenRecordIdIsBlank() {
     Test.startTest();
-    Map<String, Object> result = calloutResult(null);
+    String result = calloutReply(null);
     Test.stopTest();
 
     String blankIdMessage = 'A blank record Id must return the generic error.';
-    Assert.areEqual(false, result.get('success'), blankIdMessage);
     Assert.areEqual(
-      System.Label.SummaryServerError,
-      result.get('message'),
+      GCPSummaryUtil.errorReply(System.Label.SummaryServerError),
+      result,
       blankIdMessage
     );
   }

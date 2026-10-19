@@ -93,6 +93,26 @@ describe("Account Summary PDF document", () => {
     expect(textOf(doc)).not.toContain("<strong>");
   });
 
+  it("notes Google Search Suggestions only when the service returned them", () => {
+    const without = snapshot();
+    without.view.research = {
+      ...without.view.research,
+      hasSearchSuggestions: false
+    };
+    const withSuggestions = snapshot();
+    withSuggestions.view.research = {
+      ...withSuggestions.view.research,
+      hasSearchSuggestions: true
+    };
+
+    expect(textOf(buildPdfDocument(without, labels))).not.toContain(
+      labels.pdfSearchSuggestionsNote
+    );
+    const text = textOf(buildPdfDocument(withSuggestions, labels));
+    expect(text).toContain(labels.searchSuggestions);
+    expect(text).toContain(labels.pdfSearchSuggestionsNote);
+  });
+
   it("links evidence references to the cited research findings", () => {
     const doc = buildPdfDocument(snapshot(), labels);
     const links = nodes(doc, (node) => Boolean(node.linkToDestination)).map(
@@ -212,17 +232,18 @@ describe("Account Summary PDF document", () => {
     expect(lastHeading).toContain(labels.sectionHistory);
   });
 
-  it("tags routing steps only when the text does not already say the kind", () => {
+  it("prints routing steps without a kind tag", () => {
     const data = snapshot();
     data.view.flag.routing = [
-      { key: "r1", kind: "NOTIFY", text: "Notify the renewals manager." },
-      { key: "r2", kind: "WATCH", text: "The case crosses 90 days." }
+      { key: "r1", kind: "notify", text: "Notify the renewals manager." },
+      { key: "r2", kind: "record", text: "Update the open opportunity." }
     ];
 
     const text = textOf(buildPdfDocument(data, labels));
 
-    expect(text).not.toMatch(/NOTIFY\s+Notify/);
-    expect(text).toMatch(/WATCH\s+The case crosses 90 days/);
+    expect(text).toContain("Notify the renewals manager.");
+    expect(text).toContain("Update the open opportunity.");
+    expect(text).not.toMatch(/NOTIFY|RECORD/);
   });
 
   it("keeps a numbered stage name together across a line wrap", () => {

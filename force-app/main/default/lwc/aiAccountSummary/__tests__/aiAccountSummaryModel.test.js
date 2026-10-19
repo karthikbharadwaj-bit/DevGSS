@@ -338,6 +338,23 @@ describe("Account Summary view model", () => {
     expect(view.header.rows).toEqual([]);
     expect(view.flag.hasScore).toBe(false);
     expect(view.research.hasResearch).toBe(false);
+    expect(view.research.hasSearchSuggestions).toBe(false);
+  });
+
+  it("flags Google Search Suggestions when the enrichment carries rendered markup", () => {
+    const view = buildAccountViewModel(
+      {
+        account_summary: {},
+        account_enrichment: {
+          search_entry_point: { rendered_content: "<div>chips</div>" }
+        }
+      },
+      labels,
+      LOCALE
+    );
+    expect(view.research.hasSearchSuggestions).toBe(true);
+    expect(view.research.hasResearch).toBe(false);
+    expect(view.research.showResearch).toBe(true);
   });
 
   it("keeps the opportunities closing soonest, up to the row limit", () => {

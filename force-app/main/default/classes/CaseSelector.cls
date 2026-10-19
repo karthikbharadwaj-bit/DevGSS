@@ -579,9 +579,32 @@ public inherited sharing class CaseSelector extends SObjectSelector {
       .setFactoryName('selectOpenCasesForAccountSummary')
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded()
+      .selectFields(getOpenCaseAccountSummaryFieldList())
+      .selectFields(getAccountSummaryRelatedFieldList())
       .setCondition('AccountId = :bind0 AND IsClosed = false')
       .setQueryBindings(new List<Object>{ accountId })
       .addOrdering(Case.CreatedDate, QueryFactory.SortOrder.ASCENDING, false);
+  }
+
+  /** Fields the Account Summary sends for this list, in payload order. */
+  public List<Schema.SObjectField> getOpenCaseAccountSummaryFieldList() {
+    return new List<Schema.SObjectField>{
+      Case.Id,
+      Case.CaseNumber,
+      Case.Subject,
+      Case.Status,
+      Case.Priority,
+      Case.IsEscalated,
+      Case.CreatedDate,
+      Case.Reason,
+      Case.Type,
+      Case.IsClosed
+    };
+  }
+
+  /** Relationship fields the Account Summary sends with this list. */
+  public List<String> getAccountSummaryRelatedFieldList() {
+    return new List<String>{ 'Owner.Name' };
   }
 
   public QueryFactory selectRecentlyClosedCasesForAccountSummary(
@@ -592,10 +615,29 @@ public inherited sharing class CaseSelector extends SObjectSelector {
       .setFactoryName('selectRecentlyClosedCasesForAccountSummary')
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded()
+      .selectFields(getClosedCaseAccountSummaryFieldList())
+      .selectFields(getAccountSummaryRelatedFieldList())
       .setCondition(
         'AccountId = :bind0 AND IsClosed = true AND ClosedDate >= :bind1'
       )
       .setQueryBindings(new List<Object>{ accountId, closedSince })
       .addOrdering(Case.ClosedDate, QueryFactory.SortOrder.DESCENDING, true);
+  }
+
+  /** Fields the Account Summary sends for this list, in payload order. */
+  public List<Schema.SObjectField> getClosedCaseAccountSummaryFieldList() {
+    return new List<Schema.SObjectField>{
+      Case.Id,
+      Case.CaseNumber,
+      Case.Subject,
+      Case.Status,
+      Case.Priority,
+      Case.IsEscalated,
+      Case.CreatedDate,
+      Case.ClosedDate,
+      Case.Reason,
+      Case.Type,
+      Case.IsClosed
+    };
   }
 }

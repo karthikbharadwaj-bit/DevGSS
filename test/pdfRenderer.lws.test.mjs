@@ -2,7 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
-import { buildPdfDocument } from "../force-app/main/default/lwc/opportunitySummary/opportunitySummaryPdf.js";
+import "./support/lwcModules.mjs";
+
+// Loaded after lwcModules.mjs registers the resolver for its "c/" imports.
+const { buildPdfDocument } =
+  await import("../force-app/main/default/lwc/opportunitySummary/opportunitySummaryPdf.js");
 
 // Evaluates the vendored scripts the way Lightning Web Security evaluated them
 // in DevGss (stage probe, 2026-10-07): strict code, top-level `this` and `self`
