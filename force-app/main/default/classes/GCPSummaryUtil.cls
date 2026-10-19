@@ -72,4 +72,68 @@ public inherited sharing class GCPSummaryUtil {
   public static String errorReply(String message) {
     return String.format(ERROR_REPLY_FORMAT, new List<Object>{ message });
   }
+
+  /**
+   * Drops rows from the end of the longest list until the serialized payload is under limitBytes
+   * or every list is empty, so each list keeps as many of its first rows as possible. The lists
+   * are changed in place and must be the ones the payload holds.
+   * @return keys of the lists that lost rows
+   */
+  public static Set<String> trimListsToFit(
+    Map<String, Object> payload,
+    Map<String, List<Object>> keyToRows,
+    Integer limitBytes
+  ) {
+    Set<String> trimmedKeys = new Set<String>();
+    Integer overflowBytes = bytesOverLimit(payload, limitBytes);
+    while (
+      overflowBytes > 0 &&
+      dropLongestRows(keyToRows, overflowBytes, trimmedKeys)
+    ) {
+      overflowBytes = bytesOverLimit(payload, limitBytes);
+    }
+    return trimmedKeys;
+  }
+
+  private static Integer bytesOverLimit(
+    Map<String, Object> payload,
+    Integer limitBytes
+  ) {
+    return Blob.valueOf(JSON.serialize(payload)).size() - limitBytes + 1;
+  }
+
+  /* Each dropped row is measured on its own so the payload is serialized again only once per pass. */
+  private static Boolean dropLongestRows(
+    Map<String, List<Object>> keyToRows,
+    Integer overflowBytes,
+    Set<String> trimmedKeys
+  ) {
+    Integer droppedBytes = 0;
+    Boolean hasDropped = false;
+    while (droppedBytes < overflowBytes) {
+      String longestKey = longestListKey(keyToRows);
+      if (longestKey == null) {
+        return hasDropped;
+      }
+      List<Object> rows = keyToRows.get(longestKey);
+      Object row = rows.remove(rows.size() - 1);
+      droppedBytes += Blob.valueOf(JSON.serialize(row)).size() + 1;
+      trimmedKeys.add(longestKey);
+      hasDropped = true;
+    }
+    return hasDropped;
+  }
+
+  private static String longestListKey(Map<String, List<Object>> keyToRows) {
+    String longestKey;
+    Integer longestSize = 0;
+    for (String listKey : keyToRows.keySet()) {
+      List<Object> rows = keyToRows.get(listKey);
+      if (rows != null && rows.size() > longestSize) {
+        longestKey = listKey;
+        longestSize = rows.size();
+      }
+    }
+    return longestKey;
+  }
 }

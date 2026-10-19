@@ -25,7 +25,7 @@ public with sharing class OpportunitySummaryActivityHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxActivities__c,
         50,
-        50
+        200
       );
     }
   }
@@ -35,7 +35,7 @@ public with sharing class OpportunitySummaryActivityHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxConversationItems__c,
         10,
-        10
+        25
       );
     }
   }

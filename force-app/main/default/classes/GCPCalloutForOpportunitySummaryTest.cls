@@ -1037,6 +1037,63 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  static void shouldTrimRecordListsWhenEvidenceTrimIsNotEnough() {
+    OpportunitySummaryPayloadHelper.requestSizeLimitBytes = 700;
+    try {
+      List<Map<String, Object>> stakeholders = new List<Map<String, Object>>();
+      for (Integer index = 0; index < 5; index++) {
+        stakeholders.add(new Map<String, Object>{ 'name' => 'n'.repeat(100) });
+      }
+      Map<String, Object> payload = new Map<String, Object>{
+        'conversationEvidence' => new Map<String, Object>{
+          'items' => new List<Map<String, Object>>()
+        },
+        'stakeholders' => stakeholders,
+        'dataCoverage' => new Map<String, Object>{
+          'stakeholders' => new Map<String, Object>{
+            'status' => 'available',
+            'returnedCount' => 5,
+            'isTruncated' => false
+          }
+        }
+      };
+
+      Test.startTest();
+      String serialized = OpportunitySummaryPayloadHelper.serializePayloadWithinLimit(
+        payload
+      );
+      Test.stopTest();
+
+      Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(
+        serialized
+      );
+      Map<String, Object> stakeholderCoverage = (Map<String, Object>) ((Map<String, Object>) parsed.get(
+          'dataCoverage'
+        ))
+        .get('stakeholders');
+      Integer keptStakeholders = ((List<Object>) parsed.get('stakeholders'))
+        .size();
+      Assert.isTrue(
+        Blob.valueOf(serialized).size() < 700,
+        'The request must be trimmed under the limit instead of failing.'
+      );
+      Assert.isTrue(keptStakeholders < 5, 'Stakeholder rows must be dropped.');
+      Assert.areEqual(
+        keptStakeholders,
+        stakeholderCoverage.get('returnedCount'),
+        'Coverage must report the stakeholders actually sent.'
+      );
+      Assert.areEqual(
+        'request_size_limit',
+        stakeholderCoverage.get('reasonCode'),
+        'A list trimmed for size must say so in its coverage.'
+      );
+    } finally {
+      resetTestHooks();
+    }
+  }
+
+  @IsTest
   private static void shouldUseConfiguredWindowWhenRecentDaysIsSet() {
     GCP_Feature_Toggle__c setting = new GCP_Feature_Toggle__c(
       SetupOwnerId = UserInfo.getOrganizationId()
@@ -2556,6 +2613,74 @@ private class GCPCalloutForOpportunitySummaryTest {
       true,
       malformed.get('success'),
       'Expected true: malformed.get(\'success\')'
+    );
+  }
+
+  // ── getActivityData ───
+  @IsTest
+  static void shouldQueryTasksEventsAndOwnersWhenLoadingActivityData() {
+    Id opportunityId = summaryOpportunityId(false);
+    Id accountId = [
+      SELECT AccountId
+      FROM Opportunity
+      WHERE Id = :opportunityId
+    ]
+    .AccountId;
+    Contact buyer = (Contact) new SObjectBuilder(Contact.SObjectType)
+      .setField(Contact.AccountId, accountId)
+      .setField(
+        Contact.LastName,
+        ValueProviderBuilder.provideUniqueString('Activity contact')
+      )
+      .create()
+      .getRecord();
+    Task callTask = (Task) new SObjectBuilder(Task.SObjectType)
+      .setField(Task.WhatId, opportunityId)
+      .setField(Task.WhoId, buyer.Id)
+      .setField(Task.Subject, 'Discovery call')
+      .setField(Task.Status, 'Completed')
+      .setField(Task.ActivityDate, Date.today())
+      .create()
+      .getRecord();
+    Event meeting = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, opportunityId)
+      .setField(Event.WhoId, buyer.Id)
+      .setField(Event.Subject, 'Pricing review')
+      .setField(Event.ActivityDateTime, Datetime.now().addHours(-2))
+      .setField(Event.DurationInMinutes, 30)
+      .create()
+      .getRecord();
+
+    Test.startTest();
+    OpportunitySummaryActivityHelper.ActivityData data = OpportunitySummaryActivityHelper.getActivityData(
+      opportunityId,
+      true,
+      90
+    );
+    Test.stopTest();
+
+    Assert.areEqual(1, data.tasks.size(), 'The completed task must be sent.');
+    Assert.areEqual(1, data.events.size(), 'The past meeting must be sent.');
+    Map<String, Object> eventRow = data.events[0];
+    Assert.areEqual(
+      meeting.Id,
+      eventRow.get('sourceRecordId'),
+      'An enriched event row must carry its record Id.'
+    );
+    Assert.areEqual(
+      UserInfo.getName(),
+      eventRow.get('ownerName'),
+      'A user-owned event must carry the owner name.'
+    );
+    Assert.areEqual(
+      callTask.Id,
+      data.tasks[0].get('sourceRecordId'),
+      'An enriched task row must carry its record Id.'
+    );
+    Assert.areNotEqual(
+      'task_completion_time_retrieval_error',
+      data.conversationReasonCode,
+      'Task completion times must load for queried tasks.'
     );
   }
 

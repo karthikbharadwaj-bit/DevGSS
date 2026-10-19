@@ -12,6 +12,12 @@ public with sharing class OpportunitySummaryPayloadHelper {
   private static final String ENRICHMENT_REQUEST_FIELD = 'enableOpportunitySummaryEnrichment';
   private static final String CALL_TRANSCRIPTS_REQUEST_FIELD = 'enableOpportunitySummaryCallTranscripts';
 
+  private static final List<Schema.SObjectField> TRACKED_HISTORY_FIELDS = new List<Schema.SObjectField>{
+    Opportunity.CloseDate,
+    Opportunity.Amount,
+    Opportunity.Probability
+  };
+
   private static final Set<String> UNRESOLVED_ACCOUNT_NAMES = new Set<String>{
     'NEW COMPANY',
     'FIRST NAME LAST NAME',
@@ -51,7 +57,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxHistoryRows__c,
         50,
-        50
+        200
       );
     }
   }
@@ -61,7 +67,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxOpenCases__c,
         50,
-        50
+        200
       );
     }
   }
@@ -71,7 +77,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxClosedCases__c,
         50,
-        50
+        200
       );
     }
   }
@@ -81,7 +87,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxRelatedOpps__c,
         25,
-        25
+        100
       );
     }
   }
@@ -91,7 +97,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxLineItems__c,
         50,
-        50
+        200
       );
     }
   }
@@ -101,7 +107,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
       return OpportunitySummaryHelper.configuredInteger(
         Summary_Setting__mdt.MaxStakeholders__c,
         25,
-        25
+        100
       );
     }
   }
@@ -113,6 +119,10 @@ public with sharing class OpportunitySummaryPayloadHelper {
 
   @TestVisible
   private static Integer requestSizeLimitBytes = MAX_REQUEST_BYTES;
+
+  private static final String REASON_REQUEST_SIZE_LIMIT = 'request_size_limit';
+  /* Coverage entries are marked after trimming, and each can grow by one reason code. */
+  private static final Integer COVERAGE_HEADROOM_BYTES = 128;
 
   public static Map<String, Object> buildPayload(String username, Id recordId) {
     Opportunity opp = getOpportunity(recordId);
@@ -512,11 +522,10 @@ public with sharing class OpportunitySummaryPayloadHelper {
 
   private static List<Map<String, Object>> getFieldHistory(Id recordId) {
     List<Map<String, Object>> rows = new List<Map<String, Object>>();
-    Set<String> trackedFields = new Set<String>{
-      'CloseDate',
-      'Amount',
-      'Probability'
-    };
+    Set<String> trackedFields = new Set<String>();
+    for (Schema.SObjectField field : TRACKED_HISTORY_FIELDS) {
+      trackedFields.add(field.getDescribe().getName());
+    }
     List<SObject> histories = GCPSummaryUtil.stripReadable(
       new OpportunityFieldHistorySelector()
         .selectFieldHistoryByOpportunityIdAndFields(recordId, trackedFields)
@@ -916,37 +925,32 @@ public with sharing class OpportunitySummaryPayloadHelper {
           : data.rows.isEmpty() ? 'no_visible_records' : null;
   }
 
+  /**
+   * Serializes the payload under the service limit. Conversation evidence goes first, then
+   * activity participants, then rows from the end of the longest lists; trimmed collections are
+   * marked request_size_limit in their coverage entry.
+   */
   public static String serializePayloadWithinLimit(
     Map<String, Object> payload
   ) {
     String serialized = JSON.serialize(payload);
-    if (Blob.valueOf(serialized).size() < requestSizeLimitBytes) {
+    if (isWithinRequestLimit(serialized)) {
       return serialized;
     }
-
-    Map<String, Object> conversationEvidence = mapValue(
-      payload.get('conversationEvidence')
-    );
-    List<Map<String, Object>> conversationItems = conversationEvidence.get(
-        'items'
-      ) == null
-      ? new List<Map<String, Object>>()
-      : (List<Map<String, Object>>) conversationEvidence.get('items');
     Map<String, Object> coverage = mapValue(payload.get('dataCoverage'));
-    Map<String, Object> conversationCoverage = mapValue(
-      coverage.get('conversations')
-    );
 
-    while (!conversationItems.isEmpty()) {
-      conversationItems.remove(conversationItems.size() - 1);
-      conversationEvidence.put('items', conversationItems);
-      conversationCoverage.put('returnedCount', conversationItems.size());
-      conversationCoverage.put('isTruncated', true);
-      conversationCoverage.put('reasonCode', 'request_size_limit');
-      serialized = JSON.serialize(payload);
-      if (Blob.valueOf(serialized).size() < requestSizeLimitBytes) {
-        return serialized;
-      }
+    List<Map<String, Object>> conversationItems = mapListValue(
+      mapValue(payload.get('conversationEvidence')).get('items')
+    );
+    Map<String, List<Object>> conversationLists = new Map<String, List<Object>>{
+      'conversations' => conversationItems
+    };
+    if (!trimToFit(payload, conversationLists).isEmpty()) {
+      markSizeTrimmed(coverage, 'conversations', conversationItems.size());
+    }
+    serialized = JSON.serialize(payload);
+    if (isWithinRequestLimit(serialized)) {
+      return serialized;
     }
 
     Map<String, Object> activities = mapValue(payload.get('activities'));
@@ -954,19 +958,105 @@ public with sharing class OpportunitySummaryPayloadHelper {
     List<Map<String, Object>> eventRows = mapListValue(
       activities.get('events')
     );
-    Map<String, Object> activityCoverage = mapValue(coverage.get('activities'));
-    while (trimOneParticipant(eventRows) || trimOneParticipant(taskRows)) {
-      activityCoverage.put('isTruncated', true);
-      activityCoverage.put('reasonCode', 'request_size_limit');
-      serialized = JSON.serialize(payload);
-      if (Blob.valueOf(serialized).size() < requestSizeLimitBytes) {
-        return serialized;
+    Map<String, List<Object>> participantLists = new Map<String, List<Object>>();
+    addParticipantLists(participantLists, 'tasks', taskRows);
+    addParticipantLists(participantLists, 'events', eventRows);
+    if (!trimToFit(payload, participantLists).isEmpty()) {
+      markSizeTrimmed(coverage, 'activities', null);
+    }
+    serialized = JSON.serialize(payload);
+    if (isWithinRequestLimit(serialized)) {
+      return serialized;
+    }
+
+    Map<String, Object> cases = mapValue(payload.get('cases'));
+    List<Map<String, Object>> stakeholders = mapListValue(
+      payload.get('stakeholders')
+    );
+    List<Map<String, Object>> lineItems = mapListValue(
+      payload.get('lineItems')
+    );
+    Set<String> trimmedKeys = trimToFit(
+      payload,
+      new Map<String, List<Object>>{
+        'stageHistory' => mapListValue(payload.get('stageHistory')),
+        'fieldHistory' => mapListValue(payload.get('fieldHistory')),
+        'tasks' => taskRows,
+        'events' => eventRows,
+        'stakeholders' => stakeholders,
+        'openCases' => mapListValue(cases.get('open')),
+        'recentlyClosedCases' => mapListValue(cases.get('recentlyClosed')),
+        'lineItems' => lineItems,
+        'relatedOpportunities' => mapListValue(
+          payload.get('relatedOpportunities')
+        )
       }
+    );
+    if (trimmedKeys.contains('tasks') || trimmedKeys.contains('events')) {
+      markSizeTrimmed(
+        coverage,
+        'activities',
+        taskRows.size() + eventRows.size()
+      );
+    }
+    if (trimmedKeys.contains('stakeholders')) {
+      markSizeTrimmed(coverage, 'stakeholders', stakeholders.size());
+    }
+    if (trimmedKeys.contains('lineItems')) {
+      markSizeTrimmed(coverage, 'lineItems', lineItems.size());
+    }
+    serialized = JSON.serialize(payload);
+    if (isWithinRequestLimit(serialized)) {
+      return serialized;
     }
 
     throw new OpportunitySummaryPayloadException(
       'Opportunity Summary core request exceeds the service size limit.'
     );
+  }
+
+  private static Boolean isWithinRequestLimit(String serialized) {
+    return Blob.valueOf(serialized).size() < requestSizeLimitBytes;
+  }
+
+  private static Set<String> trimToFit(
+    Map<String, Object> payload,
+    Map<String, List<Object>> keyToRows
+  ) {
+    return GCPSummaryUtil.trimListsToFit(
+      payload,
+      keyToRows,
+      requestSizeLimitBytes - COVERAGE_HEADROOM_BYTES
+    );
+  }
+
+  private static void addParticipantLists(
+    Map<String, List<Object>> participantLists,
+    String listKey,
+    List<Map<String, Object>> activityRows
+  ) {
+    for (Integer index = 0; index < activityRows.size(); index++) {
+      Object participants = activityRows[index].get('participants');
+      if (participants != null) {
+        participantLists.put(listKey + index, (List<Object>) participants);
+      }
+    }
+  }
+
+  private static void markSizeTrimmed(
+    Map<String, Object> coverage,
+    String coverageKey,
+    Integer returnedCount
+  ) {
+    if (!coverage.containsKey(coverageKey)) {
+      return;
+    }
+    Map<String, Object> entry = mapValue(coverage.get(coverageKey));
+    if (returnedCount != null) {
+      entry.put('returnedCount', returnedCount);
+    }
+    entry.put('isTruncated', true);
+    entry.put('reasonCode', REASON_REQUEST_SIZE_LIMIT);
   }
 
   public static Boolean trimOverflow(
@@ -1003,23 +1093,6 @@ public with sharing class OpportunitySummaryPayloadHelper {
     return value == null
       ? new List<Map<String, Object>>()
       : (List<Map<String, Object>>) value;
-  }
-
-  private static Boolean trimOneParticipant(
-    List<Map<String, Object>> activityRows
-  ) {
-    for (Integer index = activityRows.size() - 1; index >= 0; index--) {
-      Object value = activityRows[index].get('participants');
-      if (value == null) {
-        continue;
-      }
-      List<Map<String, Object>> participants = (List<Map<String, Object>>) value;
-      if (!participants.isEmpty()) {
-        participants.remove(participants.size() - 1);
-        return true;
-      }
-    }
-    return false;
   }
 
   public class CollectionData {

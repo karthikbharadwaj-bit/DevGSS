@@ -38,6 +38,9 @@ public with sharing class AccountSummaryHelper {
   private static final Integer MAX_CLOSED_CASE_MONTHS = 24;
   private static final Integer MILLISECONDS_PER_SECOND = 1000;
   private static final Integer MAX_REQUEST_BYTES = 2 * 1024 * 1024;
+
+  @TestVisible
+  private static Integer requestSizeLimitBytes = MAX_REQUEST_BYTES;
   @TestVisible
   private static final Integer MAX_DESCRIPTION_LENGTH = 1000;
   private static final Integer MAX_LOGGED_MESSAGE_LENGTH = 255;
@@ -45,23 +48,49 @@ public with sharing class AccountSummaryHelper {
   private static final Integer STATUS_UNPROCESSABLE = 422;
   private static final Integer STATUS_RATE_LIMITED = 429;
 
-  private static final Integer OPEN_OPPORTUNITY_LIMIT = 200;
-  private static final Integer CLOSED_OPPORTUNITY_LIMIT = 15;
-  private static final Integer OPEN_CASE_LIMIT = 200;
-  private static final Integer RECENTLY_CLOSED_CASE_LIMIT = 15;
-  private static final Integer ESCALATION_LIMIT = 200;
-  private static final Integer ENTITLEMENT_LIMIT = 100;
-  private static final Integer ACCOUNT_TEAM_LIMIT = 50;
-  private static final Integer CONTACT_LIMIT = 20;
-  private static final Integer TASK_LIMIT = 20;
-  private static final Integer CASE_TASK_LIMIT = 10;
-  private static final Integer EVENT_LIMIT = 10;
-  private static final Integer UPCOMING_EVENT_LIMIT = 5;
-  private static final Integer UPCOMING_EVENT_DAYS = 30;
-  private static final Integer RETENTION_TASK_LIMIT = 5;
-  private static final Integer ORDER_LIMIT = 5;
-  private static final Integer CONTRACT_LIMIT = 5;
-  private static final Integer ACCOUNT_HISTORY_LIMIT = 20;
+  /* Row caps and windows used when the setting is blank or out of range. */
+  private static final Map<Schema.SObjectField, Integer> SETTING_TO_DEFAULT_MAP = new Map<Schema.SObjectField, Integer>{
+    Summary_Setting__mdt.MaxOpenOpportunities__c => 200,
+    Summary_Setting__mdt.MaxClosedOpportunities__c => 15,
+    Summary_Setting__mdt.MaxOpenCases__c => 200,
+    Summary_Setting__mdt.MaxClosedCases__c => 15,
+    Summary_Setting__mdt.MaxEscalations__c => 200,
+    Summary_Setting__mdt.MaxEntitlements__c => 100,
+    Summary_Setting__mdt.MaxTeamMembers__c => 50,
+    Summary_Setting__mdt.MaxContacts__c => 20,
+    Summary_Setting__mdt.MaxTasks__c => 20,
+    Summary_Setting__mdt.MaxCaseTasks__c => 10,
+    Summary_Setting__mdt.MaxEvents__c => 10,
+    Summary_Setting__mdt.MaxUpcomingEvents__c => 5,
+    Summary_Setting__mdt.UpcomingEventDays__c => 30,
+    Summary_Setting__mdt.MaxRetentionTasks__c => 5,
+    Summary_Setting__mdt.MaxOrders__c => 5,
+    Summary_Setting__mdt.MaxContracts__c => 5,
+    Summary_Setting__mdt.MaxHistoryRows__c => 20,
+    Summary_Setting__mdt.HistoryDays__c => 90
+  };
+
+  /* Largest value a setting may take; the 2 MB request limit still applies to the whole payload. */
+  private static final Map<Schema.SObjectField, Integer> SETTING_TO_MAXIMUM_MAP = new Map<Schema.SObjectField, Integer>{
+    Summary_Setting__mdt.MaxOpenOpportunities__c => 500,
+    Summary_Setting__mdt.MaxClosedOpportunities__c => 50,
+    Summary_Setting__mdt.MaxOpenCases__c => 500,
+    Summary_Setting__mdt.MaxClosedCases__c => 50,
+    Summary_Setting__mdt.MaxEscalations__c => 500,
+    Summary_Setting__mdt.MaxEntitlements__c => 250,
+    Summary_Setting__mdt.MaxTeamMembers__c => 100,
+    Summary_Setting__mdt.MaxContacts__c => 50,
+    Summary_Setting__mdt.MaxTasks__c => 50,
+    Summary_Setting__mdt.MaxCaseTasks__c => 25,
+    Summary_Setting__mdt.MaxEvents__c => 25,
+    Summary_Setting__mdt.MaxUpcomingEvents__c => 25,
+    Summary_Setting__mdt.UpcomingEventDays__c => 90,
+    Summary_Setting__mdt.MaxRetentionTasks__c => 25,
+    Summary_Setting__mdt.MaxOrders__c => 25,
+    Summary_Setting__mdt.MaxContracts__c => 25,
+    Summary_Setting__mdt.MaxHistoryRows__c => 50,
+    Summary_Setting__mdt.HistoryDays__c => 365
+  };
 
   private static final String KEY_USERNAME = 'username';
   private static final String KEY_RECORD_ID = 'recordId';
@@ -321,10 +350,7 @@ public with sharing class AccountSummaryHelper {
       accountId,
       isAccountSummaryEnrichmentEnabled()
     );
-    String requestBody = JSON.serialize(payload);
-    if (Blob.valueOf(requestBody).size() > MAX_REQUEST_BYTES) {
-      throw new AccountSummaryException(PAYLOAD_TOO_LARGE_MESSAGE);
-    }
+    String requestBody = serializeWithinLimit(payload);
 
     HttpRequest request = new HttpRequest();
     request.setEndpoint(
@@ -387,6 +413,39 @@ public with sharing class AccountSummaryHelper {
     return payload;
   }
 
+  /**
+   * Serializes the payload, dropping rows from the end of the longest lists when it is over the
+   * service limit. A trimmed list is marked truncated in its coverage entry.
+   */
+  @TestVisible
+  private static String serializeWithinLimit(Map<String, Object> payload) {
+    Map<String, Object> listKeyToCoverage = (Map<String, Object>) payload.get(
+      KEY_DATA_COVERAGE
+    );
+    Map<String, List<Object>> keyToRows = new Map<String, List<Object>>();
+    for (String listKey : listKeyToCoverage.keySet()) {
+      keyToRows.put(listKey, (List<Object>) payload.get(listKey));
+    }
+    for (
+      String listKey : GCPSummaryUtil.trimListsToFit(
+        payload,
+        keyToRows,
+        requestSizeLimitBytes
+      )
+    ) {
+      Map<String, Object> coverage = (Map<String, Object>) listKeyToCoverage.get(
+        listKey
+      );
+      coverage.put(KEY_RETURNED_COUNT, keyToRows.get(listKey).size());
+      coverage.put(KEY_IS_TRUNCATED, true);
+    }
+    String requestBody = JSON.serialize(payload);
+    if (Blob.valueOf(requestBody).size() >= requestSizeLimitBytes) {
+      throw new AccountSummaryException(PAYLOAD_TOO_LARGE_MESSAGE);
+    }
+    return requestBody;
+  }
+
   @TestVisible
   private static List<ListSpec> listSpecs(Id accountId) {
     List<String> excludedCreators = excludedActivityCreators();
@@ -407,7 +466,7 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_OPEN_OPPORTUNITIES,
           opportunities.selectOpenOpportunitiesForAccountSummary(accountId),
-          OPEN_OPPORTUNITY_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxOpenOpportunities__c)
         )
         .withFields(
           opportunities.getOpenOpportunityAccountSummaryFieldList(),
@@ -416,7 +475,7 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_CLOSED_OPPORTUNITIES,
           opportunities.selectClosedOpportunitiesForAccountSummary(accountId),
-          CLOSED_OPPORTUNITY_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxClosedOpportunities__c)
         )
         .withFields(
           opportunities.getClosedOpportunityAccountSummaryFieldList(),
@@ -425,7 +484,7 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_OPEN_CASES,
           cases.selectOpenCasesForAccountSummary(accountId),
-          OPEN_CASE_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxOpenCases__c)
         )
         .withFields(
           cases.getOpenCaseAccountSummaryFieldList(),
@@ -437,7 +496,7 @@ public with sharing class AccountSummaryHelper {
             accountId,
             asOf.addMonths(-closedCaseMonths())
           ),
-          RECENTLY_CLOSED_CASE_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxClosedCases__c)
         )
         .withFields(
           cases.getClosedCaseAccountSummaryFieldList(),
@@ -446,19 +505,19 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_ESCALATIONS,
           escalations.selectEscalationsForAccountSummary(accountId),
-          ESCALATION_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxEscalations__c)
         )
         .withFields(escalations.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_ENTITLEMENTS,
           entitlements.selectActiveEntitlementsForAccountSummary(accountId),
-          ENTITLEMENT_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxEntitlements__c)
         )
         .withFields(entitlements.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_ACCOUNT_TEAM,
           teamMembers.selectTeamMembersForAccountSummary(accountId),
-          ACCOUNT_TEAM_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxTeamMembers__c)
         )
         .withFields(
           teamMembers.getAccountSummaryFieldList(),
@@ -467,13 +526,13 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_CONTACTS,
           contacts.selectContactsForAccountSummary(accountId),
-          CONTACT_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxContacts__c)
         )
         .withFields(contacts.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_TASKS,
           tasks.selectHumanTasksForAccountSummary(accountId, excludedCreators),
-          TASK_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxTasks__c)
         )
         .withFields(
           tasks.getAccountSummaryFieldList(),
@@ -485,7 +544,7 @@ public with sharing class AccountSummaryHelper {
             accountId,
             excludedCreators
           ),
-          CASE_TASK_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxCaseTasks__c)
         )
         .withFields(
           tasks.getAccountSummaryFieldList(),
@@ -494,7 +553,7 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_EVENTS,
           events.selectPastEventsForAccountSummary(accountId, asOf),
-          EVENT_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxEvents__c)
         )
         .withFields(
           events.getAccountSummaryFieldList(),
@@ -505,9 +564,11 @@ public with sharing class AccountSummaryHelper {
           events.selectUpcomingEventsForAccountSummary(
             accountId,
             asOf,
-            asOf.addDays(UPCOMING_EVENT_DAYS)
+            asOf.addDays(
+              configuredInteger(Summary_Setting__mdt.UpcomingEventDays__c)
+            )
           ),
-          UPCOMING_EVENT_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxUpcomingEvents__c)
         )
         .withFields(
           events.getAccountSummaryFieldList(),
@@ -516,25 +577,30 @@ public with sharing class AccountSummaryHelper {
       new ListSpec(
           LIST_RETENTION_TASKS,
           retentionTasks.selectRetentionTasksForAccountSummary(accountId),
-          RETENTION_TASK_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxRetentionTasks__c)
         )
         .withFields(retentionTasks.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_ORDERS,
           orders.selectOrdersForAccountSummary(accountId),
-          ORDER_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxOrders__c)
         )
         .withFields(orders.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_CONTRACTS,
           contracts.selectContractsForAccountSummary(accountId),
-          CONTRACT_LIMIT
+          configuredInteger(Summary_Setting__mdt.MaxContracts__c)
         )
         .withFields(contracts.getAccountSummaryFieldList(), null),
       new ListSpec(
           LIST_ACCOUNT_HISTORY,
-          history.selectStatusAndOwnerChangesForAccountSummary(accountId),
-          ACCOUNT_HISTORY_LIMIT
+          history.selectStatusAndOwnerChangesForAccountSummary(
+            accountId,
+            asOf.addDays(
+              -configuredInteger(Summary_Setting__mdt.HistoryDays__c)
+            )
+          ),
+          configuredInteger(Summary_Setting__mdt.MaxHistoryRows__c)
         )
         .withFields(history.getAccountSummaryFieldList(), null)
     };
@@ -748,6 +814,16 @@ public with sharing class AccountSummaryHelper {
       setting().ClosedCaseMonths__c,
       DEFAULT_CLOSED_CASE_MONTHS,
       MAX_CLOSED_CASE_MONTHS
+    );
+  }
+
+  /* Row cap or window for one list; a blank or out-of-range setting uses the coded default. */
+  @TestVisible
+  private static Integer configuredInteger(Schema.SObjectField field) {
+    return SummarySettingHelper.positiveInteger(
+      (Decimal) setting().get(field),
+      SETTING_TO_DEFAULT_MAP.get(field),
+      SETTING_TO_MAXIMUM_MAP.get(field)
     );
   }
 

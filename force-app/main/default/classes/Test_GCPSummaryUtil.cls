@@ -158,4 +158,71 @@ private class Test_GCPSummaryUtil {
     String replyMessage = 'An error reply must be the Error: prefix followed by the message.';
     Assert.areEqual('Error: Try again later.', reply, replyMessage);
   }
+
+  // ── trimListsToFit ───
+  @IsTest
+  static void shouldDropRowsFromLongestListWhenPayloadIsOverLimit() {
+    List<Map<String, Object>> longRows = textRows(5);
+    List<Map<String, Object>> shortRows = textRows(2);
+    Map<String, Object> payload = new Map<String, Object>{
+      'long' => longRows,
+      'short' => shortRows
+    };
+
+    Test.startTest();
+    Set<String> trimmedKeys = GCPSummaryUtil.trimListsToFit(
+      payload,
+      new Map<String, List<Object>>{ 'long' => longRows, 'short' => shortRows },
+      600
+    );
+    Test.stopTest();
+
+    Assert.isTrue(
+      Blob.valueOf(JSON.serialize(payload)).size() < 600,
+      'The trimmed payload must be under the limit.'
+    );
+    Assert.areEqual(
+      new Set<String>{ 'long' },
+      trimmedKeys,
+      'Only the longest list should lose rows.'
+    );
+    Assert.areEqual(3, longRows.size(), 'Rows must come off the longest list.');
+    Assert.areEqual(
+      2,
+      shortRows.size(),
+      'The shorter list must keep its rows.'
+    );
+  }
+
+  @IsTest
+  static void shouldLeaveListsWhenPayloadFits() {
+    List<Map<String, Object>> rows = textRows(3);
+    Map<String, Object> payload = new Map<String, Object>{ 'rows' => rows };
+
+    Test.startTest();
+    Set<String> trimmedKeys = GCPSummaryUtil.trimListsToFit(
+      payload,
+      new Map<String, List<Object>>{ 'rows' => rows },
+      2 * 1024 * 1024
+    );
+    Test.stopTest();
+
+    Assert.isTrue(
+      trimmedKeys.isEmpty(),
+      'A payload under the limit must not be trimmed.'
+    );
+    Assert.areEqual(
+      3,
+      rows.size(),
+      'Every row must be kept when the payload fits.'
+    );
+  }
+
+  private static List<Map<String, Object>> textRows(Integer rowCount) {
+    List<Map<String, Object>> rows = new List<Map<String, Object>>();
+    for (Integer index = 0; index < rowCount; index++) {
+      rows.add(new Map<String, Object>{ 'text' => 'a'.repeat(100) });
+    }
+    return rows;
+  }
 }

@@ -184,13 +184,13 @@ private class Test_GCPCalloutForAccountSummary {
 
     String fieldMessage = 'History must be limited to Account Status and Owner.';
     String dataTypeMessage = 'Owner rows holding user Ids must be left out.';
-    String windowMessage = 'History must cover the last 90 days.';
+    String windowMessage = 'History must start at the configured window.';
     Assert.isTrue(
       condition.contains('Field IN (\'RC_Account_Status__c\', \'Owner\')'),
       fieldMessage
     );
     Assert.isTrue(condition.contains('DataType = \'Text\''), dataTypeMessage);
-    Assert.isTrue(condition.contains('LAST_N_DAYS:90'), windowMessage);
+    Assert.isTrue(condition.contains('CreatedDate >= :bind1'), windowMessage);
   }
 
   @IsTest
@@ -495,6 +495,120 @@ private class Test_GCPCalloutForAccountSummary {
     Assert.areEqual(6, blank, fallbackMessage);
     String configuredMessage = 'A valid closed case months setting must be used.';
     Assert.areEqual(12, configured, configuredMessage);
+  }
+
+  // ── configuredInteger ───
+  @IsTest
+  static void shouldUseConfiguredLimitWhenSettingIsInRangeAndDefaultOtherwise() {
+    Test.startTest();
+    overrideSettings(new Summary_Setting__mdt(MaxOpenCases__c = 501));
+    Integer tooLarge = AccountSummaryHelper.configuredInteger(
+      Summary_Setting__mdt.MaxOpenCases__c
+    );
+    overrideSettings(new Summary_Setting__mdt());
+    Integer blank = AccountSummaryHelper.configuredInteger(
+      Summary_Setting__mdt.MaxOpenCases__c
+    );
+    overrideSettings(new Summary_Setting__mdt(MaxOpenCases__c = 500));
+    Integer atMaximum = AccountSummaryHelper.configuredInteger(
+      Summary_Setting__mdt.MaxOpenCases__c
+    );
+    Test.stopTest();
+
+    String fallbackMessage = 'An out-of-range or blank open case cap must fall back to 200.';
+    Assert.areEqual(200, tooLarge, fallbackMessage);
+    Assert.areEqual(200, blank, fallbackMessage);
+    String configuredMessage = 'An open case cap at the maximum must be used.';
+    Assert.areEqual(500, atMaximum, configuredMessage);
+  }
+
+  @IsTest
+  static void shouldCapListAtConfiguredRowsWhenSettingIsSet() {
+    Account summaryAccount = testAccount();
+    overrideSettings(new Summary_Setting__mdt(MaxTasks__c = 7));
+    Map<String, Integer> keyToMaxRows = new Map<String, Integer>();
+
+    Test.startTest();
+    for (
+      AccountSummaryHelper.ListSpec spec : AccountSummaryHelper.listSpecs(
+        summaryAccount.Id
+      )
+    ) {
+      keyToMaxRows.put(spec.key, spec.maxRows);
+    }
+    Test.stopTest();
+
+    Assert.areEqual(
+      7,
+      keyToMaxRows.get('tasks'),
+      'The task list must use the configured cap.'
+    );
+    Assert.areEqual(
+      10,
+      keyToMaxRows.get('caseTasks'),
+      'A list without a setting must use its default cap.'
+    );
+  }
+
+  // ── serializeWithinLimit ───
+  @IsTest
+  static void shouldTrimLongestListWhenPayloadIsOverLimit() {
+    List<Map<String, Object>> taskRows = new List<Map<String, Object>>();
+    for (Integer index = 0; index < 5; index++) {
+      taskRows.add(new Map<String, Object>{ 'subject' => 's'.repeat(100) });
+    }
+    Map<String, Object> payload = new Map<String, Object>{
+      'tasks' => taskRows,
+      'contacts' => new List<Map<String, Object>>{
+        new Map<String, Object>{ 'name' => 'Fictional Contact' }
+      },
+      'dataCoverage' => new Map<String, Object>{
+        'tasks' => new Map<String, Object>{
+          'returnedCount' => 5,
+          'isTruncated' => false
+        },
+        'contacts' => new Map<String, Object>{
+          'returnedCount' => 1,
+          'isTruncated' => false
+        }
+      }
+    };
+    AccountSummaryHelper.requestSizeLimitBytes = 700;
+
+    Test.startTest();
+    String requestBody = AccountSummaryHelper.serializeWithinLimit(payload);
+    Test.stopTest();
+
+    Map<String, Object> parsed = (Map<String, Object>) JSON.deserializeUntyped(
+      requestBody
+    );
+    Map<String, Object> coverage = (Map<String, Object>) parsed.get(
+      'dataCoverage'
+    );
+    Map<String, Object> taskCoverage = (Map<String, Object>) coverage.get(
+      'tasks'
+    );
+    Integer keptTasks = ((List<Object>) parsed.get('tasks')).size();
+    Assert.isTrue(
+      Blob.valueOf(requestBody).size() < 700,
+      'The request must be trimmed under the limit instead of failing.'
+    );
+    Assert.isTrue(keptTasks < 5, 'Rows must come off the longest list.');
+    Assert.areEqual(
+      keptTasks,
+      taskCoverage.get('returnedCount'),
+      'Coverage must report the rows actually sent.'
+    );
+    Assert.areEqual(
+      true,
+      taskCoverage.get('isTruncated'),
+      'A list trimmed for size must be marked truncated.'
+    );
+    Assert.areEqual(
+      false,
+      ((Map<String, Object>) coverage.get('contacts')).get('isTruncated'),
+      'A list that kept every row must not be marked truncated.'
+    );
   }
 
   // ── timeoutSeconds / getClientSettings ───
