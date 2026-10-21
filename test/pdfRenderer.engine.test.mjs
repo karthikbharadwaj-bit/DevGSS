@@ -128,6 +128,29 @@ test("bundled browser renderer produces a real linked PDF with embedded fonts", 
     writeFileSync(process.env.OPPORTUNITY_PDF_PREVIEW_PATH, bytes);
 });
 
+test("bundled renderer draws the call icon beside a call-sourced line", async () => {
+  const flagged = {
+    ...snapshot,
+    winFactors: [{ ...snapshot.winFactors[0], fromCall: true }]
+  };
+  // SummaryFromCall is shared by both summaries, so it is not in the Opportunity label file.
+  const callLabels = {
+    ...labels,
+    fromCall: "From a recorded customer call (RingSense)"
+  };
+  const buffer = await renderBuffer(
+    toPdfDefinition(buildPdfDocument(flagged, callLabels))
+  );
+  const pdf = Buffer.from(buffer).toString("latin1");
+  assert.ok(pdf.startsWith("%PDF-"));
+  assert.match(pdf, /%%EOF/);
+  if (process.env.OPPORTUNITY_PDF_CALL_PREVIEW_PATH)
+    writeFileSync(
+      process.env.OPPORTUNITY_PDF_CALL_PREVIEW_PATH,
+      Buffer.from(buffer)
+    );
+});
+
 test("long content paginates with the real bundled renderer", async () => {
   const long = {
     ...snapshot,

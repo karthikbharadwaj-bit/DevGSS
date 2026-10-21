@@ -1,9 +1,11 @@
 import {
   HEADING_PART,
+  callIconLegend,
   keepHeadingWithContent,
   pdfText as sharedPdfText,
   plainText,
-  safeLink
+  safeLink,
+  withCallIcon
 } from "c/lwcPdfBlocks";
 import { formatLabel } from "./aiAccountSummaryConfig";
 
@@ -339,10 +341,15 @@ export function buildPdfDocument(snapshot, labels) {
     subheading(title, color, [0, 4, 0, 8]),
     items?.length
       ? {
-          ul: items.map((item) => ({
-            text: titledLine(item.title, item.detail, item.evidence),
-            margin: [0, 0, 0, 8]
-          })),
+          ul: items.map((item) =>
+            withCallIcon(
+              {
+                text: titledLine(item.title, item.detail, item.evidence),
+                margin: [0, 0, 0, 8]
+              },
+              item.fromCall
+            )
+          ),
           type: "square",
           markerColor: color,
           margin: [6, 0, 0, 8]
@@ -619,6 +626,9 @@ export function buildPdfDocument(snapshot, labels) {
   }
 
   content.push(heading(labels.sectionSignals));
+  if (view.hasCallInsights) {
+    content.push(callIconLegend(labels.fromCall));
+  }
   content.push(...signalRow(labels.risks, view.risks, RISK, labels.noRisks));
   content.push(...signalRow(labels.growth, view.growth, WIN, labels.noGrowth));
 
@@ -630,22 +640,25 @@ export function buildPdfDocument(snapshot, labels) {
           .filter(Boolean)
           .map((tag) => plain(tag).toUpperCase())
           .join(" · ");
-        return {
-          text: [
-            ...(tags
-              ? [
-                  {
-                    text: `${tags}   `,
-                    fontSize: 7.5,
-                    bold: true,
-                    color: BLUE
-                  }
-                ]
-              : []),
-            ...titledLine(action.title, action.detail, action.evidence)
-          ],
-          margin: [0, 0, 0, 8]
-        };
+        return withCallIcon(
+          {
+            text: [
+              ...(tags
+                ? [
+                    {
+                      text: `${tags}   `,
+                      fontSize: 7.5,
+                      bold: true,
+                      color: BLUE
+                    }
+                  ]
+                : []),
+              ...titledLine(action.title, action.detail, action.evidence)
+            ],
+            margin: [0, 0, 0, 8]
+          },
+          action.fromCall
+        );
       }),
       markerColor: BLUE,
       margin: [6, 0, 0, 6]

@@ -94,12 +94,28 @@ function textOf(value) {
   if (typeof value === "string") return value;
   if (Array.isArray(value)) return value.map(textOf).join(" ");
   if (!value || typeof value !== "object") return "";
-  return ["text", "content", "stack", "table", "body", "ul", "ol"]
+  return ["text", "content", "stack", "table", "body", "ul", "ol", "columns"]
     .map((key) => textOf(value[key]))
     .join(" ");
 }
 
 describe("Opportunity Summary PDF document", () => {
+  it("marks call-sourced lines with the call icon and a legend", () => {
+    const flagged = fixture();
+    flagged.scoreCard.notes[0].fromCall = true;
+    flagged.winFactors[0].fromCall = true;
+    const iconCount = (doc) =>
+      JSON.stringify(doc.content).split('"svg":').length - 1;
+
+    const plainDoc = buildPdfDocument(fixture(), labels);
+    const flaggedDoc = buildPdfDocument(flagged, labels);
+
+    expect(iconCount(plainDoc)).toBe(0);
+    expect(textOf(plainDoc)).not.toContain(labels.fromCall);
+    expect(iconCount(flaggedDoc)).toBe(3);
+    expect(textOf(flaggedDoc)).toContain(labels.fromCall);
+  });
+
   it("includes all summary sections and keeps research and supplemental updates separate", () => {
     const input = fixture();
     const original = JSON.stringify(input);

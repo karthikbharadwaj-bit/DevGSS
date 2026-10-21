@@ -1,12 +1,39 @@
 import {
   HEADING_PART,
+  callIconLegend,
   keepHeadingWithContent,
   pdfText,
   plainText,
-  safeLink
+  safeLink,
+  withCallIcon
 } from "c/lwcPdfBlocks";
 
 describe("c-lwc-pdf-blocks", () => {
+  it("leaves an item unchanged unless it came from a call", () => {
+    const item = { text: "Budget confirmed", margin: [0, 0, 0, 8] };
+
+    expect(withCallIcon(item, false)).toBe(item);
+    expect(withCallIcon(item, undefined)).toBe(item);
+  });
+
+  it("puts the call icon beside a call-sourced item and keeps its spacing", () => {
+    const node = withCallIcon(
+      { text: "Budget confirmed", margin: [0, 0, 0, 8] },
+      true
+    );
+
+    expect(node.margin).toEqual([0, 0, 0, 8]);
+    expect(node.columns[0]).toEqual({ text: "Budget confirmed", width: "*" });
+    expect(node.columns[1].svg).toContain("<path");
+  });
+
+  it("explains the call icon in a legend", () => {
+    const legend = callIconLegend("From a recorded customer call");
+
+    expect(legend.columns[0].svg).toContain("<path");
+    expect(legend.columns[1].text).toBe("From a recorded customer call");
+  });
+
   it("links only evidence markers that have a research anchor", () => {
     const runs = pdfText("<b>Win</b> [E1] [E9]", new Set(["E1"]));
 

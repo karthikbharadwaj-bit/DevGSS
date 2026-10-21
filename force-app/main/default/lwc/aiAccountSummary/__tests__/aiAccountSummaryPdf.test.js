@@ -48,6 +48,29 @@ function nodes(value, predicate, found = []) {
 }
 
 describe("Account Summary PDF document", () => {
+  it("marks call-sourced signals and actions with the call icon and a legend", () => {
+    const plain = snapshot();
+    [...plain.view.risks, ...plain.view.growth, ...plain.view.actions].forEach(
+      (item) => {
+        item.fromCall = false;
+      }
+    );
+    plain.view.hasCallInsights = false;
+    const flagged = clone(plain);
+    flagged.view.risks[0].fromCall = true;
+    flagged.view.actions[0].fromCall = true;
+    flagged.view.hasCallInsights = true;
+    const icons = (doc) => nodes(doc.content, (node) => "svg" in node);
+
+    const plainDoc = buildPdfDocument(plain, labels);
+    const flaggedDoc = buildPdfDocument(flagged, labels);
+
+    expect(icons(plainDoc)).toHaveLength(0);
+    expect(textOf(plainDoc)).not.toContain(labels.fromCall);
+    expect(icons(flaggedDoc)).toHaveLength(3);
+    expect(textOf(flaggedDoc)).toContain(labels.fromCall);
+  });
+
   it("includes every summary section shown in the modal", () => {
     const doc = buildPdfDocument(snapshot(), labels);
     const text = textOf(doc).toLowerCase();

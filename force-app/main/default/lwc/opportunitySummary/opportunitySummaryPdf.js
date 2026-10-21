@@ -1,9 +1,11 @@
 import {
   HEADING_PART,
+  callIconLegend,
   keepHeadingWithContent,
   pdfText,
   plainText,
-  safeLink
+  safeLink,
+  withCallIcon
 } from "c/lwcPdfBlocks";
 
 export { pdfText };
@@ -186,15 +188,19 @@ export function buildPdfDocument(snapshot, labels) {
       margin: [0, -4, 0, 12]
     });
 
-  const summaryLine = (item) => ({
-    text: [
-      ...(item.label
-        ? [{ text: `${plain(item.label)}: `, bold: true, color: INK }]
-        : []),
-      ...pdfText(item.text, evidenceIds)
-    ],
-    margin: [0, 0, 0, 8] // Increased to separate dense bullet points
-  });
+  const summaryLine = (item) =>
+    withCallIcon(
+      {
+        text: [
+          ...(item.label
+            ? [{ text: `${plain(item.label)}: `, bold: true, color: INK }]
+            : []),
+          ...pdfText(item.text, evidenceIds)
+        ],
+        margin: [0, 0, 0, 8] // Increased to separate dense bullet points
+      },
+      item.fromCall
+    );
 
   const chipLine = (chips) => ({
     text: chips.flatMap((chip, i) => [
@@ -339,6 +345,21 @@ export function buildPdfDocument(snapshot, labels) {
     margin: [0, 0, 0, 8]
   });
 
+  const hasCallInsights = [
+    snapshot.scoreCard?.notes,
+    snapshot.executiveFacts,
+    snapshot.history,
+    snapshot.winFactors,
+    snapshot.riskFlags,
+    snapshot.nextActions,
+    snapshot.closePlan,
+    snapshot.postCloseActions,
+    ...(snapshot.extraSections || []).map((extra) => extra.items)
+  ].some((items) => (items || []).some((item) => item.fromCall === true));
+  if (hasCallInsights) {
+    content.push(callIconLegend(labels.fromCall, [0, 4, 0, 0]));
+  }
+
   if (snapshot.scoreCard) {
     const score = snapshot.scoreCard;
     content.push(
@@ -352,10 +373,15 @@ export function buildPdfDocument(snapshot, labels) {
             color: INK,
             margin: [0, 0, 0, 6]
           },
-          ...(score.notes || []).map((note) => ({
-            text: pdfText(note.text, evidenceIds),
-            margin: [0, 4, 0, 0]
-          }))
+          ...(score.notes || []).map((note) =>
+            withCallIcon(
+              {
+                text: pdfText(note.text, evidenceIds),
+                margin: [0, 4, 0, 0]
+              },
+              note.fromCall
+            )
+          )
         ],
         { fill: PANEL, margin: [0, 16, 0, 0] }
       )

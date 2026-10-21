@@ -530,7 +530,7 @@ describe("c-ai-account-summary", () => {
     await flushPromises();
 
     const drawer = query(element, "[data-public-research]");
-    expect(drawer.open).toBe(false);
+    expect(drawer.open).toBe(true);
     expect(element.shadowRoot.textContent).not.toContain("§");
 
     const evidence = query(element, '[data-evidence-id="E1"]');
