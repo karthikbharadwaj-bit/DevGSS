@@ -413,8 +413,9 @@ public with sharing class OpportunitySummaryPayloadHelper {
     String accountWebsite = normalizedText(
       GCPSummaryUtil.readableField(relatedAccount, Account.Website)
     );
-    if (String.isNotBlank(accountWebsite)) {
-      return sanitizedPublicWebsite(accountWebsite);
+    String sanitizedAccountWebsite = sanitizedPublicWebsite(accountWebsite);
+    if (sanitizedAccountWebsite != null) {
+      return sanitizedAccountWebsite;
     }
     return sanitizedPublicWebsite(
       normalizedText(GCPSummaryUtil.readableField(opp, Opportunity.Website__c))

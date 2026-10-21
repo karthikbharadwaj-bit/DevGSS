@@ -27,9 +27,11 @@ public class EventSelector extends SObjectSelector {
       .setQueryBindings(new List<Object>{ whatIds });
   }
 
+  /* Bounded at windowEnd so scheduled meetings cannot fill the cap ahead of past ones. */
   public QueryFactory selectEventsByWhatIdSinceForSummary(
     Id whatId,
     Datetime since,
+    Datetime windowEnd,
     Integer rowLimit
   ) {
     return newQueryFactory()
@@ -47,8 +49,12 @@ public class EventSelector extends SObjectSelector {
         }
       )
       .withoutSelectorOrderByIncluded()
-      .setCondition('WhatId IN :bind0 AND StartDateTime >= :bind1')
-      .setQueryBindings(new List<Object>{ new Set<Id>{ whatId }, since })
+      .setCondition(
+        'WhatId IN :bind0 AND StartDateTime >= :bind1 AND StartDateTime <= :bind2'
+      )
+      .setQueryBindings(
+        new List<Object>{ new Set<Id>{ whatId }, since, windowEnd }
+      )
       .addOrdering(Event.StartDateTime, QueryFactory.SortOrder.DESCENDING)
       .setLimit(rowLimit);
   }

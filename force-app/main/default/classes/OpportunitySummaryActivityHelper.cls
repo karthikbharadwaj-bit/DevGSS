@@ -73,6 +73,7 @@ public with sharing class OpportunitySummaryActivityHelper {
         .selectEventsByWhatIdSinceForSummary(
           recordId,
           activitySince,
+          windowEnd,
           maxActivities + 1
         )
         .executeQuery()

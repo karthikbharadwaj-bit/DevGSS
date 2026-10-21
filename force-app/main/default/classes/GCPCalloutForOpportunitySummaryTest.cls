@@ -299,9 +299,10 @@ private class GCPCalloutForOpportunitySummaryTest {
       invalidAccountWebsite,
       true
     );
-    Assert.isFalse(
-      invalid.containsKey('accountWebsite'),
-      'Opportunity.Website__c is used only when Account.Website is blank.'
+    Assert.areEqual(
+      'https://fallback.example.com',
+      invalid.get('accountWebsite'),
+      'A rejected Account.Website must fall back to Opportunity.Website__c.'
     );
   }
 
@@ -2681,6 +2682,49 @@ private class GCPCalloutForOpportunitySummaryTest {
       'task_completion_time_retrieval_error',
       data.conversationReasonCode,
       'Task completion times must load for queried tasks.'
+    );
+  }
+
+  @IsTest
+  static void shouldKeepPastMeetingWhenFutureMeetingsExceedCap() {
+    Id opportunityId = summaryOpportunityId(false);
+    overrideSettings(new Summary_Setting__mdt(MaxActivities__c = 1));
+    Event pastMeeting = (Event) new SObjectBuilder(Event.SObjectType)
+      .setField(Event.WhatId, opportunityId)
+      .setField(Event.Subject, 'Past review')
+      .setField(Event.ActivityDateTime, Datetime.now().addDays(-1))
+      .setField(Event.DurationInMinutes, 30)
+      .create()
+      .getRecord();
+    new SObjectBuilder(Event.SObjectType)
+      .quantity(2)
+      .setField(Event.WhatId, opportunityId)
+      .setField(Event.Subject, 'Scheduled review')
+      .setField(Event.ActivityDateTime, Datetime.now().addDays(7))
+      .setField(Event.DurationInMinutes, 30)
+      .create();
+
+    Test.startTest();
+    OpportunitySummaryActivityHelper.ActivityData data = OpportunitySummaryActivityHelper.getActivityData(
+      opportunityId,
+      true,
+      90
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      1,
+      data.events.size(),
+      'Only meetings inside the activity window must be sent.'
+    );
+    Assert.areEqual(
+      pastMeeting.Id,
+      data.events[0].get('sourceRecordId'),
+      'Future meetings must not crowd the past meeting out of the cap.'
+    );
+    Assert.isFalse(
+      data.eventsTruncated,
+      'Future meetings must not count toward truncation.'
     );
   }
 
