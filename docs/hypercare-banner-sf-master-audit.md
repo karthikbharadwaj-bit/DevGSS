@@ -20,6 +20,19 @@ SF Master proves **35 desktop app/profile/record-type combinations where the Cas
 
 The checkout also proves **22 out-of-scope record types with at least one configured metadata path to the Case Highlighter**. This is a conservative minimum rather than a complete production list because the repository's Case metadata is incomplete: application/profile metadata references 162 Case record types, but only 47 record-type definition files are present.
 
+## BisUAT UI validation status
+
+A read-only BisUAT validation on 22 October 2026 UI-confirmed the RC Service/Sofia gap and produced an uncalibrated observation for the EU Sales gap. These checks support the SF Master findings; they do not change the source-derived count of 35 missing combinations.
+
+| Pattern       | Tested context                                            | Observation                                                                                                                                                                                                                                                                | Assessment                                                                                                                           |
+| ------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Sofia page    | Support T2 profile in RC Service                          | A `Developer_Platform` control Case displayed the Case Highlighter with BT Business and Red Account messages. In the same user/app session, escalated `Support_T2` Case 20837178 displayed no Case Highlighter or escalation text; only an unrelated Jira notice appeared. | **UI-confirmed gap.** The same-session positive control passed before the negative check.                                            |
+| EU Sales page | Sales Engineer Lightning - EU Restricted profile in Sales | Escalated `Support_T2` Case 20837178 loaded without the Case Highlighter or escalation text.                                                                                                                                                                               | **Inconclusive UI result.** The supplied AT&T control Case was inaccessible, so a same-session positive control was not established. |
+
+Earlier broader checks that depended on RC Sales View or Service Console — RingCentral were not run because those apps were unavailable to the selected users. App or record access failures are not evidence that the highlighter is absent and do not contradict the source findings.
+
+The remaining EU Sales follow-up uses an AT&T control Case that live `UserRecordAccess` reports as readable for the same user. The Hypercare-specific message remains untestable in BisUAT because the deployed `CaseHighlighter` implementation does not evaluate `Hyper_Care__c`.
+
 ## Confirmed gaps — Case Highlighter will not be visible
 
 The table below is exhaustive for combinations that can be proven absent from this SF Master checkout. Each row represents desktop (`Large`) overrides only.
@@ -86,7 +99,7 @@ SF Master contains 483 Large-form-factor overrides across the 12 in-scope record
 | `CaseDefault_Record_Page`         | Preconfigured Lightning Service Console                                                                                                              | Support - TAM, Back Office, Operations, T1, T2, T3 and EU Restricted variants across all 12 types | Same dependency on missing layout assignments.                                                                              |
 | `Sales_Cases`                     | Lightning Sales                                                                                                                                      | GSP Sales Rep for `Product_Platform_Issues`, `Support_Case`, `Support_T1`, and `Support_T2`       | Same dependency on missing layout assignments.                                                                              |
 
-This is where the live DevGSS query is necessary. In particular, the repository by itself cannot prove the previously reported Extended Enterprise Support and Support Integrations layout gaps because it does not contain explicit profile/record-type layout assignments for those two record types.
+This is where live sandbox metadata is necessary. In particular, the repository by itself cannot prove the previously reported Extended Enterprise Support and Support Integrations layout gaps because it does not contain explicit profile/record-type layout assignments for those two record types.
 
 ## Out-of-scope record types that have the Case Highlighter
 
@@ -156,4 +169,4 @@ These may be valid production record types omitted from the retrieval, deleted/s
 - Only desktop (`Large`) overrides are counted as confirmed gaps. Mobile behavior differs because `Sofia_Support_Cases` contains `force:recordDetailPanelMobile`.
 - Visualforce page/class access was not used as proof of rendering. Permission enables access but does not place the component on the page.
 - The 22 out-of-scope record types are a conservative “present in at least one proven path” list, not proof that every user sees the highlighter for those types.
-- DevGSS should be treated as authoritative for resolving the 483 unknown combinations, verifying whether the 39 referenced-only record types still exist and are active, and confirming the additional layout-name candidates.
+- Live sandbox metadata should be used to resolve the 483 unknown combinations, verify whether the 39 referenced-only record types still exist and are active, and confirm the additional layout-name candidates.
