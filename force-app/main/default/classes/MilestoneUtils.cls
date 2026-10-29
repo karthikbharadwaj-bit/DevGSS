@@ -123,14 +123,14 @@ public class MilestoneUtils {
         Map<String,List<Id>> followUpMap =  new Map<String,List<Id>>();
         Map<String,List<Id>> resolutionMap =  new Map<String,List<Id>>();
 
+        Schema.DescribeSObjectResult d = Schema.SObjectType.Case;
+        Map<Id,Schema.RecordTypeInfo> rtMapById = d.getRecordTypeInfosById();
+
         for(Id thisRecord : newCaseMap.keySet()) {
 
             // Maintaining new and old case object.
             Case newRecord = newCaseMap.get(thisRecord);
             Case oldRecord = oldCaseMap != null ? oldCaseMap.get(thisRecord) : null;
-
-            Schema.DescribeSObjectResult d = Schema.SObjectType.Case;
-            Map<Id,Schema.RecordTypeInfo> rtMapById = d.getRecordTypeInfosById();
             String caseRecordTypeName = rtMapById.get(newRecord.recordTypeId).Name;
 
             Boolean isInternalCommentsChanged = oldRecord != null &&

@@ -636,6 +636,36 @@ private class Test_PortingESBHelper {
     }
 
     @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
+    @IsTest
+    private static void shouldRestrictUpdatesWhenNonIntegrationUserInsertsPortingCase() {
+        User nonIntegrationUser = (User) new SObjectBuilder(User.SObjectType)
+            .create()
+            .getRecord();
+        List<Case> cases = (List<Case>) new SObjectBuilder(Case.SObjectType)
+            .setField(
+                Case.RecordTypeId,
+                ValueProviderBuilder.provideList(new List<Id> {
+                    getRTIdByName(PortingESBHelper.PortingInRC),
+                    getRTIdByName(CaseHelper.RT_NAME_IT_HELPDESK)
+                })
+            )
+            .quantity(2)
+            .build()
+            .getRecords();
+
+        System.runAs(nonIntegrationUser) {
+            Test.startTest();
+                PortingESBHelper.validateOnBeforeInsertEvent(cases, rtMapByName);
+            Test.stopTest();
+        }
+
+        String portingCaseMessage = 'A non-integration user should not be permitted to insert a porting case';
+        String nonPortingCaseMessage = 'A non-integration user should be permitted to insert a non-porting case';
+        Assert.isFalse(cases[0].IsUpdatePermitted__c, portingCaseMessage);
+        Assert.isTrue(cases[1].IsUpdatePermitted__c, nonPortingCaseMessage);
+    }
+
+    @SuppressWarnings('PMD.ApexUnitTestClassShouldHaveAsserts')
     @isTest
     public static void testValidationsAfterUpdate() {
         List<Case> records = new SObjectBuilder(Case.SObjectType)

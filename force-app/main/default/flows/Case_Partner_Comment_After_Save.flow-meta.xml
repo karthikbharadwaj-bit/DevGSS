@@ -120,8 +120,8 @@
     <customErrors>
         <name>Fault_Handler</name>
         <label>Handle flow fault</label>
-        <locationX>1000</locationX>
-        <locationY>200</locationY>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
         <customErrorMessages>
             <errorMessage>Case Partner Comment After Save could not complete. {!$Flow.FaultMessage}</errorMessage>
             <isFieldError>false</isFieldError>
@@ -209,7 +209,7 @@
             <label>P5 Case Status Update</label>
         </rules>
     </decisions>
-    <description>F6 - manual Task 10 build replacing the Migrate to Flow donor (quick actions unsupported, G6). P1-P5 first-match priority, one CaseComment per save. P5 verbatim omits the ebonding exclusion (SO-3: port as-is). To exclude Customer EBonded Cases (P1-P4).</description>
+    <description>CPU-limit remediation replacing Partner_Case_Status_Case_Comment. Uses ordered first-match evaluation to create at most one CaseComment per save for partner status, severity, owner, or Case status changes. Preserves queue-versus-user owner text, publication rules, and the legacy behavior where the customer-ebonding exclusion applies to partner status, severity, and owner changes but not the final Case-status rule.</description>
     <environments>Default</environments>
     <formulas>
         <name>formula_IsPublished_RT</name>
@@ -380,7 +380,7 @@
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
     <variables>
         <name>varCommentBody</name>
         <dataType>String</dataType>

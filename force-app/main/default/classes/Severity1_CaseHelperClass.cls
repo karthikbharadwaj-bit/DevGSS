@@ -36,8 +36,8 @@ public class Severity1_CaseHelperClass {
 	    // Looping the triggered cases to create Map of <AccountId,CaseId>
 	    for(Id thisId : triggerMap.keySet()){
             System.debug('thisId' + thisId);
-            System.debug('triggerMap.get(thisId) ' + triggerMap.get(thisId));
-            System.debug('triggerMap.get(thisId).AccountId ' + triggerMap.get(thisId).AccountId);
+            //System.debug('triggerMap.get(thisId) ' + triggerMap.get(thisId));
+            //System.debug('triggerMap.get(thisId).AccountId ' + triggerMap.get(thisId).AccountId);
 	    	caseAccountId.put(triggerMap.get(thisId).AccountId,thisId);
 	    }
 	    // Looping the triggered cases to create Map of <CaseId,Account>
@@ -47,7 +47,7 @@ public class Severity1_CaseHelperClass {
 	    }
 	    	    
 		// LoOp over the case list fetched		
-        System.debug('check acc map ' + caseAccountMap);	
+        //System.debug('check acc map ' + caseAccountMap);	
 		for(Id thisCase : triggerMap.keySet()){
 			/* check if the record type is Support-Case,Case severity is Level 1 - Critical,
 			Account Current Owner is not null / inactive, If account owner is null / inactive than no action.*/
@@ -73,7 +73,7 @@ public class Severity1_CaseHelperClass {
 		// Inserting records
 		try{
 			insert notificationList;
-			system.debug('#### Email Notification - '+notificationList);
+			//system.debug('#### Email Notification - '+notificationList);
 			return true;
 		}catch(DMLException dmle){
 			system.debug('#### Exception encountered - '+dmle);

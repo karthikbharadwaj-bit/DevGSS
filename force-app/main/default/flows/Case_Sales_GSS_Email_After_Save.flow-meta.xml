@@ -94,8 +94,8 @@
     <customErrors>
         <name>Fault_Handler</name>
         <label>Handle flow fault</label>
-        <locationX>1000</locationX>
-        <locationY>200</locationY>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
         <customErrorMessages>
             <errorMessage>Case Sales GSS Email After Save could not complete. {!$Flow.FaultMessage}</errorMessage>
             <isFieldError>false</isFieldError>
@@ -571,7 +571,7 @@
             <label>TRUE_GSS  Update Status</label>
         </rules>
     </decisions>
-    <description>Migrated from the Consolidated Case Routing/Escalation PB process using multiple criteria.</description>
+    <description>CPU-limit remediation replacing the Sales and GSS email branches of Consolidated_Case_Routing_Escalation_PB. Sends the existing Sales or GSS alerts for qualifying new, open, closed, and status-changed Cases. Category-list entry guards keep unrelated Case saves from starting the flow; routing and escalation behavior is handled by the paired routing flows.</description>
     <environments>Default</environments>
     <interviewLabel>Case Sales GSS Email After Save {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Case Sales GSS Email After Save</label>
@@ -594,10 +594,10 @@
         <connector>
             <targetReference>myRule_1</targetReference>
         </connector>
-        <filterFormula>( CONTAINS({!$Label.CaseCat_Sales_List}, ";" &amp; TEXT({!$Record.Case_Category__c}) &amp; ";")
-  || CONTAINS({!$Label.CaseCat_GSS_List}, ";" &amp; TEXT({!$Record.Case_Category__c}) &amp; ";") )
+        <filterFormula>( CONTAINS({!$Label.CaseCat_Sales_List}, &quot;;&quot; &amp; TEXT({!$Record.Case_Category__c}) &amp; &quot;;&quot;)
+  || CONTAINS({!$Label.CaseCat_GSS_List}, &quot;;&quot; &amp; TEXT({!$Record.Case_Category__c}) &amp; &quot;;&quot;) )
 &amp;&amp; (
-     ( ( ISPICKVAL({!$Record.Status}, "Open") || {!$Record.IsClosed} )
+     ( ( ISPICKVAL({!$Record.Status}, &quot;Open&quot;) || {!$Record.IsClosed} )
        &amp;&amp; ( ISNEW() || ISCHANGED({!$Record.Status}) || ISCHANGED({!$Record.Case_Category__c}) ) )
   || ISCHANGED({!$Record.Status})
 )</filterFormula>
@@ -605,5 +605,5 @@
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
 </Flow>
