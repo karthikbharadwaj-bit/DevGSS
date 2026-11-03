@@ -2928,6 +2928,69 @@ private class GCPCalloutForOpportunitySummaryTest {
     Assert.areEqual('128', settings.get('CacheMaxKB'), overrideMessage);
   }
 
+  /* Shared selector coverage must not require the Account Summary test class. */
+  @IsTest
+  private static void shouldBuildPastEventQueryWhenCoveringSharedSelector() {
+    Id accountId = (Id) new ValueProvider.DummyIdProvider(Account.SObjectType)
+      .getValue();
+    Datetime asOf = Datetime.now();
+
+    Test.startTest();
+    QueryFactory query = new EventSelector(true, true)
+      .selectPastEventsForAccountSummary(accountId, asOf)
+      .setQuery();
+    List<SObject> meetings = query.executeQuery();
+    Test.stopTest();
+
+    String boundaryMessage = 'Past events must include the as-of instant and exclude integration events.';
+    String fieldsMessage = 'The shared event query must retain duration and participant fields.';
+    String emptyMessage = 'A nonexistent account must not return meetings.';
+    Assert.areEqual(
+      'AccountId = :bind0 AND StartDateTime <= :bind1 AND Type != \'System Use\'',
+      query.getCondition(),
+      boundaryMessage
+    );
+    Assert.isTrue(
+      query.getQuery().contains('ORDER BY StartDateTime DESC'),
+      boundaryMessage
+    );
+    Assert.isTrue(
+      query.getQuery().contains('DurationInMinutes'),
+      fieldsMessage
+    );
+    Assert.isTrue(query.getQuery().contains('CreatedBy.Name'), fieldsMessage);
+    Assert.isTrue(query.getQuery().contains('Who.Name'), fieldsMessage);
+    Assert.isTrue(meetings.isEmpty(), emptyMessage);
+  }
+
+  @IsTest
+  private static void shouldBuildUpcomingEventQueryWhenCoveringSharedSelector() {
+    Id accountId = (Id) new ValueProvider.DummyIdProvider(Account.SObjectType)
+      .getValue();
+    Datetime asOf = Datetime.now();
+    Datetime until = asOf.addDays(30);
+
+    Test.startTest();
+    QueryFactory query = new EventSelector()
+      .selectUpcomingEventsForAccountSummary(accountId, asOf, until)
+      .setQuery();
+    List<SObject> meetings = query.executeQuery();
+    Test.stopTest();
+
+    String boundaryMessage = 'Upcoming events must start after the as-of instant and stay within the window.';
+    String emptyMessage = 'A nonexistent account must not return upcoming meetings.';
+    Assert.areEqual(
+      'AccountId = :bind0 AND StartDateTime > :bind1 AND StartDateTime <= :bind2 AND Type != \'System Use\'',
+      query.getCondition(),
+      boundaryMessage
+    );
+    Assert.isTrue(
+      query.getQuery().contains('ORDER BY StartDateTime ASC'),
+      boundaryMessage
+    );
+    Assert.isTrue(meetings.isEmpty(), emptyMessage);
+  }
+
   private class SummaryServiceMock implements HttpCalloutMock {
     private Integer summaryStatusCode;
     private String summaryBody;

@@ -1160,6 +1160,53 @@ private class Test_GCPCalloutForAccountSummary {
     Assert.isTrue(creators.contains('Automation Service'), defaultMessage);
   }
 
+  /* Shared TaskSelector coverage belongs here so Account can deploy without Opportunity tests. */
+  @IsTest
+  private static void shouldQueryRelatedTasksWhenCoveringSharedSelector() {
+    Account summaryAccount = testAccount();
+
+    Test.startTest();
+    QueryFactory query = new TaskSelector(true, true)
+      .selectTasksByWhatIdForOpportunitySummary(summaryAccount.Id)
+      .setQuery();
+    List<SObject> tasks = query.executeQuery();
+    Test.stopTest();
+
+    String scopeMessage = 'The shared related-record query must filter by WhatId and return this account tasks.';
+    String fieldsMessage = 'The task query must include the owner and default fields, newest first.';
+    Assert.areEqual('WhatId = :bind0', query.getCondition(), scopeMessage);
+    Assert.areEqual(ACTIVITY_CAP + 1, tasks.size(), scopeMessage);
+    Assert.isTrue(query.getQuery().contains('Owner.Name'), fieldsMessage);
+    Assert.isTrue(
+      query.getQuery().contains('ORDER BY CreatedDate DESC'),
+      fieldsMessage
+    );
+    for (SObject taskRecord : tasks) {
+      Assert.areEqual(
+        summaryAccount.Id,
+        taskRecord.get(Task.WhatId),
+        scopeMessage
+      );
+    }
+  }
+
+  @IsTest
+  private static void shouldExposeDefaultTaskFieldsWhenCoveringSharedSelector() {
+    Test.startTest();
+    TaskSelector selector = new TaskSelector();
+    Schema.SObjectType objectType = selector.getSObjectType();
+    List<Schema.SObjectField> fields = selector.getDefaultFieldList();
+    Test.stopTest();
+
+    String typeMessage = 'The shared selector must query Task records.';
+    String fieldsMessage = 'The default task projection must retain its identity and activity fields.';
+    Assert.areEqual(Task.SObjectType, objectType, typeMessage);
+    Assert.isTrue(fields.contains(Task.Id), fieldsMessage);
+    Assert.isTrue(fields.contains(Task.WhatId), fieldsMessage);
+    Assert.isTrue(fields.contains(Task.Subject), fieldsMessage);
+    Assert.isTrue(fields.contains(Task.Description), fieldsMessage);
+  }
+
   private static void overrideSettings(Summary_Setting__mdt setting) {
     SummarySettingHelper.settingNameToOverrideMap.put(
       ACCOUNT_SETTING_NAME,
