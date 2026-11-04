@@ -424,7 +424,7 @@ public with sharing class OpportunitySummaryPayloadHelper {
 
   @TestVisible
   private static String sanitizedPublicWebsite(String rawWebsite) {
-    String candidate = normalizedText(rawWebsite);
+    String candidate = GCPSummaryUtil.normalizeWebsiteUrl(rawWebsite);
     if (String.isBlank(candidate)) {
       return null;
     }

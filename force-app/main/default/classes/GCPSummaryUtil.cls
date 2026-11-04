@@ -1,6 +1,6 @@
 /*
  * Helpers shared by the Opportunity and Account Summary callouts: field-level security, the
- * service endpoint and the error reply. QueryFactory runs in system mode and `with sharing` only
+ * website normalization, service endpoint and error reply. QueryFactory runs in system mode and `with sharing` only
  * covers row access, so every queried record is stripped of fields the running user cannot read
  * before it reaches a GCP payload.
  */
@@ -42,6 +42,26 @@ public inherited sharing class GCPSummaryUtil {
     Schema.SObjectField field
   ) {
     return field == null ? null : readableField(record, String.valueOf(field));
+  }
+
+  /**
+   * Adds HTTPS to a bare CRM website domain. Explicit schemes are preserved; callers still
+   * apply their own URL validation. Safe to call again on an already normalized value.
+   */
+  public static String normalizeWebsiteUrl(String rawWebsite) {
+    if (String.isBlank(rawWebsite)) {
+      return null;
+    }
+    String candidate = rawWebsite.trim();
+    if (candidate.contains('://')) {
+      return candidate;
+    }
+    return Pattern.matches(
+        '(?i)^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::[0-9]+)?(?:[/?#][^\\s]*)?$',
+        candidate
+      )
+      ? 'https://' + candidate
+      : candidate;
   }
 
   /**

@@ -372,6 +372,68 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  static void shouldNormalizeBareDomainsInWebsitePayload() {
+    Map<String, Object> accountPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
+      opportunityWithIdentity(
+        'Clarivate',
+        ' clarivate.com ',
+        'https://fallback.example.com',
+        null
+      ),
+      true
+    );
+    Assert.areEqual(
+      'https://clarivate.com',
+      accountPayload.get('accountWebsite'),
+      'A bare Account domain must be normalized and retain priority over the fallback.'
+    );
+
+    Map<String, Object> fallbackPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
+      opportunityWithIdentity(
+        'Clarivate',
+        null,
+        'www.clarivate.com/about?tracking=1#company',
+        null
+      ),
+      true
+    );
+    Assert.areEqual(
+      'https://www.clarivate.com/about',
+      fallbackPayload.get('accountWebsite'),
+      'A bare fallback domain must be normalized and have its query and fragment removed.'
+    );
+    Assert.areEqual(
+      'http://clarivate.com/about',
+      OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(
+        'http://clarivate.com/about'
+      ),
+      'An explicit HTTP protocol must be preserved.'
+    );
+  }
+
+  @IsTest
+  static void shouldRejectUnsafeBareWebsiteValues() {
+    for (
+      String website : new List<String>{
+        'localhost',
+        'company.internal',
+        'company.local',
+        '192.168.1.10/internal',
+        'user:secret@example.com',
+        'not a website.com',
+        'javascript:alert(1)',
+        'ftp://example.com/file',
+        '//example.com'
+      }
+    ) {
+      Assert.isNull(
+        OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(website),
+        'Unsafe or malformed website must still be rejected: ' + website
+      );
+    }
+  }
+
+  @IsTest
   static void shouldRejectWebsiteWhenPrivateCredentialedOrNonHttp() {
     Assert.isNull(
       OpportunitySummaryPayloadHelper.sanitizedPublicWebsite(

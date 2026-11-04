@@ -122,6 +122,68 @@ private class Test_GCPSummaryUtil {
     Assert.isNull(nullToken, nullTokenMessage);
   }
 
+  // ── normalizeWebsiteUrl ───
+  @IsTest
+  static void shouldAddHttpsOnlyToBareWebsiteDomains() {
+    Map<String, String> cases = new Map<String, String>{
+      'insiraglobal.com' => 'https://insiraglobal.com',
+      ' www.example.com/about?source=crm#company ' => 'https://www.example.com/about?source=crm#company',
+      'example.com:8443/about' => 'https://example.com:8443/about'
+    };
+    for (String website : cases.keySet()) {
+      String normalized = GCPSummaryUtil.normalizeWebsiteUrl(website);
+      Assert.areEqual(
+        cases.get(website),
+        normalized,
+        'Normalize bare domain: ' + website
+      );
+      Assert.areEqual(
+        normalized,
+        GCPSummaryUtil.normalizeWebsiteUrl(normalized),
+        'Normalizing twice must not add a second scheme.'
+      );
+    }
+  }
+
+  @IsTest
+  static void shouldPreserveWebsiteWithExplicitScheme() {
+    for (
+      String website : new List<String>{
+        'http://insiraglobal.com',
+        'https://insiraglobal.com',
+        'HTTPS://WWW.EXAMPLE.COM/About?source=crm#Company',
+        'ftp://example.com/file'
+      }
+    ) {
+      Assert.areEqual(
+        website,
+        GCPSummaryUtil.normalizeWebsiteUrl(website),
+        'An explicit scheme must never be replaced or prefixed.'
+      );
+    }
+  }
+
+  @IsTest
+  static void shouldLeaveNonDomainWebsiteValuesForValidation() {
+    Assert.isNull(GCPSummaryUtil.normalizeWebsiteUrl(null));
+    Assert.isNull(GCPSummaryUtil.normalizeWebsiteUrl('  '));
+    for (
+      String website : new List<String>{
+        'not a website.com',
+        'javascript:alert(1)',
+        'user:secret@example.com',
+        '//example.com',
+        'localhost'
+      }
+    ) {
+      Assert.areEqual(
+        website,
+        GCPSummaryUtil.normalizeWebsiteUrl(website),
+        'Malformed values must not be disguised as HTTPS URLs.'
+      );
+    }
+  }
+
   // ── buildServiceEndpoint ───
   @IsTest
   static void shouldReplaceConfiguredPathWhenBuildingEndpoint() {

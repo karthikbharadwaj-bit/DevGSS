@@ -97,6 +97,41 @@ private class Test_GCPCalloutForAccountSummary {
   }
 
   @IsTest
+  static void shouldNormalizeOnlyWebsiteWhenMappingAccountPayload() {
+    Map<String, String> cases = new Map<String, String>{
+      'insiraglobal.com' => 'https://insiraglobal.com',
+      'http://insiraglobal.com' => 'http://insiraglobal.com',
+      'https://insiraglobal.com' => 'https://insiraglobal.com'
+    };
+    for (String website : cases.keySet()) {
+      Map<String, Object> row = AccountSummaryHelper.mapRow(
+        new Account(Name = website, Website = website),
+        new List<Schema.SObjectField>{ Account.Name, Account.Website },
+        null
+      );
+      Assert.areEqual(
+        cases.get(website),
+        row.get('website'),
+        'Only a missing scheme must be added to the website.'
+      );
+      Assert.areEqual(
+        website,
+        row.get('name'),
+        'Other fields must remain unchanged.'
+      );
+    }
+    Map<String, Object> missingWebsite = AccountSummaryHelper.mapRow(
+      new Account(Name = 'Insira'),
+      new List<Schema.SObjectField>{ Account.Website },
+      null
+    );
+    Assert.isNull(
+      missingWebsite.get('website'),
+      'An unreadable or missing website must remain null.'
+    );
+  }
+
+  @IsTest
   static void shouldSendEveryListWhenBuildingPayload() {
     Account summaryAccount = testAccount();
 

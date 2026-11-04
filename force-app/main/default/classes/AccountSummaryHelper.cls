@@ -653,7 +653,9 @@ public with sharing class AccountSummaryHelper {
     for (Schema.SObjectField field : fields) {
       String key = payloadKey(FIELD_TO_PAYLOAD_KEY.get(field), field);
       Object value = GCPSummaryUtil.readableField(record, field);
-      if (value instanceof Datetime && DATE_ONLY_KEYS.contains(key)) {
+      if (field == Account.Website && value instanceof String) {
+        value = GCPSummaryUtil.normalizeWebsiteUrl((String) value);
+      } else if (value instanceof Datetime && DATE_ONLY_KEYS.contains(key)) {
         value = ((Datetime) value).date();
       } else if (value instanceof String && TRUNCATED_TEXT_KEYS.contains(key)) {
         value = ((String) value).left(MAX_DESCRIPTION_LENGTH);
