@@ -372,6 +372,73 @@ private class GCPCalloutForOpportunitySummaryTest {
   }
 
   @IsTest
+  static void shouldEnableEnrichmentWhenGenericNameHasBareCompanyWebsite() {
+    Opportunity company = opportunityWithIdentity(
+      'yahoo.com',
+      'clarivate.com',
+      null,
+      null
+    );
+    Opportunity missingWebsite = opportunityWithIdentity(
+      'yahoo.com',
+      null,
+      null,
+      null
+    );
+    Opportunity unsafeWebsite = opportunityWithIdentity(
+      'yahoo.com',
+      'localhost',
+      null,
+      null
+    );
+
+    Test.startTest();
+    Boolean enabled = OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
+      true,
+      company
+    );
+    Boolean disabledByConfig = OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
+      false,
+      company
+    );
+    Boolean disabledWithoutWebsite = OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
+      true,
+      missingWebsite
+    );
+    Boolean disabledWithUnsafeWebsite = OpportunitySummaryPayloadHelper.effectiveEnrichmentEnabled(
+      true,
+      unsafeWebsite
+    );
+    Map<String, Object> payload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
+      company,
+      enabled
+    );
+    Test.stopTest();
+
+    Assert.isTrue(
+      enabled,
+      'A generic account name plus a usable bare company domain must enable configured enrichment.'
+    );
+    Assert.isFalse(
+      disabledByConfig,
+      'A usable website must not override the enrichment switch.'
+    );
+    Assert.isFalse(
+      disabledWithoutWebsite,
+      'A generic account name without a website must keep enrichment off.'
+    );
+    Assert.isFalse(
+      disabledWithUnsafeWebsite,
+      'An unsafe website must not enable enrichment for a generic account name.'
+    );
+    Assert.areEqual(
+      'https://clarivate.com',
+      payload.get('accountWebsite'),
+      'Enabled enrichment must include the normalized company website.'
+    );
+  }
+
+  @IsTest
   static void shouldNormalizeBareDomainsInWebsitePayload() {
     Map<String, Object> accountPayload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
       opportunityWithIdentity(
@@ -408,6 +475,29 @@ private class GCPCalloutForOpportunitySummaryTest {
         'http://clarivate.com/about'
       ),
       'An explicit HTTP protocol must be preserved.'
+    );
+  }
+
+  @IsTest
+  static void shouldNormalizeWebsiteBeforeRemovingEmbeddedQueryUrl() {
+    Opportunity company = opportunityWithIdentity(
+      'Clarivate',
+      'clarivate.com/?next=https://example.com#tracking',
+      'https://fallback.example.com',
+      null
+    );
+
+    Test.startTest();
+    Map<String, Object> payload = OpportunitySummaryPayloadHelper.buildOpportunityMap(
+      company,
+      true
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'https://clarivate.com/',
+      payload.get('accountWebsite'),
+      'The account website must be normalized before removing its query and fragment, without selecting the fallback.'
     );
   }
 

@@ -126,6 +126,8 @@ private class Test_GCPSummaryUtil {
   @IsTest
   static void shouldAddHttpsOnlyToBareWebsiteDomains() {
     Map<String, String> cases = new Map<String, String>{
+      'clarivate.com' => 'https://clarivate.com',
+      'Clarivate.com' => 'https://Clarivate.com',
       'insiraglobal.com' => 'https://insiraglobal.com',
       ' www.example.com/about?source=crm#company ' => 'https://www.example.com/about?source=crm#company',
       'example.com:8443/about' => 'https://example.com:8443/about'
@@ -143,6 +145,31 @@ private class Test_GCPSummaryUtil {
         'Normalizing twice must not add a second scheme.'
       );
     }
+  }
+
+  @IsTest
+  static void shouldAddHttpsWhenSchemeAppearsOnlyAfterHostname() {
+    Map<String, String> cases = new Map<String, String>{
+      'clarivate.com/?next=https://example.com' => 'https://clarivate.com/?next=https://example.com',
+      'clarivate.com/#https://example.com' => 'https://clarivate.com/#https://example.com',
+      'clarivate.com/path/https://example.com' => 'https://clarivate.com/path/https://example.com'
+    };
+
+    Test.startTest();
+    for (String website : cases.keySet()) {
+      String normalized = GCPSummaryUtil.normalizeWebsiteUrl(website);
+      Assert.areEqual(
+        cases.get(website),
+        normalized,
+        'A scheme inside the path, query or fragment must not suppress the HTTPS prefix.'
+      );
+      Assert.areEqual(
+        normalized,
+        GCPSummaryUtil.normalizeWebsiteUrl(normalized),
+        'An explicit leading scheme must be preserved when normalizing again.'
+      );
+    }
+    Test.stopTest();
   }
 
   @IsTest

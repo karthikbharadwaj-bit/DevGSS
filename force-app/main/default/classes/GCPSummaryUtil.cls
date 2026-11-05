@@ -53,7 +53,9 @@ public inherited sharing class GCPSummaryUtil {
       return null;
     }
     String candidate = rawWebsite.trim();
-    if (candidate.contains('://')) {
+    if (
+      Pattern.compile('^[a-zA-Z][a-zA-Z0-9+.-]*://').matcher(candidate).find()
+    ) {
       return candidate;
     }
     return Pattern.matches(
