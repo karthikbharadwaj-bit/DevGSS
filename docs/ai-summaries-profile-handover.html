@@ -1,0 +1,578 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>AI Summaries: Profiles Getting Access (Prod)</title>
+  </head>
+  <body style="font-family: Arial, sans-serif">
+    <h1>AI Summaries: Profiles Getting Access (Prod)</h1>
+    <p>
+      Handover for the testing team. Source: prod analysis (org ID
+      00D80000000aRUXEA2, run 12 Nov 2026), counts are active standard users.
+      Page list is from SF Master. Nothing has been changed in any org.
+    </p>
+    <h2>What gives a user access</h2>
+    <p>All three must be true. Editing the pages alone is not enough.</p>
+    <ol>
+      <li>
+        <b>Page:</b> the new component (aiAccountSummary, opportunitySummary)
+        sits on the Account or Opportunity page the user is routed to. Plan: add
+        it to every page that holds accountAISummary or opportunityAISummary.
+      </li>
+      <li>
+        <b>Permission set:</b> the user holds AI_Reporting_Tool, which grants
+        the AI_Reporting_Access custom permission used by the page visibility
+        rule and the Apex class access.
+      </li>
+      <li>
+        <b>Feature toggle:</b> GCP_Feature_Toggle__c resolves to on for the user
+        (user row, then profile row, then org default). Opportunity is off on
+        3,416 active user rows today, so those rows must be updated, and profile
+        rows must be created or updated for users without a user row. Account
+        depends on the Account deploy planned for the week after this note.
+      </li>
+    </ol>
+    <h2>Cardinality</h2>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr>
+        <th>Measure</th>
+        <th>Count</th>
+      </tr>
+      <tr>
+        <td>Profiles with active standard users</td>
+        <td>98</td>
+      </tr>
+      <tr>
+        <td>
+          Profiles that get access (at least one user holds AI_Reporting_Tool)
+        </td>
+        <td>77 (42 standard, 35 EU Restricted)</td>
+      </tr>
+      <tr>
+        <td>Profiles excluded (no user holds the permission set)</td>
+        <td>21</td>
+      </tr>
+      <tr>
+        <td>Active standard users</td>
+        <td>3,874</td>
+      </tr>
+      <tr>
+        <td>
+          Users who get access (hold the permission set, on an included profile)
+        </td>
+        <td>3,616 (2,027 standard, 1,589 EU Restricted)</td>
+      </tr>
+      <tr>
+        <td>
+          Users on included profiles without the permission set (no access)
+        </td>
+        <td>135 (51 standard, 84 EU Restricted)</td>
+      </tr>
+      <tr>
+        <td>Users on excluded profiles (no access)</td>
+        <td>123</td>
+      </tr>
+      <tr>
+        <td>Total without AI_Reporting_Tool</td>
+        <td>258</td>
+      </tr>
+      <tr>
+        <td>Pages to edit</td>
+        <td>24 Account + 14 Opportunity</td>
+      </tr>
+      <tr>
+        <td>Profile toggle rows: update existing / create in scope</td>
+        <td>4 / 42</td>
+      </tr>
+      <tr>
+        <td>Active user toggle rows to update (Opportunity off today)</td>
+        <td>3,416 of 3,421 (5 keep Opportunity on)</td>
+      </tr>
+    </table>
+    <h2>Excluded profiles</h2>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr>
+        <th>Excluded profiles (21)</th>
+        <th>Users</th>
+      </tr>
+      <tr>
+        <td>No Access</td>
+        <td>45 users</td>
+      </tr>
+      <tr>
+        <td>No Access (API)</td>
+        <td>29 users</td>
+      </tr>
+      <tr>
+        <td>Integration and API profiles</td>
+        <td>13 profiles, 43 users</td>
+      </tr>
+      <tr>
+        <td>Terminated User</td>
+        <td>1 user</td>
+      </tr>
+      <tr>
+        <td>
+          GSP Sales, Operations, SE Manager, Service Engineer - Manager,
+          Business Services - Advanced - EU Restricted
+        </td>
+        <td>1 user each</td>
+      </tr>
+    </table>
+    <h2>Standard profiles (42 profiles, 2,027 users)</h2>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr>
+        <th>Profile</th>
+        <th>Users with AI_Reporting_Tool</th>
+        <th>Active users on profile</th>
+      </tr>
+      <tr>
+        <td>Expansion - Lightning</td>
+        <td>285</td>
+        <td>291</td>
+      </tr>
+      <tr>
+        <td>Signature - CSM Lightning</td>
+        <td>207</td>
+        <td>221</td>
+      </tr>
+      <tr>
+        <td>Sales Rep - Lightning</td>
+        <td>197</td>
+        <td>199</td>
+      </tr>
+      <tr>
+        <td>WWFS Rep - Lightning</td>
+        <td>189</td>
+        <td>189</td>
+      </tr>
+      <tr>
+        <td>Deal Desk Lightning</td>
+        <td>123</td>
+        <td>123</td>
+      </tr>
+      <tr>
+        <td>Sales Engineer Lightning</td>
+        <td>107</td>
+        <td>107</td>
+      </tr>
+      <tr>
+        <td>Marketing User AD Auth</td>
+        <td>90</td>
+        <td>101</td>
+      </tr>
+      <tr>
+        <td>Sales Operations Lightning</td>
+        <td>89</td>
+        <td>92</td>
+      </tr>
+      <tr>
+        <td>Channel Sales - Lightning</td>
+        <td>88</td>
+        <td>89</td>
+      </tr>
+      <tr>
+        <td>Support Porting Cases Users Only</td>
+        <td>84</td>
+        <td>84</td>
+      </tr>
+      <tr>
+        <td>GSP Sales Rep</td>
+        <td>81</td>
+        <td>81</td>
+      </tr>
+      <tr>
+        <td>Finance Admin</td>
+        <td>57</td>
+        <td>59</td>
+      </tr>
+      <tr>
+        <td>Support Back Office</td>
+        <td>49</td>
+        <td>49</td>
+      </tr>
+      <tr>
+        <td>CRM Support Engineer</td>
+        <td>38</td>
+        <td>38</td>
+      </tr>
+      <tr>
+        <td>Support T2</td>
+        <td>38</td>
+        <td>38</td>
+      </tr>
+      <tr>
+        <td>Channel Sales Manager - Lightning</td>
+        <td>35</td>
+        <td>35</td>
+      </tr>
+      <tr>
+        <td>Marketing Admin AD Auth</td>
+        <td>34</td>
+        <td>35</td>
+      </tr>
+      <tr>
+        <td>OPS Member</td>
+        <td>34</td>
+        <td>34</td>
+      </tr>
+      <tr>
+        <td>Support T1</td>
+        <td>25</td>
+        <td>25</td>
+      </tr>
+      <tr>
+        <td>ProServ -Lightning</td>
+        <td>23</td>
+        <td>23</td>
+      </tr>
+      <tr>
+        <td>Professional Services Lightning</td>
+        <td>23</td>
+        <td>24</td>
+      </tr>
+      <tr>
+        <td>Channel Operations - Lightning</td>
+        <td>22</td>
+        <td>22</td>
+      </tr>
+      <tr>
+        <td>System Administrator</td>
+        <td>19</td>
+        <td>24</td>
+      </tr>
+      <tr>
+        <td>Support - TAM</td>
+        <td>11</td>
+        <td>12</td>
+      </tr>
+      <tr>
+        <td>Support T3</td>
+        <td>11</td>
+        <td>11</td>
+      </tr>
+      <tr>
+        <td>Global Operations</td>
+        <td>8</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Legal Team AD Auth</td>
+        <td>8</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Sales 4.0 inContact Order Lightning</td>
+        <td>8</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Support Fraud Investigation</td>
+        <td>7</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Support Implementations</td>
+        <td>7</td>
+        <td>7</td>
+      </tr>
+      <tr>
+        <td>Support Operations</td>
+        <td>5</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Restricted System Administrator</td>
+        <td>4</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Service Engineer - Agent</td>
+        <td>4</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Support Porting Shipping</td>
+        <td>4</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>CRM QA Engineer</td>
+        <td>3</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>Deal Desk</td>
+        <td>2</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Read Only</td>
+        <td>2</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>Sales Agent SDR w Insidesales</td>
+        <td>2</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Avaya - Report Access</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Business Services - Advanced</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Business Services - Basic</td>
+        <td>1</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Restricted Profile - LP (RUL)</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td><b>Total (42 profiles)</b></td>
+        <td><b>2027</b></td>
+        <td><b>2078</b></td>
+      </tr>
+    </table>
+    <h2>
+      EU Restricted profiles (35 profiles, 1,589 users, scope decision pending)
+    </h2>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr>
+        <th>Profile</th>
+        <th>Users with AI_Reporting_Tool</th>
+        <th>Active users on profile</th>
+      </tr>
+      <tr>
+        <td>Support T1 - EU Restricted</td>
+        <td>319</td>
+        <td>331</td>
+      </tr>
+      <tr>
+        <td>Support Implementations - EU Restricted</td>
+        <td>209</td>
+        <td>213</td>
+      </tr>
+      <tr>
+        <td>Support T2 - EU Restricted</td>
+        <td>206</td>
+        <td>206</td>
+      </tr>
+      <tr>
+        <td>Professional Services Lightning - EU Restricted</td>
+        <td>158</td>
+        <td>160</td>
+      </tr>
+      <tr>
+        <td>CERT - Lightning - EU Restricted</td>
+        <td>120</td>
+        <td>129</td>
+      </tr>
+      <tr>
+        <td>ProServ -Lightning - EU Restricted</td>
+        <td>102</td>
+        <td>112</td>
+      </tr>
+      <tr>
+        <td>Support Back Office - EU Restricted</td>
+        <td>96</td>
+        <td>97</td>
+      </tr>
+      <tr>
+        <td>Finance Admin - EU Restricted</td>
+        <td>89</td>
+        <td>100</td>
+      </tr>
+      <tr>
+        <td>Support T3 - EU Restricted</td>
+        <td>71</td>
+        <td>71</td>
+      </tr>
+      <tr>
+        <td>Support Operations - EU Restricted</td>
+        <td>51</td>
+        <td>51</td>
+      </tr>
+      <tr>
+        <td>Support - TAM - EU Restricted</td>
+        <td>28</td>
+        <td>28</td>
+      </tr>
+      <tr>
+        <td>Sales Rep - Lightning - EU Restricted</td>
+        <td>20</td>
+        <td>26</td>
+      </tr>
+      <tr>
+        <td>Legal Team AD Auth - EU Restricted</td>
+        <td>16</td>
+        <td>17</td>
+      </tr>
+      <tr>
+        <td>OPS Member - EU Restricted</td>
+        <td>16</td>
+        <td>17</td>
+      </tr>
+      <tr>
+        <td>Sales Engineer Lightning - EU Restricted</td>
+        <td>16</td>
+        <td>17</td>
+      </tr>
+      <tr>
+        <td>Signature - ICSM Lightning - EU Restricted</td>
+        <td>11</td>
+        <td>11</td>
+      </tr>
+      <tr>
+        <td>ERT Lightning - EU Restricted</td>
+        <td>10</td>
+        <td>10</td>
+      </tr>
+      <tr>
+        <td>CRM Support Engineer - EU Restricted</td>
+        <td>7</td>
+        <td>7</td>
+      </tr>
+      <tr>
+        <td>Marketing User AD Auth - EU Restricted</td>
+        <td>7</td>
+        <td>7</td>
+      </tr>
+      <tr>
+        <td>ICSM Lightning - EU Restricted</td>
+        <td>5</td>
+        <td>12</td>
+      </tr>
+      <tr>
+        <td>Support Porting Shipping - EU Restricted</td>
+        <td>5</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Sales Operations Lightning - EU Restricted</td>
+        <td>4</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Support Fraud Investigation - EU Restricted</td>
+        <td>4</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>WWFS Rep - Lightning - EU Restricted</td>
+        <td>4</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Sales 4.0 inContact Order Lightning - EU Restricted</td>
+        <td>3</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Business Services - Basic - EU Restricted</td>
+        <td>2</td>
+        <td>8</td>
+      </tr>
+      <tr>
+        <td>Sales Director 3.0 - EU Restricted</td>
+        <td>2</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Channel Sales - Lightning - EU Restricted</td>
+        <td>1</td>
+        <td>3</td>
+      </tr>
+      <tr>
+        <td>Deal Desk Lightning - EU Restricted</td>
+        <td>1</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <td>Global Operations - EU Restricted</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>OPS Manager - EU Restricted</td>
+        <td>1</td>
+        <td>2</td>
+      </tr>
+      <tr>
+        <td>Operations - EU Restricted</td>
+        <td>1</td>
+        <td>4</td>
+      </tr>
+      <tr>
+        <td>Sales 4.0 inContact Order - EU Restricted</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Sales Manager - Business Processing - EU Restricted</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td>Support Manager - KB - EU Restricted</td>
+        <td>1</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <td><b>Total (35 profiles)</b></td>
+        <td><b>1589</b></td>
+        <td><b>1673</b></td>
+      </tr>
+    </table>
+    <h2>Beta users in prod</h2>
+    <table border="1" cellpadding="4" cellspacing="0">
+      <tr>
+        <th>Beta user (Opportunity on today)</th>
+        <th>Prod profile</th>
+      </tr>
+      <tr>
+        <td>Bill Farmer</td>
+        <td>WWFS Rep - Lightning</td>
+      </tr>
+      <tr>
+        <td>Adam Walworth</td>
+        <td>Sales Engineer Lightning</td>
+      </tr>
+      <tr>
+        <td>Cody Turner</td>
+        <td>CRM Support Engineer</td>
+      </tr>
+      <tr>
+        <td>Michael Throssel</td>
+        <td>CRM Support Engineer</td>
+      </tr>
+      <tr>
+        <td>Molly Bohon</td>
+        <td>WWFS Rep - Lightning - EU Restricted</td>
+      </tr>
+    </table>
+    <h2>Suggested test checks</h2>
+    <ol>
+      <li>
+        After the toggle and page changes, Login As one user per included
+        profile (start with the beta users).
+      </li>
+      <li>
+        Open an Account and an Opportunity in the Sales and RC Sales apps.
+        Confirm the new summary component is visible and loads.
+      </li>
+      <li>
+        Negative checks: a user on an excluded profile and a user on an included
+        profile without AI_Reporting_Tool must not see the component.
+      </li>
+    </ol>
+  </body>
+</html>
