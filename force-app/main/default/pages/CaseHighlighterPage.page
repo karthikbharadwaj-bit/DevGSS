@@ -7,6 +7,29 @@
   lightningStylesheets="true"
 >
   <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .case-highlights-messages {
+      box-sizing: border-box;
+      max-height: calc(100vh - 2px);
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      width: 100%;
+    }
+
+    .case-highlights-messages::-webkit-scrollbar {
+      display: none;
+    }
+
     .backCss {
       background-color: #fffcce !important;
       border: 1px solid #cd9e5a !important;
@@ -24,100 +47,102 @@
     id="message"
     rendered="{!IF(bRedAccount || bContactCenter || isCloudConnectCustomer || highlighterMsg != NULL || Case.isEscalated || isHypercareAccount, true, false)}"
   >
-    <div class="backCss">
-      <apex:panelGrid
-        columns="3"
-        id="Paneltable"
-        style="background-color: #fffcce !important"
-      >
-        <apex:image
-          id="warning"
-          value="/resource/WarningRed"
-          width="48.7"
-          height="48.7"
-          style="padding: 5px"
-        />
-        <apex:outputpanel>
-          <apex:outputpanel rendered="{!isHypercareAccount}">
-            <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
-            <apex:outputText
-              styleClass="hypercare-title"
-              value="{!$Label.Hypercare_Banner_Title}. "
-            />
-            <apex:outputText value="{!$Label.Hypercare_Banner_Message} " />
-            <a
-              href="{!$Label.Hypercare_Handling_URL}"
-              target="_blank"
-              rel="noopener noreferrer"
-              ><b>{!$Label.Hypercare_Link_Text}</b></a
+    <div class="case-highlights-messages">
+      <div class="backCss">
+        <apex:panelGrid
+          columns="3"
+          id="Paneltable"
+          style="background-color: #fffcce !important"
+        >
+          <apex:image
+            id="warning"
+            value="/resource/WarningRed"
+            width="48.7"
+            height="48.7"
+            style="padding: 5px"
+          />
+          <apex:outputpanel>
+            <apex:outputpanel rendered="{!isHypercareAccount}">
+              <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+              <apex:outputText
+                styleClass="hypercare-title"
+                value="{!$Label.Hypercare_Banner_Title}. "
+              />
+              <apex:outputText value="{!$Label.Hypercare_Banner_Message} " />
+              <a
+                href="{!$Label.Hypercare_Handling_URL}"
+                target="_blank"
+                rel="noopener noreferrer"
+                ><b>{!$Label.Hypercare_Link_Text}</b></a
+              >
+              <br />
+            </apex:outputpanel>
+            <apex:outputpanel rendered="{!bRedAccount}">
+              <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+              <apex:outputText escape="false">
+                <!-- This is a Red Account - Please see <a href="/{!strRedAccountId}" target='_blank'><b>here</b></a> for details.-->
+                <font
+                  color="#FFF"
+                  style="background: red; font-size: 15px; font-weight: bold"
+                >
+                  This is a Red Account. Handle with Care. Please see
+                  <a
+                    href="/{!strRedAccountId}"
+                    target="_blank"
+                    style="font-weight: normal"
+                    ><b>here</b>
+                  </a>
+                  for details.
+                </font>
+              </apex:outputText>
+              <br />
+            </apex:outputpanel>
+            <apex:outputLabel escape="false" rendered="{!bContactCenter}"
+              >&#9830;&#160;</apex:outputLabel
             >
-            <br />
-          </apex:outputpanel>
-          <apex:outputpanel rendered="{!bRedAccount}">
-            <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
-            <apex:outputText escape="false">
-              <!-- This is a Red Account - Please see <a href="/{!strRedAccountId}" target='_blank'><b>here</b></a> for details.-->
-              <font
-                color="#FFF"
-                style="background: red; font-size: 15px; font-weight: bold"
-              >
-                This is a Red Account. Handle with Care. Please see
-                <a
-                  href="/{!strRedAccountId}"
-                  target="_blank"
-                  style="font-weight: normal"
-                  ><b>here</b>
-                </a>
-                for details.
-              </font>
+            <apex:outputText escape="false" rendered="{!bContactCenter}">
+              <b>T</b>his is a Contact Center Account, please do NOT change the
+              main account phone number without prior discussion with
+              cc.desk@ringcentral.com
             </apex:outputText>
-            <br />
+            <apex:outputpanel
+              rendered="{!IF(highlighterMsg != NULL , true, false)}"
+            >
+              <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+              <apex:outputText escape="false">
+                <font
+                  color="#FFF"
+                  style="color: black; font-size: 15px; font-weight: bold"
+                  >This is a <b style="color: red">{!highlighterMsg}</b> Case,
+                  please handle with care.</font
+                >
+              </apex:outputText>
+              <br />
+            </apex:outputpanel>
+            <apex:outputpanel rendered="{!isCloudConnectCustomer}">
+              <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+              <apex:outputText escape="false">
+                <font
+                  color="#FFF"
+                  style="color: black; font-size: 15px; font-weight: bold"
+                  ><b style="color: red">CloudConnect</b> , please handle with
+                  care.</font
+                >
+              </apex:outputText>
+              <br />
+            </apex:outputpanel>
+            <apex:outputpanel rendered="{!Case.isEscalated}">
+              <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
+              <apex:outputText escape="false">
+                <p style="display: inline-block; color: red">
+                  Please handle with care. This case has been escalated.
+                </p>
+              </apex:outputText>
+              <br />
+            </apex:outputpanel>
           </apex:outputpanel>
-          <apex:outputLabel escape="false" rendered="{!bContactCenter}"
-            >&#9830;&#160;</apex:outputLabel
-          >
-          <apex:outputText escape="false" rendered="{!bContactCenter}">
-            <b>T</b>his is a Contact Center Account, please do NOT change the
-            main account phone number without prior discussion with
-            cc.desk@ringcentral.com
-          </apex:outputText>
-          <apex:outputpanel
-            rendered="{!IF(highlighterMsg != NULL , true, false)}"
-          >
-            <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
-            <apex:outputText escape="false">
-              <font
-                color="#FFF"
-                style="color: black; font-size: 15px; font-weight: bold"
-                >This is a <b style="color: red">{!highlighterMsg}</b> Case,
-                please handle with care.</font
-              >
-            </apex:outputText>
-            <br />
-          </apex:outputpanel>
-          <apex:outputpanel rendered="{!isCloudConnectCustomer}">
-            <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
-            <apex:outputText escape="false">
-              <font
-                color="#FFF"
-                style="color: black; font-size: 15px; font-weight: bold"
-                ><b style="color: red">CloudConnect</b> , please handle with
-                care.</font
-              >
-            </apex:outputText>
-            <br />
-          </apex:outputpanel>
-          <apex:outputpanel rendered="{!Case.isEscalated}">
-            <apex:outputLabel escape="false">&#9830;&#160;</apex:outputLabel>
-            <apex:outputText escape="false">
-              <p style="display: inline-block; color: red">
-                Please handle with care. This case has been escalated.
-              </p>
-            </apex:outputText>
-            <br />
-          </apex:outputpanel>
-        </apex:outputpanel>
-      </apex:panelGrid>
+        </apex:panelGrid>
+      </div>
     </div>
   </apex:outputPanel>
   <!-- <div class="backCss">
