@@ -186,6 +186,26 @@ public inherited sharing class CaseSelector extends SObjectSelector {
     };
   }
 
+  public List<String> getCaseHighlighterFieldList() {
+    return new List<String>{
+      'Id',
+      'AccountId',
+      'RecordTypeId',
+      'Account.RC_Brand__c',
+      'Account.Hyper_Care__c'
+    };
+  }
+
+  public QueryFactory selectCaseForHighlighter(Id caseId) {
+    return newQueryFactory()
+      .setFactoryName('selectCaseForHighlighter')
+      .selectFields(getCaseHighlighterFieldList())
+      .withoutSelectorOrderByIncluded()
+      .setCondition('Id = :bind0')
+      .setQueryBindings(new List<Object>{ caseId })
+      .setLimit(1);
+  }
+
   public QueryFactory selectCases() {
     return newQueryFactory()
       .setFactoryName('selectCases')
@@ -498,23 +518,13 @@ public inherited sharing class CaseSelector extends SObjectSelector {
       .setLimit(1);
   }
 
-  public QueryFactory selectCasesForBTCustomerResponseCheck(
-    List<Object> bindings
-  ) {
+  public QueryFactory selectCasesForBTCustomerResponseCheck(Set<Id> caseIds) {
     return newQueryFactory()
       .setFactoryName('selectCasesForBTCustomerResponseCheck')
-      .selectFields(
-        new List<Schema.SObjectField>{
-          Case.Id,
-          Case.Brand_Account__c,
-          Case.CaseNumber,
-          Case.Original_RecordType__c,
-          Case.RecordTypeId
-        }
-      )
-      .selectFields(new List<String>{ 'Contact.Email' })
+      .selectFields(getBTCustomerResponseCaseFieldList())
+      .selectFields(getBTCustomerResponseRelatedFieldList())
       .setCondition('Id IN :bind0')
-      .setQueryBindings(bindings)
+      .setQueryBindings(new List<Object>{ caseIds })
       .withoutSelectorFieldsIncluded()
       .withoutSelectorOrderByIncluded();
   }
@@ -639,5 +649,17 @@ public inherited sharing class CaseSelector extends SObjectSelector {
       Case.Type,
       Case.IsClosed
     };
+  }
+  private List<Schema.SObjectField> getBTCustomerResponseCaseFieldList() {
+    return new List<Schema.SObjectField>{
+      Case.Id,
+      Case.Brand_Account__c,
+      Case.CaseNumber,
+      Case.RecordTypeName__c
+    };
+  }
+
+  private List<String> getBTCustomerResponseRelatedFieldList() {
+    return new List<String>{ 'Contact.Email' };
   }
 }

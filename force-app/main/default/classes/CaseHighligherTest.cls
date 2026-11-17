@@ -43,7 +43,10 @@ private class CaseHighligherTest {
   // ── shouldShowHypercare_WhenAccountFlagTrue ───────────────────────────────
   @IsTest
   static void shouldShowHypercare_WhenAccountFlagTrue() {
-    Case hypercareCase = createCase(true, true, SUPPORT_T2_RECORD_TYPE);
+    Case hypercareCase = createCase(
+      createAccount(true),
+      SUPPORT_T2_RECORD_TYPE
+    );
 
     Test.startTest();
     CaseHighlighter highlighter = new CaseHighlighter(
@@ -60,7 +63,7 @@ private class CaseHighligherTest {
   // ── shouldHideHypercare_WhenAccountFlagFalse ──────────────────────────────
   @IsTest
   static void shouldHideHypercare_WhenAccountFlagFalse() {
-    Case regularCase = createCase(false, true, SUPPORT_T2_RECORD_TYPE);
+    Case regularCase = createCase(createAccount(false), SUPPORT_T2_RECORD_TYPE);
 
     Test.startTest();
     CaseHighlighter highlighter = new CaseHighlighter(
@@ -77,7 +80,7 @@ private class CaseHighligherTest {
   // ── shouldHideHypercare_WhenCaseHasNoAccount ──────────────────────────────
   @IsTest
   static void shouldHideHypercare_WhenCaseHasNoAccount() {
-    Case noAccountCase = createCase(false, false, SUPPORT_T2_RECORD_TYPE);
+    Case noAccountCase = createCaseWithoutAccount(SUPPORT_T2_RECORD_TYPE);
 
     Test.startTest();
     CaseHighlighter highlighter = new CaseHighlighter(
@@ -94,7 +97,7 @@ private class CaseHighligherTest {
   // ── shouldShowHypercare_WhenRecordTypeIsDifferent ─────────────────────────
   @IsTest
   static void shouldShowHypercare_WhenRecordTypeIsDifferent() {
-    Case chatCase = createCase(true, true, SUPPORT_CHAT_RECORD_TYPE);
+    Case chatCase = createCase(createAccount(true), SUPPORT_CHAT_RECORD_TYPE);
 
     Test.startTest();
     CaseHighlighter highlighter = new CaseHighlighter(
@@ -112,9 +115,24 @@ private class CaseHighligherTest {
    * Creates a case, optionally linked to an account, with the Hypercare flag set as requested.
    * Trigger bypass is applied only while the test data is created.
    */
+  private static Account createAccount(Boolean isHypercare) {
+    Triggers.switchOff();
+    Test_Utils testUtils = new Test_Utils();
+    testUtils.initialiseTriggerBypass();
+    Account testAccount = (Account) SmartFactory.createSObject('Account', true);
+    testAccount.RC_User_ID__c = 'RC' + Math.random();
+    testAccount.Hyper_Care__c = isHypercare;
+    upsert testAccount;
+    testUtils.deInitialiseTriggerBypass();
+    return testAccount;
+  }
+
+  private static Case createCaseWithoutAccount(String recordTypeDeveloperName) {
+    return createCase(null, recordTypeDeveloperName);
+  }
+
   private static Case createCase(
-    Boolean isHypercare,
-    Boolean hasAccount,
+    Account testAccount,
     String recordTypeDeveloperName
   ) {
     Triggers.switchOff();
@@ -130,14 +148,7 @@ private class CaseHighligherTest {
       Type = 'VoIP Device Back Order',
       RecordTypeId = caseRecordType.Id
     );
-    if (hasAccount) {
-      Account testAccount = (Account) SmartFactory.createSObject(
-        'Account',
-        true
-      );
-      testAccount.RC_User_ID__c = 'RC' + Math.random();
-      testAccount.Hyper_Care__c = isHypercare;
-      upsert testAccount;
+    if (testAccount != null) {
       testCase.AccountId = testAccount.Id;
     }
     insert testCase;

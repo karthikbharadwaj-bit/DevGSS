@@ -40,16 +40,10 @@ public class CaseHighlighter {
       .keySet();
     isCloudConnectCustomer = false;
     Case objCase = (Case) controller.getRecord();
-    Case objCaseDetail = [
-      SELECT
-        id,
-        AccountId,
-        Account.RC_Brand__c,
-        Account.Hyper_Care__c,
-        RecordTypeId
-      FROM Case
-      WHERE id = :objCase.id
-    ];
+    Case objCaseDetail = (Case) new CaseSelector()
+      .selectCaseForHighlighter(objCase.Id)
+      .executeQuery()
+      .get(0);
     isHypercareAccount =
       objCaseDetail.AccountId != null &&
       objCaseDetail.Account.Hyper_Care__c == true;
