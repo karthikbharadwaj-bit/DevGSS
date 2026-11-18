@@ -186,20 +186,23 @@ public inherited sharing class CaseSelector extends SObjectSelector {
     };
   }
 
-  public List<String> getCaseHighlighterFieldList() {
-    return new List<String>{
-      'Id',
-      'AccountId',
-      'RecordTypeId',
-      'Account.RC_Brand__c',
-      'Account.Hyper_Care__c'
+  private List<Schema.SObjectField> getCaseHighlighterFieldList() {
+    return new List<Schema.SObjectField>{
+      Case.Id,
+      Case.AccountId,
+      Case.RecordTypeId
     };
+  }
+
+  private List<String> getCaseHighlighterRelatedFieldList() {
+    return new List<String>{ 'Account.RC_Brand__c', 'Account.Hyper_Care__c' };
   }
 
   public QueryFactory selectCaseForHighlighter(Id caseId) {
     return newQueryFactory()
       .setFactoryName('selectCaseForHighlighter')
       .selectFields(getCaseHighlighterFieldList())
+      .selectFields(getCaseHighlighterRelatedFieldList())
       .withoutSelectorOrderByIncluded()
       .setCondition('Id = :bind0')
       .setQueryBindings(new List<Object>{ caseId })

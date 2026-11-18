@@ -23,6 +23,8 @@ private class CaseHighligherTest {
     objRedAcc.Primary_Competitor__c = 'Comcast';
     objRedAcc.Primary_Reason_for_Red__c = 'Support Issues';
     objRedAcc.Sub_Reason_for_Red__c = 'Adoption Issues';
+    objRedAcc.Best_Case_Downsell__c = 1;
+    objRedAcc.Likely_Case_Downsell__c = 1;
     upsert objRedAcc;
     Case cas1 = new Case(
       Type = 'VoIP Device Back Order',
