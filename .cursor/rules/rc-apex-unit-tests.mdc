@@ -226,12 +226,40 @@ static void shouldPerformActionWhenConditionMet() {
 
 ---
 
+## UT-007: Dedicated Test Class Per Changed Class
+
+**Scope**: Any Apex class that is created or modified
+
+**Core Requirements**:
+- Every test method for a changed class lives only in that class's own dedicated test class (`Test_<ClassName>`)
+- If the dedicated test class already exists, add the new test methods to it, including legacy-named ones such as `CaseHighligherTest`
+- If it does not exist, create it. Do not put the tests in another class's test class
+- A test class tests exactly one class. Never add a test for class A to the test class of class B, even when A calls B or B calls A
+- A test must reach the changed class's code through that class's own public or `@TestVisible` entry points, not through another class's test setup
+- A test class must not call methods or use fixtures of another test class. Shared data goes through `SObjectBuilder`, `SObjectFactory`, `ValueProvider` or a dedicated test utility, not through another test class
+- Coverage for a class must come from its own test class. Never rely on another class's tests to reach the coverage threshold
+- When a change touches several classes, add tests to each affected class's own test class
+
+**Examples**:
+```apex
+✅ CaseSelector changed       → tests added to Test_CaseSelector
+✅ CaseHighlighter changed    → tests added to CaseHighligherTest (its existing dedicated class)
+✅ AccountHelper changed      → tests added to Test_AccountHelper (created if missing)
+
+❌ CaseSelector changed       → tests added to Test_CaseHighlighter or Test_CloneHelper
+❌ Test_A calls a method defined in Test_B
+❌ Coverage of CaseSelector reached only because Test_CloneHelper also runs it
+```
+
+---
+
 ## Implementation Priority
 
 ### High Priority (Must Fix)
 - UT-001: Test class naming and structure
 - UT-004: Assertion requirements
 - UT-006: Metadata generation
+- UT-007: Dedicated test class per changed class
 
 ### Medium Priority (Should Fix)
 - UT-002: Method naming patterns
@@ -248,4 +276,5 @@ static void shouldPerformActionWhenConditionMet() {
 4. **Data Phase**: Verify usage of `SObjectBuilder`, `SObjectFactory`, and `ValueProvider`
 5. **Assertion Phase**: Confirm all methods have assertions with meaningful messages
 6. **Lifecycle Phase**: Check proper `Test.startTest()`/`Test.stopTest()` usage
+7. **Ownership Phase**: Confirm each changed class's tests are only in its own `Test_<ClassName>` class, with no dependency on another class's tests
 7. **Metadata Phase**: Generate appropriate `.cls-meta.xml` file
