@@ -1,0 +1,311 @@
+{
+  "info": {
+    "_postman_id": "07e86aff-24a1-4f4c-81c6-5b846ad96ab0",
+    "name": "RingEX & RingCX Token Auth",
+    "description": "Two-step authentication flow: exchanges a RingCentral (REX) JWT for a RingEX access token, then exchanges that token for a RingCX (RCX) access token and refresh token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "24799455"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "1. Get RingEX (REX) Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (pm.response.code === 200 && res.access_token) {",
+                  "    pm.collectionVariables.set(\"rex_access_token\", res.access_token);",
+                  "    console.log(\"Saved rex_access_token\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{rex_client_id}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{rex_client_secret}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "assertion",
+                  "value": "{{rex_jwt}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{rex_server}}/restapi/oauth/token",
+              "host": ["{{rex_server}}"],
+              "path": ["restapi", "oauth", "token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Exchange for RingCX (RCX) Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (pm.response.code === 200 && res.accessToken) {",
+                  "    pm.collectionVariables.set(\"rcx_access_token\", res.accessToken);",
+                  "    if (res.refreshToken) {",
+                  "        pm.collectionVariables.set(\"rcx_refresh_token\", res.refreshToken);",
+                  "    }",
+                  "    if (res.mainAccountId) {",
+                  "        pm.collectionVariables.set(\"rcx_account_id\", String(res.mainAccountId));",
+                  "    }",
+                  "    console.log(\"Saved rcx_access_token\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "rcTokenType",
+                  "value": "Bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "rcAccessToken",
+                  "value": "{{rex_access_token}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{rcx_server}}/api/auth/login/rc/accesstoken?includeRefresh=true",
+              "host": ["{{rcx_server}}"],
+              "path": ["api", "auth", "login", "rc", "accesstoken"],
+              "query": [
+                {
+                  "key": "includeRefresh",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Refresh RingCX (RCX) Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (pm.response.code === 200 && res.accessToken) {",
+                  "    pm.collectionVariables.set(\"rcx_access_token\", res.accessToken);",
+                  "    if (res.refreshToken) {",
+                  "        pm.collectionVariables.set(\"rcx_refresh_token\", res.refreshToken);",
+                  "    }",
+                  "    console.log(\"Refreshed rcx_access_token\");",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "rcTokenType",
+                  "value": "Bearer",
+                  "type": "text"
+                },
+                {
+                  "key": "refresh_token",
+                  "value": "{{rcx_refresh_token}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{rcx_server}}/api/auth/token/refresh",
+              "host": ["{{rcx_server}}"],
+              "path": ["api", "auth", "token", "refresh"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Sample RingCX Requests",
+      "item": [
+        {
+          "name": "Get RingCX Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{rcx_server}}/voice/api/v1/admin/accounts",
+              "host": ["{{rcx_server}}"],
+              "path": ["voice", "api", "v1", "admin", "accounts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Agent AI Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{rcx_server}}/voice/api/v1/summary/accounts/{{rcx_account_id}}/segments/{{segment_id}}/agent",
+              "host": ["{{rcx_server}}"],
+              "path": [
+                "voice",
+                "api",
+                "v1",
+                "summary",
+                "accounts",
+                "{{rcx_account_id}}",
+                "segments",
+                "{{segment_id}}",
+                "agent"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{rcx_access_token}}",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "rex_server",
+      "value": "https://platform.ringcentral.com"
+    },
+    {
+      "key": "rcx_server",
+      "value": "https://ringcx.ringcentral.com"
+    },
+    {
+      "key": "rex_client_id",
+      "value": ""
+    },
+    {
+      "key": "rex_client_secret",
+      "value": ""
+    },
+    {
+      "key": "rex_jwt",
+      "value": ""
+    },
+    {
+      "key": "rex_access_token",
+      "value": ""
+    },
+    {
+      "key": "rcx_access_token",
+      "value": ""
+    },
+    {
+      "key": "rcx_refresh_token",
+      "value": ""
+    },
+    {
+      "key": "rcx_account_id",
+      "value": ""
+    },
+    {
+      "key": "segment_id",
+      "value": ""
+    }
+  ]
+}
